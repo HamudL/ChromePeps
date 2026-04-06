@@ -34,7 +34,8 @@ export async function PATCH(
     );
   }
 
-  const { id: _, ...updateData } = parsed.data;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id: _id, ...updateData } = parsed.data;
 
   if (updateData.isDefault) {
     await db.address.updateMany({

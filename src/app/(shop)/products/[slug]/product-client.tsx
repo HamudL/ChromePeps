@@ -19,10 +19,9 @@ interface GalleryImage {
 
 export function ImageGallery({
   images,
-  productName,
 }: {
   images: GalleryImage[];
-  productName: string;
+  productName?: string;
 }) {
   const [selected, setSelected] = useState(0);
 

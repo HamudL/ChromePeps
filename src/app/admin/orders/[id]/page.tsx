@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { format } from "date-fns";
 import { ArrowLeft, Package, MapPin, Clock } from "lucide-react";
@@ -14,7 +16,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";

@@ -1,9 +1,10 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, FlaskConical, ShieldCheck, Truck } from "lucide-react";
 import { db } from "@/lib/db";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
-import { formatPrice } from "@/lib/utils";
 import { ProductCard } from "@/components/shop/product-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

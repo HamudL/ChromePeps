@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAuth } from "@/lib/auth-helpers";
 import { APP_NAME } from "@/lib/constants";
 import { DashboardNav } from "./dashboard-nav";
@@ -17,9 +18,9 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-muted/30">
       <header className="sticky top-0 z-30 border-b bg-background">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
-          <a href="/" className="mr-6 text-lg font-bold tracking-tight">
+          <Link href="/" className="mr-6 text-lg font-bold tracking-tight">
             {APP_NAME}
-          </a>
+          </Link>
           <span className="text-sm text-muted-foreground">My Account</span>
           <div className="ml-auto text-sm text-muted-foreground">
             {session.user.email}

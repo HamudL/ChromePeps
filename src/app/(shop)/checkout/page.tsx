@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/dialog";
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
-import { APP_NAME } from "@/lib/constants";
 
 interface Address {
   id: string;
@@ -81,7 +80,7 @@ const INITIAL_ADDRESS_FORM = {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
 
   const items = useCartStore((s) => s.items);
   const totalPrice = useCartStore((s) => s.totalPrice);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { cacheGet, cacheSet, cacheDelPattern, cacheDel } from "@/lib/redis";
+import { cacheGet, cacheSet, cacheDel } from "@/lib/redis";
 import { createCategorySchema } from "@/validators/product";
 import { slugify } from "@/lib/utils";
 import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";

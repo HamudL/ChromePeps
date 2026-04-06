@@ -29,7 +29,8 @@ export async function PATCH(
     );
   }
 
-  const { id: _, ...updateData } = parsed.data;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id: _id, ...updateData } = parsed.data;
   const slug = updateData.name ? slugify(updateData.name) : undefined;
 
   const category = await db.category.update({

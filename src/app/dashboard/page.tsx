@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";

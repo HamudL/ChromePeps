@@ -77,7 +77,8 @@ export async function PATCH(
     );
   }
 
-  const { id, images, variants, ...updateData } = parsed.data;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id, images: _images, variants: _variants, ...updateData } = parsed.data;
   const newSlug = updateData.name ? slugify(updateData.name) : undefined;
 
   const product = await db.product.update({

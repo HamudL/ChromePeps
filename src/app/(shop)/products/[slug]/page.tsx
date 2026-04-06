@@ -1,5 +1,6 @@
+export const dynamic = "force-dynamic";
+
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { Star, FlaskConical, Thermometer, Weight, Hash, Layers, Dna } from "lucide-react";
 import { db } from "@/lib/db";

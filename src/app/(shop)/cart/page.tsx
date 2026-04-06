@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
-import { APP_NAME } from "@/lib/constants";
 
 const SHIPPING_THRESHOLD_CENTS = 10000; // 100 EUR
 const SHIPPING_COST_CENTS = 599; // 5.99 EUR

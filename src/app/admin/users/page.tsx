@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { format } from "date-fns";
 import { Search, Shield, User } from "lucide-react";

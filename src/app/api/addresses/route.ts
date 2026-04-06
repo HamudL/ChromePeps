@@ -15,7 +15,7 @@ export async function GET() {
 
   const addresses = await db.address.findMany({
     where: { userId: session.user.id },
-    orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+    orderBy: { isDefault: "desc" },
   });
 
   return NextResponse.json({ success: true, data: addresses });
