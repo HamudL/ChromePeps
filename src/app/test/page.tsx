@@ -55,21 +55,12 @@ async function DiagnosticChecks() {
     checks.push({ name: "next-auth/react", status: "FAIL", detail: String(e) });
   }
 
-  // Check 3: Can we import framer-motion?
-  try {
-    const fm = require("framer-motion");
-    const hasMotion = typeof fm.motion !== "undefined";
-    const hasMotionDiv = hasMotion && typeof fm.motion.div !== "undefined";
-    checks.push({
-      name: "framer-motion → motion.div",
-      status: hasMotionDiv ? "OK" : "UNDEFINED!",
-      detail: hasMotionDiv
-        ? "motion.div available"
-        : `motion=${typeof fm.motion}, motion.div=${hasMotion ? typeof fm.motion.div : "N/A"}`,
-    });
-  } catch (e: unknown) {
-    checks.push({ name: "framer-motion", status: "FAIL", detail: String(e) });
-  }
+  // Check 3: framer-motion (REMOVED from project — was causing Error #130)
+  checks.push({
+    name: "framer-motion",
+    status: "REMOVED",
+    detail: "Replaced with CSS animations (was failing: createContext not a function)",
+  });
 
   // Check 4: Can we import @radix-ui/react-dialog?
   try {

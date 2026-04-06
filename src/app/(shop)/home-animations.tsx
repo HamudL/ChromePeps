@@ -1,14 +1,6 @@
 "use client";
 
-import { safeMotion, type Variants } from "@/lib/safe-motion";
-import { type ReactNode } from "react";
-
-const fadeUpVariants: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const MotionDiv = safeMotion.div;
+import { useEffect, useRef, type ReactNode } from "react";
 
 function FadeUp({
   children,
@@ -19,17 +11,39 @@ function FadeUp({
   delay?: number;
   className?: string;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    // Apply initial hidden state
+    el.style.opacity = "0";
+    el.style.transform = "translateY(24px)";
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          // Animate in after delay
+          setTimeout(() => {
+            el.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+            el.style.opacity = "1";
+            el.style.transform = "translateY(0)";
+          }, delay * 1000);
+          observer.unobserve(el);
+        }
+      },
+      { rootMargin: "-40px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [delay]);
+
   return (
-    <MotionDiv
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-40px" }}
-      variants={fadeUpVariants}
-      transition={{ duration: 0.5, ease: "easeOut", delay }}
-      className={className}
-    >
+    <div ref={ref} className={className}>
       {children}
-    </MotionDiv>
+    </div>
   );
 }
 

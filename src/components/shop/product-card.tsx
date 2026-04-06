@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { safeMotion } from "@/lib/safe-motion";
 import { ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,14 +35,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     openCart();
   };
 
-  const MotionDiv = safeMotion.div;
-
   return (
-    <MotionDiv
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="animate-fade-in">
+
       <Link href={`/products/${product.slug}`}>
         <Card className="group overflow-hidden h-full hover:shadow-lg transition-shadow duration-300">
           {/* Image */}
@@ -103,6 +97,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </CardContent>
         </Card>
       </Link>
-    </MotionDiv>
+    </div>
   );
 }
