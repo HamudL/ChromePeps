@@ -122,7 +122,12 @@ if ! grep -q "^AllowUsers" "$SSHD_CONFIG"; then
   echo "AllowUsers $DEPLOY_USER" >> "$SSHD_CONFIG"
 fi
 
-systemctl restart sshd
+# Ubuntu 24.04 uses "ssh" not "sshd"
+if systemctl list-units --type=service | grep -q "sshd.service"; then
+  systemctl restart sshd
+else
+  systemctl restart ssh
+fi
 log "SSH hardened: port=$SSH_PORT, key-only, no root login"
 
 # =============================================================================
