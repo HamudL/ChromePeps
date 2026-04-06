@@ -31,6 +31,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Validate address belongs to the authenticated user
+  const address = await db.address.findFirst({
+    where: { id: shippingAddressId, userId: session.user.id },
+  });
+  if (!address) {
+    return NextResponse.json(
+      { success: false, error: "Address not found" },
+      { status: 404 }
+    );
+  }
+
   // Get cart
   const cart = await db.cart.findUnique({
     where: { userId: session.user.id },

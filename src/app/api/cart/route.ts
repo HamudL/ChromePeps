@@ -131,16 +131,21 @@ export async function POST(req: NextRequest) {
     update: {},
   });
 
-  // Upsert cart item
-  const existingItem = await db.cartItem.findUnique({
-    where: {
-      cartId_productId_variantId: {
-        cartId: cart.id,
-        productId,
-        variantId: variantId ?? "",
-      },
-    },
-  });
+  // Upsert cart item — use findFirst for null variantId since
+  // PostgreSQL unique constraints don't enforce uniqueness on NULLs
+  const existingItem = variantId
+    ? await db.cartItem.findUnique({
+        where: {
+          cartId_productId_variantId: {
+            cartId: cart.id,
+            productId,
+            variantId,
+          },
+        },
+      })
+    : await db.cartItem.findFirst({
+        where: { cartId: cart.id, productId, variantId: null },
+      });
 
   if (existingItem) {
     await db.cartItem.update({
@@ -235,15 +240,19 @@ export async function PUT(req: NextRequest) {
 
   // Merge items: guest items take priority for quantities
   for (const item of parsed.data.items) {
-    const existing = await db.cartItem.findUnique({
-      where: {
-        cartId_productId_variantId: {
-          cartId: cart.id,
-          productId: item.productId,
-          variantId: item.variantId ?? "",
-        },
-      },
-    });
+    const existing = item.variantId
+      ? await db.cartItem.findUnique({
+          where: {
+            cartId_productId_variantId: {
+              cartId: cart.id,
+              productId: item.productId,
+              variantId: item.variantId,
+            },
+          },
+        })
+      : await db.cartItem.findFirst({
+          where: { cartId: cart.id, productId: item.productId, variantId: null },
+        });
 
     if (existing) {
       // Guest quantity wins (more recent intent)
