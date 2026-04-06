@@ -39,12 +39,12 @@ export function ProductFilters({ categories }: { categories: Category[] }) {
 
   return (
     <div className="flex flex-col sm:flex-row gap-4">
-      <Select value={currentCategory} onValueChange={(v) => updateParam("category", v)}>
+      <Select value={currentCategory || "all"} onValueChange={(v) => updateParam("category", v === "all" ? "" : v)}>
         <SelectTrigger className="w-full sm:w-48">
           <SelectValue placeholder="All Categories" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Categories</SelectItem>
+          <SelectItem value="all">All Categories</SelectItem>
           {categories.map((cat) => (
             <SelectItem key={cat.id} value={cat.slug}>
               {cat.name} ({cat._count.products})

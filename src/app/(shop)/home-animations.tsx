@@ -47,6 +47,6 @@ function FadeUp({
   );
 }
 
-export const HomeAnimations = {
-  FadeUp,
-};
+// Export directly as named export — NOT as object property.
+// RSC cannot resolve component references from object properties.
+export { FadeUp };

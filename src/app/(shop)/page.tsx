@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { ProductCardData } from "@/types";
 
-import { HomeAnimations } from "./home-animations";
+import { FadeUp } from "./home-animations";
 
 async function getFeaturedProducts(): Promise<ProductCardData[]> {
   const products = await db.product.findMany({
@@ -70,7 +70,7 @@ export default async function HomePage() {
       <section className="relative overflow-hidden chrome-gradient">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_hsl(217,55%,45%,0.08),transparent_70%)]" />
         <div className="container relative py-20 md:py-32">
-          <HomeAnimations.FadeUp>
+          <FadeUp>
             <div className="mx-auto max-w-3xl text-center space-y-6">
               <Badge variant="outline" className="px-4 py-1 text-sm">
                 <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
@@ -98,10 +98,10 @@ export default async function HomePage() {
                 </Button>
               </div>
             </div>
-          </HomeAnimations.FadeUp>
+          </FadeUp>
 
           {/* Trust indicators */}
-          <HomeAnimations.FadeUp delay={0.2}>
+          <FadeUp delay={0.2}>
             <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
               <div className="flex items-center gap-3 justify-center text-sm text-muted-foreground">
                 <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
@@ -116,7 +116,7 @@ export default async function HomePage() {
                 <span>Fast EU Shipping</span>
               </div>
             </div>
-          </HomeAnimations.FadeUp>
+          </FadeUp>
         </div>
       </section>
 
@@ -132,7 +132,7 @@ export default async function HomePage() {
       {/* Featured Products */}
       {products.length > 0 && (
         <section className="container py-16 md:py-20">
-          <HomeAnimations.FadeUp>
+          <FadeUp>
             <div className="flex items-end justify-between mb-8">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -148,13 +148,13 @@ export default async function HomePage() {
                 </Link>
               </Button>
             </div>
-          </HomeAnimations.FadeUp>
+          </FadeUp>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.map((product, i) => (
-              <HomeAnimations.FadeUp key={product.id} delay={i * 0.05}>
+              <FadeUp key={product.id} delay={i * 0.05}>
                 <ProductCard product={product} />
-              </HomeAnimations.FadeUp>
+              </FadeUp>
             ))}
           </div>
 
@@ -171,7 +171,7 @@ export default async function HomePage() {
       {/* Categories */}
       {categories.length > 0 && (
         <section className="container py-16 md:py-20">
-          <HomeAnimations.FadeUp>
+          <FadeUp>
             <div className="text-center mb-10">
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
                 Shop by Category
@@ -180,11 +180,11 @@ export default async function HomePage() {
                 Explore our range of research peptides
               </p>
             </div>
-          </HomeAnimations.FadeUp>
+          </FadeUp>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((category, i) => (
-              <HomeAnimations.FadeUp key={category.id} delay={i * 0.08}>
+              <FadeUp key={category.id} delay={i * 0.08}>
                 <Link href={`/products?category=${category.slug}`}>
                   <Card className="group overflow-hidden h-full hover:shadow-lg transition-shadow duration-300">
                     <div className="relative h-48 bg-muted overflow-hidden">
@@ -218,7 +218,7 @@ export default async function HomePage() {
                     </CardContent>
                   </Card>
                 </Link>
-              </HomeAnimations.FadeUp>
+              </FadeUp>
             ))}
           </div>
         </section>
