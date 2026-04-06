@@ -10,14 +10,15 @@ import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
 
 export function CartSheet() {
-  const { items, isOpen, totalPrice, removeItem, updateQuantity } = useCartStore((s) => ({
-    items: s.items,
-    isOpen: s.isOpen,
-    totalPrice: s.totalPrice(),
-    removeItem: s.removeItem,
-    updateQuantity: s.updateQuantity,
-  }));
+  // Individual selectors — never use object selectors or call store methods
+  // inside selectors with Zustand v5 + React 19 (causes Error #185 infinite loop)
+  const items = useCartStore((s) => s.items);
+  const isOpen = useCartStore((s) => s.isOpen);
+  const removeItem = useCartStore((s) => s.removeItem);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
   const closeCart = useCartStore((s) => s.closeCart);
+  // Compute derived values from items directly instead of calling store methods
+  const totalPrice = items.reduce((sum, item) => sum + item.priceInCents * item.quantity, 0);
 
   return (
     <Sheet open={isOpen} onOpenChange={closeCart}>

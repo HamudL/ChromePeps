@@ -83,7 +83,6 @@ export default function CheckoutPage() {
   const { status: authStatus } = useSession();
 
   const items = useCartStore((s) => s.items);
-  const totalPrice = useCartStore((s) => s.totalPrice);
 
   const [mounted, setMounted] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -241,7 +240,7 @@ export default function CheckoutPage() {
     );
   }
 
-  const subtotal = totalPrice();
+  const subtotal = items.reduce((sum, item) => sum + item.priceInCents * item.quantity, 0);
   const shipping =
     subtotal >= SHIPPING_THRESHOLD_CENTS ? 0 : SHIPPING_COST_CENTS;
   const taxableAmount = subtotal + shipping;

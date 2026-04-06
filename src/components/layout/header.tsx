@@ -27,8 +27,11 @@ const navLinks = [
 
 export function Header() {
   const { data: session } = useSession();
-  const totalItems = useCartStore((s) => s.totalItems());
+  // Individual selector for items — compute totalItems from it directly.
+  // Never call store methods (s.totalItems()) inside selectors with Zustand v5 + React 19.
+  const items = useCartStore((s) => s.items);
   const openCart = useCartStore((s) => s.openCart);
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
