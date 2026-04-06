@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Next.js Dev Server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "PostgreSQL (Docker)",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "-f", "docker/docker-compose.dev.yml", "up", "postgres"],
+      "port": 5432
+    },
+    {
+      "name": "Redis (Docker)",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "-f", "docker/docker-compose.dev.yml", "up", "redis"],
+      "port": 6379
+    },
+    {
+      "name": "Dev Dependencies (Postgres + Redis)",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "-f", "docker/docker-compose.dev.yml", "up"],
+      "port": 5432
+    },
+    {
+      "name": "Prisma Studio",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["prisma", "studio"],
+      "port": 5555
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ChromePeps Chrome Theme — cool steel/silver palette */
+    --background: 220 20% 97%;
+    --foreground: 224 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 20% 10%;
+
+    --primary: 217 55% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 16% 93%;
+    --secondary-foreground: 224 20% 15%;
+
+    --muted: 220 16% 93%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 220 16% 90%;
+    --accent-foreground: 224 20% 15%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 87%;
+    --input: 220 13% 87%;
+    --ring: 217 55% 45%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 224 25% 8%;
+    --foreground: 220 15% 92%;
+
+    --card: 224 22% 11%;
+    --card-foreground: 220 15% 92%;
+
+    --popover: 224 22% 11%;
+    --popover-foreground: 220 15% 92%;
+
+    --primary: 217 65% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 224 18% 16%;
+    --secondary-foreground: 220 15% 85%;
+
+    --muted: 224 18% 16%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 224 18% 18%;
+    --accent-foreground: 220 15% 85%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 224 15% 18%;
+    --input: 224 15% 18%;
+    --ring: 217 65% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .chrome-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(220, 20%, 96%) 0%,
+      hsl(220, 25%, 88%) 25%,
+      hsl(220, 20%, 96%) 50%,
+      hsl(220, 25%, 88%) 75%,
+      hsl(220, 20%, 96%) 100%
+    );
+  }
+
+  .dark .chrome-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(224, 22%, 14%) 0%,
+      hsl(224, 20%, 18%) 25%,
+      hsl(224, 22%, 14%) 50%,
+      hsl(224, 20%, 18%) 75%,
+      hsl(224, 22%, 14%) 100%
+    );
+  }
+
+  .chrome-text {
+    background: linear-gradient(
+      180deg,
+      hsl(220, 15%, 55%) 0%,
+      hsl(220, 20%, 35%) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .chrome-text {
+    background: linear-gradient(
+      180deg,
+      hsl(220, 15%, 80%) 0%,
+      hsl(220, 20%, 60%) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
