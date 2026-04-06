@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { safeMotion } from "@/lib/safe-motion";
 import { ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,8 +36,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     openCart();
   };
 
+  const MotionDiv = safeMotion.div;
+
   return (
-    <motion.div
+    <MotionDiv
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -101,6 +103,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </CardContent>
         </Card>
       </Link>
-    </motion.div>
+    </MotionDiv>
   );
 }

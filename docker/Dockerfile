@@ -49,14 +49,24 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy Next.js standalone build (all with correct ownership)
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# --- COPY ORDER MATTERS ---
+# 1. Full node_modules FIRST (for Prisma CLI, migrate, seed, ts-node)
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+# 2. Standalone output SECOND — its traced node_modules overwrites/merges
+#    on top of the full set. This ensures server.js gets the exact deps it traced.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+
+# 3. Static assets (client JS bundles, CSS, fonts — not in standalone output)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Full node_modules for prisma CLI, migrate, seed (ts-node, typescript)
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# 4. Public assets
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# 5. Prisma schema + migrations (for prisma migrate deploy / db push)
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# 6. Config files needed for prisma db seed (ts-node needs tsconfig, seed reads package.json)
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
 

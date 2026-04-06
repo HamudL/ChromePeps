@@ -1,12 +1,14 @@
 "use client";
 
-import { motion, type Variants } from "framer-motion";
+import { safeMotion, type Variants } from "@/lib/safe-motion";
 import { type ReactNode } from "react";
 
 const fadeUpVariants: Variants = {
   hidden: { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0 },
 };
+
+const MotionDiv = safeMotion.div;
 
 function FadeUp({
   children,
@@ -18,7 +20,7 @@ function FadeUp({
   className?: string;
 }) {
   return (
-    <motion.div
+    <MotionDiv
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-40px" }}
@@ -27,7 +29,7 @@ function FadeUp({
       className={className}
     >
       {children}
-    </motion.div>
+    </MotionDiv>
   );
 }
 
