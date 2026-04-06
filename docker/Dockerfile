@@ -51,10 +51,15 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Prisma engine binaries
+# Prisma CLI + engine binaries (needed for migrate deploy / db seed)
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules/ts-node ./node_modules/ts-node
+COPY --from=builder /app/node_modules/typescript ./node_modules/typescript
 
 USER nextjs
 EXPOSE 3000
