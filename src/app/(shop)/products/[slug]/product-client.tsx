@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ShoppingCart, Minus, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -181,7 +181,7 @@ export function AddToCartButton({
   const [added, setAdded] = useState(false);
 
   // Listen for variant selection events
-  useState(() => {
+  useEffect(() => {
     const handler = ((e: CustomEvent<VariantOption>) => {
       setSelectedVariant(e.detail);
       setAdded(false);
@@ -189,7 +189,7 @@ export function AddToCartButton({
 
     window.addEventListener("variant-selected", handler);
     return () => window.removeEventListener("variant-selected", handler);
-  });
+  }, []);
 
   const effectiveStock = selectedVariant ? selectedVariant.stock : product.stock;
   const effectivePrice = selectedVariant

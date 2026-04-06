@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { APP_NAME } from "@/lib/constants";
-import { DashboardNav } from "@/components/admin/dashboard-nav";
+import { DashboardNav } from "@/components/admin/admin-nav";
 import { Separator } from "@/components/ui/separator";
 import { Shield } from "lucide-react";
 
