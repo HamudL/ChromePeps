@@ -34,8 +34,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# prisma
-prisma/migrations/
+# prisma (migrations MUST be committed — needed for prisma migrate deploy)
 
 # docker volumes
 docker/data/
