@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { format } from "date-fns";
-import { ArrowLeft, Package, MapPin, Clock } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Clock, CreditCard, Building2, Tag } from "lucide-react";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { formatPrice, cn } from "@/lib/utils";
@@ -137,6 +137,22 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>{formatPrice(order.subtotalInCents)}</span>
                 </div>
+                {order.discountInCents > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600 flex items-center gap-1">
+                      <Tag className="h-3 w-3" />
+                      Discount
+                      {order.promoCode && (
+                        <code className="text-xs bg-green-100 px-1 py-0.5 rounded">
+                          {order.promoCode}
+                        </code>
+                      )}
+                    </span>
+                    <span className="text-green-600 font-medium">
+                      &minus;{formatPrice(order.discountInCents)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
                   <span>{formatPrice(order.shippingInCents)}</span>
@@ -249,6 +265,22 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             <CardContent>
               <dl className="grid grid-cols-2 gap-3 text-sm">
                 <div>
+                  <dt className="text-muted-foreground">Payment Method</dt>
+                  <dd className="flex items-center gap-1.5 mt-0.5">
+                    {order.paymentMethod === "BANK_TRANSFER" ? (
+                      <>
+                        <Building2 className="h-3.5 w-3.5 text-blue-600" />
+                        <span className="font-medium">Bank Transfer</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-3.5 w-3.5 text-purple-600" />
+                        <span className="font-medium">Stripe</span>
+                      </>
+                    )}
+                  </dd>
+                </div>
+                <div>
                   <dt className="text-muted-foreground">Payment Status</dt>
                   <dd>
                     <Badge
@@ -304,6 +336,8 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             orderId={order.id}
             currentStatus={order.status}
             currentTracking={order.trackingNumber}
+            paymentMethod={order.paymentMethod}
+            paymentStatus={order.paymentStatus}
           />
 
           {/* Event Timeline */}

@@ -15,6 +15,7 @@ import {
   Tag,
   X,
   Check,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,9 @@ import {
 } from "@/components/ui/dialog";
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
+import { BANK_DETAILS } from "@/lib/constants";
+
+type PaymentMethod = "STRIPE" | "BANK_TRANSFER";
 
 interface Address {
   id: string;
@@ -106,6 +110,9 @@ export default function CheckoutPage() {
     discountAmount: number;
     description: string | null;
   } | null>(null);
+
+  // Payment method
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("STRIPE");
 
   // New address dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -230,7 +237,7 @@ export default function CheckoutPage() {
     setPromoError(null);
   };
 
-  // Handle Stripe checkout
+  // Handle checkout (routes to Stripe or bank transfer)
   const handleCheckout = async () => {
     if (!selectedAddressId) {
       setCheckoutError("Please select a shipping address.");
@@ -239,6 +246,15 @@ export default function CheckoutPage() {
 
     setCheckoutError(null);
     setCheckoutLoading(true);
+
+    if (paymentMethod === "BANK_TRANSFER") {
+      await handleBankTransferCheckout();
+    } else {
+      await handleStripeCheckout();
+    }
+  };
+
+  const handleStripeCheckout = async () => {
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -256,6 +272,31 @@ export default function CheckoutPage() {
       if (json.data?.url) {
         window.location.href = json.data.url;
       }
+    } catch {
+      setCheckoutError("Network error. Please try again.");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handleBankTransferCheckout = async () => {
+    try {
+      const res = await fetch("/api/checkout/bank-transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shippingAddressId: selectedAddressId,
+          promoCode: appliedPromo?.code ?? null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setCheckoutError(json.error || "Checkout failed. Please try again.");
+        return;
+      }
+      router.push(
+        `/checkout/success?method=bank-transfer&orderId=${json.data.orderId}&orderNumber=${json.data.orderNumber}&total=${json.data.totalInCents}`
+      );
     } catch {
       setCheckoutError("Network error. Please try again.");
     } finally {
@@ -682,23 +723,75 @@ export default function CheckoutPage() {
             </CardContent>
           </Card>
 
-          {/* Payment Section */}
+          {/* Payment Method Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Payment
+                Payment Method
               </CardTitle>
               <CardDescription>
-                Secure payment powered by Stripe
+                Choose how you&apos;d like to pay
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                You will be redirected to Stripe&apos;s secure checkout to
-                complete your payment. We accept all major credit and debit
-                cards.
-              </p>
+              {/* Payment method toggle */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("STRIPE")}
+                  className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
+                    paymentMethod === "STRIPE"
+                      ? "border-primary bg-primary/5"
+                      : "border-muted hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <CreditCard className={`h-6 w-6 ${paymentMethod === "STRIPE" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className={`text-sm font-medium ${paymentMethod === "STRIPE" ? "text-primary" : ""}`}>
+                    Credit / Debit Card
+                  </span>
+                  <span className="text-xs text-muted-foreground">via Stripe</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("BANK_TRANSFER")}
+                  className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
+                    paymentMethod === "BANK_TRANSFER"
+                      ? "border-primary bg-primary/5"
+                      : "border-muted hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <Building2 className={`h-6 w-6 ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className={`text-sm font-medium ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : ""}`}>
+                    Bank Transfer
+                  </span>
+                  <span className="text-xs text-muted-foreground">Vorkasse</span>
+                </button>
+              </div>
+
+              {paymentMethod === "STRIPE" ? (
+                <p className="text-sm text-muted-foreground">
+                  You will be redirected to Stripe&apos;s secure checkout to
+                  complete your payment. We accept all major credit and debit
+                  cards.
+                </p>
+              ) : (
+                <div className="rounded-md border bg-muted/50 p-3 text-sm space-y-2">
+                  <p className="font-medium">Bank Transfer (Vorkasse)</p>
+                  <p className="text-muted-foreground">
+                    After placing your order, you will receive our bank details.
+                    Please transfer the total amount using your order number as
+                    the payment reference. Your order will be processed once
+                    payment is received.
+                  </p>
+                  <div className="grid grid-cols-2 gap-1 text-xs mt-2">
+                    <span className="text-muted-foreground">Bank:</span>
+                    <span>{BANK_DETAILS.bankName}</span>
+                    <span className="text-muted-foreground">Account Holder:</span>
+                    <span>{BANK_DETAILS.accountHolder}</span>
+                  </div>
+                </div>
+              )}
 
               {checkoutError && (
                 <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
@@ -717,10 +810,12 @@ export default function CheckoutPage() {
               >
                 {checkoutLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
+                ) : paymentMethod === "STRIPE" ? (
                   <CreditCard className="mr-2 h-4 w-4" />
+                ) : (
+                  <Building2 className="mr-2 h-4 w-4" />
                 )}
-                Pay with Stripe
+                {paymentMethod === "STRIPE" ? "Pay with Stripe" : "Place Order (Bank Transfer)"}
               </Button>
             </CardContent>
           </Card>

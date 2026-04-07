@@ -52,5 +52,12 @@ export const CACHE_TTL = {
   PROMOS: 60,
 } as const;
 
+export const BANK_DETAILS = {
+  accountHolder: "ChromePeps GmbH",
+  iban: "DE89 3704 0044 0532 0130 00",
+  bic: "COBADEFFXXX",
+  bankName: "Commerzbank",
+} as const;
+
 export const RESEARCH_DISCLAIMER =
   "All products are strictly for in-vitro research and laboratory use only. Not for human consumption. Not intended to diagnose, treat, cure, or prevent any disease.";

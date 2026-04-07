@@ -54,6 +54,63 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json();
+
+  // Handle paymentStatus-only update (Mark as Paid)
+  if (body.paymentStatus && !body.status) {
+    const existing = await db.order.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    const validPaymentStatuses = ["PENDING", "SUCCEEDED", "FAILED", "REFUNDED"];
+    if (!validPaymentStatuses.includes(body.paymentStatus)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid payment status" },
+        { status: 400 }
+      );
+    }
+
+    const order = await db.$transaction(async (tx) => {
+      const updateData: Record<string, unknown> = {
+        paymentStatus: body.paymentStatus,
+      };
+
+      // When marking as paid, also move order to PROCESSING
+      if (body.paymentStatus === "SUCCEEDED" && existing.status === "PENDING") {
+        updateData.status = "PROCESSING";
+      }
+
+      const updated = await tx.order.update({
+        where: { id },
+        data: updateData,
+        include: { items: true, events: { orderBy: { createdAt: "desc" } } },
+      });
+
+      const statusForEvent = updateData.status
+        ? (updateData.status as string)
+        : existing.status;
+
+      await tx.orderEvent.create({
+        data: {
+          orderId: id,
+          status: statusForEvent as "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "REFUNDED",
+          note:
+            body.paymentStatus === "SUCCEEDED"
+              ? "Payment confirmed (bank transfer received)"
+              : `Payment status updated to ${body.paymentStatus}`,
+        },
+      });
+
+      return updated;
+    });
+
+    return NextResponse.json({ success: true, data: order });
+  }
+
+  // Standard status update
   const parsed = updateOrderStatusSchema.safeParse({ ...body, orderId: id });
   if (!parsed.success) {
     return NextResponse.json(
@@ -122,8 +179,6 @@ export async function PATCH(
 
     return updated;
   });
-
-  // TODO Phase 2 enhancement: trigger email notification here
 
   return NextResponse.json({ success: true, data: order });
 }

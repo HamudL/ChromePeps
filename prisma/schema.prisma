@@ -220,6 +220,7 @@ model Order {
   userId                String
   status                OrderStatus   @default(PENDING)
   paymentStatus         PaymentStatus @default(PENDING)
+  paymentMethod         String        @default("STRIPE") @db.VarChar(20)
   stripePaymentIntentId String?       @unique
   stripeSessionId       String?       @unique
   subtotalInCents       Int
