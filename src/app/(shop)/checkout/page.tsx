@@ -237,6 +237,31 @@ export default function CheckoutPage() {
     setPromoError(null);
   };
 
+  // Sync Zustand cart to server DB before checkout
+  const syncCartToServer = async (): Promise<boolean> => {
+    try {
+      const syncItems = items.map((item) => ({
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+      }));
+      const res = await fetch("/api/cart", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: syncItems }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setCheckoutError(json.error || "Failed to sync cart. Please try again.");
+        return false;
+      }
+      return true;
+    } catch {
+      setCheckoutError("Network error. Please try again.");
+      return false;
+    }
+  };
+
   // Handle checkout (routes to Stripe or bank transfer)
   const handleCheckout = async () => {
     if (!selectedAddressId) {
@@ -246,6 +271,13 @@ export default function CheckoutPage() {
 
     setCheckoutError(null);
     setCheckoutLoading(true);
+
+    // Sync client cart to server before checkout
+    const synced = await syncCartToServer();
+    if (!synced) {
+      setCheckoutLoading(false);
+      return;
+    }
 
     if (paymentMethod === "BANK_TRANSFER") {
       await handleBankTransferCheckout();

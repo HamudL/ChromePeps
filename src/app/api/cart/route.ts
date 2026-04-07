@@ -211,7 +211,7 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-// PUT /api/cart — sync guest cart on login
+// PUT /api/cart — sync client cart to server (full replace)
 export async function PUT(req: NextRequest) {
   const session = await auth();
   if (!session?.user) {
@@ -239,38 +239,18 @@ export async function PUT(req: NextRequest) {
     update: {},
   });
 
-  // Merge items: guest items take priority for quantities
-  for (const item of parsed.data.items) {
-    const existing = item.variantId
-      ? await db.cartItem.findUnique({
-          where: {
-            cartId_productId_variantId: {
-              cartId: cart.id,
-              productId: item.productId,
-              variantId: item.variantId,
-            },
-          },
-        })
-      : await db.cartItem.findFirst({
-          where: { cartId: cart.id, productId: item.productId, variantId: null },
-        });
+  // Clear existing items and replace with client cart (full sync)
+  await db.cartItem.deleteMany({ where: { cartId: cart.id } });
 
-    if (existing) {
-      // Guest quantity wins (more recent intent)
-      await db.cartItem.update({
-        where: { id: existing.id },
-        data: { quantity: Math.min(item.quantity, 99) },
-      });
-    } else {
-      await db.cartItem.create({
-        data: {
-          cartId: cart.id,
-          productId: item.productId,
-          variantId: item.variantId,
-          quantity: item.quantity,
-        },
-      });
-    }
+  for (const item of parsed.data.items) {
+    await db.cartItem.create({
+      data: {
+        cartId: cart.id,
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: Math.min(item.quantity, 99),
+      },
+    });
   }
 
   await cacheDel(CACHE_KEYS.CART(userId));
