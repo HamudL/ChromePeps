@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   if (!limit.success) return rateLimitExceeded(limit);
 
   const body = await req.json();
-  const { shippingAddressId } = body;
+  const { shippingAddressId, promoCode } = body;
 
   if (!shippingAddressId) {
     return NextResponse.json(
@@ -99,7 +99,51 @@ export async function POST(req: NextRequest) {
     return sum + price * item.quantity;
   }, 0);
 
-  const shippingCost = subtotal >= 10000 ? 0 : 599;
+  // Validate and apply promo code
+  let discountAmount = 0;
+  let validatedPromoId: string | null = null;
+  if (promoCode) {
+    const promo = await db.promoCode.findUnique({
+      where: { code: promoCode.toUpperCase() },
+    });
+
+    if (promo && promo.isActive) {
+      const now = new Date();
+      const notExpired = !promo.expiresAt || promo.expiresAt > now;
+      const notEarly = !promo.startsAt || promo.startsAt <= now;
+      const notMaxed = !promo.maxUses || promo.usedCount < promo.maxUses;
+      const meetsMin = !promo.minOrderCents || subtotal >= promo.minOrderCents;
+
+      // Check user hasn't used it
+      const alreadyUsed = await db.promoUsage.findFirst({
+        where: { promoId: promo.id, userId: session.user.id },
+      });
+
+      if (notExpired && notEarly && notMaxed && meetsMin && !alreadyUsed) {
+        validatedPromoId = promo.id;
+        if (promo.discountType === "PERCENTAGE") {
+          discountAmount = Math.round((subtotal * promo.discountValue) / 100);
+        } else {
+          discountAmount = Math.min(promo.discountValue, subtotal);
+        }
+      }
+    }
+  }
+
+  const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
+  const shippingCost = subtotalAfterDiscount >= 10000 ? 0 : 599;
+
+  // Create a Stripe coupon for the discount
+  let stripeCouponId: string | undefined;
+  if (discountAmount > 0) {
+    const coupon = await stripe.coupons.create({
+      amount_off: discountAmount,
+      currency: "eur",
+      duration: "once",
+      name: `Promo: ${promoCode.toUpperCase()}`,
+    });
+    stripeCouponId = coupon.id;
+  }
 
   if (shippingCost > 0) {
     lineItems.push({
@@ -119,10 +163,18 @@ export async function POST(req: NextRequest) {
     mode: "payment",
     payment_method_types: ["card"],
     line_items: lineItems,
+    ...(stripeCouponId && {
+      discounts: [{ coupon: stripeCouponId }],
+    }),
     automatic_tax: { enabled: false },
     metadata: {
       userId: session.user.id,
       shippingAddressId,
+      ...(validatedPromoId && {
+        promoId: validatedPromoId,
+        promoCode: promoCode.toUpperCase(),
+        discountAmount: discountAmount.toString(),
+      }),
     },
     customer_email: session.user.email ?? undefined,
     success_url: absoluteUrl(

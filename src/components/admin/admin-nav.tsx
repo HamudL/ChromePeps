@@ -8,6 +8,7 @@ import {
   FolderTree,
   ShoppingCart,
   Users,
+  Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const navItems = [
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/promos", label: "Promo Codes", icon: Tag },
 ];
 
 export function DashboardNav() {

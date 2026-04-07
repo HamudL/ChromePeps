@@ -27,12 +27,13 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
-  orders    Order[]
-  cart      Cart?
-  reviews   Review[]
-  addresses Address[]
+  accounts    Account[]
+  sessions    Session[]
+  orders      Order[]
+  cart        Cart?
+  reviews     Review[]
+  addresses   Address[]
+  promoUsages PromoUsage[]
 
   @@index([email])
   @@map("users")
@@ -236,11 +237,15 @@ model Order {
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
+  discountInCents       Int           @default(0)
+  promoCode             String?       @db.VarChar(20)
+
   user            User         @relation(fields: [userId], references: [id])
   items           OrderItem[]
   shippingAddress Address?     @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
   billingAddress  Address?     @relation("BillingAddress", fields: [billingAddressId], references: [id])
   events          OrderEvent[]
+  promoUsage      PromoUsage?
 
   @@index([userId])
   @@index([status])
@@ -329,6 +334,54 @@ model Review {
   @@unique([userId, productId])
   @@index([productId])
   @@map("reviews")
+}
+
+// ============================================================
+// PROMO CODES
+// ============================================================
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model PromoCode {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  description   String?      @db.Text
+  discountType  DiscountType
+  discountValue Int          // percentage (1-100) or cents
+  maxUses       Int?         // null = unlimited
+  usedCount     Int          @default(0)
+  minOrderCents Int?         // minimum order subtotal in cents
+  isActive      Boolean      @default(true)
+  startsAt      DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  usages PromoUsage[]
+
+  @@index([code])
+  @@index([isActive, expiresAt])
+  @@map("promo_codes")
+}
+
+model PromoUsage {
+  id             String   @id @default(cuid())
+  promoId        String
+  userId         String
+  orderId        String   @unique
+  discountAmount Int      // actual discount applied in cents
+  createdAt      DateTime @default(now())
+
+  promo PromoCode @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([promoId])
+  @@index([userId])
+  @@map("promo_usages")
 }
 
 // ============================================================

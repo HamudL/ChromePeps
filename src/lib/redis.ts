@@ -11,7 +11,7 @@ function createRedisClient(): Redis {
       if (times > 3) return null;
       return Math.min(times * 200, 2000);
     },
-    lazyConnect: true,
+    // NOTE: removed lazyConnect — Redis must auto-connect on startup
   });
 
   client.on("error", (err) => {
@@ -33,14 +33,19 @@ if (process.env.NODE_ENV !== "production") {
   globalForRedis.redis = redis;
 }
 
-// ---- Cache Helpers ----
+// ---- Cache Helpers (with graceful fallback) ----
 
 const DEFAULT_TTL = 60; // seconds
 
 export async function cacheGet<T>(key: string): Promise<T | null> {
-  const data = await redis.get(key);
-  if (!data) return null;
-  return JSON.parse(data) as T;
+  try {
+    const data = await redis.get(key);
+    if (!data) return null;
+    return JSON.parse(data) as T;
+  } catch (err) {
+    console.error("[Redis] cacheGet failed:", (err as Error).message);
+    return null;
+  }
 }
 
 export async function cacheSet<T>(
@@ -48,16 +53,28 @@ export async function cacheSet<T>(
   value: T,
   ttl: number = DEFAULT_TTL
 ): Promise<void> {
-  await redis.set(key, JSON.stringify(value), "EX", ttl);
+  try {
+    await redis.set(key, JSON.stringify(value), "EX", ttl);
+  } catch (err) {
+    console.error("[Redis] cacheSet failed:", (err as Error).message);
+  }
 }
 
 export async function cacheDel(key: string): Promise<void> {
-  await redis.del(key);
+  try {
+    await redis.del(key);
+  } catch (err) {
+    console.error("[Redis] cacheDel failed:", (err as Error).message);
+  }
 }
 
 export async function cacheDelPattern(pattern: string): Promise<void> {
-  const keys = await redis.keys(pattern);
-  if (keys.length > 0) {
-    await redis.del(...keys);
+  try {
+    const keys = await redis.keys(pattern);
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  } catch (err) {
+    console.error("[Redis] cacheDelPattern failed:", (err as Error).message);
   }
 }

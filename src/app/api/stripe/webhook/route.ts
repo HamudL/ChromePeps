@@ -144,12 +144,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     });
   }
 
-  const taxInCents = Math.round(subtotalInCents * 0.19);
-  const shippingInCents = subtotalInCents >= 10000 ? 0 : 599;
-  const totalInCents = subtotalInCents + taxInCents + shippingInCents;
+  // Promo code data from metadata
+  const promoId = session.metadata?.promoId ?? null;
+  const promoCodeStr = session.metadata?.promoCode ?? null;
+  const discountInCents = parseInt(session.metadata?.discountAmount ?? "0") || 0;
+
+  const subtotalAfterDiscount = Math.max(0, subtotalInCents - discountInCents);
+  const shippingInCents = subtotalAfterDiscount >= 10000 ? 0 : 599;
+  const taxInCents = Math.round((subtotalAfterDiscount + shippingInCents) * 0.19);
+  const totalInCents = subtotalAfterDiscount + shippingInCents + taxInCents;
 
   await db.$transaction(async (tx) => {
-    await tx.order.create({
+    const order = await tx.order.create({
       data: {
         orderNumber: generateOrderNumber(),
         userId,
@@ -161,6 +167,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             ? session.payment_intent
             : session.payment_intent?.id ?? null,
         subtotalInCents,
+        discountInCents,
+        promoCode: promoCodeStr,
         taxInCents,
         shippingInCents,
         totalInCents,
@@ -170,11 +178,29 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         events: {
           create: {
             status: "PROCESSING",
-            note: "Payment confirmed via Stripe",
+            note: promoCodeStr
+              ? `Payment confirmed via Stripe (Promo: ${promoCodeStr})`
+              : "Payment confirmed via Stripe",
           },
         },
       },
     });
+
+    // Record promo usage and increment counter
+    if (promoId) {
+      await tx.promoUsage.create({
+        data: {
+          promoId,
+          userId,
+          orderId: order.id,
+          discountAmount: discountInCents,
+        },
+      });
+      await tx.promoCode.update({
+        where: { id: promoId },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
 
     // Decrement stock
     for (const item of cart.items) {

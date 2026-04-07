@@ -40,6 +40,7 @@ export const CACHE_KEYS = {
   CATEGORIES: "categories:all",
   CART: (userId: string) => `cart:${userId}`,
   STATS: "admin:stats",
+  PROMOS: "promos:all",
 } as const;
 
 export const CACHE_TTL = {
@@ -48,6 +49,7 @@ export const CACHE_TTL = {
   CATEGORIES: 300,
   CART: 3600,
   STATS: 30,
+  PROMOS: 60,
 } as const;
 
 export const RESEARCH_DISCLAIMER =

@@ -12,6 +12,9 @@ import {
   CreditCard,
   ShoppingBag,
   AlertCircle,
+  Tag,
+  X,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -90,6 +93,19 @@ export default function CheckoutPage() {
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  // Promo code
+  const [promoInput, setPromoInput] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<{
+    id: string;
+    code: string;
+    discountType: string;
+    discountValue: number;
+    discountAmount: number;
+    description: string | null;
+  } | null>(null);
 
   // New address dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -177,6 +193,43 @@ export default function CheckoutPage() {
     }
   };
 
+  // Handle promo code validation
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+
+    setPromoError(null);
+    setPromoLoading(true);
+    try {
+      const subtotalInCents = items.reduce(
+        (sum, item) => sum + item.priceInCents * item.quantity,
+        0
+      );
+      const res = await fetch("/api/promos/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotalInCents }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setPromoError(json.error || "Invalid promo code");
+        return;
+      }
+      setAppliedPromo(json.data);
+      setPromoError(null);
+    } catch {
+      setPromoError("Network error. Please try again.");
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const removePromo = () => {
+    setAppliedPromo(null);
+    setPromoInput("");
+    setPromoError(null);
+  };
+
   // Handle Stripe checkout
   const handleCheckout = async () => {
     if (!selectedAddressId) {
@@ -190,7 +243,10 @@ export default function CheckoutPage() {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shippingAddressId: selectedAddressId }),
+        body: JSON.stringify({
+          shippingAddressId: selectedAddressId,
+          promoCode: appliedPromo?.code ?? null,
+        }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -241,9 +297,11 @@ export default function CheckoutPage() {
   }
 
   const subtotal = items.reduce((sum, item) => sum + item.priceInCents * item.quantity, 0);
+  const discount = appliedPromo?.discountAmount ?? 0;
+  const subtotalAfterDiscount = Math.max(0, subtotal - discount);
   const shipping =
-    subtotal >= SHIPPING_THRESHOLD_CENTS ? 0 : SHIPPING_COST_CENTS;
-  const taxableAmount = subtotal + shipping;
+    subtotalAfterDiscount >= SHIPPING_THRESHOLD_CENTS ? 0 : SHIPPING_COST_CENTS;
+  const taxableAmount = subtotalAfterDiscount + shipping;
   const estimatedTax = Math.round(taxableAmount * TAX_RATE);
   const total = taxableAmount + estimatedTax;
 
@@ -563,6 +621,67 @@ export default function CheckoutPage() {
             </CardContent>
           </Card>
 
+          {/* Promo Code Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5" />
+                Promo Code
+              </CardTitle>
+              <CardDescription>
+                Have a discount code? Apply it here.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {appliedPromo ? (
+                <div className="flex items-center justify-between rounded-md border border-green-200 bg-green-50 p-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-600" />
+                    <span className="font-mono font-medium">
+                      {appliedPromo.code}
+                    </span>
+                    <span className="text-green-700">
+                      &minus;{formatPrice(appliedPromo.discountAmount)}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={removePromo}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter code"
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                    className="font-mono uppercase"
+                    disabled={promoLoading}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={handleApplyPromo}
+                    disabled={promoLoading || !promoInput.trim()}
+                  >
+                    {promoLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Apply"
+                    )}
+                  </Button>
+                </div>
+              )}
+              {promoError && (
+                <p className="text-sm text-destructive">{promoError}</p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Payment Section */}
           <Card>
             <CardHeader>
@@ -663,6 +782,16 @@ export default function CheckoutPage() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600">
+                      Discount ({appliedPromo?.code})
+                    </span>
+                    <span className="text-green-600 font-medium">
+                      &minus;{formatPrice(discount)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
                   <span>
