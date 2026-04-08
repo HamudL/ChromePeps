@@ -21,19 +21,29 @@ function FadeUp({
     el.style.opacity = "0";
     el.style.transform = "translateY(24px)";
 
+    const animateIn = () => {
+      setTimeout(() => {
+        el.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0)";
+      }, delay * 1000);
+    };
+
+    // Check if already in viewport (above the fold)
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      animateIn();
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // Animate in after delay
-          setTimeout(() => {
-            el.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
-            el.style.opacity = "1";
-            el.style.transform = "translateY(0)";
-          }, delay * 1000);
+          animateIn();
           observer.unobserve(el);
         }
       },
-      { rootMargin: "-40px" }
+      { threshold: 0.1 }
     );
 
     observer.observe(el);
