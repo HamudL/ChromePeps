@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 import { LogIn, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +16,47 @@ import {
 } from "@/components/ui/card";
 import { checkLoginRateLimit } from "@/app/(auth)/actions/auth-actions";
 import { APP_NAME } from "@/lib/constants";
+
+/**
+ * Manual credential sign-in via fetch — bypasses next-auth/react's signIn()
+ * which has a known bug: getProviders() failure causes a hard redirect to
+ * /api/auth/error even when redirect:false is set.
+ */
+async function credentialSignIn(email: string, password: string) {
+  // 1. Get CSRF token (required by NextAuth)
+  const csrfRes = await fetch("/api/auth/csrf");
+  if (!csrfRes.ok) throw new Error("Failed to get CSRF token");
+  const { csrfToken } = await csrfRes.json();
+
+  // 2. POST to the credentials callback endpoint
+  const res = await fetch("/api/auth/callback/credentials", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-Auth-Return-Redirect": "1",
+    },
+    body: new URLSearchParams({
+      email,
+      password,
+      csrfToken,
+      callbackUrl: window.location.origin,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    return { ok: true, error: null };
+  }
+
+  // Extract error from redirect URL
+  try {
+    const errorParam = new URL(data.url).searchParams.get("error");
+    return { ok: false, error: errorParam ?? "CredentialsSignin" };
+  } catch {
+    return { ok: false, error: "CredentialsSignin" };
+  }
+}
 
 export default function LoginPage() {
   const [isPending, setIsPending] = useState(false);
@@ -39,19 +79,14 @@ export default function LoginPage() {
         return;
       }
 
-      // Client-side signIn — directly calls NextAuth callback endpoint
-      // This reliably sets the session cookie without server-action redirect issues
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
+      // Manual credential sign-in via fetch (not next-auth/react signIn)
+      const result = await credentialSignIn(email, password);
 
-      if (result?.error) {
-        setError("Invalid email or password.");
-      } else if (result?.ok) {
+      if (result.ok) {
         const params = new URLSearchParams(window.location.search);
         window.location.href = params.get("callbackUrl") ?? "/";
+      } else {
+        setError("Invalid email or password.");
       }
     } catch {
       setError("Something went wrong. Please try again.");

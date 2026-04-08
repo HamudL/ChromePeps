@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 import { UserPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,14 +59,24 @@ export default function RegisterPage() {
         return;
       }
 
-      // Account created — now sign in via client-side NextAuth
-      const signInResult = await signIn("credentials", {
-        email: raw.email,
-        password: raw.password,
-        redirect: false,
+      // Account created — sign in via manual fetch (bypasses next-auth/react bugs)
+      const csrfRes = await fetch("/api/auth/csrf");
+      const { csrfToken } = await csrfRes.json();
+      const signInRes = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-Auth-Return-Redirect": "1",
+        },
+        body: new URLSearchParams({
+          email: raw.email,
+          password: raw.password,
+          csrfToken,
+          callbackUrl: window.location.origin,
+        }),
       });
 
-      if (signInResult?.ok) {
+      if (signInRes.ok) {
         window.location.href = "/";
       } else {
         // Account was created but auto-login failed — redirect to login

@@ -32,6 +32,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.edgeone.app",
+      },
     ],
   },
   // Ensure Prisma is resolved from node_modules at runtime (not bundled)
