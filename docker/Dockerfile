@@ -63,6 +63,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # 4. Public assets
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# 4b. Ensure uploads directory exists with correct ownership for runtime writes
+RUN mkdir -p /app/public/uploads/products && chown -R nextjs:nodejs /app/public/uploads
+
 # 5. Prisma schema + migrations (for prisma migrate deploy / db push)
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
