@@ -161,6 +161,10 @@ export default function EditProductPage({
       return;
     }
 
+    const images = imageUrls
+      .filter((url) => url.trim() !== "")
+      .map((url, i) => ({ url: url.trim(), alt: form.name, sortOrder: i }));
+
     const body = {
       name: form.name,
       sku: form.sku,
@@ -177,6 +181,7 @@ export default function EditProductPage({
       storageTemp: form.storageTemp || undefined,
       form: form.form || undefined,
       weight: form.weight || undefined,
+      images: images.length > 0 ? images : [],
     };
 
     try {

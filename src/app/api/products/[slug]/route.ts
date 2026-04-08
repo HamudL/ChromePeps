@@ -107,7 +107,7 @@ export async function PATCH(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, images: _images, variants: _variants, ...updateData } = parsed.data;
+  const { id, images, variants: _variants, ...updateData } = parsed.data;
   const newSlug = updateData.name ? slugify(updateData.name) : undefined;
 
   // Check for slug collision when renaming
@@ -126,6 +126,12 @@ export async function PATCH(
     data: {
       ...updateData,
       ...(newSlug && { slug: newSlug }),
+      ...(images !== undefined && {
+        images: {
+          deleteMany: {},
+          createMany: { data: images },
+        },
+      }),
     },
     include: { images: true, variants: true, category: true },
   });

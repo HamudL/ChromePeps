@@ -24,7 +24,7 @@ export const createProductSchema = z.object({
   images: z
     .array(
       z.object({
-        url: z.string().url(),
+        url: z.string().min(1),
         alt: z.string().max(200).optional(),
         sortOrder: z.number().int().min(0).default(0),
       })
