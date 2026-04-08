@@ -50,13 +50,13 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
     setMounted(true);
   }, []);
 
-  // Clear cart once on mount
+  // Clear cart once — only if we arrived via a real checkout (has session_id or orderId)
   useEffect(() => {
-    if (!clearedRef.current) {
+    if (!clearedRef.current && (sessionId || params.orderId)) {
       clearedRef.current = true;
       clearCart();
     }
-  }, [clearCart]);
+  }, [clearCart, sessionId, params.orderId]);
 
   const copyToClipboard = async (text: string, field: string) => {
     try {

@@ -47,11 +47,10 @@ export async function PATCH(
     }
   }
 
-  if (
-    parsed.data.discountType === "PERCENTAGE" &&
-    parsed.data.discountValue &&
-    parsed.data.discountValue > 100
-  ) {
+  // Cross-validate discountType and discountValue (handles partial updates)
+  const effectiveType = parsed.data.discountType ?? existing.discountType;
+  const effectiveValue = parsed.data.discountValue ?? existing.discountValue;
+  if (effectiveType === "PERCENTAGE" && effectiveValue > 100) {
     return NextResponse.json(
       { success: false, error: "Percentage discount cannot exceed 100%" },
       { status: 400 }

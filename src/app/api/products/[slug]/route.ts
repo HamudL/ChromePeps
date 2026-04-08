@@ -81,6 +81,17 @@ export async function PATCH(
   const { id, images: _images, variants: _variants, ...updateData } = parsed.data;
   const newSlug = updateData.name ? slugify(updateData.name) : undefined;
 
+  // Check for slug collision when renaming
+  if (newSlug && newSlug !== slug) {
+    const slugTaken = await db.product.findUnique({ where: { slug: newSlug } });
+    if (slugTaken) {
+      return NextResponse.json(
+        { success: false, error: "A product with this name already exists" },
+        { status: 409 }
+      );
+    }
+  }
+
   const product = await db.product.update({
     where: { id },
     data: {

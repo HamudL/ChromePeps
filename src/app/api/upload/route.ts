@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomBytes } from "crypto";
 
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
     const uniqueName = `${Date.now()}-${randomBytes(6).toString("hex")}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
     const uploadDir = join(process.cwd(), "public", "uploads", "products");
+    await mkdir(uploadDir, { recursive: true });
     await writeFile(join(uploadDir, uniqueName), buffer);
 
     urls.push(`/uploads/products/${uniqueName}`);
