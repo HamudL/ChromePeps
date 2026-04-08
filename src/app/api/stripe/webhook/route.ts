@@ -44,13 +44,27 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Idempotency: check if event already processed
-  const existing = await db.stripeEvent.findUnique({
-    where: { id: event.id },
-  });
-
-  if (existing) {
-    return NextResponse.json({ success: true, message: "Already processed" });
+  // Idempotency: claim this event atomically before processing.
+  // If another request already claimed it, the unique constraint will reject us.
+  try {
+    await db.stripeEvent.create({
+      data: {
+        id: event.id,
+        type: event.type,
+        payloadSnapshot: JSON.parse(body),
+      },
+    });
+  } catch (err: unknown) {
+    // Unique constraint violation = already processing/processed
+    const isPrismaUniqueError =
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      (err as { code: string }).code === "P2002";
+    if (isPrismaUniqueError) {
+      return NextResponse.json({ success: true, message: "Already processed" });
+    }
+    throw err;
   }
 
   try {
@@ -71,20 +85,13 @@ export async function POST(req: NextRequest) {
         await handleRefund(event.data.object as Stripe.Charge);
         break;
     }
-
-    // Log event as processed
-    await db.stripeEvent.create({
-      data: {
-        id: event.id,
-        type: event.type,
-        payloadSnapshot: JSON.parse(body),
-      },
-    });
   } catch (err) {
     console.error(
       `[Stripe Webhook] Error processing ${event.type}:`,
       err instanceof Error ? err.message : err
     );
+    // Delete the event record so Stripe can retry
+    await db.stripeEvent.delete({ where: { id: event.id } }).catch(() => {});
     return NextResponse.json(
       { success: false, error: "Webhook handler failed" },
       { status: 500 }
@@ -114,8 +121,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   });
 
   if (!cart || cart.items.length === 0) {
-    console.error("[Stripe Webhook] Cart empty for user:", userId);
-    return;
+    console.error(
+      "[Stripe Webhook] CRITICAL: Cart empty for user after payment:",
+      userId,
+      "Session:",
+      session.id
+    );
+    // Throw so the webhook returns 500 and Stripe retries
+    throw new Error(
+      `Cart empty for user ${userId} after payment (session: ${session.id}). Payment collected but no order created.`
+    );
   }
 
   let subtotalInCents = 0;
@@ -202,18 +217,24 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       });
     }
 
-    // Decrement stock
+    // Decrement stock (with validation to prevent negative stock)
     for (const item of cart.items) {
       if (item.variantId) {
-        await tx.productVariant.update({
-          where: { id: item.variantId },
+        const updated = await tx.productVariant.updateMany({
+          where: { id: item.variantId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
         });
+        if (updated.count === 0) {
+          throw new Error(`Insufficient stock for variant ${item.variantId}`);
+        }
       } else {
-        await tx.product.update({
-          where: { id: item.productId },
+        const updated = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
         });
+        if (updated.count === 0) {
+          throw new Error(`Insufficient stock for product ${item.productId}`);
+        }
       }
     }
 

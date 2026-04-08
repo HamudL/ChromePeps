@@ -176,18 +176,24 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Decrement stock
+    // Decrement stock (with validation to prevent negative stock)
     for (const item of cart.items) {
       if (item.variantId) {
-        await tx.productVariant.update({
-          where: { id: item.variantId },
+        const updated = await tx.productVariant.updateMany({
+          where: { id: item.variantId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
         });
+        if (updated.count === 0) {
+          throw new Error(`Insufficient stock for variant ${item.variantId}`);
+        }
       } else {
-        await tx.product.update({
-          where: { id: item.productId },
+        const updated = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
         });
+        if (updated.count === 0) {
+          throw new Error(`Insufficient stock for product ${item.productId}`);
+        }
       }
     }
 
