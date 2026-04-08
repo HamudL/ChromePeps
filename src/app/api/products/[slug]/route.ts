@@ -100,7 +100,7 @@ export async function PATCH(
   return NextResponse.json({ success: true, data: product });
 }
 
-// DELETE /api/products/[slug] — admin only
+// DELETE /api/products/[slug] — admin only (soft-delete: sets isActive=false)
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -123,7 +123,11 @@ export async function DELETE(
     );
   }
 
-  await db.product.delete({ where: { slug } });
+  // Soft-delete: deactivate instead of hard delete to preserve order item references
+  await db.product.update({
+    where: { slug },
+    data: { isActive: false },
+  });
 
   await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(slug));
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);

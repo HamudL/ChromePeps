@@ -70,6 +70,18 @@ export async function DELETE(
     );
   }
 
+  // Check for existing orders — hard delete would cascade and lose order data
+  const orderCount = await db.order.count({ where: { userId: id } });
+  if (orderCount > 0) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Cannot delete: user has ${orderCount} order(s). Deactivate instead.`,
+      },
+      { status: 400 }
+    );
+  }
+
   await db.user.delete({ where: { id } });
 
   return NextResponse.json({ success: true });

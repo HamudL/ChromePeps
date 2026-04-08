@@ -92,6 +92,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const isAdmin = auth?.user?.role === "ADMIN";
       const isAdminRoute = nextUrl.pathname.startsWith("/admin");
       const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard");
+      const isCheckoutRoute = nextUrl.pathname.startsWith("/checkout");
       const isAuthRoute =
         nextUrl.pathname.startsWith("/login") ||
         nextUrl.pathname.startsWith("/register");
@@ -100,7 +101,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return Response.redirect(new URL("/login", nextUrl));
       }
 
-      if (isDashboardRoute && !isLoggedIn) {
+      if ((isDashboardRoute || isCheckoutRoute) && !isLoggedIn) {
         return Response.redirect(new URL("/login", nextUrl));
       }
 

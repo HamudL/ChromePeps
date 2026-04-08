@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { addressSchema } from "@/validators/address";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 
 // GET /api/addresses — user's addresses
 export async function GET() {
@@ -30,6 +31,12 @@ export async function POST(req: NextRequest) {
       { status: 401 }
     );
   }
+
+  const limit = await rateLimit(`addresses:${session.user.id}`, {
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   const body = await req.json();
   const parsed = addressSchema.safeParse(body);

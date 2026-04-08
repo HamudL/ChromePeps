@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { updateAddressSchema } from "@/validators/address";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 
 // PATCH /api/addresses/[id]
 export async function PATCH(
@@ -15,6 +16,12 @@ export async function PATCH(
       { status: 401 }
     );
   }
+
+  const limit = await rateLimit(`addresses:${session.user.id}`, {
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   const { id } = await params;
   const body = await req.json();
@@ -64,6 +71,12 @@ export async function DELETE(
       { status: 401 }
     );
   }
+
+  const limit = await rateLimit(`addresses:${session.user.id}`, {
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   const { id } = await params;
 
