@@ -239,16 +239,49 @@ export async function PUT(req: NextRequest) {
     update: {},
   });
 
-  // Clear existing items and replace with client cart (full sync)
-  await db.cartItem.deleteMany({ where: { cartId: cart.id } });
+  // Validate every item before syncing
+  const validatedItems: Array<{
+    productId: string;
+    variantId: string | null;
+    quantity: number;
+  }> = [];
 
   for (const item of parsed.data.items) {
+    const product = await db.product.findUnique({
+      where: { id: item.productId, isActive: true },
+    });
+    if (!product) continue; // skip invalid / inactive products
+
+    if (item.variantId) {
+      const variant = await db.productVariant.findUnique({
+        where: { id: item.variantId, isActive: true },
+      });
+      if (!variant) continue; // skip invalid / inactive variants
+      validatedItems.push({
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: Math.min(item.quantity, 99, variant.stock),
+      });
+    } else {
+      validatedItems.push({
+        productId: item.productId,
+        variantId: null,
+        quantity: Math.min(item.quantity, 99, product.stock),
+      });
+    }
+  }
+
+  // Clear existing items and replace with validated client cart
+  await db.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+  for (const item of validatedItems) {
+    if (item.quantity <= 0) continue;
     await db.cartItem.create({
       data: {
         cartId: cart.id,
         productId: item.productId,
         variantId: item.variantId,
-        quantity: Math.min(item.quantity, 99),
+        quantity: item.quantity,
       },
     });
   }

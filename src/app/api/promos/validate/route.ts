@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 
 // POST /api/promos/validate — validate a promo code for the current user
 export async function POST(req: NextRequest) {
@@ -11,6 +12,12 @@ export async function POST(req: NextRequest) {
       { status: 401 }
     );
   }
+
+  const limit = await rateLimit(`promo-validate:${session.user.id}`, {
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   const body = await req.json();
   const code = (body.code ?? "").trim().toUpperCase();

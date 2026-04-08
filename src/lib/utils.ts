@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { randomBytes } from "crypto";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -14,7 +15,7 @@ export function formatPrice(cents: number, currency = "EUR"): string {
 
 export function generateOrderNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  const random = randomBytes(4).toString("hex").toUpperCase();
   return `CP-${timestamp}-${random}`;
 }
 
@@ -32,5 +33,11 @@ export function truncate(str: string, maxLength: number): string {
 }
 
 export function absoluteUrl(path: string): string {
-  return `${process.env.NEXT_PUBLIC_APP_URL}${path}`;
+  const base = process.env.NEXT_PUBLIC_APP_URL;
+  if (!base) {
+    throw new Error(
+      "NEXT_PUBLIC_APP_URL is not set. Add it to your .env file."
+    );
+  }
+  return `${base}${path}`;
 }
