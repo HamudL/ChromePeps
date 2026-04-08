@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ImageUpload } from "@/components/admin/image-upload";
 
 interface Category {
   id: string;
@@ -67,17 +68,6 @@ export default function NewProductPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function addImageUrl() {
-    setImageUrls((prev) => [...prev, ""]);
-  }
-
-  function removeImageUrl(index: number) {
-    setImageUrls((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function updateImageUrl(index: number, value: string) {
-    setImageUrls((prev) => prev.map((url, i) => (i === index ? value : url)));
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -373,38 +363,11 @@ export default function NewProductPage() {
           <CardHeader>
             <CardTitle>Images</CardTitle>
             <CardDescription>
-              Add image URLs for this product.
+              Upload product images from your computer.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {imageUrls.map((url, index) => (
-              <div key={index} className="flex gap-2">
-                <Input
-                  value={url}
-                  onChange={(e) => updateImageUrl(index, e.target.value)}
-                  placeholder={`Image URL ${index + 1}`}
-                />
-                {imageUrls.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeImageUrl(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addImageUrl}
-            >
-              <Plus className="mr-2 h-3 w-3" />
-              Add Image URL
-            </Button>
+          <CardContent>
+            <ImageUpload images={imageUrls} onChange={setImageUrls} />
           </CardContent>
         </Card>
 

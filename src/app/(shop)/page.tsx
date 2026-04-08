@@ -9,10 +9,10 @@ import { ProductCard } from "@/components/shop/product-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import type { ProductCardData } from "@/types";
 
 import { FadeUp } from "./home-animations";
+import { HeroLogo } from "./hero-logo";
 
 async function getFeaturedProducts(): Promise<ProductCardData[]> {
   const products = await db.product.findMany({
@@ -69,7 +69,7 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden chrome-gradient">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_hsl(217,55%,45%,0.08),transparent_70%)]" />
-        <div className="container relative py-20 md:py-32">
+        <div className="container relative py-16 md:py-24">
           <FadeUp>
             <div className="mx-auto max-w-3xl text-center space-y-6">
               <Badge variant="outline" className="px-4 py-1 text-sm">
@@ -77,9 +77,7 @@ export default async function HomePage() {
                 Research Use Only
               </Badge>
 
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight chrome-text">
-                {APP_NAME}
-              </h1>
+              <HeroLogo />
 
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
                 Premium research peptides with verified purity. Rigorously
@@ -102,16 +100,16 @@ export default async function HomePage() {
 
           {/* Trust indicators */}
           <FadeUp delay={0.2}>
-            <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              <div className="flex items-center gap-3 justify-center text-sm text-muted-foreground">
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+              <div className="flex items-center gap-3 justify-center text-sm text-muted-foreground rounded-lg border border-border/50 bg-background/50 backdrop-blur-sm px-4 py-3">
                 <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
                 <span>Third-Party Purity Verified</span>
               </div>
-              <div className="flex items-center gap-3 justify-center text-sm text-muted-foreground">
+              <div className="flex items-center gap-3 justify-center text-sm text-muted-foreground rounded-lg border border-border/50 bg-background/50 backdrop-blur-sm px-4 py-3">
                 <FlaskConical className="h-5 w-5 text-primary shrink-0" />
                 <span>Lab-Grade Quality</span>
               </div>
-              <div className="flex items-center gap-3 justify-center text-sm text-muted-foreground">
+              <div className="flex items-center gap-3 justify-center text-sm text-muted-foreground rounded-lg border border-border/50 bg-background/50 backdrop-blur-sm px-4 py-3">
                 <Truck className="h-5 w-5 text-primary shrink-0" />
                 <span>Fast EU Shipping</span>
               </div>
@@ -131,7 +129,7 @@ export default async function HomePage() {
 
       {/* Featured Products */}
       {products.length > 0 && (
-        <section className="container py-16 md:py-20">
+        <section className="container py-12 md:py-16 subtle-grid">
           <FadeUp>
             <div className="flex items-end justify-between mb-8">
               <div>
@@ -166,11 +164,17 @@ export default async function HomePage() {
         </section>
       )}
 
-      <Separator />
+      {/* Divider */}
+      <div className="flex items-center justify-center gap-4 py-4 container">
+        <div className="h-px flex-1 bg-border" />
+        <FlaskConical className="h-4 w-4 text-muted-foreground/40" />
+        <div className="h-px flex-1 bg-border" />
+      </div>
 
       {/* Categories */}
       {categories.length > 0 && (
-        <section className="container py-16 md:py-20">
+        <section className="border-t bg-muted/20">
+          <div className="container py-12 md:py-16">
           <FadeUp>
             <div className="text-center mb-10">
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -221,12 +225,13 @@ export default async function HomePage() {
               </FadeUp>
             ))}
           </div>
+          </div>
         </section>
       )}
 
       {/* Bottom Disclaimer */}
       <section className="border-t bg-muted/30">
-        <div className="container py-10 text-center">
+        <div className="container py-8 text-center">
           <FlaskConical className="mx-auto h-8 w-8 text-muted-foreground/50 mb-3" />
           <p className="text-sm text-muted-foreground max-w-xl mx-auto">
             {RESEARCH_DISCLAIMER}

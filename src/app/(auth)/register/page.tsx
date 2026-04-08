@@ -55,8 +55,7 @@ export default function RegisterPage() {
     startTransition(async () => {
       const result = await registerAction(formData);
       if (result.success) {
-        router.push("/");
-        router.refresh();
+        window.location.href = "/";
       } else {
         setError(result.error ?? "Something went wrong. Please try again.");
       }

@@ -6,25 +6,56 @@ import { updateProductSchema } from "@/validators/product";
 import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
 import { slugify } from "@/lib/utils";
 
-// GET /api/products/[slug] — public, cached
+// GET /api/products/[slug] — public (cached) or admin (uncached, includes inactive)
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
 
-  const cacheKey = CACHE_KEYS.PRODUCT_DETAIL(slug);
-  const cached = await cacheGet(cacheKey);
-  if (cached) {
-    return NextResponse.json({ success: true, data: cached });
+  // Admin users can view inactive products (needed for edit page)
+  const session = await auth();
+  const isAdmin = session?.user?.role === "ADMIN";
+
+  if (!isAdmin) {
+    const cacheKey = CACHE_KEYS.PRODUCT_DETAIL(slug);
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return NextResponse.json({ success: true, data: cached });
+    }
+
+    const product = await db.product.findUnique({
+      where: { slug, isActive: true },
+      include: {
+        images: { orderBy: { sortOrder: "asc" } },
+        category: true,
+        variants: { where: { isActive: true }, orderBy: { priceInCents: "asc" } },
+        reviews: {
+          include: { user: { select: { name: true, image: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        },
+      },
+    });
+
+    if (!product) {
+      return NextResponse.json(
+        { success: false, error: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    await cacheSet(cacheKey, product, CACHE_TTL.PRODUCT_DETAIL);
+    return NextResponse.json({ success: true, data: product });
   }
 
+  // Admin: no isActive filter, no cache, include all variants
   const product = await db.product.findUnique({
-    where: { slug, isActive: true },
+    where: { slug },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       category: true,
-      variants: { where: { isActive: true }, orderBy: { priceInCents: "asc" } },
+      variants: { orderBy: { priceInCents: "asc" } },
       reviews: {
         include: { user: { select: { name: true, image: true } } },
         orderBy: { createdAt: "desc" },
@@ -39,8 +70,6 @@ export async function GET(
       { status: 404 }
     );
   }
-
-  await cacheSet(cacheKey, product, CACHE_TTL.PRODUCT_DETAIL);
 
   return NextResponse.json({ success: true, data: product });
 }

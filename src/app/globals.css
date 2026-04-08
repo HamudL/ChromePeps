@@ -17,14 +17,14 @@
     --primary: 217 55% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 16% 93%;
-    --secondary-foreground: 224 20% 15%;
+    --secondary: 38 35% 92%;
+    --secondary-foreground: 30 25% 15%;
 
     --muted: 220 16% 93%;
     --muted-foreground: 220 10% 46%;
 
-    --accent: 220 16% 90%;
-    --accent-foreground: 224 20% 15%;
+    --accent: 38 30% 87%;
+    --accent-foreground: 30 25% 15%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -49,14 +49,14 @@
     --primary: 217 65% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 224 18% 16%;
-    --secondary-foreground: 220 15% 85%;
+    --secondary: 35 18% 14%;
+    --secondary-foreground: 35 15% 85%;
 
     --muted: 224 18% 16%;
     --muted-foreground: 220 10% 55%;
 
-    --accent: 224 18% 18%;
-    --accent-foreground: 220 15% 85%;
+    --accent: 35 16% 17%;
+    --accent-foreground: 35 15% 85%;
 
     --destructive: 0 62% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -102,24 +102,65 @@
 
   .chrome-text {
     background: linear-gradient(
-      180deg,
-      hsl(220, 15%, 55%) 0%,
-      hsl(220, 20%, 35%) 100%
+      90deg,
+      hsl(220, 15%, 40%) 0%,
+      hsl(220, 20%, 58%) 15%,
+      hsl(220, 25%, 78%) 30%,
+      hsl(220, 20%, 45%) 45%,
+      hsl(220, 25%, 75%) 60%,
+      hsl(220, 20%, 55%) 75%,
+      hsl(220, 15%, 40%) 100%
     );
+    background-size: 200% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: chromeFlow 6s linear infinite;
   }
 
   .dark .chrome-text {
     background: linear-gradient(
-      180deg,
-      hsl(220, 15%, 80%) 0%,
-      hsl(220, 20%, 60%) 100%
+      90deg,
+      hsl(220, 15%, 55%) 0%,
+      hsl(220, 20%, 72%) 15%,
+      hsl(220, 25%, 90%) 30%,
+      hsl(220, 20%, 62%) 45%,
+      hsl(220, 25%, 85%) 60%,
+      hsl(220, 20%, 70%) 75%,
+      hsl(220, 15%, 55%) 100%
     );
+    background-size: 200% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: chromeFlow 6s linear infinite;
+  }
+
+  @keyframes chromeFlow {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: -200% 50%;
+    }
+  }
+
+  .subtle-grid {
+    background-image: radial-gradient(
+      circle,
+      hsl(220, 15%, 80%, 0.25) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  .dark .subtle-grid {
+    background-image: radial-gradient(
+      circle,
+      hsl(220, 15%, 25%, 0.3) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
   }
 
   /* Fade-in animation (replaces framer-motion) */

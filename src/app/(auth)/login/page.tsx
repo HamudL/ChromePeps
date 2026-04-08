@@ -32,8 +32,10 @@ export default function LoginPage() {
     startTransition(async () => {
       const result = await loginAction(formData);
       if (result.success) {
-        router.push("/");
-        router.refresh();
+        // Full page load to pick up the new session cookie reliably
+        // (router.push + router.refresh has a race condition with stale RSC cache)
+        const params = new URLSearchParams(window.location.search);
+        window.location.href = params.get("callbackUrl") ?? "/";
       } else {
         setError(result.error ?? "Something went wrong. Please try again.");
       }

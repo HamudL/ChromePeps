@@ -187,7 +187,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button asChild size="icon" variant="ghost">
-                          <Link href={`/admin/products/${product.id}`}>
+                          <Link href={`/admin/products/${product.slug}`}>
                             <Pencil className="h-4 w-4" />
                           </Link>
                         </Button>
