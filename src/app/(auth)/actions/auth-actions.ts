@@ -1,32 +1,30 @@
 "use server";
 
-import { signIn, signOut } from "@/lib/auth";
+import { z } from "zod";
 import { db } from "@/lib/db";
-import { registerSchema, loginSchema } from "@/validators/auth";
+import { registerSchema } from "@/validators/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
-import { AuthError } from "next-auth";
 
 export interface AuthActionResult {
   success: boolean;
   error?: string;
 }
 
-export async function loginAction(
-  formData: FormData
+/**
+ * Server-side rate limit check for login.
+ * The actual authentication happens client-side via signIn() from next-auth/react,
+ * which avoids the NEXT_REDIRECT issue in NextAuth v5 beta server actions.
+ */
+export async function checkLoginRateLimit(
+  email: string
 ): Promise<AuthActionResult> {
-  const raw = {
-    email: formData.get("email"),
-    password: formData.get("password"),
-  };
-
-  const parsed = loginSchema.safeParse(raw);
+  const parsed = z.string().email().safeParse(email);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0].message };
+    return { success: false, error: "Invalid email format." };
   }
 
-  // Rate limit by email — prevents brute-force on specific accounts
-  const limit = await rateLimit(`login:${parsed.data.email}`, {
+  const limit = await rateLimit(`login:${parsed.data}`, {
     maxRequests: 5,
     windowMs: 300_000, // 5 attempts per 5 minutes
   });
@@ -37,21 +35,13 @@ export async function loginAction(
     };
   }
 
-  try {
-    await signIn("credentials", {
-      email: parsed.data.email,
-      password: parsed.data.password,
-      redirect: false,
-    });
-    return { success: true };
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return { success: false, error: "Invalid email or password." };
-    }
-    throw error;
-  }
+  return { success: true };
 }
 
+/**
+ * Creates a new user account. Does NOT sign in — the client handles
+ * authentication separately via signIn() from next-auth/react.
+ */
 export async function registerAction(
   formData: FormData
 ): Promise<AuthActionResult> {
@@ -97,21 +87,5 @@ export async function registerAction(
     },
   });
 
-  try {
-    await signIn("credentials", {
-      email: parsed.data.email,
-      password: parsed.data.password,
-      redirect: false,
-    });
-    return { success: true };
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return { success: true }; // Account created, login failed — still a success
-    }
-    throw error;
-  }
-}
-
-export async function logoutAction(): Promise<void> {
-  await signOut({ redirect: false });
+  return { success: true };
 }

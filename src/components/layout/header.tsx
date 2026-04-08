@@ -120,7 +120,7 @@ export function Header() {
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={async () => {
-                  await signOut({ redirect: false });
+                  try { await signOut({ redirect: false }); } catch { /* ensure reload even if signOut fails */ }
                   window.location.href = "/";
                 }}>
                   <LogOut className="mr-2 h-4 w-4" />Log out

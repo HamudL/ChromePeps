@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { LogIn, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,31 +15,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { loginAction } from "@/app/(auth)/actions/auth-actions";
+import { checkLoginRateLimit } from "@/app/(auth)/actions/auth-actions";
 import { APP_NAME } from "@/lib/constants";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    setIsPending(true);
 
-    const formData = new FormData(e.currentTarget);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
 
-    startTransition(async () => {
-      const result = await loginAction(formData);
-      if (result.success) {
-        // Full page load to pick up the new session cookie reliably
-        // (router.push + router.refresh has a race condition with stale RSC cache)
+      // Server-side rate limit check
+      const rateCheck = await checkLoginRateLimit(email);
+      if (!rateCheck.success) {
+        setError(rateCheck.error ?? "Too many attempts.");
+        return;
+      }
+
+      // Client-side signIn — directly calls NextAuth callback endpoint
+      // This reliably sets the session cookie without server-action redirect issues
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid email or password.");
+      } else if (result?.ok) {
         const params = new URLSearchParams(window.location.search);
         window.location.href = params.get("callbackUrl") ?? "/";
-      } else {
-        setError(result.error ?? "Something went wrong. Please try again.");
       }
-    });
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (

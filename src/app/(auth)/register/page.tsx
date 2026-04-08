@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { UserPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,11 @@ import { registerSchema } from "@/validators/auth";
 import { APP_NAME } from "@/lib/constants";
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setFieldErrors({});
@@ -52,14 +51,33 @@ export default function RegisterPage() {
       return;
     }
 
-    startTransition(async () => {
+    setIsPending(true);
+    try {
+      // Create account via server action (handles rate limiting + DB)
       const result = await registerAction(formData);
-      if (result.success) {
+      if (!result.success) {
+        setError(result.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+
+      // Account created — now sign in via client-side NextAuth
+      const signInResult = await signIn("credentials", {
+        email: raw.email,
+        password: raw.password,
+        redirect: false,
+      });
+
+      if (signInResult?.ok) {
         window.location.href = "/";
       } else {
-        setError(result.error ?? "Something went wrong. Please try again.");
+        // Account was created but auto-login failed — redirect to login
+        window.location.href = "/login";
       }
-    });
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
