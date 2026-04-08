@@ -71,6 +71,43 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Validate stock and availability before creating Stripe session
+  for (const item of cart.items) {
+    const product = await db.product.findUnique({
+      where: { id: item.productId },
+      select: { isActive: true, name: true, stock: true },
+    });
+    if (!product || !product.isActive) {
+      return NextResponse.json(
+        { success: false, error: `"${product?.name ?? "Unknown product"}" is no longer available` },
+        { status: 400 }
+      );
+    }
+    if (item.variantId) {
+      const variant = await db.productVariant.findUnique({
+        where: { id: item.variantId },
+        select: { isActive: true, name: true, stock: true },
+      });
+      if (!variant || !variant.isActive) {
+        return NextResponse.json(
+          { success: false, error: `Variant "${variant?.name ?? "unknown"}" is no longer available` },
+          { status: 400 }
+        );
+      }
+      if (variant.stock < item.quantity) {
+        return NextResponse.json(
+          { success: false, error: `Insufficient stock for "${product.name} (${variant.name})"` },
+          { status: 400 }
+        );
+      }
+    } else if (product.stock < item.quantity) {
+      return NextResponse.json(
+        { success: false, error: `Insufficient stock for "${product.name}"` },
+        { status: 400 }
+      );
+    }
+  }
+
   // Build Stripe line items
   const lineItems = cart.items.map((item) => {
     const unitAmount = item.variant?.priceInCents ?? item.product.priceInCents;
@@ -84,7 +121,7 @@ export async function POST(req: NextRequest) {
         product_data: {
           name: productName,
           images: item.product.images[0]?.url
-            ? [item.product.images[0].url]
+            ? [absoluteUrl(item.product.images[0].url)]
             : [],
         },
         unit_amount: unitAmount,

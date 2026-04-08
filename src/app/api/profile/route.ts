@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { updateProfileSchema, changePasswordSchema } from "@/validators/auth";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 
 // GET /api/profile
@@ -39,6 +40,12 @@ export async function PATCH(req: NextRequest) {
       { status: 401 }
     );
   }
+
+  const limit = await rateLimit(`profile:${session.user.id}`, {
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   const body = await req.json();
   const parsed = updateProfileSchema.safeParse(body);
@@ -79,6 +86,13 @@ export async function PUT(req: NextRequest) {
       { status: 401 }
     );
   }
+
+  // Strict rate limit — password brute-force protection
+  const limit = await rateLimit(`password:${session.user.id}`, {
+    maxRequests: 5,
+    windowMs: 300_000, // 5 attempts per 5 minutes
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   const body = await req.json();
   const parsed = changePasswordSchema.safeParse(body);
