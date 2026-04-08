@@ -10,6 +10,7 @@ import {
   Building2,
   Copy,
   Check,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,8 +44,14 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
 
   const clearCart = useCartStore((s) => s.clearCart);
   const clearedRef = useRef(false);
+  const verifiedRef = useRef(false);
   const [mounted, setMounted] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [stripeOrder, setStripeOrder] = useState<{
+    orderId: string;
+    orderNumber: string;
+  } | null>(null);
+  const [verifying, setVerifying] = useState(!!sessionId);
 
   useEffect(() => {
     setMounted(true);
@@ -57,6 +64,33 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
       clearCart();
     }
   }, [clearCart, sessionId, params.orderId]);
+
+  // For Stripe payments: verify session and create order if webhook hasn't
+  useEffect(() => {
+    if (!sessionId || verifiedRef.current) return;
+    verifiedRef.current = true;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/stripe/verify-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+          setStripeOrder({
+            orderId: json.data.orderId,
+            orderNumber: json.data.orderNumber,
+          });
+        }
+      } catch {
+        // Silent — order may still be created by webhook
+      } finally {
+        setVerifying(false);
+      }
+    })();
+  }, [sessionId]);
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
@@ -212,7 +246,19 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
                   </div>
                 </div>
 
-                {sessionId && (
+                {verifying ? (
+                  <div className="rounded-md border bg-muted/50 p-3 flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Confirming your order...</p>
+                  </div>
+                ) : stripeOrder ? (
+                  <div className="rounded-md border bg-muted/50 p-3">
+                    <p className="text-xs text-muted-foreground">Order Number</p>
+                    <p className="font-mono font-bold text-sm mt-1">
+                      {stripeOrder.orderNumber}
+                    </p>
+                  </div>
+                ) : sessionId ? (
                   <div className="rounded-md border bg-muted/50 p-3">
                     <p className="text-xs text-muted-foreground">
                       Payment Reference
@@ -221,7 +267,7 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
                       {sessionId}
                     </p>
                   </div>
-                )}
+                ) : null}
               </div>
             )}
 
