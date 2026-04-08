@@ -110,6 +110,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
+  // Check if verify-session fallback already created this order
+  const existingOrder = await db.order.findUnique({
+    where: { stripeSessionId: session.id },
+    select: { id: true },
+  });
+  if (existingOrder) {
+    console.log("[Stripe Webhook] Order already exists for session:", session.id);
+    return;
+  }
+
   // Get user's cart
   const cart = await db.cart.findUnique({
     where: { userId },
@@ -121,13 +131,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   });
 
   if (!cart || cart.items.length === 0) {
+    // Re-check if order was created between our first check and now
+    const raceCheck = await db.order.findUnique({
+      where: { stripeSessionId: session.id },
+      select: { id: true },
+    });
+    if (raceCheck) {
+      console.log("[Stripe Webhook] Order created by fallback for session:", session.id);
+      return;
+    }
     console.error(
       "[Stripe Webhook] CRITICAL: Cart empty for user after payment:",
       userId,
       "Session:",
       session.id
     );
-    // Throw so the webhook returns 500 and Stripe retries
     throw new Error(
       `Cart empty for user ${userId} after payment (session: ${session.id}). Payment collected but no order created.`
     );
