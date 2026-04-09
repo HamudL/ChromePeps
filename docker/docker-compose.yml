@@ -3,6 +3,10 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        # NEXT_PUBLIC_* must be available at build time, not just runtime.
+        # Compose pulls this from ../.env via variable substitution.
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
     container_name: chromepeps-app
     restart: unless-stopped
     env_file:

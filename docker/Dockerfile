@@ -28,6 +28,11 @@ COPY . .
 # Generate Prisma Client
 RUN npx prisma generate
 
+# Build-time env vars (NEXT_PUBLIC_* are inlined into the JS bundle by Next.js,
+# so they MUST be present during `npm run build`, not just at runtime).
+ARG NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+
 # Build Next.js (standalone output)
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
