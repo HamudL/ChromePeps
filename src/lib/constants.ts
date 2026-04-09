@@ -61,3 +61,15 @@ export const BANK_DETAILS = {
 
 export const RESEARCH_DISCLAIMER =
   "All products are strictly for in-vitro research and laboratory use only. Not for human consumption. Not intended to diagnose, treat, cure, or prevent any disease.";
+
+// ---- Email configuration ----
+// These are read at runtime on the server only. Keep the fallbacks safe for
+// local dev so the build doesn't fail when no Resend key is present.
+export const MAIL_FROM =
+  process.env.MAIL_FROM ?? "ChromePeps <no-reply@chromepeps.com>";
+export const MAIL_REPLY_TO =
+  process.env.MAIL_REPLY_TO ?? "support@chromepeps.com";
+export const MAIL_SUPPORT_ADDRESS = "support@chromepeps.com";
+
+// Password reset tokens expire after 1 hour.
+export const PASSWORD_RESET_TOKEN_TTL_MS = 60 * 60 * 1000;

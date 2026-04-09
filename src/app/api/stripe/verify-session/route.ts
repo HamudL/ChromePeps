@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { generateOrderNumber } from "@/lib/utils";
 import { cacheDel } from "@/lib/redis";
 import { CACHE_KEYS } from "@/lib/constants";
+import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 
 /**
  * POST /api/stripe/verify-session
@@ -154,12 +155,12 @@ export async function POST(req: NextRequest) {
   const totalInCents = subtotalAfterDiscount + shippingInCents + taxInCents;
 
   try {
-    const order = await db.$transaction(async (tx) => {
+    const txResult = await db.$transaction(async (tx) => {
       // Double-check inside transaction to prevent duplicates
       const doubleCheck = await tx.order.findUnique({
         where: { stripeSessionId: sessionId },
       });
-      if (doubleCheck) return doubleCheck;
+      if (doubleCheck) return { order: doubleCheck, wasCreated: false };
 
       const created = await tx.order.create({
         data: {
@@ -226,17 +227,77 @@ export async function POST(req: NextRequest) {
       // Clear cart
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
 
-      return created;
+      return { order: created, wasCreated: true };
     });
 
     await cacheDel(CACHE_KEYS.CART(userId));
 
+    // Send confirmation email only when this path actually created the order,
+    // so we don't duplicate when webhook + verify-session race.
+    if (txResult.wasCreated) {
+      try {
+        const [user, fullOrder] = await Promise.all([
+          db.user.findUnique({
+            where: { id: userId },
+            select: { email: true, name: true },
+          }),
+          db.order.findUnique({
+            where: { id: txResult.order.id },
+            include: { items: true, shippingAddress: true },
+          }),
+        ]);
+
+        if (user?.email && fullOrder) {
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+          await sendOrderConfirmationEmail({
+            to: user.email,
+            customerName: user.name,
+            orderNumber: fullOrder.orderNumber,
+            orderUrl: baseUrl
+              ? `${baseUrl}/dashboard/orders/${fullOrder.id}`
+              : undefined,
+            placedAt: fullOrder.createdAt,
+            items: fullOrder.items.map((item) => ({
+              name: item.productName,
+              variant: item.variantName,
+              sku: item.sku,
+              quantity: item.quantity,
+              priceInCents: item.priceInCents,
+            })),
+            subtotalInCents: fullOrder.subtotalInCents,
+            shippingInCents: fullOrder.shippingInCents,
+            taxInCents: fullOrder.taxInCents,
+            discountInCents: fullOrder.discountInCents,
+            totalInCents: fullOrder.totalInCents,
+            paymentMethod: "STRIPE",
+            shippingAddress: fullOrder.shippingAddress
+              ? {
+                  firstName: fullOrder.shippingAddress.firstName,
+                  lastName: fullOrder.shippingAddress.lastName,
+                  company: fullOrder.shippingAddress.company,
+                  street: fullOrder.shippingAddress.street,
+                  street2: fullOrder.shippingAddress.street2,
+                  postalCode: fullOrder.shippingAddress.postalCode,
+                  city: fullOrder.shippingAddress.city,
+                  country: fullOrder.shippingAddress.country,
+                }
+              : null,
+          });
+        }
+      } catch (err) {
+        console.error(
+          "[verify-session] order confirmation email failed:",
+          err instanceof Error ? err.message : err
+        );
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        alreadyCreated: false,
+        orderId: txResult.order.id,
+        orderNumber: txResult.order.orderNumber,
+        alreadyCreated: !txResult.wasCreated,
       },
     });
   } catch (err) {

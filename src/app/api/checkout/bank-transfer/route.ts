@@ -5,6 +5,7 @@ import { generateOrderNumber } from "@/lib/utils";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { cacheDel } from "@/lib/redis";
 import { CACHE_KEYS } from "@/lib/constants";
+import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 
 // POST /api/checkout/bank-transfer — create order with bank transfer payment
 export async function POST(req: NextRequest) {
@@ -204,6 +205,50 @@ export async function POST(req: NextRequest) {
   });
 
   await cacheDel(CACHE_KEYS.CART(session.user.id));
+
+  // Send order confirmation email with bank details. Never block on mail
+  // failures — the order is already committed. Log and move on if anything
+  // goes wrong.
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+    await sendOrderConfirmationEmail({
+      to: session.user.email ?? "",
+      customerName: session.user.name,
+      orderNumber: order.orderNumber,
+      orderUrl: baseUrl
+        ? `${baseUrl}/dashboard/orders/${order.id}`
+        : undefined,
+      placedAt: order.createdAt,
+      items: orderItems.map((item) => ({
+        name: item.productName,
+        variant: item.variantName,
+        sku: item.sku,
+        quantity: item.quantity,
+        priceInCents: item.priceInCents,
+      })),
+      subtotalInCents,
+      shippingInCents,
+      taxInCents,
+      discountInCents,
+      totalInCents,
+      paymentMethod: "BANK_TRANSFER",
+      shippingAddress: {
+        firstName: address.firstName,
+        lastName: address.lastName,
+        company: address.company,
+        street: address.street,
+        street2: address.street2,
+        postalCode: address.postalCode,
+        city: address.city,
+        country: address.country,
+      },
+    });
+  } catch (err) {
+    console.error(
+      "[bank-transfer] order confirmation email failed:",
+      err instanceof Error ? err.message : err
+    );
+  }
 
   return NextResponse.json({
     success: true,

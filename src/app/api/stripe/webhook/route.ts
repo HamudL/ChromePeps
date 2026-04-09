@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { generateOrderNumber } from "@/lib/utils";
 import { cacheDel } from "@/lib/redis";
 import { CACHE_KEYS } from "@/lib/constants";
+import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import type Stripe from "stripe";
 
 // Disable body parsing — Stripe needs the raw body for signature verification
@@ -187,7 +188,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const taxInCents = Math.round((subtotalAfterDiscount + shippingInCents) * 0.19);
   const totalInCents = subtotalAfterDiscount + shippingInCents + taxInCents;
 
-  await db.$transaction(async (tx) => {
+  const createdOrderId = await db.$transaction(async (tx) => {
     const order = await tx.order.create({
       data: {
         orderNumber: generateOrderNumber(),
@@ -258,9 +259,69 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
     // Clear cart
     await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+    return order.id;
   });
 
   await cacheDel(CACHE_KEYS.CART(userId));
+
+  // Send order confirmation email. Never block on mail failures — we've
+  // already committed the order. Log and move on if anything goes wrong.
+  try {
+    const [user, fullOrder] = await Promise.all([
+      db.user.findUnique({
+        where: { id: userId },
+        select: { email: true, name: true },
+      }),
+      db.order.findUnique({
+        where: { id: createdOrderId },
+        include: { items: true, shippingAddress: true },
+      }),
+    ]);
+
+    if (user?.email && fullOrder) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+      await sendOrderConfirmationEmail({
+        to: user.email,
+        customerName: user.name,
+        orderNumber: fullOrder.orderNumber,
+        orderUrl: baseUrl
+          ? `${baseUrl}/dashboard/orders/${fullOrder.id}`
+          : undefined,
+        placedAt: fullOrder.createdAt,
+        items: fullOrder.items.map((item) => ({
+          name: item.productName,
+          variant: item.variantName,
+          sku: item.sku,
+          quantity: item.quantity,
+          priceInCents: item.priceInCents,
+        })),
+        subtotalInCents: fullOrder.subtotalInCents,
+        shippingInCents: fullOrder.shippingInCents,
+        taxInCents: fullOrder.taxInCents,
+        discountInCents: fullOrder.discountInCents,
+        totalInCents: fullOrder.totalInCents,
+        paymentMethod: "STRIPE",
+        shippingAddress: fullOrder.shippingAddress
+          ? {
+              firstName: fullOrder.shippingAddress.firstName,
+              lastName: fullOrder.shippingAddress.lastName,
+              company: fullOrder.shippingAddress.company,
+              street: fullOrder.shippingAddress.street,
+              street2: fullOrder.shippingAddress.street2,
+              postalCode: fullOrder.shippingAddress.postalCode,
+              city: fullOrder.shippingAddress.city,
+              country: fullOrder.shippingAddress.country,
+            }
+          : null,
+      });
+    }
+  } catch (err) {
+    console.error(
+      "[Stripe Webhook] order confirmation email failed:",
+      err instanceof Error ? err.message : err
+    );
+  }
 }
 
 async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
