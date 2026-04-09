@@ -1,9 +1,15 @@
 import type { MetadataRoute } from "next";
 
-// Base URL with sensible fallback for local/dev builds.
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+// Force dynamic evaluation so the base URL is read from the running
+// container's env (via docker-compose env_file) instead of being frozen
+// at build time — NEXT_PUBLIC_* build-arg propagation through Compose is
+// brittle, runtime lookup is reliable.
+export const dynamic = "force-dynamic";
 
 export default function robots(): MetadataRoute.Robots {
+  // Base URL with sensible fallback for local/dev builds.
+  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
   return {
     rules: [
       {
