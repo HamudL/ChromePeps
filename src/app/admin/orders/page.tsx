@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { format } from "date-fns";
+import { Download } from "lucide-react";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { formatPrice, cn } from "@/lib/utils";
@@ -67,13 +68,25 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
 
   const totalPages = Math.ceil(total / ADMIN_ITEMS_PER_PAGE);
 
+  const exportHref = `/api/admin/orders/export${
+    statusFilter !== "ALL" ? `?status=${statusFilter}` : ""
+  }`;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Orders</h2>
-        <p className="text-muted-foreground">
-          Manage customer orders ({total} total)
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Orders</h2>
+          <p className="text-muted-foreground">
+            Manage customer orders ({total} total)
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <a href={exportHref}>
+            <Download className="mr-2 h-4 w-4" />
+            CSV exportieren
+          </a>
+        </Button>
       </div>
 
       {/* Status Filter Tabs */}

@@ -9,6 +9,10 @@ import { SearchBar } from "@/components/shop/search-bar";
 import { ProductFilters } from "@/components/shop/product-filters";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  productCardSelect,
+  getBestsellerProductIds,
+} from "@/lib/products/card";
 import type { ProductCardData } from "@/types";
 import type { Prisma } from "@prisma/client";
 import type { Metadata } from "next";
@@ -124,38 +128,25 @@ async function getProducts(params: {
     }
   })();
 
-  const [products, total] = await Promise.all([
+  const [products, total, bestsellerIds] = await Promise.all([
     db.product.findMany({
       where,
       orderBy,
       skip: (page - 1) * pageSize,
       take: pageSize,
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        shortDesc: true,
-        priceInCents: true,
-        compareAtPriceInCents: true,
-        purity: true,
-        weight: true,
-        isActive: true,
-        stock: true,
-        images: {
-          select: { url: true, alt: true },
-          orderBy: { sortOrder: "asc" },
-          take: 1,
-        },
-        category: {
-          select: { name: true, slug: true },
-        },
-      },
+      select: productCardSelect,
     }),
     db.product.count({ where }),
+    getBestsellerProductIds(),
   ]);
 
+  const productsWithBadges: ProductCardData[] = products.map((p) => ({
+    ...p,
+    isBestseller: bestsellerIds.has(p.id),
+  }));
+
   return {
-    products: products as ProductCardData[],
+    products: productsWithBadges,
     total,
     page,
     pageSize,

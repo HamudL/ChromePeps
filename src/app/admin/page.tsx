@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { RevenueChart } from "@/components/admin/revenue-chart";
+import { LowStockWidget } from "@/components/admin/low-stock-widget";
 
 async function getDashboardStats() {
   const now = new Date();
@@ -218,6 +219,9 @@ export default async function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Low Stock Widget */}
+      <LowStockWidget />
 
       {/* Recent Orders */}
       <Card>

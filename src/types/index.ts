@@ -36,9 +36,15 @@ export type ProductCardData = Pick<
   | "weight"
   | "isActive"
   | "stock"
+  | "createdAt"
 > & {
   images: Pick<ProductImage, "url" | "alt">[];
   category: Pick<Category, "name" | "slug">;
+  /**
+   * Optional flag set by catalog/related-product queries when the product
+   * is currently a bestseller. Undefined = not computed (no badge).
+   */
+  isBestseller?: boolean;
 };
 
 // ---- Order with Relations ----

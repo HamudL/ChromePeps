@@ -4,44 +4,35 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, FlaskConical, ShieldCheck, Truck } from "lucide-react";
 import { db } from "@/lib/db";
-import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
+import { RESEARCH_DISCLAIMER } from "@/lib/constants";
 import { ProductCard } from "@/components/shop/product-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  productCardSelect,
+  getBestsellerProductIds,
+} from "@/lib/products/card";
 import type { ProductCardData } from "@/types";
 
 import { FadeUp } from "./home-animations";
 import { HeroLogo } from "./hero-logo";
 
 async function getFeaturedProducts(): Promise<ProductCardData[]> {
-  const products = await db.product.findMany({
-    where: { isActive: true },
-    orderBy: { createdAt: "desc" },
-    take: 8,
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      shortDesc: true,
-      priceInCents: true,
-      compareAtPriceInCents: true,
-      purity: true,
-      weight: true,
-      isActive: true,
-      stock: true,
-      images: {
-        select: { url: true, alt: true },
-        orderBy: { sortOrder: "asc" },
-        take: 1,
-      },
-      category: {
-        select: { name: true, slug: true },
-      },
-    },
-  });
+  const [products, bestsellerIds] = await Promise.all([
+    db.product.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: productCardSelect,
+    }),
+    getBestsellerProductIds(),
+  ]);
 
-  return products;
+  return products.map((p) => ({
+    ...p,
+    isBestseller: bestsellerIds.has(p.id),
+  }));
 }
 
 async function getCategories() {

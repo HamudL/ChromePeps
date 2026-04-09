@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ReviewForm } from "@/components/shop/review-form";
+import { ProductCard } from "@/components/shop/product-card";
+import { getRelatedProducts } from "@/lib/products/related";
+import { getBestsellerProductIds } from "@/lib/products/card";
 import type { Metadata } from "next";
 import type { ProductWithDetails } from "@/types";
 
@@ -118,6 +121,20 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   const avgRating = averageRating(product.reviews);
   const isOutOfStock = product.stock <= 0;
+
+  // Related products + bestseller flags run in parallel with the review
+  // eligibility lookup so we don't add noticeable latency to the page.
+  const [relatedRaw, bestsellerIds] = await Promise.all([
+    getRelatedProducts(
+      { id: product.id, categoryId: product.categoryId },
+      4
+    ),
+    getBestsellerProductIds(),
+  ]);
+  const relatedProducts = relatedRaw.map((p) => ({
+    ...p,
+    isBestseller: bestsellerIds.has(p.id),
+  }));
 
   // Review eligibility — computed server-side so the form can decide what
   // to render without an extra round-trip. The API does the same check again
@@ -431,6 +448,26 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           />
         </div>
       </section>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <>
+          <Separator className="my-14" />
+          <section>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold">Ähnliche Produkte</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Weitere Peptide aus der Kategorie {product.category.name}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((related) => (
+                <ProductCard key={related.id} product={related} />
+              ))}
+            </div>
+          </section>
+        </>
+      )}
 
       {/* Research Disclaimer */}
       <Separator className="my-14" />
