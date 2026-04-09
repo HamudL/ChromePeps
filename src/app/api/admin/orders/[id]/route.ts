@@ -160,19 +160,23 @@ export async function PATCH(
       },
     });
 
-    // Restore stock on cancellation
+    // Restore stock on cancellation (skip if product/variant was hard-deleted)
     if (parsed.data.status === "CANCELLED" && existing.status !== "CANCELLED") {
       for (const item of updated.items) {
         if (item.variantId) {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { stock: { increment: item.quantity } },
-          });
-        } else {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { increment: item.quantity } },
-          });
+          await tx.productVariant
+            .update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            })
+            .catch(() => {});
+        } else if (item.productId) {
+          await tx.product
+            .update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+            })
+            .catch(() => {});
         }
       }
     }
