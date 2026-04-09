@@ -13,12 +13,6 @@ import type { ProductCardData } from "@/types";
 import type { Prisma } from "@prisma/client";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Products",
-  description:
-    "Browse our catalog of premium research peptides. Lab-grade quality, third-party purity verified.",
-};
-
 interface ProductsPageProps {
   searchParams: Promise<{
     search?: string;
@@ -26,6 +20,54 @@ interface ProductsPageProps {
     sort?: string;
     page?: string;
   }>;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: ProductsPageProps): Promise<Metadata> {
+  const resolvedParams = await searchParams;
+  const categorySlug = resolvedParams.category;
+  const search = resolvedParams.search;
+
+  let title = "Produkte";
+  let description =
+    "Durchstöbern Sie unseren Katalog hochwertiger Forschungspeptide — laborgeprüfte Reinheit und umfassende Analysezertifikate.";
+  let canonical = "/products";
+
+  if (categorySlug) {
+    const category = await db.category.findUnique({
+      where: { slug: categorySlug },
+      select: { name: true, description: true },
+    });
+    if (category) {
+      title = category.name;
+      description =
+        category.description ??
+        `Entdecken Sie unsere Auswahl an ${category.name} für wissenschaftliche Forschung.`;
+      canonical = `/products?category=${categorySlug}`;
+    }
+  } else if (search) {
+    title = `Suche: ${search}`;
+    description = `Suchergebnisse für "${search}" im ChromePeps-Katalog.`;
+  }
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "website",
+      locale: "de_DE",
+      title,
+      description,
+      url: canonical,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
 }
 
 async function getCategories() {

@@ -6,6 +6,7 @@ import { Star, FlaskConical, Thermometer, Weight, Hash, Layers, Dna } from "luci
 import { db } from "@/lib/db";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
+import { productJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -47,15 +48,37 @@ export async function generateMetadata({
     return { title: "Product Not Found" };
   }
 
+  const description = product.shortDesc ?? product.description.slice(0, 160);
+  const canonical = `/products/${product.slug}`;
+  const ogImage = product.images[0]
+    ? [
+        {
+          url: product.images[0].url,
+          alt: product.images[0].alt ?? product.name,
+          width: 1200,
+          height: 630,
+        },
+      ]
+    : undefined;
+
   return {
     title: product.name,
-    description: product.shortDesc ?? product.description.slice(0, 160),
+    description,
+    alternates: { canonical },
     openGraph: {
+      type: "website",
+      locale: "de_DE",
+      url: canonical,
+      siteName: APP_NAME,
       title: `${product.name} | ${APP_NAME}`,
-      description: product.shortDesc ?? product.description.slice(0, 160),
-      images: product.images[0]
-        ? [{ url: product.images[0].url, alt: product.images[0].alt ?? product.name }]
-        : undefined,
+      description,
+      images: ogImage,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${product.name} | ${APP_NAME}`,
+      description,
+      images: ogImage?.map((img) => img.url),
     },
   };
 }
@@ -94,6 +117,29 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const avgRating = averageRating(product.reviews);
   const isOutOfStock = product.stock <= 0;
 
+  // JSON-LD structured data for Google Rich Results.
+  const productSchema = productJsonLd({
+    name: product.name,
+    slug: product.slug,
+    description: product.description,
+    sku: product.sku,
+    priceInCents: product.priceInCents,
+    inStock: !isOutOfStock,
+    image: product.images[0]?.url ?? null,
+    ratingValue: avgRating,
+    ratingCount: product.reviews.length,
+  });
+
+  const breadcrumbSchema = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Products", path: "/products" },
+    {
+      name: product.category.name,
+      path: `/products?category=${product.category.slug}`,
+    },
+    { name: product.name, path: `/products/${product.slug}` },
+  ]);
+
   // Prepare spec items
   const specs: { icon: React.ReactNode; label: string; value: string }[] = [];
   if (product.purity)
@@ -111,6 +157,16 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   return (
     <div className="container py-8 md:py-12">
+      {/* Structured data for Google Rich Results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-muted-foreground flex items-center gap-1.5">
         <Link href="/" className="hover:text-foreground transition-colors">
