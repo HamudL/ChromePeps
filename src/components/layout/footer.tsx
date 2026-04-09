@@ -5,11 +5,11 @@ export function Footer() {
   return (
     <footer className="border-t bg-chrome-50 dark:bg-chrome-950">
       <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Brand */}
-          <div className="space-y-3">
+          <div className="col-span-2 space-y-3">
             <h3 className="text-lg font-bold chrome-text">{APP_NAME}</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground max-w-sm">
               Premium research peptides with verified purity and comprehensive
               certificates of analysis.
             </p>
@@ -17,7 +17,7 @@ export function Footer() {
 
           {/* Products */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold">Products</h4>
+            <h4 className="text-sm font-semibold">Produkte</h4>
             <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
               <Link href="/products?category=growth-hormone-peptides" className="hover:text-foreground transition-colors">GH Peptides</Link>
               <Link href="/products?category=metabolic-peptides" className="hover:text-foreground transition-colors">Metabolic Peptides</Link>
@@ -26,24 +26,25 @@ export function Footer() {
             </nav>
           </div>
 
-          {/* Account */}
+          {/* Service / Account */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold">Account</h4>
+            <h4 className="text-sm font-semibold">Service</h4>
             <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link href="/login" className="hover:text-foreground transition-colors">Sign In</Link>
-              <Link href="/register" className="hover:text-foreground transition-colors">Create Account</Link>
-              <Link href="/dashboard" className="hover:text-foreground transition-colors">My Orders</Link>
+              <Link href="/kontakt" className="hover:text-foreground transition-colors">Kontakt</Link>
+              <Link href="/versand" className="hover:text-foreground transition-colors">Versand</Link>
+              <Link href="/zahlung" className="hover:text-foreground transition-colors">Zahlung</Link>
+              <Link href="/dashboard" className="hover:text-foreground transition-colors">Mein Konto</Link>
             </nav>
           </div>
 
           {/* Legal */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold">Information</h4>
+            <h4 className="text-sm font-semibold">Rechtliches</h4>
             <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link href="#" className="hover:text-foreground transition-colors">Shipping Policy</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Return Policy</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Terms of Service</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+              <Link href="/impressum" className="hover:text-foreground transition-colors">Impressum</Link>
+              <Link href="/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</Link>
+              <Link href="/agb" className="hover:text-foreground transition-colors">AGB</Link>
+              <Link href="/widerruf" className="hover:text-foreground transition-colors">Widerruf</Link>
             </nav>
           </div>
         </div>
