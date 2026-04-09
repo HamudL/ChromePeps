@@ -1,8 +1,16 @@
 "use client";
 
+import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
+
 /**
  * Global error boundary — catches errors in the root layout.
  * Must be a Client Component and must define its own <html>/<body>.
+ *
+ * Errors here bypass all other error.tsx boundaries, so this is our
+ * last-chance funnel into Sentry: if the root layout itself blew up
+ * (theme provider, fonts, JSON-LD serialization, etc.) we still want
+ * a ticket in the dashboard instead of a silent white screen.
  */
 export default function GlobalError({
   error,
@@ -11,7 +19,13 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  // Log to server console (visible in docker logs)
+  useEffect(() => {
+    // Forward the error to Sentry — useEffect guarantees it fires exactly
+    // once per render and only in the browser, so we don't double-report.
+    Sentry.captureException(error);
+  }, [error]);
+
+  // Also log to server console (visible in docker logs) for local debugging.
   console.error("[GlobalError]", error.message, error.stack);
 
   return (

@@ -33,6 +33,19 @@ RUN npx prisma generate
 ARG NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 
+# Sentry build-time config — NEXT_PUBLIC_SENTRY_DSN is inlined into the client
+# bundle, SENTRY_AUTH_TOKEN/ORG/PROJECT are needed by withSentryConfig to
+# upload source maps during the build. Missing tokens fall back to no upload
+# (the runtime SDK still works), so builds never hard-fail on Sentry.
+ARG NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
+ARG SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+ARG SENTRY_ORG
+ENV SENTRY_ORG=${SENTRY_ORG}
+ARG SENTRY_PROJECT
+ENV SENTRY_PROJECT=${SENTRY_PROJECT}
+
 # Build Next.js (standalone output)
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
