@@ -146,7 +146,10 @@ export async function PATCH(
   return NextResponse.json({ success: true, data: product });
 }
 
-// DELETE /api/products/[slug] — admin only (soft-delete: sets isActive=false)
+// DELETE /api/products/[slug] — admin only (hard delete)
+// Cascades to variants, images, reviews, cart items.
+// OrderItems have productId/variantId set to null (order history preserved
+// via snapshot fields: productName, variantName, sku, priceInCents).
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -169,11 +172,7 @@ export async function DELETE(
     );
   }
 
-  // Soft-delete: deactivate instead of hard delete to preserve order item references
-  await db.product.update({
-    where: { slug },
-    data: { isActive: false },
-  });
+  await db.product.delete({ where: { slug } });
 
   await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(slug));
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);

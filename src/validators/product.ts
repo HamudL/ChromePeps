@@ -64,7 +64,7 @@ export const productFilterSchema = z.object({
 export const createCategorySchema = z.object({
   name: z.string().min(2).max(100),
   description: z.string().max(500).optional(),
-  image: z.string().url().optional(),
+  image: z.string().min(1).optional(),
   sortOrder: z.number().int().min(0).default(0),
 });
 

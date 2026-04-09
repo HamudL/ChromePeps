@@ -524,7 +524,7 @@ export default function EditProductPage({
             ) : (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-red-600 font-medium">
-                  Are you sure?
+                  Permanently delete this product? This cannot be undone.
                 </span>
                 <Button
                   type="button"
@@ -536,7 +536,7 @@ export default function EditProductPage({
                   {deleting && (
                     <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                   )}
-                  Yes, Delete
+                  Yes, Delete Permanently
                 </Button>
                 <Button
                   type="button"

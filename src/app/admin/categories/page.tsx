@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ImageUpload } from "@/components/admin/image-upload";
 
 interface Category {
   id: string;
@@ -324,14 +325,12 @@ export default function AdminCategoriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cat-image">Image URL</Label>
-              <Input
-                id="cat-image"
-                value={form.image}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, image: e.target.value }))
+              <Label>Image</Label>
+              <ImageUpload
+                images={form.image ? [form.image] : []}
+                onChange={(urls) =>
+                  setForm((prev) => ({ ...prev, image: urls[0] ?? "" }))
                 }
-                placeholder="https://..."
               />
             </div>
 

@@ -312,18 +312,22 @@ async function handleRefund(charge: Stripe.Charge) {
         },
       });
 
-      // Restore stock
+      // Restore stock (skip if product/variant has been hard-deleted)
       for (const item of order.items) {
         if (item.variantId) {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { stock: { increment: item.quantity } },
-          });
-        } else {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { increment: item.quantity } },
-          });
+          await tx.productVariant
+            .update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            })
+            .catch(() => {});
+        } else if (item.productId) {
+          await tx.product
+            .update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+            })
+            .catch(() => {});
         }
       }
     });
