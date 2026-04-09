@@ -4,12 +4,14 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Star, FlaskConical, Thermometer, Weight, Hash, Layers, Dna } from "lucide-react";
 import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 import { productJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { ReviewForm } from "@/components/shop/review-form";
 import type { Metadata } from "next";
 import type { ProductWithDetails } from "@/types";
 
@@ -116,6 +118,31 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   const avgRating = averageRating(product.reviews);
   const isOutOfStock = product.stock <= 0;
+
+  // Review eligibility — computed server-side so the form can decide what
+  // to render without an extra round-trip. The API does the same check again
+  // on submit, so this is purely a UX hint.
+  const session = await auth();
+  const isLoggedIn = !!session?.user;
+  let canReview = false;
+  let alreadyReviewed = false;
+  if (isLoggedIn) {
+    const [hasPurchase, existingReview] = await Promise.all([
+      db.orderItem.findFirst({
+        where: {
+          productId: product.id,
+          order: { userId: session!.user.id, status: "DELIVERED" },
+        },
+        select: { id: true },
+      }),
+      db.review.findFirst({
+        where: { productId: product.id, userId: session!.user.id },
+        select: { id: true },
+      }),
+    ]);
+    canReview = !!hasPurchase;
+    alreadyReviewed = !!existingReview;
+  }
 
   // JSON-LD structured data for Google Rich Results.
   const productSchema = productJsonLd({
@@ -324,7 +351,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       <Separator className="my-14" />
 
       {/* Reviews */}
-      <section>
+      <section id="reviews" className="scroll-mt-24">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">
             Reviews ({product.reviews.length})
@@ -394,6 +421,15 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             <p>No reviews yet for this product.</p>
           </div>
         )}
+
+        <div className="mt-8">
+          <ReviewForm
+            productId={product.id}
+            canReview={canReview}
+            isLoggedIn={isLoggedIn}
+            alreadyReviewed={alreadyReviewed}
+          />
+        </div>
       </section>
 
       {/* Research Disclaimer */}

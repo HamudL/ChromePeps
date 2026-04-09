@@ -261,12 +261,36 @@ model Order {
   billingAddress  Address?     @relation("BillingAddress", fields: [billingAddressId], references: [id])
   events          OrderEvent[]
   promoUsage      PromoUsage?
+  invoice         Invoice?
 
   @@index([userId])
   @@index([status])
   @@index([orderNumber])
   @@index([stripePaymentIntentId])
   @@map("orders")
+}
+
+// ============================================================
+// INVOICES (UStG §14 compliant — fortlaufende, lueckenlose Nummerierung)
+// ============================================================
+//
+// One invoice per order. invoiceNumber is the canonical human-readable
+// identifier (e.g. "CP-RE-2026-0001"). The (year, seq) composite unique
+// guarantees gapless numbering per calendar year when allocated inside a
+// transaction. issuedAt freezes the legal issue date.
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String   @unique
+  orderId       String   @unique
+  year          Int
+  seq           Int
+  issuedAt      DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([year, seq])
+  @@index([year])
+  @@map("invoices")
 }
 
 model OrderItem {

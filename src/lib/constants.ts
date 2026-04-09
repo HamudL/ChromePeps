@@ -59,6 +59,30 @@ export const BANK_DETAILS = {
   bankName: "Commerzbank",
 } as const;
 
+/**
+ * Seller data for invoices and official documents.
+ *
+ * NOTE: These fields must be kept in sync with the Impressum page. The
+ * placeholder values here will be replaced with the real company data
+ * before going live — the invoice PDF falls back to these values.
+ */
+export const SELLER_DETAILS = {
+  companyName: "ChromePeps GmbH",
+  streetLine1: "[TODO: Straße und Hausnummer]",
+  postalCodeCity: "[TODO: PLZ Ort]",
+  country: "Deutschland",
+  email: "support@chromepeps.com",
+  phone: "[TODO: Telefonnummer]",
+  vatId: "[TODO: DE XXXXXXXXX]",
+  taxId: "[TODO: Steuernummer]",
+  registerCourt: "[TODO: Amtsgericht]",
+  registerNumber: "[TODO: HRB XXXXXX]",
+  managingDirector: "[TODO: Geschäftsführer]",
+} as const;
+
+// German statutory VAT rate (19%) used for invoices and checkout math.
+export const TAX_RATE = 0.19;
+
 export const RESEARCH_DISCLAIMER =
   "All products are strictly for in-vitro research and laboratory use only. Not for human consumption. Not intended to diagnose, treat, cure, or prevent any disease.";
 
@@ -73,3 +97,6 @@ export const MAIL_SUPPORT_ADDRESS = "support@chromepeps.com";
 
 // Password reset tokens expire after 1 hour.
 export const PASSWORD_RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+// Email verification tokens expire after 24 hours.
+export const EMAIL_VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;

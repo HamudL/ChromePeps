@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { updateOrderStatusSchema } from "@/validators/order";
+import {
+  sendOrderShippedEmail,
+  sendReviewRequestEmail,
+} from "@/lib/mail/send";
 
 // GET /api/admin/orders/[id] — admin: get order details
 export async function GET(
@@ -183,6 +187,100 @@ export async function PATCH(
 
     return updated;
   });
+
+  // Transactional mails — trigger on legitimate forward transitions only.
+  // Never block on mail failures; the status update is already committed.
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const becameShipped =
+    parsed.data.status === "SHIPPED" && existing.status !== "SHIPPED";
+  const becameDelivered =
+    parsed.data.status === "DELIVERED" && existing.status !== "DELIVERED";
+
+  if (becameShipped || becameDelivered) {
+    try {
+      const fullOrder = await db.order.findUnique({
+        where: { id },
+        include: {
+          user: { select: { email: true, name: true } },
+          items: { include: { product: { select: { slug: true } } } },
+          shippingAddress: true,
+        },
+      });
+
+      if (fullOrder?.user?.email) {
+        if (becameShipped) {
+          await sendOrderShippedEmail({
+            to: fullOrder.user.email,
+            customerName: fullOrder.user.name,
+            orderNumber: fullOrder.orderNumber,
+            orderUrl: baseUrl
+              ? `${baseUrl}/dashboard/orders/${fullOrder.id}`
+              : undefined,
+            shippedAt: fullOrder.shippedAt ?? new Date(),
+            trackingNumber: fullOrder.trackingNumber,
+            trackingUrl: null,
+            items: fullOrder.items.map((item) => ({
+              name: item.productName,
+              variant: item.variantName,
+              sku: item.sku,
+              quantity: item.quantity,
+            })),
+            shippingAddress: fullOrder.shippingAddress
+              ? {
+                  firstName: fullOrder.shippingAddress.firstName,
+                  lastName: fullOrder.shippingAddress.lastName,
+                  company: fullOrder.shippingAddress.company,
+                  street: fullOrder.shippingAddress.street,
+                  street2: fullOrder.shippingAddress.street2,
+                  postalCode: fullOrder.shippingAddress.postalCode,
+                  city: fullOrder.shippingAddress.city,
+                  country: fullOrder.shippingAddress.country,
+                }
+              : null,
+          });
+        }
+
+        if (becameDelivered) {
+          // De-dupe by product id — customers don't need multiple review
+          // buttons for variants of the same product.
+          const seen = new Set<string>();
+          const products = fullOrder.items
+            .filter((item) => {
+              if (!item.productId) return false;
+              if (seen.has(item.productId)) return false;
+              seen.add(item.productId);
+              return true;
+            })
+            .map((item) => {
+              const slug = item.product?.slug;
+              const reviewUrl =
+                baseUrl && slug
+                  ? `${baseUrl}/products/${slug}#reviews`
+                  : baseUrl || "#";
+              return {
+                name: item.productName,
+                variant: item.variantName,
+                reviewUrl,
+              };
+            });
+
+          if (products.length > 0) {
+            await sendReviewRequestEmail({
+              to: fullOrder.user.email,
+              customerName: fullOrder.user.name,
+              orderNumber: fullOrder.orderNumber,
+              products,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error(
+        "[admin/orders] transactional mail failed:",
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
 
   return NextResponse.json({ success: true, data: order });
 }

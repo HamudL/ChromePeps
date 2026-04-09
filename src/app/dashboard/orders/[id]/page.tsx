@@ -24,7 +24,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { ArrowLeft, Clock, MapPin, Receipt } from "lucide-react";
+import { ArrowLeft, Clock, Download, MapPin, Receipt } from "lucide-react";
 
 export default async function OrderDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -66,12 +66,26 @@ export default async function OrderDetailPage(props: {
             Placed on {format(new Date(order.createdAt), "MMMM d, yyyy 'at' h:mm a")}
           </p>
         </div>
-        <Badge
-          variant="secondary"
-          className={cn("w-fit text-sm", ORDER_STATUS_COLORS[order.status] ?? "")}
-        >
-          {ORDER_STATUS_LABELS[order.status] ?? order.status}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant="secondary"
+            className={cn("w-fit text-sm", ORDER_STATUS_COLORS[order.status] ?? "")}
+          >
+            {ORDER_STATUS_LABELS[order.status] ?? order.status}
+          </Badge>
+          {order.paymentStatus === "SUCCEEDED" && (
+            <Button asChild size="sm" variant="outline">
+              <a
+                href={`/api/orders/${order.id}/invoice`}
+                target="_blank"
+                rel="noopener"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Rechnung herunterladen
+              </a>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Items table */}

@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 import { registerSchema } from "@/validators/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
+import { generateEmailVerifyToken } from "@/lib/email-verify";
+import { sendEmailVerifyEmail } from "@/lib/mail/send";
+import { EMAIL_VERIFY_TOKEN_TTL_MS } from "@/lib/constants";
 
 export interface AuthActionResult {
   success: boolean;
@@ -79,13 +82,50 @@ export async function registerAction(
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
 
-  await db.user.create({
+  const user = await db.user.create({
     data: {
       name: parsed.data.name,
       email: parsed.data.email,
       passwordHash,
     },
   });
+
+  // Fire-and-forget email verification. We use soft enforcement: the user is
+  // allowed to log in immediately, but the dashboard nags them until they
+  // verify. The mail failing never blocks registration — a resend button is
+  // available from the dashboard.
+  try {
+    const { rawToken, tokenHash } = generateEmailVerifyToken();
+    const expiresAt = new Date(Date.now() + EMAIL_VERIFY_TOKEN_TTL_MS);
+
+    await db.verificationToken.create({
+      data: {
+        identifier: user.email,
+        token: tokenHash,
+        expires: expiresAt,
+      },
+    });
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+    if (baseUrl) {
+      const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${rawToken}`;
+      await sendEmailVerifyEmail({
+        to: user.email,
+        name: user.name,
+        verifyUrl,
+        expiresInHours: 24,
+      });
+    } else {
+      console.warn(
+        "[register] NEXT_PUBLIC_APP_URL not set — skipping verify email"
+      );
+    }
+  } catch (err) {
+    console.error(
+      "[register] email verify step failed:",
+      err instanceof Error ? err.message : err
+    );
+  }
 
   return { success: true };
 }
