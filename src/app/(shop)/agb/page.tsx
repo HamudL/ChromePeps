@@ -89,7 +89,7 @@ export default function AgbPage() {
             Versandkostenpauschale von 5,99 EUR an. Die genauen Konditionen
             finden Sie auf der{" "}
             <Link href="/versand" className="underline">
-              Seite „Versand"
+              Seite &bdquo;Versand&ldquo;
             </Link>
             .
           </p>
@@ -116,7 +116,7 @@ export default function AgbPage() {
             mit; die Ware wird nach Eingang des Rechnungsbetrages versandt.
             Weitere Informationen finden Sie auf der{" "}
             <Link href="/zahlung" className="underline">
-              Seite „Zahlung"
+              Seite &bdquo;Zahlung&ldquo;
             </Link>
             .
           </p>
