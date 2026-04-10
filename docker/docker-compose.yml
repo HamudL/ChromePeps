@@ -60,7 +60,7 @@ services:
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
 
   nginx:
-    image: nginx:alpine
+    build: ./nginx
     container_name: chromepeps-nginx
     restart: unless-stopped
     ports:

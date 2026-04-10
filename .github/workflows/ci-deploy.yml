@@ -1,0 +1,97 @@
+name: CI & Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Prevent parallel deploys — only one deploy at a time
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  # ──────────────────────────────────────────────
+  # 1. Lint + Typecheck
+  # ──────────────────────────────────────────────
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npx tsc --noEmit
+
+  # ──────────────────────────────────────────────
+  # 2. Unit & Component Tests
+  # ──────────────────────────────────────────────
+  unit-tests:
+    needs: lint-and-typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run test:run
+
+  # ──────────────────────────────────────────────
+  # 3. Build Verification
+  # ──────────────────────────────────────────────
+  build:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Dummy values so the build doesn't fail on missing env vars.
+      # The real values are only needed at runtime on the VPS.
+      NEXT_PUBLIC_APP_URL: https://chromepeps.com
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_placeholder
+      DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run build
+
+  # ──────────────────────────────────────────────
+  # 4. Deploy to VPS (only on push to main)
+  # ──────────────────────────────────────────────
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script_stop: true
+          command_timeout: 12m
+          script: |
+            cd /opt/chromepeps/docker && bash deploy.sh
