@@ -72,6 +72,12 @@
     @apply border-border;
   }
 
+  /* Global keyboard-focus indicator (WCAG 2.4.7) — only shows for
+     keyboard navigation, never for mouse clicks. */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
   body {
     @apply bg-background text-foreground;
   }

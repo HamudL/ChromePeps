@@ -18,7 +18,7 @@ export function Footer() {
           {/* Products */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold">Produkte</h4>
-            <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <nav aria-label="Produkte" className="flex flex-col gap-2 text-sm text-muted-foreground">
               <Link href="/products?category=growth-hormone-peptides" className="hover:text-foreground transition-colors">GH Peptides</Link>
               <Link href="/products?category=metabolic-peptides" className="hover:text-foreground transition-colors">Metabolic Peptides</Link>
               <Link href="/products?category=research-blends" className="hover:text-foreground transition-colors">Research Blends</Link>
@@ -29,7 +29,7 @@ export function Footer() {
           {/* Service / Account */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold">Service</h4>
-            <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <nav aria-label="Service" className="flex flex-col gap-2 text-sm text-muted-foreground">
               <Link href="/kontakt" className="hover:text-foreground transition-colors">Kontakt</Link>
               <Link href="/versand" className="hover:text-foreground transition-colors">Versand</Link>
               <Link href="/zahlung" className="hover:text-foreground transition-colors">Zahlung</Link>
@@ -40,7 +40,7 @@ export function Footer() {
           {/* Legal */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold">Rechtliches</h4>
-            <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <nav aria-label="Rechtliches" className="flex flex-col gap-2 text-sm text-muted-foreground">
               <Link href="/impressum" className="hover:text-foreground transition-colors">Impressum</Link>
               <Link href="/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</Link>
               <Link href="/agb" className="hover:text-foreground transition-colors">AGB</Link>

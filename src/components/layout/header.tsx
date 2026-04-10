@@ -40,12 +40,12 @@ export function Header() {
         {/* Mobile menu */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label="Menü öffnen">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-72">
-            <nav className="flex flex-col gap-4 mt-8">
+            <nav aria-label="Hauptmenü" className="flex flex-col gap-4 mt-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -68,7 +68,7 @@ export function Header() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav aria-label="Hauptnavigation" className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -82,7 +82,7 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="relative" onClick={openCart}>
+          <Button variant="ghost" size="icon" className="relative" onClick={openCart} aria-label={`Warenkorb${totalItems > 0 ? ` (${totalItems})` : ""}`}>
             <ShoppingCart className="h-5 w-5" />
             {totalItems > 0 && (
               <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]">
@@ -94,7 +94,7 @@ export function Header() {
           {session?.user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" aria-label="Benutzerkonto">
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>

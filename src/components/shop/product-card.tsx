@@ -60,7 +60,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
   return (
     <div className="animate-fade-in">
-      <Link href={`/products/${product.slug}`}>
+      <Link href={`/products/${product.slug}`} className="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
         <Card className="group overflow-hidden h-full hover:shadow-lg transition-shadow duration-300">
           {/* Image */}
           <div className="relative aspect-square bg-muted overflow-hidden">
@@ -101,7 +101,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             {/* Quick add */}
             {!isOutOfStock && (
               <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button size="icon" onClick={handleAddToCart}>
+                <Button size="icon" onClick={handleAddToCart} aria-label={`${product.name} in den Warenkorb`}>
                   <ShoppingCart className="h-4 w-4" />
                 </Button>
               </div>
