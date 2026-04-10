@@ -84,6 +84,12 @@ export default function RootLayout({
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
+        {/* Plausible Analytics — cookieless, DSGVO-konform, no consent needed */}
+        <script
+          defer
+          data-domain="chromepeps.com"
+          src="https://analytics.chromepeps.com/js/script.js"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
