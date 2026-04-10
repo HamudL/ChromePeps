@@ -7,7 +7,16 @@
 set -euo pipefail
 
 COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$COMPOSE_DIR")"
 cd "$COMPOSE_DIR"
+
+# Export .env vars so docker compose build args (NEXT_PUBLIC_*) are available
+if [ -f "$PROJECT_DIR/.env" ]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$PROJECT_DIR/.env"
+  set +a
+fi
 
 echo "=== ChromePeps Deploy ==="
 echo "$(date '+%Y-%m-%d %H:%M:%S') Starting deploy..."
