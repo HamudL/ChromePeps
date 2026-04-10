@@ -20,11 +20,11 @@ const nextConfig: NextConfig = {
     // Plausible, Sentry tunnel, and image CDNs are explicitly allowed.
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' analytics.chromepeps.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' analytics.chromepeps.com *.googletagmanager.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com *.edgeone.app",
+      "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com *.edgeone.app *.google-analytics.com *.googletagmanager.com",
       "font-src 'self'",
-      "connect-src 'self' analytics.chromepeps.com *.ingest.de.sentry.io",
+      "connect-src 'self' analytics.chromepeps.com *.ingest.de.sentry.io *.google-analytics.com *.analytics.google.com *.googletagmanager.com",
       "frame-src 'none'",
       "object-src 'none'",
       "base-uri 'self'",
