@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { cacheGet, cacheSet, cacheDelPattern } from "@/lib/redis";
@@ -171,6 +172,7 @@ export async function POST(req: NextRequest) {
   });
 
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
+  revalidatePath("/products");
 
   return NextResponse.json({ success: true, data: product }, { status: 201 });
 }

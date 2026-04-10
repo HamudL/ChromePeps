@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
+import { NewsletterForm } from "@/components/shop/newsletter-form";
 
 export function Footer() {
   return (
@@ -13,6 +14,10 @@ export function Footer() {
               Premium research peptides with verified purity and comprehensive
               certificates of analysis.
             </p>
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-medium">Newsletter</p>
+              <NewsletterForm />
+            </div>
           </div>
 
           {/* Products */}
@@ -31,6 +36,8 @@ export function Footer() {
             <h4 className="text-sm font-semibold">Service</h4>
             <nav aria-label="Service" className="flex flex-col gap-2 text-sm text-muted-foreground">
               <Link href="/kontakt" className="hover:text-foreground transition-colors">Kontakt</Link>
+              <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
+              <Link href="/ueber-uns" className="hover:text-foreground transition-colors">Über uns</Link>
               <Link href="/versand" className="hover:text-foreground transition-colors">Versand</Link>
               <Link href="/zahlung" className="hover:text-foreground transition-colors">Zahlung</Link>
               <Link href="/dashboard" className="hover:text-foreground transition-colors">Mein Konto</Link>

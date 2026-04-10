@@ -1,17 +1,16 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 300; // ISR: regenerate every 5 minutes
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Star, FlaskConical, Thermometer, Weight, Hash, Layers, Dna } from "lucide-react";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 import { productJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ReviewForm } from "@/components/shop/review-form";
+import { ReviewSection } from "@/components/shop/review-section";
 import { ProductCard } from "@/components/shop/product-card";
 import { getRelatedProducts } from "@/lib/products/related";
 import { getBestsellerProductIds } from "@/lib/products/card";
@@ -135,31 +134,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     ...p,
     isBestseller: bestsellerIds.has(p.id),
   }));
-
-  // Review eligibility — computed server-side so the form can decide what
-  // to render without an extra round-trip. The API does the same check again
-  // on submit, so this is purely a UX hint.
-  const session = await auth();
-  const isLoggedIn = !!session?.user;
-  let canReview = false;
-  let alreadyReviewed = false;
-  if (isLoggedIn) {
-    const [hasPurchase, existingReview] = await Promise.all([
-      db.orderItem.findFirst({
-        where: {
-          productId: product.id,
-          order: { userId: session!.user.id, status: "DELIVERED" },
-        },
-        select: { id: true },
-      }),
-      db.review.findFirst({
-        where: { productId: product.id, userId: session!.user.id },
-        select: { id: true },
-      }),
-    ]);
-    canReview = !!hasPurchase;
-    alreadyReviewed = !!existingReview;
-  }
 
   // JSON-LD structured data for Google Rich Results.
   const productSchema = productJsonLd({
@@ -440,12 +414,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         )}
 
         <div className="mt-8">
-          <ReviewForm
-            productId={product.id}
-            canReview={canReview}
-            isLoggedIn={isLoggedIn}
-            alreadyReviewed={alreadyReviewed}
-          />
+          <ReviewSection productId={product.id} />
         </div>
       </section>
 

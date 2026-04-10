@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
+import { WishlistButton } from "@/components/shop/wishlist-button";
 import { formatPrice, cn } from "@/lib/utils";
 import { computeProductBadges, type ProductBadge } from "@/lib/products/badges";
 import type { ProductCardData } from "@/types";
@@ -96,6 +97,11 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                   {product.purity}
                 </Badge>
               )}
+            </div>
+
+            {/* Wishlist heart */}
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <WishlistButton productId={product.id} className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background" />
             </div>
 
             {/* Quick add */}

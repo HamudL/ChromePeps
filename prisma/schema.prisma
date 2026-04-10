@@ -33,7 +33,8 @@ model User {
   cart        Cart?
   reviews     Review[]
   addresses   Address[]
-  promoUsages PromoUsage[]
+  promoUsages   PromoUsage[]
+  wishlistItems WishlistItem[]
 
   @@index([email])
   @@map("users")
@@ -139,8 +140,9 @@ model Product {
   images     ProductImage[]
   cartItems  CartItem[]
   orderItems OrderItem[]
-  reviews    Review[]
-  variants   ProductVariant[]
+  reviews       Review[]
+  variants      ProductVariant[]
+  wishlistItems WishlistItem[]
 
   @@index([slug])
   @@index([categoryId])
@@ -434,4 +436,50 @@ model StripeEvent {
   payloadSnapshot Json?
 
   @@map("stripe_events")
+}
+
+// ============================================================
+// NEWSLETTER
+// ============================================================
+
+model NewsletterSubscriber {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  token       String    @unique @default(cuid())
+  confirmedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@map("newsletter_subscribers")
+}
+
+// ============================================================
+// WISHLIST
+// ============================================================
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlist_items")
+}
+
+// ============================================================
+// SITE SETTINGS (key-value store for admin-configurable options)
+// ============================================================
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
 }

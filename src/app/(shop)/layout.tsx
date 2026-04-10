@@ -2,6 +2,8 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartSheet } from "@/components/shop/cart-sheet";
 import { CookieBanner } from "@/components/shop/cookie-banner";
+import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { WishlistInitializer } from "@/components/shop/wishlist-initializer";
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,11 +15,13 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       >
         Zum Inhalt springen
       </a>
+      <AnnouncementBar />
       <Header />
       <CartSheet />
       <main id="main-content" className="min-h-[calc(100vh-4rem)]">{children}</main>
       <Footer />
       <CookieBanner />
+      <WishlistInitializer />
     </>
   );
 }

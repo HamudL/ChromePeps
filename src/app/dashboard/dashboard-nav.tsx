@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Package, User, MapPin } from "lucide-react";
+import { Package, User, MapPin, Heart } from "lucide-react";
 
 const navItems = [
   {
@@ -20,6 +20,11 @@ const navItems = [
     label: "Addresses",
     href: "/dashboard/addresses",
     icon: MapPin,
+  },
+  {
+    label: "Merkliste",
+    href: "/dashboard/wishlist",
+    icon: Heart,
   },
 ];
 

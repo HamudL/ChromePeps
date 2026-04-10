@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { cacheGet, cacheSet, cacheDel, cacheDelPattern } from "@/lib/redis";
 import { auth } from "@/lib/auth";
@@ -136,12 +137,14 @@ export async function PATCH(
     include: { images: true, variants: true, category: true },
   });
 
-  // Invalidate caches
+  // Invalidate caches (Redis + ISR)
   await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(slug));
   if (newSlug && newSlug !== slug) {
     await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(newSlug));
   }
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
+  revalidatePath(`/products/${newSlug ?? slug}`);
+  revalidatePath("/products");
 
   return NextResponse.json({ success: true, data: product });
 }
@@ -176,6 +179,8 @@ export async function DELETE(
 
   await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(slug));
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
+  revalidatePath(`/products/${slug}`);
+  revalidatePath("/products");
 
   return NextResponse.json({ success: true });
 }

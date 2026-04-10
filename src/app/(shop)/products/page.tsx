@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, PackageSearch } from "lucide-react";
 import { db } from "@/lib/db";

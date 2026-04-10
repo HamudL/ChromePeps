@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const nextConfig: NextConfig = {
   async rewrites() {
@@ -11,6 +16,21 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
+    // CSP: Next.js requires 'unsafe-inline' for hydration scripts and styles.
+    // Plausible, Sentry tunnel, and image CDNs are explicitly allowed.
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' analytics.chromepeps.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com *.edgeone.app",
+      "font-src 'self'",
+      "connect-src 'self' analytics.chromepeps.com *.ingest.de.sentry.io",
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; ");
+
     return [
       {
         source: "/(.*)",
@@ -27,11 +47,16 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          {
+            key: "Content-Security-Policy",
+            value: csp,
+          },
         ],
       },
     ];
   },
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",
@@ -69,7 +94,7 @@ const nextConfig: NextConfig = {
 // Sentry dashboard reference the original TypeScript instead of minified JS.
 // The tunnelRoute "/monitoring" proxies Sentry ingest requests through our
 // own origin so browser adblockers can't block error reporting.
-export default withSentryConfig(nextConfig, {
+export default withSentryConfig(withBundleAnalyzer(nextConfig), {
   // Source-map upload credentials — read from env at build time.
   // If any are missing, the Sentry plugin falls back to a silent no-op so
   // local dev builds keep working even without the token.
