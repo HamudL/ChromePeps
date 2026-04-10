@@ -89,6 +89,10 @@ services:
         condition: service_healthy
     volumes:
       - plausible-data:/var/lib/plausible
+    # Hard cap to prevent BEAM VM from eating all RAM and triggering OOM killer.
+    # 512 MB is plenty for a low-traffic analytics dashboard.
+    mem_limit: 512m
+    memswap_limit: 768m
     ulimits:
       nofile:
         soft: 65535
@@ -101,11 +105,15 @@ services:
       - CLICKHOUSE_DATABASE_URL=http://plausible_events_db:8123/plausible_events_db
       - HTTP_PORT=8000
       - DISABLE_REGISTRATION=${PLAUSIBLE_DISABLE_REGISTRATION:-invite_only}
+      # Tell BEAM to stay within the container memory limit
+      - ERL_FLAGS=+MIscs 256
 
   plausible_db:
     image: postgres:16-alpine
     container_name: chromepeps-plausible-db
     restart: unless-stopped
+    mem_limit: 128m
+    memswap_limit: 192m
     volumes:
       - plausible-pgdata:/var/lib/postgresql/data
     environment:
@@ -122,6 +130,8 @@ services:
     image: clickhouse/clickhouse-server:24.12-alpine
     container_name: chromepeps-clickhouse
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 384m
     volumes:
       - plausible-events:/var/lib/clickhouse
       - plausible-event-logs:/var/log/clickhouse-server
