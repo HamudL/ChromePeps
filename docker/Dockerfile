@@ -47,11 +47,11 @@ ARG SENTRY_PROJECT
 ENV SENTRY_PROJECT=${SENTRY_PROJECT}
 
 # Build Next.js (standalone output).
-# V8 heap limit — keep at 1024 MB to stay within the VPS's 1.8 GB RAM
-# + 2 GB swap envelope without triggering the OOM killer during builds.
+# V8 heap limit — 1536 MB fits within the 1.8 GB RAM + 2 GB swap envelope
+# when the app container is stopped during build (via deploy.sh).
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=1024"
+ENV NODE_OPTIONS="--max-old-space-size=1536"
 RUN npm run build
 
 # ---- Stage 3: Production Runner ----
