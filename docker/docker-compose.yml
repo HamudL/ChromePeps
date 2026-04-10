@@ -13,6 +13,10 @@ services:
         SENTRY_PROJECT: ${SENTRY_PROJECT:-}
     container_name: chromepeps-app
     restart: unless-stopped
+    # Runtime memory cap — prevents the Node.js app from growing unbounded and
+    # triggering the OOM killer on the 1.8 GB VPS.
+    mem_limit: 512m
+    memswap_limit: 768m
     env_file:
       - ../.env
     ports:

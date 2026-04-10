@@ -47,12 +47,11 @@ ARG SENTRY_PROJECT
 ENV SENTRY_PROJECT=${SENTRY_PROJECT}
 
 # Build Next.js (standalone output).
-# Bump V8 heap ceiling — the default ~950 MB isn't enough once we add the
-# Sentry webpack plugin for source map uploads. 2 GB is comfortably inside
-# the VPS's 1.8 GB RAM + 2 GB swap envelope.
+# V8 heap limit — keep at 1024 MB to stay within the VPS's 1.8 GB RAM
+# + 2 GB swap envelope without triggering the OOM killer during builds.
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 RUN npm run build
 
 # ---- Stage 3: Production Runner ----
