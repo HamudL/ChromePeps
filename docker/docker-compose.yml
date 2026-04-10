@@ -70,7 +70,6 @@ services:
       - uploads:/app/public/uploads:ro
     depends_on:
       - app
-      - plausible
 
   # ---------------------------------------------------------------------------
   # Plausible Analytics (self-hosted, cookieless, DSGVO-konform)
@@ -80,6 +79,7 @@ services:
   plausible:
     image: ghcr.io/plausible/community-edition:v3.2.0
     container_name: chromepeps-plausible
+    profiles: ["analytics"]
     restart: unless-stopped
     command: sh -c "/entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
     depends_on:
@@ -111,6 +111,7 @@ services:
   plausible_db:
     image: postgres:16-alpine
     container_name: chromepeps-plausible-db
+    profiles: ["analytics"]
     restart: unless-stopped
     mem_limit: 128m
     memswap_limit: 192m
@@ -129,6 +130,7 @@ services:
   plausible_events_db:
     image: clickhouse/clickhouse-server:24.12-alpine
     container_name: chromepeps-clickhouse
+    profiles: ["analytics"]
     restart: unless-stopped
     mem_limit: 256m
     memswap_limit: 384m
