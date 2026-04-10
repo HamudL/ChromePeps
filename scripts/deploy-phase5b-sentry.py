@@ -94,8 +94,10 @@ STEPS = [
     ),
     (
         "build-app",
-        "cd /opt/chromepeps && set -a && . /tmp/chromepeps.env && set +a && "
-        f"CI=1 {COMPOSE} build --no-cache app 2>&1 | tail -n 25",
+        # pipefail ensures docker's non-zero exit propagates past the tail,
+        # otherwise a failed build looks green in the deploy log.
+        "bash -o pipefail -c 'cd /opt/chromepeps && set -a && . /tmp/chromepeps.env && set +a && "
+        f"CI=1 {COMPOSE} build --no-cache app 2>&1 | tail -n 30'",
         1800,
     ),
     (
