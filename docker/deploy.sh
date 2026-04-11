@@ -50,6 +50,7 @@ docker image prune -f 2>/dev/null || true
 log "[5/7] Building images..."
 if ! docker compose build app; then
   log "ERROR: App build failed! Attempting to restart old image..."
+  docker compose rm -f app 2>/dev/null || true
   docker compose up -d || true
   exit 1
 fi
