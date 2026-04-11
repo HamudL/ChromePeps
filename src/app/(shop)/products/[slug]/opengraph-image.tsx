@@ -1,7 +1,15 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
 import { APP_NAME } from "@/lib/constants";
-import { formatPrice } from "@/lib/utils";
+
+// Inline formatPrice — can't import from @/lib/utils because it pulls in
+// Node.js `crypto` which isn't available in the Edge runtime.
+function formatPrice(cents: number): string {
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
+  }).format(cents / 100);
+}
 
 export const runtime = "edge";
 
