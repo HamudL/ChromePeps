@@ -37,6 +37,8 @@ docker compose exec -T app npx prisma db push --skip-generate 2>&1 || log "DB pu
 log "[3/7] Stopping app + nginx to free memory for build..."
 docker compose stop app nginx 2>/dev/null || true
 docker compose rm -f app nginx 2>/dev/null || true
+# Force-remove by container name in case compose lost track of them
+docker rm -f chromepeps-app chromepeps-nginx 2>/dev/null || true
 
 # 4. Prune Docker build cache + dangling images to free disk
 #    Prevents the multi-GB cache buildup that filled the disk in the past.
