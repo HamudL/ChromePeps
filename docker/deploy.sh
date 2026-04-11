@@ -62,9 +62,18 @@ docker compose build nginx 2>/dev/null || true
 log "[6/7] Starting containers..."
 docker compose up -d
 
+# Wait for app to become healthy before running post-deploy tasks
+log "Waiting for app to become healthy..."
+for i in $(seq 1 30); do
+  if docker compose exec -T app wget -q --spider http://127.0.0.1:3000/ 2>/dev/null; then
+    log "App is healthy after ${i}s"
+    break
+  fi
+  sleep 1
+done
+
 # 7. Run prisma operations in the NEW container
 log "[7/7] Running post-deploy tasks..."
-sleep 5
 docker compose exec -T app npx prisma db push --skip-generate 2>&1 || true
 docker compose exec -T app npx prisma generate 2>&1 || true
 
