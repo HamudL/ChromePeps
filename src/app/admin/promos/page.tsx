@@ -50,6 +50,7 @@ interface PromoCode {
   usedCount: number;
   minOrderCents: number | null;
   isActive: boolean;
+  isCombinable: boolean;
   startsAt: string | null;
   expiresAt: string | null;
   createdAt: string;
@@ -64,6 +65,7 @@ const INITIAL_FORM = {
   maxUses: "",
   minOrderCents: "",
   isActive: true,
+  isCombinable: false,
   startsAt: "",
   expiresAt: "",
 };
@@ -120,6 +122,7 @@ export default function AdminPromosPage() {
         ? (promo.minOrderCents / 100).toString()
         : "",
       isActive: promo.isActive,
+      isCombinable: promo.isCombinable,
       startsAt: promo.startsAt
         ? new Date(promo.startsAt).toISOString().slice(0, 16)
         : "",
@@ -145,6 +148,7 @@ export default function AdminPromosPage() {
         ? Math.round(parseFloat(form.minOrderCents) * 100)
         : null,
       isActive: form.isActive,
+      isCombinable: form.isCombinable,
       startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : null,
       expiresAt: form.expiresAt
         ? new Date(form.expiresAt).toISOString()
@@ -377,20 +381,36 @@ export default function AdminPromosPage() {
                 </div>
               </div>
 
-              {/* Active */}
-              <div className="flex items-center gap-2">
-                <input
-                  id="isActive"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-input"
-                  checked={form.isActive}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, isActive: e.target.checked }))
-                  }
-                />
-                <Label htmlFor="isActive" className="cursor-pointer">
-                  Active
-                </Label>
+              {/* Active + Combinable */}
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="isActive"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-input"
+                    checked={form.isActive}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, isActive: e.target.checked }))
+                    }
+                  />
+                  <Label htmlFor="isActive" className="cursor-pointer">
+                    Active
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="isCombinable"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-input"
+                    checked={form.isCombinable}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, isCombinable: e.target.checked }))
+                    }
+                  />
+                  <Label htmlFor="isCombinable" className="cursor-pointer">
+                    Combinable with other codes
+                  </Label>
+                </div>
               </div>
 
               {formError && (
@@ -470,6 +490,11 @@ export default function AdminPromosPage() {
                         )}
                         {formatDiscount(promo)}
                       </Badge>
+                      {promo.isCombinable && (
+                        <Badge variant="outline" className="border-blue-300 text-blue-700">
+                          Combinable
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">

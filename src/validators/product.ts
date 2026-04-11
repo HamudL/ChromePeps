@@ -14,6 +14,7 @@ export const createProductSchema = z.object({
   categoryId: z.string().cuid(),
   stock: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
+  isBestseller: z.boolean().default(false),
   purity: z.string().max(20).nullish(),
   molecularWeight: z.string().max(50).nullish(),
   sequence: z.string().nullish(),

@@ -9,11 +9,8 @@ import * as React from "react";
 import { EmailLayout } from "./components/email-layout";
 
 interface PasswordResetEmailProps {
-  /** First name or full name — may be empty. */
   name?: string | null;
-  /** Absolute URL with the reset token, e.g. https://chromepeps.com/reset-password/abc123 */
   resetUrl: string;
-  /** Token expiry in minutes — defaults to 60. */
   expiresInMinutes?: number;
 }
 
@@ -30,9 +27,11 @@ export function PasswordResetEmail({
         Passwort zur&uuml;cksetzen
       </Heading>
 
-      <Text className="mt-4 text-sm text-neutral-700">{greeting}</Text>
+      <Text className="mt-4 text-sm leading-6 text-neutral-700">
+        {greeting}
+      </Text>
 
-      <Text className="text-sm text-neutral-700">
+      <Text className="text-sm leading-6 text-neutral-700">
         wir haben eine Anfrage erhalten, das Passwort f&uuml;r Ihr
         ChromePeps-Konto zur&uuml;ckzusetzen. Klicken Sie auf den folgenden
         Button, um ein neues Passwort zu vergeben:
@@ -41,20 +40,20 @@ export function PasswordResetEmail({
       <Section className="my-6 text-center">
         <Button
           href={resetUrl}
-          className="rounded-md bg-neutral-900 px-6 py-3 text-sm font-semibold text-white no-underline"
+          className="rounded-lg bg-zinc-900 px-8 py-4 text-sm font-semibold text-white no-underline"
         >
           Neues Passwort vergeben
         </Button>
       </Section>
 
-      <Text className="text-xs text-neutral-500">
+      <Text className="text-xs leading-5 text-neutral-500">
         Der Link ist aus Sicherheitsgr&uuml;nden {expiresInMinutes} Minuten
         lang g&uuml;ltig. Falls der Button nicht funktioniert, kopieren Sie
         diese Adresse in Ihren Browser:
       </Text>
 
       <Text className="break-all text-xs">
-        <Link href={resetUrl} className="text-neutral-700 underline">
+        <Link href={resetUrl} className="text-zinc-700 underline">
           {resetUrl}
         </Link>
       </Text>

@@ -21,9 +21,9 @@ const faqs: { question: string; answer: string }[] = [
       "Wir akzeptieren Kreditkarte (Visa, Mastercard), SEPA-Lastschrift und weitere Zahlungsarten über unseren Zahlungsdienstleister Stripe. Alle Transaktionen sind SSL-verschlüsselt.",
   },
   {
-    question: "Sind die Peptide für den menschlichen Verzehr bestimmt?",
+    question: "Sind die Produkte für den menschlichen Verzehr bestimmt?",
     answer:
-      "Nein. Alle unsere Produkte sind ausschließlich für die Forschung und In-vitro-Anwendungen bestimmt (Research Use Only). Sie sind nicht für den menschlichen oder tierischen Verzehr zugelassen.",
+      "Nein. Alle unsere Produkte sind ausschließlich als Referenzmaterialien für die In-vitro-Forschung und den Laborgebrauch bestimmt (Research Use Only). Sie sind nicht für den menschlichen oder tierischen Verzehr, noch für therapeutische, diagnostische oder medizinische Zwecke vorgesehen.",
   },
   {
     question: "Gibt es ein Analysezertifikat (CoA)?",
@@ -31,9 +31,9 @@ const faqs: { question: string; answer: string }[] = [
       "Ja. Zu jedem Produkt stellen wir ein Analysezertifikat mit HPLC- und MS-Daten bereit. Sie finden das CoA auf der jeweiligen Produktseite oder können es per E-Mail anfordern.",
   },
   {
-    question: "Wie lagere ich die Peptide richtig?",
+    question: "Wie lagere ich die Referenzmaterialien richtig?",
     answer:
-      "Die empfohlene Lagertemperatur finden Sie auf der Produktseite unter \u201ESpecifications\u201C. In der Regel sollten Peptide bei -20 °C trocken und lichtgeschützt gelagert werden. Geöffnete Vials sollten zeitnah verbraucht werden.",
+      "Die empfohlene Lagertemperatur finden Sie auf der Produktseite unter \u201ESpecifications\u201C. In der Regel sollten Peptid-Referenzmaterialien bei -20 \u00B0C trocken und lichtgesch\u00FCtzt gelagert werden. Ge\u00F6ffnete Vials sollten zeitnah im Labor verwendet werden.",
   },
   {
     question: "Kann ich meine Bestellung stornieren oder ändern?",

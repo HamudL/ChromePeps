@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageUpload } from "@/components/admin/image-upload";
+import { VariantEditor, type VariantRow } from "@/components/admin/variant-editor";
 
 interface Category {
   id: string;
@@ -38,6 +39,15 @@ interface ProductImage {
   sortOrder: number;
 }
 
+interface ProductVariant {
+  id: string;
+  name: string;
+  sku: string;
+  priceInCents: number;
+  stock: number;
+  isActive: boolean;
+}
+
 interface ProductData {
   id: string;
   name: string;
@@ -49,6 +59,7 @@ interface ProductData {
   categoryId: string;
   stock: number;
   isActive: boolean;
+  isBestseller: boolean;
   purity: string | null;
   molecularWeight: string | null;
   sequence: string | null;
@@ -57,6 +68,7 @@ interface ProductData {
   form: string | null;
   weight: string | null;
   images: ProductImage[];
+  variants: ProductVariant[];
   category: Category;
 }
 
@@ -73,6 +85,7 @@ export default function EditProductPage({
   const [error, setError] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([""]);
+  const [variants, setVariants] = useState<VariantRow[]>([]);
   const [product, setProduct] = useState<ProductData | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -85,6 +98,7 @@ export default function EditProductPage({
     categoryId: "",
     stock: "0",
     isActive: true,
+    isBestseller: false,
     purity: "",
     molecularWeight: "",
     sequence: "",
@@ -123,6 +137,7 @@ export default function EditProductPage({
           categoryId: p.categoryId,
           stock: String(p.stock),
           isActive: p.isActive,
+          isBestseller: p.isBestseller ?? false,
           purity: p.purity ?? "",
           molecularWeight: p.molecularWeight ?? "",
           sequence: p.sequence ?? "",
@@ -133,6 +148,16 @@ export default function EditProductPage({
         });
         setImageUrls(
           p.images.length > 0 ? p.images.map((img) => img.url) : [""]
+        );
+        setVariants(
+          (p.variants ?? []).map((v) => ({
+            id: v.id,
+            name: v.name,
+            sku: v.sku,
+            priceInCents: v.priceInCents,
+            stock: v.stock,
+            isActive: v.isActive,
+          }))
         );
       } catch {
         setError("Failed to load product data.");
@@ -174,6 +199,7 @@ export default function EditProductPage({
       categoryId: form.categoryId,
       stock: parseInt(form.stock) || 0,
       isActive: form.isActive,
+      isBestseller: form.isBestseller,
       purity: form.purity || null,
       molecularWeight: form.molecularWeight || null,
       sequence: form.sequence || null,
@@ -182,6 +208,13 @@ export default function EditProductPage({
       form: form.form || null,
       weight: form.weight || null,
       images: images.length > 0 ? images : [],
+      variants: variants.map((v) => ({
+        name: v.name,
+        sku: v.sku,
+        priceInCents: v.priceInCents,
+        stock: v.stock,
+        isActive: v.isActive,
+      })),
     };
 
     try {
@@ -342,18 +375,33 @@ export default function EditProductPage({
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <Label htmlFor="isActive">Active</Label>
-              <input
-                id="isActive"
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(e) => updateField("isActive", e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <span className="text-sm text-muted-foreground">
-                Product visible in shop
-              </span>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="isActive">Active</Label>
+                <input
+                  id="isActive"
+                  type="checkbox"
+                  checked={form.isActive}
+                  onChange={(e) => updateField("isActive", e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Product visible in shop
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="isBestseller">Bestseller</Label>
+                <input
+                  id="isBestseller"
+                  type="checkbox"
+                  checked={form.isBestseller}
+                  onChange={(e) => updateField("isBestseller", e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Show bestseller badge
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -493,6 +541,19 @@ export default function EditProductPage({
                 rows={3}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Variants */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Variants</CardTitle>
+            <CardDescription>
+              Manage product variants (e.g. different sizes/weights).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <VariantEditor variants={variants} onChange={setVariants} />
           </CardContent>
         </Card>
 

@@ -126,6 +126,7 @@ model Product {
   categoryId            String
   stock                 Int            @default(0)
   isActive              Boolean        @default(true)
+  isBestseller          Boolean        @default(false)
   purity                String?        @db.VarChar(20)
   molecularWeight       String?        @db.VarChar(50)
   sequence              String?        @db.Text
@@ -221,6 +222,7 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   REFUNDED
+  ARCHIVED
 }
 
 enum PaymentStatus {
@@ -396,6 +398,7 @@ model PromoCode {
   usedCount     Int          @default(0)
   minOrderCents Int?         // minimum order subtotal in cents
   isActive      Boolean      @default(true)
+  isCombinable  Boolean      @default(false)
   startsAt      DateTime?
   expiresAt     DateTime?
   createdAt     DateTime     @default(now())

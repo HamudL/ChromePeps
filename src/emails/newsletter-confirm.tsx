@@ -21,29 +21,29 @@ export function NewsletterConfirmEmail({
         Newsletter-Anmeldung
       </Heading>
 
-      <Text className="mt-4 text-sm text-neutral-700">
+      <Text className="mt-4 text-sm leading-6 text-neutral-700">
         Sie haben sich f&uuml;r den ChromePeps-Newsletter angemeldet.
         Bitte best&auml;tigen Sie Ihre Anmeldung mit dem Button unten
         (Double-Opt-In gem&auml;&szlig; DSGVO).
       </Text>
 
-      <Section className="mt-6 text-center">
+      <Section className="mt-6 mb-6 text-center">
         <Button
           href={confirmUrl}
-          className="rounded-md bg-blue-600 px-6 py-3 text-sm font-semibold text-white no-underline"
+          className="rounded-lg bg-zinc-900 px-8 py-4 text-sm font-semibold text-white no-underline"
         >
           Anmeldung best&auml;tigen
         </Button>
       </Section>
 
-      <Text className="mt-6 text-xs text-neutral-500">
+      <Text className="text-xs leading-5 text-neutral-500">
         Falls Sie sich nicht angemeldet haben, k&ouml;nnen Sie diese E-Mail
         ignorieren. Der Link ist 7 Tage g&uuml;ltig.
       </Text>
 
-      <Text className="mt-4 text-xs text-neutral-500">
+      <Text className="mt-3 text-xs text-neutral-500">
         Oder kopieren Sie diesen Link:{" "}
-        <Link href={confirmUrl} className="text-blue-600 underline">
+        <Link href={confirmUrl} className="text-zinc-700 underline">
           {confirmUrl}
         </Link>
       </Text>

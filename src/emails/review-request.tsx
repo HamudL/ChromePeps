@@ -1,5 +1,4 @@
 import {
-  Button,
   Column,
   Heading,
   Link,
@@ -37,17 +36,19 @@ export function ReviewRequestEmail({
         Wie war Ihre Bestellung?
       </Heading>
 
-      <Text className="mt-4 text-sm text-neutral-700">{greeting}</Text>
+      <Text className="mt-4 text-sm leading-6 text-neutral-700">
+        {greeting}
+      </Text>
 
-      <Text className="text-sm text-neutral-700">
+      <Text className="text-sm leading-6 text-neutral-700">
         vielen Dank, dass Sie bei ChromePeps bestellt haben &ndash; wir hoffen,
         alles ist gut bei Ihnen angekommen. Wenn Sie einen Moment Zeit haben,
         w&uuml;rden wir uns sehr &uuml;ber eine kurze Bewertung freuen. Ihre
         R&uuml;ckmeldung hilft anderen Forschenden bei der Auswahl.
       </Text>
 
-      <Section className="mt-4 rounded-md bg-neutral-50 p-4">
-        <Text className="m-0 text-xs uppercase tracking-wide text-neutral-500">
+      <Section className="mt-4 rounded-lg bg-neutral-50 p-4 border border-neutral-100">
+        <Text className="m-0 text-[10px] uppercase tracking-widest text-neutral-500 font-medium">
           Bestellnummer
         </Text>
         <Text className="m-0 text-sm font-semibold text-neutral-900">
@@ -61,7 +62,7 @@ export function ReviewRequestEmail({
 
       <Section className="mt-2">
         {products.map((product, idx) => (
-          <Row key={`${product.name}-${idx}`} className="py-3">
+          <Row key={`${product.name}-${idx}`} className="py-3 border-b border-neutral-100">
             <Column>
               <Text className="m-0 text-sm font-medium text-neutral-900">
                 {product.name}
@@ -75,7 +76,7 @@ export function ReviewRequestEmail({
             <Column className="text-right">
               <Link
                 href={product.reviewUrl}
-                className="rounded-md bg-neutral-900 px-3 py-2 text-xs font-semibold text-white no-underline"
+                className="rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white no-underline"
               >
                 Bewerten
               </Link>
@@ -84,7 +85,7 @@ export function ReviewRequestEmail({
         ))}
       </Section>
 
-      <Text className="mt-6 text-xs text-neutral-500">
+      <Text className="mt-6 text-xs leading-5 text-neutral-500">
         Sie k&ouml;nnen eine Bewertung jederzeit auch sp&auml;ter auf der
         Produktseite abgeben, solange Sie eingeloggt sind.
       </Text>

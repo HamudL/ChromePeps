@@ -49,10 +49,10 @@ async function getDashboardStats() {
     monthlyRevenue,
   ] = await Promise.all([
     db.order.aggregate({
-      where: { paymentStatus: "SUCCEEDED" },
+      where: { paymentStatus: "SUCCEEDED", status: { not: "ARCHIVED" } },
       _sum: { totalInCents: true },
     }),
-    db.order.count(),
+    db.order.count({ where: { status: { not: "ARCHIVED" } } }),
     db.product.count({ where: { isActive: true } }),
     db.user.count(),
     db.order.findMany({
@@ -76,10 +76,12 @@ async function getDashboardStats() {
     }),
   ]);
 
-  const revenueByMonth: Record<string, number> = {};
+  const revenueByMonth: Record<string, { revenue: number; orders: number }> = {};
   for (const order of monthlyRevenue) {
     const key = `${order.createdAt.getFullYear()}-${String(order.createdAt.getMonth() + 1).padStart(2, "0")}`;
-    revenueByMonth[key] = (revenueByMonth[key] ?? 0) + order.totalInCents;
+    if (!revenueByMonth[key]) revenueByMonth[key] = { revenue: 0, orders: 0 };
+    revenueByMonth[key].revenue += order.totalInCents;
+    revenueByMonth[key].orders += 1;
   }
 
   return {
@@ -90,7 +92,7 @@ async function getDashboardStats() {
     recentOrders,
     revenueByMonth: Object.entries(revenueByMonth)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, revenue]) => ({ month, revenue })),
+      .map(([month, data]) => ({ month, revenue: data.revenue, orders: data.orders })),
     ordersByStatus: ordersByStatus.map((g) => ({
       status: g.status,
       count: g._count,

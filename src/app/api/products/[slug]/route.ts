@@ -107,8 +107,7 @@ export async function PATCH(
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, images, variants: _variants, ...updateData } = parsed.data;
+  const { id, images, variants: incomingVariants, ...updateData } = parsed.data;
   const newSlug = updateData.name ? slugify(updateData.name) : undefined;
 
   // Check for slug collision when renaming
@@ -122,19 +121,59 @@ export async function PATCH(
     }
   }
 
-  const product = await db.product.update({
-    where: { id },
-    data: {
-      ...updateData,
-      ...(newSlug && { slug: newSlug }),
-      ...(images !== undefined && {
-        images: {
-          deleteMany: {},
-          createMany: { data: images },
+  const product = await db.$transaction(async (tx) => {
+    await tx.product.update({
+      where: { id },
+      data: {
+        ...updateData,
+        ...(newSlug && { slug: newSlug }),
+        ...(images !== undefined && {
+          images: {
+            deleteMany: {},
+            createMany: { data: images },
+          },
+        }),
+      },
+    });
+
+    // Sync variants: upsert by SKU, remove those no longer present
+    if (incomingVariants !== undefined) {
+      const incomingSkus = new Set(incomingVariants.map((v) => v.sku));
+
+      // Delete variants whose SKU is no longer in the list
+      await tx.productVariant.deleteMany({
+        where: {
+          productId: id,
+          sku: { notIn: [...incomingSkus] },
         },
-      }),
-    },
-    include: { images: true, variants: true, category: true },
+      });
+
+      // Upsert each variant
+      for (const v of incomingVariants) {
+        await tx.productVariant.upsert({
+          where: { sku: v.sku },
+          update: {
+            name: v.name,
+            priceInCents: v.priceInCents,
+            stock: v.stock,
+            isActive: v.isActive ?? true,
+          },
+          create: {
+            productId: id,
+            name: v.name,
+            sku: v.sku,
+            priceInCents: v.priceInCents,
+            stock: v.stock,
+            isActive: v.isActive ?? true,
+          },
+        });
+      }
+    }
+
+    return tx.product.findUnique({
+      where: { id },
+      include: { images: true, variants: true, category: true },
+    });
   });
 
   // Invalidate caches (Redis + ISR)

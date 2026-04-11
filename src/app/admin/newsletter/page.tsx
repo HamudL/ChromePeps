@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { Mail, CheckCircle2, Clock } from "lucide-react";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { NewsletterDeleteButton } from "@/components/admin/newsletter-delete-button";
 import { ADMIN_ITEMS_PER_PAGE } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -122,6 +123,7 @@ export default async function AdminNewsletterPage({ searchParams }: Props) {
                 <TableHead>Status</TableHead>
                 <TableHead>Subscribed</TableHead>
                 <TableHead>Confirmed</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,11 +148,17 @@ export default async function AdminNewsletterPage({ searchParams }: Props) {
                         ? format(new Date(sub.confirmedAt), "MMM d, yyyy HH:mm")
                         : "\u2014"}
                     </TableCell>
+                    <TableCell>
+                      <NewsletterDeleteButton
+                        subscriberId={sub.id}
+                        email={sub.email}
+                      />
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
+                  <TableCell colSpan={5} className="text-center py-8">
                     <p className="text-muted-foreground">No subscribers yet.</p>
                   </TableCell>
                 </TableRow>

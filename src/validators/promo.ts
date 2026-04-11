@@ -13,6 +13,7 @@ export const createPromoCodeSchema = z.object({
   maxUses: z.number().int().positive().nullable().optional(),
   minOrderCents: z.number().int().min(0).nullable().optional(),
   isActive: z.boolean().default(true),
+  isCombinable: z.boolean().default(false),
   startsAt: z.string().datetime().nullable().optional(),
   expiresAt: z.string().datetime().nullable().optional(),
 });

@@ -50,7 +50,6 @@ interface OrderConfirmationEmailProps {
   totalInCents: number;
   paymentMethod: "STRIPE" | "BANK_TRANSFER";
   shippingAddress?: OrderConfirmationShippingAddress | null;
-  /** Required when paymentMethod === "BANK_TRANSFER". */
   bankDetails?: OrderConfirmationBankDetails;
 }
 
@@ -85,18 +84,20 @@ export function OrderConfirmationEmail({
         Vielen Dank f&uuml;r Ihre Bestellung!
       </Heading>
 
-      <Text className="mt-4 text-sm text-neutral-700">{greeting}</Text>
+      <Text className="mt-4 text-sm leading-6 text-neutral-700">
+        {greeting}
+      </Text>
 
-      <Text className="text-sm text-neutral-700">
+      <Text className="text-sm leading-6 text-neutral-700">
         {isBank
           ? "wir haben Ihre Bestellung erhalten. Sobald Ihre Zahlung per Vorkasse bei uns eingegangen ist, bereiten wir den Versand vor."
           : "wir haben Ihre Zahlung erhalten und bereiten Ihre Bestellung zum Versand vor."}
       </Text>
 
-      <Section className="mt-4 rounded-md bg-neutral-50 p-4">
+      <Section className="mt-4 rounded-lg bg-neutral-50 p-4 border border-neutral-100">
         <Row>
           <Column>
-            <Text className="m-0 text-xs uppercase tracking-wide text-neutral-500">
+            <Text className="m-0 text-[10px] uppercase tracking-widest text-neutral-500 font-medium">
               Bestellnummer
             </Text>
             <Text className="m-0 text-sm font-semibold text-neutral-900">
@@ -104,7 +105,7 @@ export function OrderConfirmationEmail({
             </Text>
           </Column>
           <Column>
-            <Text className="m-0 text-xs uppercase tracking-wide text-neutral-500">
+            <Text className="m-0 text-[10px] uppercase tracking-widest text-neutral-500 font-medium">
               Datum
             </Text>
             <Text className="m-0 text-sm font-semibold text-neutral-900">
@@ -115,26 +116,26 @@ export function OrderConfirmationEmail({
       </Section>
 
       {isBank && bankDetails && (
-        <Section className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4">
+        <Section className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
           <Text className="m-0 text-sm font-semibold text-amber-900">
             Bitte &uuml;berweisen Sie den Gesamtbetrag
           </Text>
-          <Text className="m-0 mt-2 text-xs text-amber-900">
+          <Text className="m-0 mt-2 text-xs text-amber-800">
             Kontoinhaber: {bankDetails.accountHolder}
           </Text>
-          <Text className="m-0 text-xs text-amber-900">
+          <Text className="m-0 text-xs text-amber-800">
             IBAN: {bankDetails.iban}
           </Text>
-          <Text className="m-0 text-xs text-amber-900">
+          <Text className="m-0 text-xs text-amber-800">
             BIC: {bankDetails.bic}
           </Text>
-          <Text className="m-0 text-xs text-amber-900">
+          <Text className="m-0 text-xs text-amber-800">
             Bank: {bankDetails.bankName}
           </Text>
-          <Text className="m-0 mt-2 text-xs text-amber-900">
+          <Text className="m-0 mt-2 text-xs text-amber-800">
             Verwendungszweck: <strong>{orderNumber}</strong>
           </Text>
-          <Text className="m-0 mt-2 text-xs text-amber-900">
+          <Text className="m-0 mt-2 text-xs text-amber-800">
             Betrag: <strong>{formatPrice(totalInCents)}</strong>
           </Text>
         </Section>
@@ -146,7 +147,7 @@ export function OrderConfirmationEmail({
 
       <Section className="mt-2">
         {items.map((item, idx) => (
-          <Row key={`${item.sku}-${idx}`} className="py-2">
+          <Row key={`${item.sku}-${idx}`} className="py-2 border-b border-neutral-100">
             <Column>
               <Text className="m-0 text-sm text-neutral-900">{item.name}</Text>
               {item.variant && (
@@ -167,9 +168,7 @@ export function OrderConfirmationEmail({
         ))}
       </Section>
 
-      <Hr className="my-4 border-neutral-200" />
-
-      <Section>
+      <Section className="mt-4 rounded-lg bg-neutral-50 p-4 border border-neutral-100">
         <Row>
           <Column>
             <Text className="m-0 text-sm text-neutral-600">Zwischensumme</Text>
@@ -183,10 +182,10 @@ export function OrderConfirmationEmail({
         {discountInCents > 0 && (
           <Row>
             <Column>
-              <Text className="m-0 text-sm text-neutral-600">Rabatt</Text>
+              <Text className="m-0 text-sm text-green-700">Rabatt</Text>
             </Column>
             <Column className="text-right">
-              <Text className="m-0 text-sm text-neutral-900">
+              <Text className="m-0 text-sm font-medium text-green-700">
                 &minus;{formatPrice(discountInCents)}
               </Text>
             </Column>
@@ -207,7 +206,7 @@ export function OrderConfirmationEmail({
         <Row>
           <Column>
             <Text className="m-0 text-sm text-neutral-600">
-              Mehrwertsteuer (enthalten)
+              MwSt. (enthalten)
             </Text>
           </Column>
           <Column className="text-right">
@@ -219,12 +218,12 @@ export function OrderConfirmationEmail({
         <Hr className="my-2 border-neutral-200" />
         <Row>
           <Column>
-            <Text className="m-0 text-base font-semibold text-neutral-900">
+            <Text className="m-0 text-base font-bold text-neutral-900">
               Gesamtsumme
             </Text>
           </Column>
           <Column className="text-right">
-            <Text className="m-0 text-base font-semibold text-neutral-900">
+            <Text className="m-0 text-base font-bold text-neutral-900">
               {formatPrice(totalInCents)}
             </Text>
           </Column>
@@ -236,28 +235,30 @@ export function OrderConfirmationEmail({
           <Heading className="mt-6 text-base font-semibold text-neutral-900">
             Lieferadresse
           </Heading>
-          <Text className="m-0 mt-1 text-sm text-neutral-700">
-            {shippingAddress.firstName} {shippingAddress.lastName}
-          </Text>
-          {shippingAddress.company && (
+          <Section className="mt-2 rounded-lg bg-neutral-50 p-4 border border-neutral-100">
             <Text className="m-0 text-sm text-neutral-700">
-              {shippingAddress.company}
+              {shippingAddress.firstName} {shippingAddress.lastName}
             </Text>
-          )}
-          <Text className="m-0 text-sm text-neutral-700">
-            {shippingAddress.street}
-          </Text>
-          {shippingAddress.street2 && (
+            {shippingAddress.company && (
+              <Text className="m-0 text-sm text-neutral-700">
+                {shippingAddress.company}
+              </Text>
+            )}
             <Text className="m-0 text-sm text-neutral-700">
-              {shippingAddress.street2}
+              {shippingAddress.street}
             </Text>
-          )}
-          <Text className="m-0 text-sm text-neutral-700">
-            {shippingAddress.postalCode} {shippingAddress.city}
-          </Text>
-          <Text className="m-0 text-sm text-neutral-700">
-            {shippingAddress.country}
-          </Text>
+            {shippingAddress.street2 && (
+              <Text className="m-0 text-sm text-neutral-700">
+                {shippingAddress.street2}
+              </Text>
+            )}
+            <Text className="m-0 text-sm text-neutral-700">
+              {shippingAddress.postalCode} {shippingAddress.city}
+            </Text>
+            <Text className="m-0 text-sm text-neutral-700">
+              {shippingAddress.country}
+            </Text>
+          </Section>
         </>
       )}
 
@@ -265,7 +266,7 @@ export function OrderConfirmationEmail({
         <Text className="mt-6 text-sm text-neutral-700">
           Sie k&ouml;nnen den Status Ihrer Bestellung jederzeit in Ihrem Konto
           einsehen:{" "}
-          <Link href={orderUrl} className="text-neutral-900 underline">
+          <Link href={orderUrl} className="text-zinc-900 underline font-medium">
             Bestellung anzeigen
           </Link>
         </Text>

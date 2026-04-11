@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
       maxUses: parsed.data.maxUses ?? null,
       minOrderCents: parsed.data.minOrderCents ?? null,
       isActive: parsed.data.isActive,
+      isCombinable: parsed.data.isCombinable,
       startsAt: parsed.data.startsAt ? new Date(parsed.data.startsAt) : null,
       expiresAt: parsed.data.expiresAt
         ? new Date(parsed.data.expiresAt)

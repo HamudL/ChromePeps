@@ -23,6 +23,7 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   DELIVERED: "Delivered",
   CANCELLED: "Cancelled",
   REFUNDED: "Refunded",
+  ARCHIVED: "Archived",
 };
 
 export const ORDER_STATUS_COLORS: Record<string, string> = {
@@ -32,6 +33,7 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
   DELIVERED: "bg-green-100 text-green-800",
   CANCELLED: "bg-red-100 text-red-800",
   REFUNDED: "bg-gray-100 text-gray-800",
+  ARCHIVED: "bg-zinc-100 text-zinc-500",
 };
 
 export const CACHE_KEYS = {
@@ -84,7 +86,7 @@ export const SELLER_DETAILS = {
 export const TAX_RATE = 0.19;
 
 export const RESEARCH_DISCLAIMER =
-  "All products are strictly for in-vitro research and laboratory use only. Not for human consumption. Not intended to diagnose, treat, cure, or prevent any disease.";
+  "All products are sold strictly as reference materials for in-vitro research and laboratory use only. They are not intended for human or animal consumption, nor for any therapeutic, diagnostic, or medicinal purpose. By purchasing, you confirm that you are a qualified researcher or laboratory professional.";
 
 // ---- Email configuration ----
 // These are read at runtime on the server only. Keep the fallbacks safe for

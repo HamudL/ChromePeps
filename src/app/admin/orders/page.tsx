@@ -35,6 +35,7 @@ const STATUSES = [
   "DELIVERED",
   "CANCELLED",
   "REFUNDED",
+  "ARCHIVED",
 ] as const;
 
 interface Props {
@@ -51,7 +52,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   const where: Prisma.OrderWhereInput =
     statusFilter !== "ALL"
       ? { status: statusFilter as Prisma.EnumOrderStatusFilter }
-      : {};
+      : { status: { not: "ARCHIVED" } };
 
   const [orders, total] = await Promise.all([
     db.order.findMany({

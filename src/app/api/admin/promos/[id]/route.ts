@@ -79,6 +79,9 @@ export async function PATCH(
       ...(parsed.data.isActive !== undefined && {
         isActive: parsed.data.isActive,
       }),
+      ...(parsed.data.isCombinable !== undefined && {
+        isCombinable: parsed.data.isCombinable,
+      }),
       ...(parsed.data.startsAt !== undefined && {
         startsAt: parsed.data.startsAt ? new Date(parsed.data.startsAt) : null,
       }),

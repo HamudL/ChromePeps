@@ -54,12 +54,23 @@ export interface InvoicePdfInput {
 
 // -------- Styles --------
 
+const ACCENT = "#18181b"; // zinc-900
+
 const styles = StyleSheet.create({
   page: {
     padding: 48,
+    paddingBottom: 80,
     fontSize: 10,
     fontFamily: "Helvetica",
     color: "#1f2937",
+  },
+  accentBar: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: ACCENT,
   },
   headerRow: {
     flexDirection: "row",
@@ -68,86 +79,99 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   brand: {
-    fontSize: 20,
+    fontSize: 22,
     fontFamily: "Helvetica-Bold",
-    color: "#111827",
+    color: ACCENT,
+    letterSpacing: 0.5,
   },
   brandTag: {
-    fontSize: 9,
-    color: "#6b7280",
+    fontSize: 8,
+    color: "#9ca3af",
     marginTop: 2,
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   sellerBlock: {
     textAlign: "right",
     fontSize: 9,
-    color: "#4b5563",
-    lineHeight: 1.4,
+    color: "#6b7280",
+    lineHeight: 1.5,
   },
   title: {
     fontSize: 18,
     fontFamily: "Helvetica-Bold",
-    color: "#111827",
+    color: ACCENT,
     marginTop: 12,
     marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 10,
+    color: "#9ca3af",
   },
   metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 16,
-    marginBottom: 16,
+    marginTop: 20,
+    marginBottom: 20,
   },
   metaCol: {
     flexDirection: "column",
     maxWidth: "48%",
   },
   metaLabel: {
-    fontSize: 8,
-    color: "#6b7280",
+    fontSize: 7,
+    color: "#9ca3af",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+    fontFamily: "Helvetica-Bold",
   },
   metaValue: {
     fontSize: 10,
     color: "#111827",
-    marginTop: 1,
-    marginBottom: 6,
+    marginTop: 2,
+    marginBottom: 8,
   },
   addressHeading: {
     fontFamily: "Helvetica-Bold",
     fontSize: 10,
-    marginBottom: 4,
-    color: "#111827",
+    marginBottom: 6,
+    color: ACCENT,
   },
   addressLine: {
     fontSize: 10,
     color: "#374151",
-    lineHeight: 1.4,
-  },
-  divider: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-    marginVertical: 14,
+    lineHeight: 1.5,
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f3f4f6",
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#e5e7eb",
+    backgroundColor: ACCENT,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     fontFamily: "Helvetica-Bold",
-    fontSize: 9,
-    color: "#111827",
+    fontSize: 8,
+    color: "#ffffff",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
   },
-  tableRow: {
+  tableRowEven: {
     flexDirection: "row",
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
     fontSize: 9,
     color: "#1f2937",
+    backgroundColor: "#ffffff",
+  },
+  tableRowOdd: {
+    flexDirection: "row",
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+    fontSize: 9,
+    color: "#1f2937",
+    backgroundColor: "#fafafa",
   },
   colDescription: { flex: 3 },
   colSku: { flex: 1.3 },
@@ -156,49 +180,55 @@ const styles = StyleSheet.create({
   colTotal: { flex: 1.3, textAlign: "right" },
   variantLine: {
     fontSize: 8,
-    color: "#6b7280",
+    color: "#9ca3af",
     marginTop: 1,
   },
   totalsBlock: {
     alignSelf: "flex-end",
     width: "55%",
-    marginTop: 12,
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+    paddingTop: 8,
   },
   totalsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 3,
     fontSize: 10,
-    color: "#374151",
+    color: "#4b5563",
   },
   totalsRowGrand: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingTop: 6,
-    marginTop: 4,
-    borderTopWidth: 1,
-    borderTopColor: "#111827",
-    fontSize: 12,
+    paddingTop: 8,
+    marginTop: 6,
+    borderTopWidth: 2,
+    borderTopColor: ACCENT,
+    fontSize: 13,
     fontFamily: "Helvetica-Bold",
-    color: "#111827",
+    color: ACCENT,
   },
   footer: {
     position: "absolute",
-    bottom: 36,
+    bottom: 28,
     left: 48,
     right: 48,
-    fontSize: 8,
-    color: "#6b7280",
+    fontSize: 7,
+    color: "#9ca3af",
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
     paddingTop: 8,
-    lineHeight: 1.4,
+    lineHeight: 1.5,
   },
   notice: {
-    fontSize: 9,
-    color: "#4b5563",
-    marginTop: 14,
-    lineHeight: 1.4,
+    fontSize: 8,
+    color: "#6b7280",
+    marginTop: 20,
+    lineHeight: 1.5,
+    padding: 10,
+    backgroundColor: "#fafafa",
+    borderRadius: 4,
   },
 });
 
@@ -213,7 +243,7 @@ function paymentMethodLabel(method: string): string {
     case "STRIPE":
       return "Kreditkarte / Stripe";
     case "BANK_TRANSFER":
-      return "Vorkasse (Überweisung)";
+      return "Vorkasse (\u00DCberweisung)";
     default:
       return method;
   }
@@ -264,11 +294,14 @@ export function InvoiceDocument(props: InvoicePdfInput) {
       subject={`Rechnung zur Bestellung ${orderNumber}`}
     >
       <Page size="A4" style={styles.page}>
+        {/* Accent bar at top */}
+        <View style={styles.accentBar} fixed />
+
         {/* Header with brand and seller block */}
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.brand}>{APP_NAME}</Text>
-            <Text style={styles.brandTag}>Premium Research Peptides</Text>
+            <Text style={styles.brandTag}>Research Peptides</Text>
           </View>
           <View style={styles.sellerBlock}>
             <Text>{SELLER_DETAILS.companyName}</Text>
@@ -281,14 +314,14 @@ export function InvoiceDocument(props: InvoicePdfInput) {
         </View>
 
         <Text style={styles.title}>Rechnung</Text>
-        <Text style={{ fontSize: 10, color: "#6b7280" }}>
+        <Text style={styles.subtitle}>
           Rechnungs-Nr. {invoiceNumber}
         </Text>
 
         {/* Meta */}
         <View style={styles.metaRow}>
           <View style={styles.metaCol}>
-            <Text style={styles.addressHeading}>Rechnungsempfänger</Text>
+            <Text style={styles.addressHeading}>Rechnungsempf\u00e4nger</Text>
             {customerName && (
               <Text style={styles.addressLine}>{customerName}</Text>
             )}
@@ -323,13 +356,13 @@ export function InvoiceDocument(props: InvoicePdfInput) {
 
             <Text style={styles.metaLabel}>Zahlung</Text>
             <Text style={styles.metaValue}>
-              {paymentMethodLabel(paymentMethod)} ·{" "}
+              {paymentMethodLabel(paymentMethod)} \u00b7{" "}
               {paymentStatusLabel(paymentStatus)}
             </Text>
           </View>
         </View>
 
-        {/* Items */}
+        {/* Items table */}
         <View style={styles.tableHeader}>
           <Text style={styles.colDescription}>Beschreibung</Text>
           <Text style={styles.colSku}>SKU</Text>
@@ -339,7 +372,10 @@ export function InvoiceDocument(props: InvoicePdfInput) {
         </View>
 
         {items.map((item, idx) => (
-          <View style={styles.tableRow} key={`${item.sku}-${idx}`}>
+          <View
+            style={idx % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd}
+            key={`${item.sku}-${idx}`}
+          >
             <View style={styles.colDescription}>
               <Text>{item.name}</Text>
               {item.variant && (
@@ -389,26 +425,29 @@ export function InvoiceDocument(props: InvoicePdfInput) {
           </View>
         </View>
 
-        <Text style={styles.notice}>
-          Im Gesamtbetrag ist die gesetzliche Mehrwertsteuer von{" "}
-          {Math.round(TAX_RATE * 100)}% enthalten. Diese Rechnung ist nach
-          § 14 UStG erstellt und ohne Unterschrift gültig. Alle Produkte sind
-          ausschließlich für In-vitro-Forschung bestimmt.
-        </Text>
+        <View style={styles.notice}>
+          <Text>
+            Im Gesamtbetrag ist die gesetzliche Mehrwertsteuer von{" "}
+            {Math.round(TAX_RATE * 100)}% enthalten. Diese Rechnung ist nach
+            \u00a7 14 UStG erstellt und ohne Unterschrift g\u00fcltig. Alle
+            Produkte sind ausschlie\u00dflich als Referenzmaterialien f\u00fcr
+            die In-vitro-Forschung bestimmt.
+          </Text>
+        </View>
 
-        {/* Footer — legal info */}
+        {/* Footer */}
         <View style={styles.footer} fixed>
           <Text>
-            {SELLER_DETAILS.companyName} · {SELLER_DETAILS.streetLine1} ·{" "}
-            {SELLER_DETAILS.postalCodeCity} · {SELLER_DETAILS.country}
+            {SELLER_DETAILS.companyName} \u00b7 {SELLER_DETAILS.streetLine1} \u00b7{" "}
+            {SELLER_DETAILS.postalCodeCity} \u00b7 {SELLER_DETAILS.country}
           </Text>
           <Text>
-            Geschäftsführer: {SELLER_DETAILS.managingDirector} ·{" "}
-            {SELLER_DETAILS.registerCourt} {SELLER_DETAILS.registerNumber} ·
+            Gesch\u00e4ftsf\u00fchrer: {SELLER_DETAILS.managingDirector} \u00b7{" "}
+            {SELLER_DETAILS.registerCourt} {SELLER_DETAILS.registerNumber} \u00b7
             USt-IdNr {SELLER_DETAILS.vatId}
           </Text>
           <Text>
-            E-Mail: {SELLER_DETAILS.email} · Telefon: {SELLER_DETAILS.phone}
+            E-Mail: {SELLER_DETAILS.email} \u00b7 Telefon: {SELLER_DETAILS.phone}
           </Text>
         </View>
       </Page>

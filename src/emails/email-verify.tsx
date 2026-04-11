@@ -9,11 +9,8 @@ import * as React from "react";
 import { EmailLayout } from "./components/email-layout";
 
 interface EmailVerifyEmailProps {
-  /** First name or full name — may be empty. */
   name?: string | null;
-  /** Absolute URL with the verify token, e.g. https://chromepeps.com/api/auth/verify-email?token=abc */
   verifyUrl: string;
-  /** Token expiry in hours — defaults to 24. */
   expiresInHours?: number;
 }
 
@@ -30,9 +27,11 @@ export function EmailVerifyEmail({
         E-Mail-Adresse best&auml;tigen
       </Heading>
 
-      <Text className="mt-4 text-sm text-neutral-700">{greeting}</Text>
+      <Text className="mt-4 text-sm leading-6 text-neutral-700">
+        {greeting}
+      </Text>
 
-      <Text className="text-sm text-neutral-700">
+      <Text className="text-sm leading-6 text-neutral-700">
         willkommen bei ChromePeps! Bitte best&auml;tigen Sie Ihre
         E-Mail-Adresse, damit wir Ihnen Bestellbest&auml;tigungen,
         Versandmeldungen und wichtige Konto-Nachrichten zustellen k&ouml;nnen.
@@ -41,20 +40,20 @@ export function EmailVerifyEmail({
       <Section className="my-6 text-center">
         <Button
           href={verifyUrl}
-          className="rounded-md bg-neutral-900 px-6 py-3 text-sm font-semibold text-white no-underline"
+          className="rounded-lg bg-zinc-900 px-8 py-4 text-sm font-semibold text-white no-underline"
         >
           E-Mail jetzt best&auml;tigen
         </Button>
       </Section>
 
-      <Text className="text-xs text-neutral-500">
+      <Text className="text-xs leading-5 text-neutral-500">
         Der Link ist aus Sicherheitsgr&uuml;nden {expiresInHours} Stunden lang
         g&uuml;ltig. Falls der Button nicht funktioniert, kopieren Sie diese
         Adresse in Ihren Browser:
       </Text>
 
       <Text className="break-all text-xs">
-        <Link href={verifyUrl} className="text-neutral-700 underline">
+        <Link href={verifyUrl} className="text-zinc-700 underline">
           {verifyUrl}
         </Link>
       </Text>

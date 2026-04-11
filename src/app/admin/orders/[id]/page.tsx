@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { OrderStatusForm } from "@/components/admin/order-status-form";
+import { OrderArchiveButton } from "@/components/admin/order-archive-button";
 import { notFound } from "next/navigation";
 
 interface Props {
@@ -339,6 +340,9 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             paymentMethod={order.paymentMethod}
             paymentStatus={order.paymentStatus}
           />
+
+          {/* Archive */}
+          <OrderArchiveButton orderId={order.id} currentStatus={order.status} />
 
           {/* Event Timeline */}
           <Card>

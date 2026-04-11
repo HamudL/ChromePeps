@@ -284,3 +284,58 @@ export async function PATCH(
 
   return NextResponse.json({ success: true, data: order });
 }
+
+// DELETE /api/admin/orders/[id] — admin: soft-delete (archive) an order
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 403 }
+    );
+  }
+
+  const { id } = await params;
+
+  const existing = await db.order.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json(
+      { success: false, error: "Order not found" },
+      { status: 404 }
+    );
+  }
+
+  // Only allow archiving of terminal states
+  const archivableStatuses = ["CANCELLED", "DELIVERED", "REFUNDED"];
+  if (!archivableStatuses.includes(existing.status)) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Only cancelled, delivered, or refunded orders can be archived.",
+      },
+      { status: 400 }
+    );
+  }
+
+  const order = await db.$transaction(async (tx) => {
+    const updated = await tx.order.update({
+      where: { id },
+      data: { status: "ARCHIVED" },
+    });
+
+    await tx.orderEvent.create({
+      data: {
+        orderId: id,
+        status: "ARCHIVED",
+        note: "Order archived by admin",
+      },
+    });
+
+    return updated;
+  });
+
+  return NextResponse.json({ success: true, data: order });
+}
