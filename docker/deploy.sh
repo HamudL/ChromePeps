@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # ChromePeps Safe Deploy Script
-# Prevents OOM by: stop app → build image → start app
+# Prevents OOM by: stop app + nginx → prune cache → build image → start all
 # Usage: cd /opt/chromepeps/docker && ./deploy.sh
 # =============================================================================
 set -euo pipefail
@@ -18,45 +18,57 @@ if [ -f "$PROJECT_DIR/.env" ]; then
   set +a
 fi
 
-echo "=== ChromePeps Deploy ==="
-echo "$(date '+%Y-%m-%d %H:%M:%S') Starting deploy..."
+log() { echo "[$(date '+%H:%M:%S')] $*"; }
+
+log "=== ChromePeps Deploy ==="
 
 # 1. Pull latest code
-echo ""
-echo "[1/6] Pulling latest code..."
-cd ..
+log "[1/7] Pulling latest code..."
+cd "$PROJECT_DIR"
 git pull origin main
 cd "$COMPOSE_DIR"
 
 # 2. Run prisma db push inside the CURRENT running container (before we stop it)
-echo ""
-echo "[2/6] Pushing database schema..."
-docker compose exec -T app npx prisma db push --skip-generate 2>&1 || echo "DB push skipped (container may not be running)"
+log "[2/7] Pushing database schema..."
+docker compose exec -T app npx prisma db push --skip-generate 2>&1 || log "DB push skipped (container may not be running)"
 
-# 3. Stop the app container to free memory for the build
-echo ""
-echo "[3/6] Stopping app container to free memory for build..."
-docker compose stop app
-docker compose rm -f app
+# 3. Stop app + nginx to free memory for the build
+#    DB and Redis stay up — they use little memory and are needed after build.
+log "[3/7] Stopping app + nginx to free memory for build..."
+docker compose stop app nginx 2>/dev/null || true
+docker compose rm -f app nginx 2>/dev/null || true
 
-# 4. Build the new image (with all memory now available)
-echo ""
-echo "[4/6] Building new app image..."
-docker compose build --no-cache app
+# 4. Prune Docker build cache + dangling images to free disk
+#    Prevents the multi-GB cache buildup that filled the disk in the past.
+log "[4/7] Pruning Docker build cache..."
+docker builder prune --force 2>/dev/null || true
+docker image prune -f 2>/dev/null || true
 
-# 5. Start everything back up
-echo ""
-echo "[5/6] Starting containers..."
+# 5. Build the new images (app + nginx)
+#    Uses Docker layer caching (no --no-cache) to save RAM and time.
+#    Only layers that changed are rebuilt.
+log "[5/7] Building images..."
+if ! docker compose build app; then
+  log "ERROR: App build failed! Attempting to restart old image..."
+  docker compose up -d || true
+  exit 1
+fi
+docker compose build nginx 2>/dev/null || true
+
+# 6. Start everything back up
+log "[6/7] Starting containers..."
 docker compose up -d
 
-# 6. Run prisma operations in the NEW container
-echo ""
-echo "[6/6] Running post-deploy tasks..."
+# 7. Run prisma operations in the NEW container
+log "[7/7] Running post-deploy tasks..."
 sleep 5
 docker compose exec -T app npx prisma db push --skip-generate 2>&1 || true
 docker compose exec -T app npx prisma generate 2>&1 || true
 
-echo ""
-echo "=== Deploy complete! ==="
-echo "$(date '+%Y-%m-%d %H:%M:%S') All services running."
+# Post-deploy cleanup: remove old dangling images from the build
+docker image prune -f 2>/dev/null || true
+
+log "=== Deploy complete! ==="
 docker compose ps
+log "Free memory:"
+free -h

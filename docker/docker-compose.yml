@@ -63,6 +63,8 @@ services:
     build: ./nginx
     container_name: chromepeps-nginx
     restart: unless-stopped
+    mem_limit: 128m
+    memswap_limit: 192m
     ports:
       - "80:80"
       - "443:443"
