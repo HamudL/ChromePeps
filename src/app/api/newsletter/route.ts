@@ -42,12 +42,23 @@ export async function POST(req: NextRequest) {
 
   const confirmUrl = `${BASE_URL}/api/newsletter/confirm?token=${subscriber.token}`;
 
-  await sendMail({
+  const mailResult = await sendMail({
     to: email,
     subject: "Newsletter-Anmeldung bestätigen — ChromePeps",
     react: createElement(NewsletterConfirmEmail, { confirmUrl }),
     tag: "newsletter-confirm",
   });
+
+  if (!mailResult.success) {
+    console.error("[newsletter] Confirmation email failed:", mailResult.error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.",
+      },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({ success: true });
 }

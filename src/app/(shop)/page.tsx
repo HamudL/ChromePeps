@@ -15,6 +15,7 @@ import {
 } from "@/lib/products/card";
 import type { ProductCardData } from "@/types";
 
+import { RecentlyViewed } from "@/components/shop/recently-viewed";
 import { FadeUp } from "./home-animations";
 import { HeroLogo } from "./hero-logo";
 
@@ -154,6 +155,9 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Recently Viewed */}
+      <RecentlyViewed />
 
       {/* Divider */}
       <div className="flex items-center justify-center gap-4 py-4 container">

@@ -18,6 +18,8 @@ import type { Metadata } from "next";
 import type { ProductWithDetails } from "@/types";
 
 import { AddToCartButton, VariantSelector, ImageGallery } from "./product-client";
+import { ProductViewTracker } from "@/components/shop/product-view-tracker";
+import { RecentlyViewed } from "@/components/shop/recently-viewed";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -175,6 +177,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   return (
     <div className="container py-8 md:py-12">
+      {/* Track this product view in localStorage */}
+      <ProductViewTracker product={product} />
+
       {/* Structured data for Google Rich Results */}
       <script
         type="application/ld+json"
@@ -437,6 +442,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </section>
         </>
       )}
+
+      {/* Recently Viewed */}
+      <Separator className="my-14" />
+      <RecentlyViewed currentProductId={product.id} />
 
       {/* Research Disclaimer */}
       <Separator className="my-14" />
