@@ -5,6 +5,7 @@ import { CookieBanner } from "@/components/shop/cookie-banner";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { WishlistInitializer } from "@/components/shop/wishlist-initializer";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { Toaster } from "sonner";
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -24,6 +25,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       <CookieBanner />
       <GoogleAnalytics />
       <WishlistInitializer />
+      <Toaster position="bottom-right" richColors closeButton />
     </>
   );
 }

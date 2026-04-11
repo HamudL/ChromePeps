@@ -28,7 +28,7 @@ export default function CartPage() {
   if (!mounted) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+        <h1 className="text-3xl font-bold mb-8">Warenkorb</h1>
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -57,15 +57,14 @@ export default function CartPage() {
           <div className="mx-auto h-24 w-24 rounded-full bg-muted flex items-center justify-center">
             <ShoppingBag className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h1 className="text-3xl font-bold">Your cart is empty</h1>
+          <h1 className="text-3xl font-bold">Ihr Warenkorb ist leer</h1>
           <p className="text-muted-foreground">
-            Looks like you haven&apos;t added any products to your cart yet.
-            Browse our catalog to find the right research peptides for your
-            needs.
+            Sie haben noch keine Produkte in Ihren Warenkorb gelegt.
+            Entdecken Sie unser Sortiment an hochwertigen Research Peptides.
           </p>
           <Button size="lg" asChild>
             <Link href="/products">
-              Browse Products
+              Produkte entdecken
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -77,14 +76,14 @@ export default function CartPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Shopping Cart</h1>
+        <h1 className="text-3xl font-bold">Warenkorb</h1>
         <Button
           variant="ghost"
           size="sm"
           className="text-muted-foreground"
           onClick={clearCart}
         >
-          Clear Cart
+          Warenkorb leeren
         </Button>
       </div>
 
@@ -133,7 +132,7 @@ export default function CartPage() {
                             </p>
                           )}
                           <p className="text-sm text-muted-foreground mt-1">
-                            {formatPrice(item.priceInCents)} each
+                            {formatPrice(item.priceInCents)} pro Stk.
                           </p>
                         </div>
                         <p className="font-semibold text-right whitespace-nowrap">
@@ -204,7 +203,7 @@ export default function CartPage() {
             <Button variant="outline" asChild>
               <Link href="/products">
                 <ShoppingCart className="mr-2 h-4 w-4" />
-                Continue Shopping
+                Weiter einkaufen
               </Link>
             </Button>
           </div>
@@ -214,21 +213,21 @@ export default function CartPage() {
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
+              <CardTitle>Bestellübersicht</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} items)
+                  Zwischensumme ({items.reduce((s, i) => s + i.quantity, 0)} Artikel)
                 </span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Estimated Shipping</span>
+                <span className="text-muted-foreground">Versandkosten (geschätzt)</span>
                 <span>
                   {shipping === 0 ? (
-                    <span className="text-green-600 font-medium">Free</span>
+                    <span className="text-green-600 font-medium">Kostenlos</span>
                   ) : (
                     formatPrice(shipping)
                   )}
@@ -237,13 +236,13 @@ export default function CartPage() {
 
               {shipping > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Free shipping on orders over {formatPrice(SHIPPING_THRESHOLD_CENTS)}
+                  Kostenloser Versand ab {formatPrice(SHIPPING_THRESHOLD_CENTS)}
                 </p>
               )}
 
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  Estimated Tax (19%)
+                  MwSt. (19%, geschätzt)
                 </span>
                 <span>{formatPrice(estimatedTax)}</span>
               </div>
@@ -251,20 +250,19 @@ export default function CartPage() {
               <Separator />
 
               <div className="flex justify-between font-semibold text-lg">
-                <span>Total</span>
+                <span>Gesamt</span>
                 <span>{formatPrice(total)}</span>
               </div>
 
               <Button className="w-full" size="lg" asChild>
                 <Link href="/checkout">
-                  Proceed to Checkout
+                  Zur Kasse
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">
-                Shipping and taxes calculated at checkout. Prices include VAT
-                where applicable.
+                Versand und Steuern werden an der Kasse berechnet. Alle Preise inkl. MwSt.
               </p>
             </CardContent>
           </Card>

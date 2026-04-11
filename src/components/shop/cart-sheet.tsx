@@ -26,16 +26,17 @@ export function CartSheet() {
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <ShoppingBag className="h-5 w-5" />
-            Cart ({items.length})
+            Warenkorb ({items.length})
           </SheetTitle>
         </SheetHeader>
 
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground">
             <ShoppingBag className="h-12 w-12" />
-            <p>Your cart is empty</p>
+            <p className="font-medium">Ihr Warenkorb ist leer</p>
+            <p className="text-sm text-center">Entdecken Sie unser Sortiment an hochwertigen Research Peptides.</p>
             <Button variant="outline" onClick={closeCart} asChild>
-              <Link href="/products">Browse Products</Link>
+              <Link href="/products">Produkte entdecken</Link>
             </Button>
           </div>
         ) : (
@@ -104,17 +105,17 @@ export function CartSheet() {
 
             <SheetFooter className="flex-col gap-3 sm:flex-col">
               <div className="flex justify-between w-full text-lg font-semibold">
-                <span>Subtotal</span>
+                <span>Zwischensumme</span>
                 <span>{formatPrice(totalPrice)}</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Shipping and taxes calculated at checkout.
+                Versand und Steuern werden an der Kasse berechnet.
               </p>
               <Button className="w-full" size="lg" onClick={closeCart} asChild>
-                <Link href="/checkout">Proceed to Checkout</Link>
+                <Link href="/checkout">Zur Kasse</Link>
               </Button>
               <Button variant="outline" className="w-full" onClick={closeCart} asChild>
-                <Link href="/cart">View Full Cart</Link>
+                <Link href="/cart">Warenkorb ansehen</Link>
               </Button>
             </SheetFooter>
           </>

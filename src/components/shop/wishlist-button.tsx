@@ -1,6 +1,7 @@
 "use client";
 
 import { Heart } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useWishlistStore } from "@/store/wishlist-store";
 
@@ -21,6 +22,11 @@ export function WishlistButton({ productId, className }: WishlistButtonProps) {
       onClick={(e) => {
         e.preventDefault();
         toggle(productId);
+        if (active) {
+          toast("Von Merkliste entfernt");
+        } else {
+          toast.success("Zur Merkliste hinzugefügt");
+        }
       }}
       aria-label={active ? "Von Merkliste entfernen" : "Zur Merkliste hinzufügen"}
     >

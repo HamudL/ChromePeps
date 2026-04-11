@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       stock: product.stock,
     });
     openCart();
+    toast.success(`${product.name} zum Warenkorb hinzugefügt`);
   };
 
   return (
