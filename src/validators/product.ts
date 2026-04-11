@@ -3,24 +3,24 @@ import { z } from "zod";
 export const createProductSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(200),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  shortDesc: z.string().max(300).optional(),
+  shortDesc: z.string().max(300).nullish(),
   sku: z
     .string()
     .min(3)
     .max(50)
     .regex(/^[A-Z0-9-]+$/, "SKU must be uppercase alphanumeric with dashes"),
   priceInCents: z.number().int().positive("Price must be positive"),
-  compareAtPriceInCents: z.number().int().positive().optional(),
+  compareAtPriceInCents: z.number().int().positive().nullish(),
   categoryId: z.string().cuid(),
   stock: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
-  purity: z.string().max(20).optional(),
-  molecularWeight: z.string().max(50).optional(),
-  sequence: z.string().optional(),
-  casNumber: z.string().max(30).optional(),
-  storageTemp: z.string().max(50).optional(),
-  form: z.string().max(50).optional(),
-  weight: z.string().max(50).optional(),
+  purity: z.string().max(20).nullish(),
+  molecularWeight: z.string().max(50).nullish(),
+  sequence: z.string().nullish(),
+  casNumber: z.string().max(30).nullish(),
+  storageTemp: z.string().max(50).nullish(),
+  form: z.string().max(50).nullish(),
+  weight: z.string().max(50).nullish(),
   images: z
     .array(
       z.object({
