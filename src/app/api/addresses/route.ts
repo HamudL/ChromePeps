@@ -7,7 +7,7 @@ import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 // GET /api/addresses — user's addresses
 export async function GET() {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user || !session.user.id) {
     return NextResponse.json(
       { success: false, error: "Unauthorized" },
       { status: 401 }
@@ -25,7 +25,7 @@ export async function GET() {
 // POST /api/addresses — create address
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user || !session.user.id) {
     return NextResponse.json(
       { success: false, error: "Unauthorized" },
       { status: 401 }

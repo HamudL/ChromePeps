@@ -82,8 +82,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as Role;
+        // Verify the user still exists in the DB (handles DB wipe / re-seed)
+        const userExists = await db.user.findUnique({
+          where: { id: token.id as string },
+          select: { id: true, role: true },
+        });
+        if (!userExists) {
+          // Force sign-out by returning an empty session
+          session.user.id = "";
+          session.user.role = "USER" as Role;
+          return session;
+        }
+        session.user.id = userExists.id;
+        session.user.role = userExists.role;
       }
       return session;
     },
