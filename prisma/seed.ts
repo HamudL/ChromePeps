@@ -194,7 +194,7 @@ async function main() {
     description: "Tirzepatide ist ein dualer GIP/GLP-1-Rezeptoragonist mit 39 Aminosäuren. Es wurde umfassend in klinischen Studien zur Erforschung metabolischer Signalwege untersucht und zeigt in vitro eine hohe Affinität zu beiden Inkretinrezeptoren. Das Peptid weist eine modifizierte Fettsäure-Seitenkette auf, die die Halbwertszeit verlängert.",
     shortDesc: "Dualer GIP/GLP-1-Rezeptoragonist zur Erforschung metabolischer Signalwege.",
     sku: "CP-TIRZ-10MG",
-    priceInCents: 3200,
+    priceInCents: 3790,
     categoryId: catWeightLoss.id,
     stock: 100,
     purity: ">98%",
@@ -204,9 +204,10 @@ async function main() {
     form: "Lyophilized Powder",
     weight: "10mg",
     variants: [
-      { name: "15mg", sku: "CP-TIRZ-15MG", priceInCents: 4500, stock: 100 },
-      { name: "30mg", sku: "CP-TIRZ-30MG", priceInCents: 6500, stock: 100 },
-      { name: "60mg", sku: "CP-TIRZ-60MG", priceInCents: 11000, stock: 80 },
+      { name: "10mg", sku: "CP-TIRZ-10MG-V", priceInCents: 3790, stock: 100 },
+      { name: "15mg", sku: "CP-TIRZ-15MG", priceInCents: 5290, stock: 100 },
+      { name: "30mg", sku: "CP-TIRZ-30MG", priceInCents: 7690, stock: 100 },
+      { name: "60mg", sku: "CP-TIRZ-60MG", priceInCents: 12990, stock: 80 },
     ],
   });
 
@@ -217,7 +218,7 @@ async function main() {
     description: "Semaglutide ist ein langwirksamer GLP-1-Rezeptoragonist mit 31 Aminosäuren und einer C18-Fettsäure-Modifikation, die eine verlängerte Plasmahalbwertszeit ermöglicht. Das Peptid wird in der Forschung zur Untersuchung von Glukosehomöostase, metabolischer Signaltransduktion und kardiovaskulären Signalwegen eingesetzt.",
     shortDesc: "GLP-1-Rezeptoragonist mit verlängerter Halbwertszeit für metabolische Signalforschung.",
     sku: "CP-SEMA-5MG",
-    priceInCents: 2500,
+    priceInCents: 2990,
     categoryId: catWeightLoss.id,
     stock: 120,
     purity: ">98%",
@@ -227,8 +228,9 @@ async function main() {
     form: "Lyophilized Powder",
     weight: "5mg",
     variants: [
-      { name: "10mg", sku: "CP-SEMA-10MG", priceInCents: 3800, stock: 100 },
-      { name: "20mg", sku: "CP-SEMA-20MG", priceInCents: 6500, stock: 80 },
+      { name: "5mg", sku: "CP-SEMA-5MG-V", priceInCents: 2990, stock: 120 },
+      { name: "10mg", sku: "CP-SEMA-10MG", priceInCents: 4490, stock: 100 },
+      { name: "20mg", sku: "CP-SEMA-20MG", priceInCents: 7690, stock: 80 },
     ],
   });
 
@@ -239,7 +241,7 @@ async function main() {
     description: "Retatrutide ist ein neuartiger Triple-Agonist, der gleichzeitig an GIP-, GLP-1- und Glukagon-Rezeptoren bindet. Dieser einzigartige Wirkmechanismus macht Retatrutide zu einem der vielversprechendsten Peptide in der metabolischen Forschung. In präklinischen Studien zeigt es eine überlegene Wirksamkeit gegenüber dualen Agonisten.",
     shortDesc: "Erster GIP/GLP-1/Glucagon-Triple-Agonist für fortgeschrittene metabolische Forschung.",
     sku: "CP-RETA-10MG",
-    priceInCents: 5500,
+    priceInCents: 6490,
     categoryId: catWeightLoss.id,
     stock: 80,
     purity: ">97%",
@@ -248,8 +250,9 @@ async function main() {
     form: "Lyophilized Powder",
     weight: "10mg",
     variants: [
-      { name: "20mg", sku: "CP-RETA-20MG", priceInCents: 8500, stock: 80 },
-      { name: "30mg", sku: "CP-RETA-30MG", priceInCents: 11000, stock: 60 },
+      { name: "10mg", sku: "CP-RETA-10MG-V", priceInCents: 6490, stock: 80 },
+      { name: "20mg", sku: "CP-RETA-20MG", priceInCents: 9990, stock: 80 },
+      { name: "30mg", sku: "CP-RETA-30MG", priceInCents: 12990, stock: 60 },
     ],
   });
 
@@ -260,7 +263,7 @@ async function main() {
     description: "Body Protection Compound-157 (BPC-157) ist ein Pentadecapeptid aus 15 Aminosäuren, das als partielle Sequenz des Body Protection Compound aus Magensaft isoliert wurde. BPC-157 wurde in zahlreichen In-vitro- und Tiermodellen umfassend erforscht, insbesondere in Bezug auf seine Rolle bei zellulären Signalwegen der Gewebereparatur und Gewebereparaturmechanismen.",
     shortDesc: "15-Aminosäure-Pentadecapeptid zur Erforschung regenerativer Signalwege.",
     sku: "CP-BPC157-10MG",
-    priceInCents: 3500,
+    priceInCents: 4190,
     categoryId: catRecovery.id,
     stock: 150,
     purity: ">99%",
@@ -279,7 +282,7 @@ async function main() {
     description: "Diese standardisierte Forschungsmischung kombiniert BPC-157 (10mg) und TB-500 (10mg) in einem einzigen Vial. Die Kombination beider Peptide wird in der Forschung zur Untersuchung synergistischer Effekte bei Gewebereparaturmechanismen und Entzündungsmodulation in vitro eingesetzt. Die vorkonfigurierte Mischung gewährleistet reproduzierbare Laborprotokolle.",
     shortDesc: "Synergistische BPC-157 + TB-500 Kombination für Regenerationsforschung.",
     sku: "CP-BPCTB-10-10MG",
-    priceInCents: 8000,
+    priceInCents: 9490,
     categoryId: catRecovery.id,
     stock: 80,
     purity: ">98%",
@@ -295,7 +298,7 @@ async function main() {
     description: "TB-500 (Thymosin Beta-4) ist ein natürlich vorkommendes 43-Aminosäure-Peptid, das in nahezu allen Gewebe- und Zelltypen exprimiert wird. Es spielt eine zentrale Rolle bei der Aktinpolymerisation und wird in der Forschung zur Untersuchung von Zellmigration, Angiogenese und Entzündungsmodulation eingesetzt.",
     shortDesc: "Thymosin Beta-4 Fragment zur Erforschung von Zellmigration und Angiogenese.",
     sku: "CP-TB500-10MG",
-    priceInCents: 5000,
+    priceInCents: 5990,
     categoryId: catRecovery.id,
     stock: 100,
     purity: ">98%",
@@ -313,7 +316,7 @@ async function main() {
     description: "GHK-Cu (Kupferpeptid) ist ein natürlich vorkommendes Tripeptid-Kupfer-Komplex (Glycyl-L-Histidyl-L-Lysin:Kupfer), das in biologischen Proben nachgewiesen wurde. In der Forschung wird GHK-Cu zur Untersuchung von Kollagensynthese, zellulärer Regeneration, antioxidativen Mechanismen und Gewebereparaturmechanismen in vitro eingesetzt.",
     shortDesc: "Kupferpeptid-Komplex zur Erforschung von Kollagensynthese und zellulärer Regeneration.",
     sku: "CP-GHKCU-50MG",
-    priceInCents: 2800,
+    priceInCents: 3290,
     categoryId: catAntiAging.id,
     stock: 120,
     purity: ">98%",
@@ -323,7 +326,8 @@ async function main() {
     form: "Lyophilized Powder",
     weight: "50mg",
     variants: [
-      { name: "100mg", sku: "CP-GHKCU-100MG", priceInCents: 4000, stock: 80 },
+      { name: "50mg", sku: "CP-GHKCU-50MG-V", priceInCents: 3290, stock: 120 },
+      { name: "100mg", sku: "CP-GHKCU-100MG", priceInCents: 4690, stock: 80 },
     ],
   });
 
@@ -334,7 +338,7 @@ async function main() {
     description: "Diese Forschungsmischung kombiniert CJC-1295 (5mg), ein GHRH-Analogon mit DAC-Modifikation, und Ipamorelin (5mg), ein selektives Growth Hormone Secretagogue. Die Kombination wird in der Forschung zur Untersuchung synergistischer Effekte auf die GH-Achse eingesetzt, da beide Peptide über unterschiedliche Rezeptorwege wirken.",
     shortDesc: "GHRH-Analogon + GH-Secretagogue Kombination zur GH-Achsen-Forschung.",
     sku: "CP-CJCIPA-5-5MG",
-    priceInCents: 4800,
+    priceInCents: 5690,
     categoryId: catGrowthHormone.id,
     stock: 100,
     purity: ">97%",
@@ -350,7 +354,7 @@ async function main() {
     description: "Nicotinamid-Adenin-Dinukleotid (NAD+) ist ein essentielles Coenzym, das in allen lebenden Zellen vorkommt und eine zentrale Rolle im Energiestoffwechsel spielt. NAD+ ist Substrat für Sirtuine und PARPs und wird in der Forschung zur Untersuchung zellulärer Alterungsprozesse, mitochondrialer Funktion und DNA-Reparaturmechanismen eingesetzt.",
     shortDesc: "Essentielles Coenzym zur Erforschung zellulärer Alterung und Energiestoffwechsel.",
     sku: "CP-NAD-500MG",
-    priceInCents: 5500,
+    priceInCents: 6490,
     categoryId: catLongevity.id,
     stock: 80,
     purity: ">99%",
@@ -368,7 +372,7 @@ async function main() {
     description: "Tesamorelin ist ein synthetisches GHRH-Analogon mit 44 Aminosäuren, das durch eine trans-3-Hexensäure-Modifikation am N-Terminus eine verbesserte Stabilität aufweist. Es wird in der Forschung zur Untersuchung der Wachstumshormon-Sekretion und adipöser Gewebeentwicklung in vitro eingesetzt.",
     shortDesc: "Modifiziertes GHRH-Analogon zur Erforschung der GH-Sekretion.",
     sku: "CP-TESA-10MG",
-    priceInCents: 7500,
+    priceInCents: 8990,
     categoryId: catGrowthHormone.id,
     stock: 60,
     purity: ">97%",
@@ -386,7 +390,7 @@ async function main() {
     description: "Selank ist ein synthetisches Heptapeptid, das als Analogon des natürlich vorkommenden Immunopeptids Tuftsin entwickelt wurde. Es wird in der Forschung zur Untersuchung neuropeptidischer Signaltransduktion, kognitiver Signalwege und der Modulation von BDNF- und Serotonin-Signalwegen eingesetzt. Selank zeigt in vitro eine hohe Stabilität gegenüber enzymatischem Abbau.",
     shortDesc: "Heptapeptid-Analogon zur Erforschung neuropeptidischer Signaltransduktion.",
     sku: "CP-SELANK-10MG",
-    priceInCents: 1800,
+    priceInCents: 2190,
     categoryId: catCognitive.id,
     stock: 120,
     purity: ">98%",
@@ -403,7 +407,7 @@ async function main() {
     description: "PT-141 (Bremelanotide) ist ein zyklisches Heptapeptid und Melanocortin-Rezeptoragonist, der primär an MC3R- und MC4R-Rezeptoren im zentralen Nervensystem bindet. Es wird in der Forschung zur Untersuchung von MC3R/MC4R-Signalwegen und neuroendokriner Melanocortin-Regulation in vitro eingesetzt.",
     shortDesc: "Melanocortin-Rezeptoragonist zur Erforschung neuroendokriner Signalwege.",
     sku: "CP-PT141-10MG",
-    priceInCents: 2000,
+    priceInCents: 2390,
     categoryId: catSexualHealth.id,
     stock: 100,
     purity: ">98%",
@@ -414,7 +418,7 @@ async function main() {
     weight: "10mg",
   });
 
-  console.log("All 12 products (20 variants) seeded successfully.");
+  console.log("All 12 products (24 variants) seeded successfully.");
   console.log("Seeding complete.");
 }
 

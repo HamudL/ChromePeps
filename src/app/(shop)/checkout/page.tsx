@@ -374,9 +374,8 @@ export default function CheckoutPage() {
   const subtotalAfterDiscount = Math.max(0, subtotal - discount);
   const shipping =
     subtotalAfterDiscount >= SHIPPING_THRESHOLD_CENTS ? 0 : SHIPPING_COST_CENTS;
-  const taxableAmount = subtotalAfterDiscount + shipping;
-  const estimatedTax = Math.round(taxableAmount * TAX_RATE);
-  const total = taxableAmount + estimatedTax;
+  const total = subtotalAfterDiscount + shipping;
+  const estimatedTax = Math.round(total - total / (1 + TAX_RATE));
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
@@ -931,7 +930,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
-                    Est. Tax (19%)
+                    MwSt. 19% (enthalten)
                   </span>
                   <span>{formatPrice(estimatedTax)}</span>
                 </div>

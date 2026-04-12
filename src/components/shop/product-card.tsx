@@ -43,6 +43,11 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     isBestseller: product.isBestseller,
   });
 
+  const variantPrices = product.variants.map((v) => v.priceInCents);
+  const hasVariants = variantPrices.length > 0;
+  const minPrice = hasVariants ? Math.min(...variantPrices) : product.priceInCents;
+  const maxPrice = hasVariants ? Math.max(...variantPrices) : product.priceInCents;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isOutOfStock) return;
@@ -107,7 +112,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             </div>
 
             {/* Quick add */}
-            {!isOutOfStock && (
+            {!isOutOfStock && !hasVariants && (
               <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button size="icon" onClick={handleAddToCart} aria-label={`${product.name} in den Warenkorb`}>
                   <ShoppingCart className="h-4 w-4" />
@@ -126,15 +131,18 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                 {product.shortDesc}
               </p>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-baseline gap-2">
               <span className="text-lg font-bold">
-                {formatPrice(product.priceInCents)}
+                {hasVariants && minPrice !== maxPrice
+                  ? `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`
+                  : formatPrice(minPrice)}
               </span>
-              {hasDiscount && (
+              {!hasVariants && hasDiscount && (
                 <span className="text-sm text-muted-foreground line-through">
                   {formatPrice(product.compareAtPriceInCents!)}
                 </span>
               )}
+              <span className="text-xs text-muted-foreground">inkl. MwSt.</span>
             </div>
             {product.weight && (
               <p className="text-xs text-muted-foreground">{product.weight}</p>

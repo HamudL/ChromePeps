@@ -247,16 +247,30 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </div>
 
           {/* Price */}
-          <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-bold">
-              {formatPrice(product.priceInCents)}
-            </span>
-            {product.compareAtPriceInCents &&
-              product.compareAtPriceInCents > product.priceInCents && (
-                <span className="text-lg text-muted-foreground line-through">
-                  {formatPrice(product.compareAtPriceInCents)}
+          <div className="flex items-baseline gap-3 flex-wrap">
+            {product.variants.length > 0 ? (() => {
+              const prices = product.variants.map((v) => v.priceInCents);
+              const min = Math.min(...prices);
+              const max = Math.max(...prices);
+              return (
+                <span className="text-3xl font-bold">
+                  {min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`}
                 </span>
-              )}
+              );
+            })() : (
+              <>
+                <span className="text-3xl font-bold">
+                  {formatPrice(product.priceInCents)}
+                </span>
+                {product.compareAtPriceInCents &&
+                  product.compareAtPriceInCents > product.priceInCents && (
+                    <span className="text-lg text-muted-foreground line-through">
+                      {formatPrice(product.compareAtPriceInCents)}
+                    </span>
+                  )}
+              </>
+            )}
+            <span className="text-sm text-muted-foreground">inkl. MwSt.</span>
             {isOutOfStock && (
               <Badge variant="secondary">Out of Stock</Badge>
             )}

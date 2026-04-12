@@ -149,10 +149,8 @@ export async function POST(req: NextRequest) {
 
   const subtotalAfterDiscount = Math.max(0, subtotalInCents - discountInCents);
   const shippingInCents = subtotalAfterDiscount >= 10000 ? 0 : 599;
-  const taxInCents = Math.round(
-    (subtotalAfterDiscount + shippingInCents) * 0.19
-  );
-  const totalInCents = subtotalAfterDiscount + shippingInCents + taxInCents;
+  const totalInCents = subtotalAfterDiscount + shippingInCents;
+  const taxInCents = Math.round(totalInCents - totalInCents / 1.19);
 
   try {
     const txResult = await db.$transaction(async (tx) => {

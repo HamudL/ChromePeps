@@ -46,9 +46,8 @@ export default function CartPage() {
     0
   );
   const shipping = subtotal >= SHIPPING_THRESHOLD_CENTS ? 0 : SHIPPING_COST_CENTS;
-  const taxableAmount = subtotal + shipping;
-  const estimatedTax = Math.round(taxableAmount * TAX_RATE);
-  const total = taxableAmount + estimatedTax;
+  const total = subtotal + shipping;
+  const estimatedTax = Math.round(total - total / (1 + TAX_RATE));
 
   if (items.length === 0) {
     return (
@@ -242,7 +241,7 @@ export default function CartPage() {
 
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  MwSt. (19%, geschätzt)
+                  MwSt. 19% (enthalten)
                 </span>
                 <span>{formatPrice(estimatedTax)}</span>
               </div>
@@ -262,7 +261,7 @@ export default function CartPage() {
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">
-                Versand und Steuern werden an der Kasse berechnet. Alle Preise inkl. MwSt.
+                Alle Preise inkl. MwSt. Versandkosten werden an der Kasse berechnet.
               </p>
             </CardContent>
           </Card>

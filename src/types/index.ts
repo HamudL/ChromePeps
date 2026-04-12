@@ -40,6 +40,7 @@ export type ProductCardData = Pick<
 > & {
   images: Pick<ProductImage, "url" | "alt">[];
   category: Pick<Category, "name" | "slug">;
+  variants: Pick<ProductVariant, "priceInCents">[];
   /**
    * Optional flag set by catalog/related-product queries when the product
    * is currently a bestseller. Undefined = not computed (no badge).

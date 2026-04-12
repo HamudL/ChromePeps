@@ -137,7 +137,7 @@ export function VariantSelector({ variants }: { variants: VariantOption[] }) {
             >
               {variant.name}
               <span className="ml-1.5 text-xs text-muted-foreground">
-                {formatPrice(variant.priceInCents)}
+                {formatPrice(variant.priceInCents)} inkl. MwSt.
               </span>
               {outOfStock && (
                 <span className="ml-1 text-xs">(Sold Out)</span>

@@ -28,6 +28,11 @@ export const productCardSelect = {
   category: {
     select: { name: true, slug: true },
   },
+  variants: {
+    where: { isActive: true },
+    select: { priceInCents: true },
+    orderBy: { priceInCents: "asc" as const },
+  },
 } satisfies Prisma.ProductSelect;
 
 /**

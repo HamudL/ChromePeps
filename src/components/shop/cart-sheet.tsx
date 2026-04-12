@@ -109,7 +109,7 @@ export function CartSheet() {
                 <span>{formatPrice(totalPrice)}</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Versand und Steuern werden an der Kasse berechnet.
+                Alle Preise inkl. MwSt. Versand wird an der Kasse berechnet.
               </p>
               <Button className="w-full" size="lg" onClick={closeCart} asChild>
                 <Link href="/checkout">Zur Kasse</Link>
