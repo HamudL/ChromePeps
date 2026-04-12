@@ -14,7 +14,7 @@ const ChromeLogo3D = dynamic(
 function StaticLogo() {
   return (
     <div className="relative w-full flex items-center justify-center py-4 sm:py-6">
-      <h1 className="text-[clamp(2.25rem,10vw,4rem)] font-bold tracking-tight chrome-text text-center leading-none px-2">
+      <h1 className="text-[clamp(2.5rem,12vw,5rem)] font-bold tracking-tight chrome-text text-center leading-none px-2">
         ChromePeps
       </h1>
     </div>

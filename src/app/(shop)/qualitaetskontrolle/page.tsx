@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ const steps = [
     icon: Package,
     title: "Chargen-Handling",
     description:
-      "Jede neue Charge wird sofort in einem dedizierten, desinfizierten Laborgefrierschrank bei -24°C gelagert und erhält eine eindeutige Lot-Nummer. Dieses lot-basierte System ermöglicht die lückenlose Rückverfolgung jedes Produkts bis zu seiner Quelle, den Testdaten und dem Verpackungsdatum.",
+      "Jede neue Charge wird sofort in einem dedizierten, desinfizierten Laborgefrierschrank bei -24\u00B0C gelagert und erhält eine eindeutige Lot-Nummer. Dieses lot-basierte System ermöglicht die lückenlose Rückverfolgung jedes Produkts bis zu seiner Quelle, den Testdaten und dem Verpackungsdatum.",
   },
   {
     icon: Microscope,
@@ -48,14 +49,17 @@ export default function QualitaetskontrollePage() {
   return (
     <div className="flex flex-col">
       {/* Hero */}
-      <section className="relative overflow-hidden chrome-gradient">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_hsl(217,55%,45%,0.08),transparent_70%)]" />
-        <div className="container relative py-12 md:py-16 text-center">
-          <FlaskConical className="mx-auto h-10 w-10 text-primary mb-4" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
+      <section className="relative overflow-hidden hero-glow bg-gradient-to-b from-background via-muted/40 to-background">
+        <div className="absolute inset-0 subtle-grid opacity-30" />
+        <div className="container relative py-14 md:py-20 text-center">
+          <Badge variant="outline" className="px-3 py-1 text-xs mb-4 border-primary/30 bg-primary/5">
+            <ShieldCheck className="mr-1 h-3 w-3 text-primary" />
+            Qualitätssicherung
+          </Badge>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
             Qualitätskontrolle
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg leading-relaxed">
             Jedes Peptid in unserem Sortiment durchläuft einen strengen,
             mehrstufigen Qualitätskontrollprozess — ohne Ausnahme.
           </p>
@@ -63,34 +67,32 @@ export default function QualitaetskontrollePage() {
       </section>
 
       {/* Main Content */}
-      <section className="container py-12 md:py-16 max-w-4xl">
+      <section className="container py-14 md:py-18 max-w-4xl">
         {/* Intro */}
-        <div className="prose prose-neutral dark:prose-invert max-w-none mb-12">
+        <div className="mb-14">
           <p className="text-lg text-muted-foreground leading-relaxed">
             Bei ChromePeps steht die Qualität unserer Forschungspeptide an
             erster Stelle. Wir arbeiten mit dem renommierten unabhängigen
-            Analyselabor <strong>Janoshik</strong> zusammen, um sicherzustellen,
+            Analyselabor <strong className="text-foreground">Janoshik</strong> zusammen, um sicherzustellen,
             dass jede einzelne Charge unseren hohen Qualitätsstandards
             entspricht.
           </p>
         </div>
 
         {/* Steps */}
-        <div className="space-y-6 mb-12">
+        <div className="space-y-5 mb-14">
           {steps.map((step, i) => (
-            <Card key={i}>
+            <Card key={i} className="group border-border/50 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
               <CardContent className="p-6 flex gap-5">
-                <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 shrink-0">
-                  <step.icon className="h-6 w-6 text-primary" />
+                <div className="relative flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shrink-0 group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300">
+                  <step.icon className="h-5 w-5 text-primary" />
+                  <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center h-5 w-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                    {i + 1}
+                  </span>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <h2 className="text-lg font-semibold">{step.title}</h2>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <h2 className="text-lg font-semibold mb-1.5">{step.title}</h2>
+                  <p className="text-muted-foreground leading-relaxed text-sm">
                     {step.description}
                   </p>
                 </div>
@@ -100,43 +102,49 @@ export default function QualitaetskontrollePage() {
         </div>
 
         {/* Testing Methods */}
-        <div className="mb-12">
-          <h2 className="text-xl font-semibold mb-4">Unsere Testmethoden</h2>
+        <div className="mb-14">
+          <h2 className="text-xl font-semibold mb-5">Unsere Testmethoden</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="p-5 text-center">
-                <p className="font-semibold mb-1">HPLC</p>
-                <p className="text-xs text-muted-foreground">
-                  Hochleistungsflüssigkeits&shy;chromatographie — Industriestandard zur Reinheitsanalyse
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-5 text-center">
-                <p className="font-semibold mb-1">qNMR</p>
-                <p className="text-xs text-muted-foreground">
-                  Quantitative Kernspinresonanz&shy;spektroskopie — Bestätigung der molekularen Identität
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-5 text-center">
-                <p className="font-semibold mb-1">LC-MS</p>
-                <p className="text-xs text-muted-foreground">
-                  Flüssigchromatographie-Massen&shy;spektrometrie — Verifizierung der Zusammensetzung
-                </p>
-              </CardContent>
-            </Card>
+            {[
+              {
+                name: "HPLC",
+                full: "Hochleistungsflüssigkeits\u00ADchromatographie",
+                desc: "Industriestandard zur Reinheitsanalyse",
+              },
+              {
+                name: "qNMR",
+                full: "Quantitative Kernspinresonanz\u00ADspektroskopie",
+                desc: "Bestätigung der molekularen Identität",
+              },
+              {
+                name: "LC-MS",
+                full: "Flüssigchromatographie-Massen\u00ADspektrometrie",
+                desc: "Verifizierung der Zusammensetzung",
+              },
+            ].map((method) => (
+              <Card key={method.name} className="group border-border/50 hover:border-primary/20 hover:shadow-md transition-all duration-300">
+                <CardContent className="p-5 text-center">
+                  <div className="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 mb-3">
+                    <FlaskConical className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="font-semibold text-base mb-1">{method.name}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {method.full} — {method.desc}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
 
         {/* CTA */}
-        <div className="text-center border-t pt-8">
-          <p className="text-muted-foreground mb-4">
+        <div className="text-center rounded-2xl bg-gradient-to-br from-muted/50 via-muted/30 to-background border border-border/50 p-8 md:p-10">
+          <ShieldCheck className="mx-auto h-8 w-8 text-primary/60 mb-3" />
+          <p className="text-muted-foreground mb-5 max-w-md mx-auto leading-relaxed">
             Alle Testergebnisse sind öffentlich einsehbar und können unabhängig
             verifiziert werden.
           </p>
-          <Button asChild size="lg" className="gap-2">
+          <Button asChild size="lg" className="gap-2 shadow-lg shadow-primary/20">
             <Link href="/analysezertifikate">
               Analysezertifikate ansehen
               <ArrowRight className="h-4 w-4" />

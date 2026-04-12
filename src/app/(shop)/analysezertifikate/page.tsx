@@ -1,10 +1,8 @@
 export const dynamic = "force-dynamic";
 
-import Link from "next/link";
-import { ShieldCheck, ArrowRight } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { AnalysezertifikateSearch } from "./search-client";
 import type { Metadata } from "next";
 
@@ -45,20 +43,20 @@ export default async function AnalysezertifikatePage() {
   return (
     <div className="flex flex-col">
       {/* Hero */}
-      <section className="relative overflow-hidden chrome-gradient">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_hsl(217,55%,45%,0.08),transparent_70%)]" />
-        <div className="container relative py-12 md:py-16 text-center">
+      <section className="relative overflow-hidden hero-glow bg-gradient-to-b from-background via-muted/40 to-background">
+        <div className="absolute inset-0 subtle-grid opacity-30" />
+        <div className="container relative py-14 md:py-20 text-center">
           <Badge
             variant="outline"
-            className="px-4 py-1 text-sm mb-4 inline-flex"
+            className="px-4 py-1.5 text-sm mb-4 inline-flex border-primary/30 bg-primary/5"
           >
-            <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+            <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-primary" />
             Drittlabor-verifiziert
           </Badge>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
             Analytische Testergebnisse
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Durchsuchen Sie unsere Analysezertifikate nach Produktname. Jede
             Charge wird unabhängig auf Reinheit und Sicherheit getestet.
           </p>
@@ -70,8 +68,10 @@ export default async function AnalysezertifikatePage() {
         <AnalysezertifikateSearch products={products} />
 
         {products.length === 0 && (
-          <div className="text-center py-12">
-            <ShieldCheck className="mx-auto h-12 w-12 text-muted-foreground/40 mb-4" />
+          <div className="text-center py-16">
+            <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/5 mb-4">
+              <ShieldCheck className="h-7 w-7 text-muted-foreground/40" />
+            </div>
             <p className="text-muted-foreground">
               Aktuell sind keine Analysezertifikate verfügbar.
             </p>
