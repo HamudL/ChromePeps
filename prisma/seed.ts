@@ -144,20 +144,35 @@ async function main() {
   }) {
     const { variants, ...productData } = data;
 
-    const product = await prisma.product.upsert({
-      where: { slug: data.slug },
-      update: {
-        name: data.name,
-        priceInCents: data.priceInCents,
-        compareAtPriceInCents: data.compareAtPriceInCents,
-        stock: data.stock,
-        isActive: true,
-      },
-      create: {
-        ...productData,
-        isActive: true,
-      },
+    // Find existing product by slug OR sku (slug may have changed via admin)
+    const existing = await prisma.product.findFirst({
+      where: { OR: [{ slug: data.slug }, { sku: data.sku }] },
     });
+
+    let product;
+    if (existing) {
+      product = await prisma.product.update({
+        where: { id: existing.id },
+        data: {
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
+          shortDesc: data.shortDesc,
+          priceInCents: data.priceInCents,
+          compareAtPriceInCents: data.compareAtPriceInCents,
+          categoryId: data.categoryId,
+          stock: data.stock,
+          isActive: true,
+        },
+      });
+    } else {
+      product = await prisma.product.create({
+        data: {
+          ...productData,
+          isActive: true,
+        },
+      });
+    }
 
     if (variants) {
       for (const v of variants) {
