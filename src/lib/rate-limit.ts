@@ -16,29 +16,35 @@ export async function rateLimit(
   identifier: string,
   config: RateLimitConfig = { maxRequests: 60, windowMs: 60_000 }
 ): Promise<RateLimitResult> {
-  const key = `rate_limit:${identifier}`;
-  const windowSec = Math.ceil(config.windowMs / 1000);
+  try {
+    const key = `rate_limit:${identifier}`;
+    const windowSec = Math.ceil(config.windowMs / 1000);
 
-  const multi = redis.multi();
-  multi.incr(key);
-  multi.pttl(key);
-  const results = await multi.exec();
+    const multi = redis.multi();
+    multi.incr(key);
+    multi.pttl(key);
+    const results = await multi.exec();
 
-  const count = (results?.[0]?.[1] as number) ?? 1;
-  const ttl = (results?.[1]?.[1] as number) ?? -1;
+    const count = (results?.[0]?.[1] as number) ?? 1;
+    const ttl = (results?.[1]?.[1] as number) ?? -1;
 
-  if (ttl === -1 || ttl === -2) {
-    await redis.expire(key, windowSec);
+    if (ttl === -1 || ttl === -2) {
+      await redis.expire(key, windowSec);
+    }
+
+    const remaining = Math.max(0, config.maxRequests - count);
+    const reset = ttl > 0 ? ttl : config.windowMs;
+
+    return {
+      success: count <= config.maxRequests,
+      remaining,
+      reset,
+    };
+  } catch (err) {
+    console.error("[RateLimit] Redis error, allowing request:", (err as Error).message);
+    // Graceful fallback: allow the request if Redis is unavailable
+    return { success: true, remaining: config.maxRequests, reset: config.windowMs };
   }
-
-  const remaining = Math.max(0, config.maxRequests - count);
-  const reset = ttl > 0 ? ttl : config.windowMs;
-
-  return {
-    success: count <= config.maxRequests,
-    remaining,
-    reset,
-  };
 }
 
 export function rateLimitHeaders(result: RateLimitResult): HeadersInit {
