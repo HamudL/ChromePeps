@@ -94,7 +94,7 @@ export function VariantSelector({ variants }: { variants: VariantOption[] }) {
   // The AddToCartButton reads the selected variant from a hidden input.
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">Size / Variant</label>
+      <label className="text-sm font-medium">Variante wählen</label>
       <div className="flex flex-wrap gap-2" data-variant-selector>
         {variants.map((variant) => {
           const outOfStock = variant.stock <= 0;
@@ -221,7 +221,7 @@ export function AddToCartButton({
     <div className="space-y-4">
       {/* Quantity Selector */}
       <div className="flex items-center gap-3">
-        <label className="text-sm font-medium">Quantity</label>
+        <label className="text-sm font-medium">Menge</label>
         <div className="flex items-center border rounded-md">
           <Button
             variant="ghost"
@@ -249,7 +249,7 @@ export function AddToCartButton({
         </div>
         {!isOutOfStock && (
           <span className="text-xs text-muted-foreground">
-            {effectiveStock} in stock
+            {effectiveStock} auf Lager
           </span>
         )}
       </div>
@@ -264,16 +264,16 @@ export function AddToCartButton({
         {added ? (
           <>
             <Check className="h-5 w-5" />
-            Added to Cart
+            Hinzugefügt
           </>
         ) : isOutOfStock ? (
-          "Out of Stock"
+          "Ausverkauft"
         ) : needsVariant ? (
-          "Select a Variant"
+          "Variante wählen"
         ) : (
           <>
             <ShoppingCart className="h-5 w-5" />
-            Add to Cart - {formatPrice(effectivePrice * quantity)}
+            In den Warenkorb — {formatPrice(effectivePrice * quantity)}
           </>
         )}
       </Button>

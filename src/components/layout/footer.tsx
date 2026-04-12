@@ -4,15 +4,15 @@ import { NewsletterForm } from "@/components/shop/newsletter-form";
 
 export function Footer() {
   return (
-    <footer className="border-t bg-chrome-50 dark:bg-chrome-950">
+    <footer className="border-t bg-muted/30">
       <div className="container py-12">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="col-span-2 space-y-3">
             <h3 className="text-lg font-bold chrome-text">{APP_NAME}</h3>
             <p className="text-sm text-muted-foreground max-w-sm">
-              Premium research peptides with verified purity and comprehensive
-              certificates of analysis.
+              Premium-Forschungspeptide mit verifizierter Reinheit und
+              umfassenden Analysezertifikaten.
             </p>
             <div className="mt-4 space-y-2">
               <p className="text-sm font-medium">Newsletter</p>

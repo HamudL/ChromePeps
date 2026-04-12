@@ -19,7 +19,6 @@ import type { ProductWithDetails } from "@/types";
 
 import { AddToCartButton, VariantSelector, ImageGallery } from "./product-client";
 import { ProductViewTracker } from "@/components/shop/product-view-tracker";
-import { RecentlyViewed } from "@/components/shop/recently-viewed";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -163,17 +162,17 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   // Prepare spec items
   const specs: { icon: React.ReactNode; label: string; value: string }[] = [];
   if (product.purity)
-    specs.push({ icon: <FlaskConical className="h-4 w-4" />, label: "Purity", value: product.purity });
+    specs.push({ icon: <FlaskConical className="h-4 w-4" />, label: "Reinheit", value: product.purity });
   if (product.molecularWeight)
-    specs.push({ icon: <Weight className="h-4 w-4" />, label: "Molecular Weight", value: product.molecularWeight });
+    specs.push({ icon: <Weight className="h-4 w-4" />, label: "Molekulargewicht", value: product.molecularWeight });
   if (product.casNumber)
-    specs.push({ icon: <Hash className="h-4 w-4" />, label: "CAS Number", value: product.casNumber });
+    specs.push({ icon: <Hash className="h-4 w-4" />, label: "CAS-Nummer", value: product.casNumber });
   if (product.storageTemp)
-    specs.push({ icon: <Thermometer className="h-4 w-4" />, label: "Storage Temp", value: product.storageTemp });
+    specs.push({ icon: <Thermometer className="h-4 w-4" />, label: "Lagerung", value: product.storageTemp });
   if (product.form)
     specs.push({ icon: <Layers className="h-4 w-4" />, label: "Form", value: product.form });
   if (product.weight)
-    specs.push({ icon: <Dna className="h-4 w-4" />, label: "Weight", value: product.weight });
+    specs.push({ icon: <Dna className="h-4 w-4" />, label: "Gewicht", value: product.weight });
 
   return (
     <div className="container py-8 md:py-12">
@@ -318,7 +317,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           {specs.length > 0 && (
             <div className="space-y-3">
               <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                Specifications
+                Spezifikationen
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 {specs.map((spec) => (
@@ -338,7 +337,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           {product.sequence && (
             <div className="space-y-2">
               <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                Amino Acid Sequence
+                Aminosäuresequenz
               </h3>
               <div className="rounded-md border bg-muted/50 p-4 overflow-x-auto">
                 <code className="font-mono text-sm break-all leading-relaxed">
@@ -352,7 +351,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
       {/* Full Description */}
       <section className="mt-14">
-        <h2 className="text-xl font-bold mb-4">Description</h2>
+        <h2 className="text-xl font-bold mb-4">Beschreibung</h2>
         <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
           {product.description}
         </div>
@@ -364,7 +363,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       <section id="reviews" className="scroll-mt-24">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">
-            Reviews ({product.reviews.length})
+            Bewertungen ({product.reviews.length})
           </h2>
           {product.reviews.length > 0 && (
             <div className="flex items-center gap-2">
@@ -457,15 +456,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         </>
       )}
 
-      {/* Recently Viewed */}
-      <Separator className="my-14" />
-      <RecentlyViewed currentProductId={product.id} />
-
       {/* Research Disclaimer */}
       <Separator className="my-14" />
       <section className="text-center pb-4">
-        <FlaskConical className="mx-auto h-6 w-6 text-muted-foreground/50 mb-2" />
-        <p className="text-xs text-muted-foreground max-w-lg mx-auto">
+        <p className="text-xs text-muted-foreground/60 max-w-lg mx-auto">
           {RESEARCH_DISCLAIMER}
         </p>
       </section>

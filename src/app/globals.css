@@ -4,66 +4,66 @@
 
 @layer base {
   :root {
-    /* ChromePeps Chrome Theme — cool steel/silver palette */
-    --background: 220 20% 97%;
-    --foreground: 224 20% 10%;
+    /* ChromePeps — Premium Gold/Amber + Dark Slate palette */
+    --background: 40 20% 98%;
+    --foreground: 20 14% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 20% 10%;
+    --card-foreground: 20 14% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 20% 10%;
+    --popover-foreground: 20 14% 10%;
 
-    --primary: 217 55% 45%;
+    --primary: 45 92% 41%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 38 35% 92%;
-    --secondary-foreground: 30 25% 15%;
+    --secondary: 30 10% 92%;
+    --secondary-foreground: 20 14% 10%;
 
-    --muted: 220 16% 93%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 30 10% 94%;
+    --muted-foreground: 20 6% 44%;
 
-    --accent: 38 30% 87%;
-    --accent-foreground: 30 25% 15%;
+    --accent: 40 20% 90%;
+    --accent-foreground: 20 14% 10%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 87%;
-    --input: 220 13% 87%;
-    --ring: 217 55% 45%;
+    --border: 30 10% 88%;
+    --input: 30 10% 88%;
+    --ring: 45 92% 41%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 224 25% 8%;
-    --foreground: 220 15% 92%;
+    --background: 20 14% 6%;
+    --foreground: 40 10% 92%;
 
-    --card: 224 22% 11%;
-    --card-foreground: 220 15% 92%;
+    --card: 20 12% 9%;
+    --card-foreground: 40 10% 92%;
 
-    --popover: 224 22% 11%;
-    --popover-foreground: 220 15% 92%;
+    --popover: 20 12% 9%;
+    --popover-foreground: 40 10% 92%;
 
-    --primary: 217 65% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 20 14% 6%;
 
-    --secondary: 35 18% 14%;
-    --secondary-foreground: 35 15% 85%;
+    --secondary: 30 8% 14%;
+    --secondary-foreground: 40 10% 85%;
 
-    --muted: 224 18% 16%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 20 10% 15%;
+    --muted-foreground: 30 6% 55%;
 
-    --accent: 35 16% 17%;
-    --accent-foreground: 35 15% 85%;
+    --accent: 30 8% 17%;
+    --accent-foreground: 40 10% 85%;
 
     --destructive: 0 62% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 224 15% 18%;
-    --input: 224 15% 18%;
-    --ring: 217 65% 55%;
+    --border: 20 10% 18%;
+    --input: 20 10% 18%;
+    --ring: 45 93% 47%;
   }
 }
 
@@ -72,8 +72,6 @@
     @apply border-border;
   }
 
-  /* Global keyboard-focus indicator (WCAG 2.4.7) — only shows for
-     keyboard navigation, never for mouse clicks. */
   *:focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;
   }
@@ -84,38 +82,22 @@
 }
 
 @layer utilities {
-  .chrome-gradient {
-    background: linear-gradient(
-      135deg,
-      hsl(220, 20%, 96%) 0%,
-      hsl(220, 25%, 88%) 25%,
-      hsl(220, 20%, 96%) 50%,
-      hsl(220, 25%, 88%) 75%,
-      hsl(220, 20%, 96%) 100%
-    );
-  }
-
-  .dark .chrome-gradient {
-    background: linear-gradient(
-      135deg,
-      hsl(224, 22%, 14%) 0%,
-      hsl(224, 20%, 18%) 25%,
-      hsl(224, 22%, 14%) 50%,
-      hsl(224, 20%, 18%) 75%,
-      hsl(224, 22%, 14%) 100%
-    );
+  /* Dark section — for alternating light/dark rhythm */
+  .section-dark {
+    background-color: hsl(20 14% 8%);
+    color: hsl(40 10% 92%);
   }
 
   .chrome-text {
     background: linear-gradient(
       90deg,
-      hsl(220, 15%, 40%) 0%,
-      hsl(220, 20%, 58%) 15%,
-      hsl(220, 25%, 78%) 30%,
-      hsl(220, 20%, 45%) 45%,
-      hsl(220, 25%, 75%) 60%,
-      hsl(220, 20%, 55%) 75%,
-      hsl(220, 15%, 40%) 100%
+      hsl(40, 15%, 35%) 0%,
+      hsl(45, 30%, 55%) 15%,
+      hsl(40, 20%, 72%) 30%,
+      hsl(45, 25%, 42%) 45%,
+      hsl(40, 30%, 68%) 60%,
+      hsl(45, 20%, 50%) 75%,
+      hsl(40, 15%, 35%) 100%
     );
     background-size: 200% 100%;
     -webkit-background-clip: text;
@@ -127,13 +109,13 @@
   .dark .chrome-text {
     background: linear-gradient(
       90deg,
-      hsl(220, 15%, 55%) 0%,
-      hsl(220, 20%, 72%) 15%,
-      hsl(220, 25%, 90%) 30%,
-      hsl(220, 20%, 62%) 45%,
-      hsl(220, 25%, 85%) 60%,
-      hsl(220, 20%, 70%) 75%,
-      hsl(220, 15%, 55%) 100%
+      hsl(40, 15%, 50%) 0%,
+      hsl(45, 25%, 68%) 15%,
+      hsl(40, 30%, 85%) 30%,
+      hsl(45, 20%, 58%) 45%,
+      hsl(40, 25%, 80%) 60%,
+      hsl(45, 20%, 65%) 75%,
+      hsl(40, 15%, 50%) 100%
     );
     background-size: 200% 100%;
     -webkit-background-clip: text;
@@ -143,69 +125,14 @@
   }
 
   @keyframes chromeFlow {
-    0% {
-      background-position: 0% 50%;
-    }
-    100% {
-      background-position: -200% 50%;
-    }
-  }
-
-  /* Hero glow orbs — decorative background accents */
-  .hero-glow {
-    position: relative;
-    overflow: hidden;
-  }
-  .hero-glow::before {
-    content: '';
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    background: radial-gradient(circle, hsl(217 55% 45% / 0.12) 0%, transparent 70%);
-    top: -200px;
-    right: -100px;
-    pointer-events: none;
-  }
-  .hero-glow::after {
-    content: '';
-    position: absolute;
-    width: 400px;
-    height: 400px;
-    border-radius: 50%;
-    background: radial-gradient(circle, hsl(220 60% 55% / 0.08) 0%, transparent 70%);
-    bottom: -100px;
-    left: -50px;
-    pointer-events: none;
-  }
-
-  /* Glass card effect */
-  .glass-card {
-    background: hsl(0 0% 100% / 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(220 13% 87% / 0.6);
-  }
-  .dark .glass-card {
-    background: hsl(224 22% 14% / 0.6);
-    border: 1px solid hsl(224 15% 22% / 0.5);
-  }
-
-  /* Gradient border left accent */
-  .gradient-border-l {
-    border-left: 3px solid transparent;
-    border-image: linear-gradient(to bottom, hsl(217 55% 45%), hsl(220 60% 65%)) 1;
-  }
-
-  /* Section glow — soft radial gradient background */
-  .section-glow {
-    background: radial-gradient(ellipse at 50% 0%, hsl(217 55% 45% / 0.04) 0%, transparent 60%);
+    0% { background-position: 0% 50%; }
+    100% { background-position: -200% 50%; }
   }
 
   .subtle-grid {
     background-image: radial-gradient(
       circle,
-      hsl(220, 15%, 80%, 0.25) 1px,
+      hsl(40, 15%, 78%, 0.3) 1px,
       transparent 1px
     );
     background-size: 24px 24px;
@@ -214,22 +141,15 @@
   .dark .subtle-grid {
     background-image: radial-gradient(
       circle,
-      hsl(220, 15%, 25%, 0.3) 1px,
+      hsl(40, 10%, 25%, 0.3) 1px,
       transparent 1px
     );
     background-size: 24px 24px;
   }
 
-  /* Fade-in animation (replaces framer-motion) */
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .animate-fade-in {

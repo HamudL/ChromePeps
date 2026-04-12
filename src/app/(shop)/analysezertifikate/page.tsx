@@ -2,20 +2,20 @@ export const dynamic = "force-dynamic";
 
 import { ShieldCheck } from "lucide-react";
 import { db } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
 import { AnalysezertifikateSearch } from "./search-client";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Analysezertifikate | ChromePeps",
   description:
-    "Drittlabor-verifizierte Analysezertifikate für alle ChromePeps-Peptide. Jede Charge wird unabhängig auf Reinheit und Sicherheit getestet.",
+    "Drittlabor-verifizierte Analysezertifikate für alle ChromePeps-Peptide. Jede Charge wird durch Janoshik unabhängig getestet.",
 };
 
 interface ProductWithCerts {
   id: string;
   name: string;
   slug: string;
+  images: { url: string }[];
   _count: { certificates: number };
 }
 
@@ -30,6 +30,7 @@ async function getProductsWithCertificates(): Promise<ProductWithCerts[]> {
       id: true,
       name: true,
       slug: true,
+      images: { select: { url: true }, orderBy: { sortOrder: "asc" }, take: 1 },
       _count: {
         select: { certificates: { where: { isPublished: true } } },
       },
@@ -42,23 +43,16 @@ export default async function AnalysezertifikatePage() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero */}
-      <section className="relative overflow-hidden hero-glow bg-gradient-to-b from-background via-muted/40 to-background">
-        <div className="absolute inset-0 subtle-grid opacity-30" />
-        <div className="container relative py-14 md:py-20 text-center">
-          <Badge
-            variant="outline"
-            className="px-4 py-1.5 text-sm mb-4 inline-flex border-primary/30 bg-primary/5"
-          >
-            <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-primary" />
-            Drittlabor-verifiziert
-          </Badge>
+      {/* Hero (dark) */}
+      <section className="section-dark">
+        <div className="container py-16 md:py-20 text-center">
+          <ShieldCheck className="mx-auto h-10 w-10 text-primary mb-4" />
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-            Analytische Testergebnisse
+            Analysezertifikate
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Durchsuchen Sie unsere Analysezertifikate nach Produktname. Jede
-            Charge wird unabhängig auf Reinheit und Sicherheit getestet.
+          <p className="text-white/60 max-w-xl mx-auto">
+            Jede Charge wird durch Janoshik unabhängig auf Reinheit getestet.
+            Alle Ergebnisse sind öffentlich verifizierbar.
           </p>
         </div>
       </section>
@@ -69,9 +63,7 @@ export default async function AnalysezertifikatePage() {
 
         {products.length === 0 && (
           <div className="text-center py-16">
-            <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/5 mb-4">
-              <ShieldCheck className="h-7 w-7 text-muted-foreground/40" />
-            </div>
+            <ShieldCheck className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4" />
             <p className="text-muted-foreground">
               Aktuell sind keine Analysezertifikate verfügbar.
             </p>
