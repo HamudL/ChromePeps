@@ -38,6 +38,8 @@ export function Footer() {
               <Link href="/kontakt" className="hover:text-foreground transition-colors">Kontakt</Link>
               <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
               <Link href="/ueber-uns" className="hover:text-foreground transition-colors">Über uns</Link>
+              <Link href="/qualitaetskontrolle" className="hover:text-foreground transition-colors">Qualitätskontrolle</Link>
+              <Link href="/analysezertifikate" className="hover:text-foreground transition-colors">Analysezertifikate</Link>
               <Link href="/versand" className="hover:text-foreground transition-colors">Versand</Link>
               <Link href="/zahlung" className="hover:text-foreground transition-colors">Zahlung</Link>
               <Link href="/dashboard" className="hover:text-foreground transition-colors">Mein Konto</Link>

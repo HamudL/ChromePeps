@@ -144,6 +144,7 @@ model Product {
   reviews       Review[]
   variants      ProductVariant[]
   wishlistItems WishlistItem[]
+  certificates  CertificateOfAnalysis[]
 
   @@index([slug])
   @@index([categoryId])
@@ -473,6 +474,31 @@ model WishlistItem {
   @@unique([userId, productId])
   @@index([userId])
   @@map("wishlist_items")
+}
+
+// ============================================================
+// CERTIFICATES OF ANALYSIS (COA)
+// ============================================================
+
+model CertificateOfAnalysis {
+  id          String   @id @default(cuid())
+  productId   String
+  batchNumber String
+  testDate    DateTime
+  purity      Float?
+  testMethod  String   @default("HPLC")
+  laboratory  String   @default("Janoshik")
+  reportUrl   String?
+  pdfUrl      String?
+  notes       String?  @db.Text
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("certificates_of_analysis")
 }
 
 // ============================================================

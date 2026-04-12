@@ -19,10 +19,12 @@ import { APP_NAME } from "@/lib/constants";
 import { useState } from "react";
 
 const navLinks = [
-  { href: "/products", label: "Products" },
+  { href: "/products", label: "Produkte" },
   { href: "/products?category=growth-hormone-peptides", label: "GH Peptides" },
-  { href: "/products?category=metabolic-peptides", label: "Metabolic" },
+  { href: "/products?category=metabolic-peptides", label: "Metabolisch" },
   { href: "/products?category=research-blends", label: "Blends" },
+  { href: "/qualitaetskontrolle", label: "Qualität" },
+  { href: "/analysezertifikate", label: "COAs" },
 ];
 
 export function Header() {

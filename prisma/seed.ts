@@ -419,6 +419,123 @@ async function main() {
   });
 
   console.log("All 12 products (24 variants) seeded successfully.");
+
+  // ---- Certificates of Analysis (COA) ----
+  console.log("Seeding certificates of analysis...");
+
+  const coaData: {
+    productSlug: string;
+    entries: { batch: string; url: string; date: string }[];
+  }[] = [
+    {
+      productSlug: "semaglutide",
+      entries: [
+        { batch: "CS-se5-0116", url: "https://janoshik.com/tests/101805-Semaglutide_5mg_Cocer_Peptides_6QZK8LJRVPDF", date: "2025-01-16" },
+        { batch: "CS-se101128", url: "https://janoshik.com/tests/92127-Semaglutide_10mg_Cocer_Peptides_6A7PDZU8BG5L", date: "2024-11-28" },
+        { batch: "CS-se201128", url: "https://janoshik.com/tests/92284-Semaglutide_20mg_Cocer_Peptides_NQL69HFVVKED", date: "2024-11-28" },
+      ],
+    },
+    {
+      productSlug: "tirzepatide",
+      entries: [
+        { batch: "CS-ze10-0202", url: "https://janoshik.com/tests/106724-Tirzepatide_10mg_Cocer_Peptides_AI69BGJAFHV", date: "2025-02-02" },
+        { batch: "CS-ze15-0202", url: "https://janoshik.com/tests/106719-Tirzepatide_15mg_Cocer_Peptides_C6DE4USZPP53", date: "2025-02-02" },
+        { batch: "CS-ze30-0228", url: "https://verify.janoshik.com/tests/121438-Tirzepatide_30mg_Cocer_Peptides", date: "2025-02-28" },
+        { batch: "CS-ze60-0316", url: "https://janoshik.com/tests/125341-tir60mg_Cocer_Peptides_SFUFPRYNMW6F", date: "2025-03-16" },
+      ],
+    },
+    {
+      productSlug: "retatrutide",
+      entries: [
+        { batch: "CS-re10-0322", url: "https://janoshik.com/tests/137638-reta10mg_Cocer_Peptides_MSARBWF3J3P9", date: "2025-03-22" },
+        { batch: "CS-re15-0112", url: "https://janoshik.com/tests/102084-Retatrutide_15mg_Cocer_Peptides_FCVY4GUQIZXD", date: "2025-01-12" },
+        { batch: "CS-re20-0327", url: "https://janoshik.com/tests/133963-Retatrutide_20_mg_Metabolotide_8SZJNDUUIWT7", date: "2025-03-27" },
+      ],
+    },
+    {
+      productSlug: "bpc-157",
+      entries: [
+        { batch: "CS-bpc-0128", url: "https://janoshik.com/tests/105645-BPC157_10mg_Cocer_Peptides_FCY4UX1U1L4B", date: "2025-01-28" },
+      ],
+    },
+    {
+      productSlug: "tb-500",
+      entries: [
+        { batch: "CS-tb-0128", url: "https://janoshik.com/tests/85178-TB500_10mg_Cocer_Peptides", date: "2025-01-28" },
+      ],
+    },
+    {
+      productSlug: "ghk-cu",
+      entries: [
+        { batch: "CS-gu50-0309", url: "https://janoshik.com/tests/122571-ghkcu_50mg_Cocer_Peptides_F8MIBZFZW3YP", date: "2025-03-09" },
+      ],
+    },
+    {
+      productSlug: "selank",
+      entries: [
+        { batch: "CS-sel10-0322", url: "https://janoshik.com/tests/137736-selank_10mg_Cocer_Peptides_WVB2B8KBLJ3W", date: "2025-03-22" },
+      ],
+    },
+    {
+      productSlug: "pt-141",
+      entries: [
+        { batch: "CS-pt10-0316", url: "https://janoshik.com/tests/125489-pt141_10mg_Cocer_Peptides_FRRU1LP7L55M", date: "2025-03-16" },
+      ],
+    },
+    {
+      productSlug: "nad-plus",
+      entries: [
+        { batch: "CS-na500-0228", url: "https://janoshik.com/tests/121796-NAD_500mg_Cocer_Peptides", date: "2025-02-28" },
+      ],
+    },
+    {
+      productSlug: "tesamorelin",
+      entries: [
+        { batch: "CS-tes-0128", url: "https://janoshik.com/tests/105708-Tesamorelin_Cocer_Peptides", date: "2025-01-28" },
+      ],
+    },
+  ];
+
+  for (const { productSlug, entries } of coaData) {
+    const product = await prisma.product.findFirst({
+      where: { slug: productSlug },
+    });
+    if (!product) {
+      console.log(`  Skipping COA for "${productSlug}" — product not found.`);
+      continue;
+    }
+
+    for (const entry of entries) {
+      const existing = await prisma.certificateOfAnalysis.findFirst({
+        where: { productId: product.id, batchNumber: entry.batch },
+      });
+
+      if (existing) {
+        await prisma.certificateOfAnalysis.update({
+          where: { id: existing.id },
+          data: {
+            reportUrl: entry.url,
+            testDate: new Date(entry.date),
+          },
+        });
+      } else {
+        await prisma.certificateOfAnalysis.create({
+          data: {
+            productId: product.id,
+            batchNumber: entry.batch,
+            testDate: new Date(entry.date),
+            testMethod: "HPLC",
+            laboratory: "Janoshik",
+            reportUrl: entry.url,
+            isPublished: true,
+          },
+        });
+      }
+    }
+    console.log(`  COAs for "${product.name}" seeded (${entries.length} entries).`);
+  }
+
+  console.log("Certificates of analysis seeded.");
   console.log("Seeding complete.");
 }
 

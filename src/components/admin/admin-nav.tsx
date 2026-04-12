@@ -11,6 +11,7 @@ import {
   Tag,
   Megaphone,
   Mail,
+  FileCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/admin/promos", label: "Promo Codes", icon: Tag },
   { href: "/admin/announcement", label: "Announcement", icon: Megaphone },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+  { href: "/admin/certificates", label: "Zertifikate", icon: FileCheck },
 ];
 
 export function DashboardNav() {
