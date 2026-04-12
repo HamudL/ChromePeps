@@ -147,6 +147,48 @@
     background-size: 24px 24px;
   }
 
+  /* Hero ambient glow — slow drifting gradient orbs */
+  .hero-ambient {
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-ambient::before,
+  .hero-ambient::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(80px);
+    opacity: 0.07;
+  }
+  .hero-ambient::before {
+    width: 500px;
+    height: 500px;
+    background: hsl(45 80% 50%);
+    top: -150px;
+    right: -100px;
+    animation: ambientDrift1 20s ease-in-out infinite;
+  }
+  .hero-ambient::after {
+    width: 400px;
+    height: 400px;
+    background: hsl(30 40% 45%);
+    bottom: -100px;
+    left: -80px;
+    animation: ambientDrift2 25s ease-in-out infinite;
+  }
+
+  @keyframes ambientDrift1 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(-40px, 30px); }
+    66% { transform: translate(20px, -20px); }
+  }
+  @keyframes ambientDrift2 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(30px, -25px); }
+    66% { transform: translate(-20px, 15px); }
+  }
+
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }

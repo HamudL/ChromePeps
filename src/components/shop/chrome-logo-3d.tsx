@@ -5,16 +5,14 @@ import * as THREE from "three";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 
-/* ── Organic noise for liquid metal displacement ── */
+/* ── Smoother organic noise for liquid metal displacement ── */
 function liquidNoise(x: number, y: number, z: number): number {
   return (
-    Math.sin(x * 1.4 + z * 0.7) * 0.35 +
-    Math.sin(y * 1.8 + x * 0.6) * 0.25 +
-    Math.sin(z * 2.1 + y * 0.9) * 0.2 +
-    Math.sin(x * 3.2 + y * 1.3 + z * 0.8) * 0.12 +
-    Math.cos(x * 0.7 + z * 2.4) * 0.18 +
-    Math.sin(y * 2.6 + z * 1.1 + x * 0.5) * 0.1 +
-    Math.cos(x * 4.1 + y * 2.7) * 0.08
+    Math.sin(x * 1.0 + z * 0.5) * 0.3 +
+    Math.sin(y * 1.3 + x * 0.4) * 0.25 +
+    Math.sin(z * 1.6 + y * 0.6) * 0.2 +
+    Math.cos(x * 0.5 + z * 1.8) * 0.15 +
+    Math.sin(x * 2.2 + y * 0.9 + z * 0.5) * 0.1
   );
 }
 
@@ -33,7 +31,7 @@ export function ChromeLogo3D() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.8;
+    renderer.toneMappingExposure = 1.6;
     container.appendChild(renderer.domElement);
 
     /* ── Scene + Camera ── */
@@ -44,42 +42,41 @@ export function ChromeLogo3D() {
       0.1,
       100
     );
-    camera.position.set(0, 0, 4.2);
+    camera.position.set(0, 0, 4.5);
 
-    /* ── Bright chrome lighting ── */
-    scene.add(new THREE.AmbientLight(0x506080, 0.8));
+    /* ── Warm chrome + gold lighting ── */
+    scene.add(new THREE.AmbientLight(0x605040, 0.6));
 
-    // Key light — bright top-right
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    // Key light — warm white from top-right
+    const keyLight = new THREE.DirectionalLight(0xfff5e0, 2.5);
     keyLight.position.set(3, 4, 5);
     scene.add(keyLight);
 
-    // Fill light — cool blue from left
-    const fillLight = new THREE.DirectionalLight(0x80a0ff, 1.2);
+    // Fill light — cool silver from left (chrome contrast)
+    const fillLight = new THREE.DirectionalLight(0xc0d0e8, 1.0);
     fillLight.position.set(-5, 1, 3);
     scene.add(fillLight);
 
     // Rim light — warm gold from behind
-    const rimLight = new THREE.DirectionalLight(0xffc070, 0.6);
+    const rimLight = new THREE.DirectionalLight(0xdaa520, 0.8);
     rimLight.position.set(0, -2, -5);
     scene.add(rimLight);
 
-    // Top accent point light
-    const topLight = new THREE.PointLight(0xffffff, 4, 15);
+    // Top accent
+    const topLight = new THREE.PointLight(0xfff0d0, 3, 15);
     topLight.position.set(0, 5, 3);
     scene.add(topLight);
 
-    // Front fill point light
-    const frontLight = new THREE.PointLight(0xc0d0f0, 2, 12);
+    // Front fill
+    const frontLight = new THREE.PointLight(0xe0d8c8, 1.5, 12);
     frontLight.position.set(0, 0, 6);
     scene.add(frontLight);
 
-    /* ── High-contrast env map for mirror-like chrome ── */
+    /* ── Env map — chrome with warm gold reflections ── */
     const pmrem = new THREE.PMREMGenerator(renderer);
     pmrem.compileCubemapShader();
     const envScene = new THREE.Scene();
 
-    // Medium-bright sky for chrome reflections
     const skyGeo = new THREE.SphereGeometry(50, 64, 32);
     const skyMat = new THREE.MeshBasicMaterial({
       side: THREE.BackSide,
@@ -90,16 +87,17 @@ export function ChromeLogo3D() {
     for (let i = 0; i < skyPos.count; i++) {
       const y = skyPos.getY(i) / 50;
       const x = skyPos.getX(i) / 50;
+      // Warm silver-gold gradient sky
       skyColors.push(
-        THREE.MathUtils.lerp(0.12, 0.28, (y + 1) * 0.5) + Math.max(0, x * 0.04),
-        THREE.MathUtils.lerp(0.12, 0.25, (y + 1) * 0.5),
-        THREE.MathUtils.lerp(0.15, 0.35, (y + 1) * 0.5)
+        THREE.MathUtils.lerp(0.14, 0.30, (y + 1) * 0.5) + Math.max(0, x * 0.05),
+        THREE.MathUtils.lerp(0.12, 0.24, (y + 1) * 0.5),
+        THREE.MathUtils.lerp(0.10, 0.20, (y + 1) * 0.5)
       );
     }
     skyGeo.setAttribute("color", new THREE.Float32BufferAttribute(skyColors, 3));
     envScene.add(new THREE.Mesh(skyGeo, skyMat));
 
-    // Studio light panels — creates dramatic highlights on chrome
+    // Studio panels
     const addPanel = (
       w: number, h: number, color: number, intensity: number,
       px: number, py: number, pz: number
@@ -112,21 +110,21 @@ export function ChromeLogo3D() {
       envScene.add(panel);
     };
 
-    // Bright key panel (top-right — main highlight streak)
-    addPanel(12, 5, 0xffffff, 7, 5, 7, -8);
-    // Secondary fill panel (left)
-    addPanel(8, 4, 0xd0e0ff, 5, -8, 3, -5);
-    // Narrow top strip (creates sharp edge highlights)
-    addPanel(16, 1.5, 0xf0f4ff, 8, 0, 10, -4);
-    // Warm bottom accent
-    addPanel(10, 3, 0xffc080, 3, 0, -7, -5);
-    // Side fills (brighter)
-    addPanel(4, 12, 0xa0b0d0, 3, 12, 0, 2);
-    addPanel(4, 12, 0x90a8c8, 2.5, -12, 0, 2);
-    // Back rim panel
-    addPanel(16, 6, 0x607090, 3, 0, 0, -18);
-    // Front bounce panel
-    addPanel(14, 4, 0xd0d8e8, 2, 0, -3, 12);
+    // Warm key panel (top-right)
+    addPanel(12, 5, 0xfff5e0, 6, 5, 7, -8);
+    // Silver fill panel (left)
+    addPanel(8, 4, 0xd0d8e8, 4, -8, 3, -5);
+    // Narrow top strip
+    addPanel(16, 1.5, 0xfff8ee, 7, 0, 10, -4);
+    // Gold bottom accent
+    addPanel(10, 3, 0xdaa520, 2.5, 0, -7, -5);
+    // Side fills
+    addPanel(4, 12, 0xb0a890, 2.5, 12, 0, 2);
+    addPanel(4, 12, 0xa0988a, 2, -12, 0, 2);
+    // Back rim
+    addPanel(16, 6, 0x706050, 2.5, 0, 0, -18);
+    // Front bounce — warm
+    addPanel(14, 4, 0xe0d4c0, 2, 0, -3, 12);
 
     const envMap = pmrem.fromScene(envScene, 0.015).texture;
     scene.environment = envMap;
@@ -137,15 +135,18 @@ export function ChromeLogo3D() {
     });
     pmrem.dispose();
 
-    /* ── Chrome material — bright mirror-like metallic finish ── */
+    /* ── Material — chrome with subtle gold pearl ── */
     const material = new THREE.MeshPhysicalMaterial({
       metalness: 1,
-      roughness: 0.025,
-      envMapIntensity: 5.0,
-      color: new THREE.Color("#d0daf0"),
-      clearcoat: 0.5,
-      clearcoatRoughness: 0.05,
+      roughness: 0.03,
+      envMapIntensity: 4.5,
+      color: new THREE.Color("#d8d0be"),    // warm chrome-gold base
+      clearcoat: 0.6,
+      clearcoatRoughness: 0.04,
       reflectivity: 1,
+      sheen: 0.3,
+      sheenColor: new THREE.Color("#c8a050"), // gold pearl sheen
+      sheenRoughness: 0.2,
     });
 
     /* ── Font loading + text geometry ── */
@@ -161,18 +162,17 @@ export function ChromeLogo3D() {
       if (disposed) return;
       const geo = new TextGeometry("ChromePeps", {
         font,
-        size: 0.85,
-        depth: 0.3,
+        size: 0.95,          // bigger
+        depth: 0.32,
         bevelEnabled: true,
         bevelThickness: 0.06,
-        bevelSize: 0.03,
+        bevelSize: 0.035,
         bevelSegments: 10,
         curveSegments: 18,
       });
       geo.center();
       geo.computeVertexNormals();
 
-      // Store originals for displacement
       originalPositions = new Float32Array(geo.attributes.position.array);
       normalBuffer = new Float32Array(geo.attributes.normal.array);
 
@@ -199,11 +199,11 @@ export function ChromeLogo3D() {
     };
     window.addEventListener("resize", onResize);
 
-    /* ── Animation loop ── */
+    /* ── Animation loop — smoother, rounder motion ── */
     const clock = new THREE.Clock();
     let animId = 0;
-    const DISPLACEMENT = 0.02;
-    const FLOW_SPEED = 0.55;
+    const DISPLACEMENT = 0.015;        // subtler
+    const FLOW_SPEED = 0.35;           // slower = smoother
 
     const animate = () => {
       if (disposed) return;
@@ -211,27 +211,27 @@ export function ChromeLogo3D() {
       const t = clock.getElapsedTime();
 
       if (textMesh && originalPositions && normalBuffer) {
-        // Mouse-follow rotation
-        targetRotation.y = pointerX * 0.15;
-        targetRotation.x = -pointerY * 0.08;
+        // Smoother mouse-follow (lower lerp factor)
+        targetRotation.y = pointerX * 0.12;
+        targetRotation.x = -pointerY * 0.06;
 
         textMesh.rotation.y = THREE.MathUtils.lerp(
           textMesh.rotation.y,
-          targetRotation.y + Math.sin(t * 0.35) * 0.025,
-          0.04
+          targetRotation.y + Math.sin(t * 0.25) * 0.02,
+          0.025    // smoother
         );
         textMesh.rotation.x = THREE.MathUtils.lerp(
           textMesh.rotation.x,
           targetRotation.x,
-          0.04
+          0.025
         );
-        textMesh.rotation.z = Math.sin(t * 0.25) * 0.008;
+        textMesh.rotation.z = Math.sin(t * 0.18) * 0.005;
 
-        // Subtle breathing
-        const s = 1 + Math.sin(t * 0.5) * 0.004;
+        // Gentle breathing
+        const s = 1 + Math.sin(t * 0.35) * 0.003;
         textMesh.scale.setScalar(s);
 
-        // ── Liquid metal vertex displacement ──
+        // Liquid metal displacement — smoother
         const posAttr = textMesh.geometry.attributes.position;
         const arr = posAttr.array as Float32Array;
         const speed = t * FLOW_SPEED;
@@ -244,12 +244,11 @@ export function ChromeLogo3D() {
           const ny = normalBuffer[i + 1];
           const nz = normalBuffer[i + 2];
 
-          // Flowing noise along vertex normal
           const d =
             liquidNoise(
-              ox * 2.8 + speed,
-              oy * 2.8 + speed * 0.65,
-              oz * 2.8 + speed * 0.35
+              ox * 2.2 + speed,
+              oy * 2.2 + speed * 0.5,
+              oz * 2.2 + speed * 0.3
             ) * DISPLACEMENT;
 
           arr[i] = ox + nx * d;
@@ -259,11 +258,11 @@ export function ChromeLogo3D() {
         posAttr.needsUpdate = true;
         textMesh.geometry.computeVertexNormals();
 
-        // Shimmer — oscillate roughness & env intensity
+        // Subtle shimmer
         material.roughness =
-          0.02 + Math.sin(t * 0.7) * 0.01 + Math.sin(t * 1.1) * 0.006;
+          0.025 + Math.sin(t * 0.5) * 0.008;
         material.envMapIntensity =
-          5.0 + Math.sin(t * 0.4) * 0.8;
+          4.5 + Math.sin(t * 0.3) * 0.5;
       }
 
       renderer.render(scene, camera);
@@ -287,7 +286,7 @@ export function ChromeLogo3D() {
   }, []);
 
   return (
-    <div className="relative w-full" style={{ height: "clamp(140px, 22vw, 260px)" }}>
+    <div className="relative w-full" style={{ height: "clamp(160px, 25vw, 300px)" }}>
       {!loaded && (
         <h1 className="absolute inset-0 flex items-center justify-center text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight chrome-text">
           ChromePeps

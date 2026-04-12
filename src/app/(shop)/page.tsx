@@ -67,8 +67,8 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 subtle-grid opacity-40" />
+      <section className="relative hero-ambient">
+        <div className="absolute inset-0 subtle-grid opacity-30" />
         <div className="container relative py-24 md:py-32 lg:py-40">
           <FadeUp>
             <div className="mx-auto max-w-3xl text-center space-y-8">
