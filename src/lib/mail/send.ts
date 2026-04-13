@@ -70,10 +70,16 @@ export async function sendOrderConfirmationEmail(
     ? `Ihre Bestellung ${input.orderNumber} \u2013 bitte Vorkasse \u00fcberweisen`
     : `Bestellbest\u00e4tigung ${input.orderNumber}`;
 
+  // Load COA PDFs for ordered products
+  const attachments = await loadCoaAttachments(
+    input.items.map((i) => i.productId).filter(Boolean) as string[]
+  );
+
   return sendMail({
     to: input.to,
     subject,
     tag: isBank ? "order-confirmation-bank" : "order-confirmation-stripe",
+    attachments,
     react: OrderConfirmationEmail({
       customerName: input.customerName,
       orderNumber: input.orderNumber,
@@ -95,8 +101,61 @@ export async function sendOrderConfirmationEmail(
             bankName: BANK_DETAILS.bankName,
           }
         : undefined,
+      hasCoaAttachments: attachments.length > 0,
     }),
   });
+}
+
+/** Load COA PDF files for the given product IDs and return as email attachments */
+async function loadCoaAttachments(
+  productIds: string[]
+): Promise<import("./client").SendMailAttachment[]> {
+  if (productIds.length === 0) return [];
+
+  try {
+    const { db } = await import("@/lib/db");
+    const { readFile } = await import("fs/promises");
+    const { join } = await import("path");
+
+    // Get the latest COA with a PDF for each product
+    const coas = await db.certificateOfAnalysis.findMany({
+      where: {
+        productId: { in: productIds },
+        isPublished: true,
+        pdfUrl: { not: null },
+      },
+      orderBy: { testDate: "desc" },
+      select: {
+        pdfUrl: true,
+        product: { select: { name: true } },
+      },
+      distinct: ["productId"],
+    });
+
+    const attachments: import("./client").SendMailAttachment[] = [];
+
+    for (const coa of coas) {
+      if (!coa.pdfUrl) continue;
+      try {
+        // pdfUrl is like "/uploads/certificates/xxx.pdf"
+        const filePath = join(process.cwd(), "public", coa.pdfUrl);
+        const content = await readFile(filePath);
+        const safeName = coa.product.name.replace(/[^a-zA-Z0-9-]/g, "_");
+        attachments.push({
+          filename: `COA-${safeName}.pdf`,
+          content,
+        });
+      } catch {
+        // File not found — skip silently
+        console.warn(`[mail] COA PDF not found: ${coa.pdfUrl}`);
+      }
+    }
+
+    return attachments;
+  } catch (err) {
+    console.error("[mail] Failed to load COA attachments:", err);
+    return [];
+  }
 }
 
 // -------- Email verification --------

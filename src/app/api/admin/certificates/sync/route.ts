@@ -38,6 +38,24 @@ function matchProductSlug(name: string): string | null {
   return null;
 }
 
+/** Try to parse date from batch number like "CS-se5-0116" → Jan 16 */
+function parseBatchDate(batch: string): Date {
+  // Pattern: last 4 digits = MMDD (e.g. "0116" = Jan 16, "0202" = Feb 2)
+  const match = batch.match(/(\d{2})(\d{2})$/);
+  if (match) {
+    const month = parseInt(match[1], 10);
+    const day = parseInt(match[2], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const year = new Date().getFullYear();
+      const d = new Date(year, month - 1, day);
+      // If future date, use previous year
+      if (d > new Date()) d.setFullYear(year - 1);
+      return d;
+    }
+  }
+  return new Date(); // fallback
+}
+
 /** Parse CSV — handles quoted fields with commas inside */
 function parseCSVLine(line: string): string[] {
   const fields: string[] = [];
@@ -164,7 +182,7 @@ export async function POST() {
           data: {
             productId,
             batchNumber: batch,
-            testDate: new Date(),
+            testDate: parseBatchDate(batch),
             testMethod: "HPLC",
             laboratory: "Janoshik",
             reportUrl: urls[0], // Latest Janoshik URL

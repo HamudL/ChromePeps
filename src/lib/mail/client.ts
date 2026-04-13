@@ -21,6 +21,11 @@ export function getResendClient(): Resend | null {
   return cachedClient;
 }
 
+export interface SendMailAttachment {
+  filename: string;
+  content: Buffer;
+}
+
 export interface SendMailInput {
   to: string | string[];
   subject: string;
@@ -29,6 +34,8 @@ export interface SendMailInput {
   text?: string;
   /** Unique tag for logging and Resend dashboard filtering. */
   tag?: string;
+  /** File attachments (e.g. COA PDFs). */
+  attachments?: SendMailAttachment[];
 }
 
 export interface SendMailResult {
@@ -70,6 +77,10 @@ export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
       text: input.text,
       replyTo,
       tags: [{ name: "category", value: tag }],
+      attachments: input.attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+      })),
     });
 
     if (error) {

@@ -17,6 +17,7 @@ export interface OrderConfirmationItem {
   sku: string;
   quantity: number;
   priceInCents: number;
+  productId?: string | null;
 }
 
 export interface OrderConfirmationBankDetails {
@@ -51,6 +52,7 @@ interface OrderConfirmationEmailProps {
   paymentMethod: "STRIPE" | "BANK_TRANSFER";
   shippingAddress?: OrderConfirmationShippingAddress | null;
   bankDetails?: OrderConfirmationBankDetails;
+  hasCoaAttachments?: boolean;
 }
 
 export function OrderConfirmationEmail({
@@ -67,6 +69,7 @@ export function OrderConfirmationEmail({
   paymentMethod,
   shippingAddress,
   bankDetails,
+  hasCoaAttachments,
 }: OrderConfirmationEmailProps) {
   const greeting = customerName ? `Hallo ${customerName},` : "Hallo,";
   const isBank = paymentMethod === "BANK_TRANSFER";
@@ -260,6 +263,18 @@ export function OrderConfirmationEmail({
             </Text>
           </Section>
         </>
+      )}
+
+      {hasCoaAttachments && (
+        <Section className="mt-6 border border-neutral-200 rounded-lg p-4">
+          <Text className="m-0 text-sm font-semibold text-zinc-900">
+            Analysezertifikate
+          </Text>
+          <Text className="m-0 mt-1 text-sm text-neutral-600">
+            Die Analysezertifikate (COA) f&uuml;r Ihre bestellten Produkte finden
+            Sie im Anhang dieser E-Mail.
+          </Text>
+        </Section>
       )}
 
       {orderUrl && (

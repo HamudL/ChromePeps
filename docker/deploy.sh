@@ -6,6 +6,9 @@
 # =============================================================================
 set -euo pipefail
 
+# SICHERHEIT: Niemals docker compose down --volumes verwenden!
+# Das löscht die Datenbank unwiderruflich.
+
 COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$COMPOSE_DIR")"
 cd "$COMPOSE_DIR"
@@ -21,6 +24,19 @@ fi
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
 log "=== ChromePeps Deploy ==="
+
+# 0. Backup database before deploy
+log "[0/7] Backing up database..."
+BACKUP_DIR="/opt/chromepeps/backups"
+mkdir -p "$BACKUP_DIR"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+if docker compose exec -T postgres pg_dump -U chromepeps chromepeps 2>/dev/null | gzip > "$BACKUP_DIR/deploy_$TIMESTAMP.sql.gz"; then
+  log "  Backup saved: deploy_$TIMESTAMP.sql.gz ($(du -h "$BACKUP_DIR/deploy_$TIMESTAMP.sql.gz" | cut -f1))"
+  # Keep only last 14 deploy backups
+  ls -t "$BACKUP_DIR"/deploy_*.sql.gz 2>/dev/null | tail -n +15 | xargs rm -f 2>/dev/null || true
+else
+  log "  WARNING: Backup failed (DB might not be running). Continuing deploy..."
+fi
 
 # 1. Pull latest code
 log "[1/7] Pulling latest code..."

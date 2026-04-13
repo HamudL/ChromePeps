@@ -18,7 +18,7 @@ export interface InvoicePdfItem {
   variant?: string | null;
   sku: string;
   quantity: number;
-  unitPriceInCents: number;
+  unitPriceInCents: number; // gross price (inkl. MwSt.)
 }
 
 export interface InvoicePdfAddress {
@@ -238,12 +238,17 @@ function formatDate(d: Date): string {
   return new Intl.DateTimeFormat("de-DE", { dateStyle: "long" }).format(d);
 }
 
+/** Convert gross price to net (remove 19% VAT) */
+function grossToNet(grossCents: number): number {
+  return Math.round(grossCents / (1 + TAX_RATE));
+}
+
 function paymentMethodLabel(method: string): string {
   switch (method) {
     case "STRIPE":
-      return "Kreditkarte / Stripe";
+      return "Kreditkarte";
     case "BANK_TRANSFER":
-      return "Vorkasse (\u00DCberweisung)";
+      return "Vorkasse";
     default:
       return method;
   }
@@ -277,7 +282,6 @@ export function InvoiceDocument(props: InvoicePdfInput) {
     customerName,
     billingAddress,
     items,
-    subtotalInCents,
     discountInCents,
     shippingInCents,
     taxInCents,
@@ -285,7 +289,14 @@ export function InvoiceDocument(props: InvoicePdfInput) {
     promoCode,
   } = props;
 
-  const netTotalInCents = totalInCents - taxInCents;
+  // Calculate net amounts for display
+  const netSubtotal = items.reduce(
+    (sum, item) => sum + grossToNet(item.unitPriceInCents) * item.quantity,
+    0
+  );
+  const netDiscount = grossToNet(discountInCents);
+  const netShipping = grossToNet(shippingInCents);
+  const netTotal = totalInCents - taxInCents;
 
   return (
     <Document
@@ -321,7 +332,7 @@ export function InvoiceDocument(props: InvoicePdfInput) {
         {/* Meta */}
         <View style={styles.metaRow}>
           <View style={styles.metaCol}>
-            <Text style={styles.addressHeading}>Rechnungsempf\u00e4nger</Text>
+            <Text style={styles.addressHeading}>{"Rechnungsempf\u00E4nger"}</Text>
             {customerName && (
               <Text style={styles.addressLine}>{customerName}</Text>
             )}
@@ -356,98 +367,105 @@ export function InvoiceDocument(props: InvoicePdfInput) {
 
             <Text style={styles.metaLabel}>Zahlung</Text>
             <Text style={styles.metaValue}>
-              {paymentMethodLabel(paymentMethod)} \u00b7{" "}
+              {paymentMethodLabel(paymentMethod)} {" \u00B7 "}
               {paymentStatusLabel(paymentStatus)}
             </Text>
           </View>
         </View>
 
-        {/* Items table */}
+        {/* Items table — NETTO prices */}
         <View style={styles.tableHeader}>
           <Text style={styles.colDescription}>Beschreibung</Text>
           <Text style={styles.colSku}>SKU</Text>
           <Text style={styles.colQty}>Menge</Text>
-          <Text style={styles.colUnit}>Einzelpreis</Text>
-          <Text style={styles.colTotal}>Summe</Text>
+          <Text style={styles.colUnit}>Einzelpreis (netto)</Text>
+          <Text style={styles.colTotal}>Summe (netto)</Text>
         </View>
 
-        {items.map((item, idx) => (
-          <View
-            style={idx % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd}
-            key={`${item.sku}-${idx}`}
-          >
-            <View style={styles.colDescription}>
-              <Text>{item.name}</Text>
-              {item.variant && (
-                <Text style={styles.variantLine}>{item.variant}</Text>
-              )}
+        {items.map((item, idx) => {
+          const netUnit = grossToNet(item.unitPriceInCents);
+          return (
+            <View
+              style={idx % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd}
+              key={`${item.sku}-${idx}`}
+            >
+              <View style={styles.colDescription}>
+                <Text>{item.name}</Text>
+                {item.variant && (
+                  <Text style={styles.variantLine}>{item.variant}</Text>
+                )}
+              </View>
+              <Text style={styles.colSku}>{item.sku}</Text>
+              <Text style={styles.colQty}>{item.quantity}</Text>
+              <Text style={styles.colUnit}>
+                {formatPrice(netUnit)}
+              </Text>
+              <Text style={styles.colTotal}>
+                {formatPrice(netUnit * item.quantity)}
+              </Text>
             </View>
-            <Text style={styles.colSku}>{item.sku}</Text>
-            <Text style={styles.colQty}>{item.quantity}</Text>
-            <Text style={styles.colUnit}>
-              {formatPrice(item.unitPriceInCents)}
-            </Text>
-            <Text style={styles.colTotal}>
-              {formatPrice(item.unitPriceInCents * item.quantity)}
-            </Text>
-          </View>
-        ))}
+          );
+        })}
 
-        {/* Totals */}
+        {/* Totals — Netto → MwSt. → Brutto */}
         <View style={styles.totalsBlock}>
           <View style={styles.totalsRow}>
-            <Text>Zwischensumme</Text>
-            <Text>{formatPrice(subtotalInCents)}</Text>
+            <Text>Zwischensumme (netto)</Text>
+            <Text>{formatPrice(netSubtotal)}</Text>
           </View>
           {discountInCents > 0 && (
             <View style={styles.totalsRow}>
               <Text>Rabatt{promoCode ? ` (${promoCode})` : ""}</Text>
-              <Text>-{formatPrice(discountInCents)}</Text>
+              <Text>-{formatPrice(netDiscount)}</Text>
+            </View>
+          )}
+          {shippingInCents > 0 && (
+            <View style={styles.totalsRow}>
+              <Text>Versand (netto)</Text>
+              <Text>{formatPrice(netShipping)}</Text>
+            </View>
+          )}
+          {shippingInCents === 0 && (
+            <View style={styles.totalsRow}>
+              <Text>Versand</Text>
+              <Text>Kostenlos</Text>
             </View>
           )}
           <View style={styles.totalsRow}>
-            <Text>Versand</Text>
-            <Text>
-              {shippingInCents === 0 ? "Kostenlos" : formatPrice(shippingInCents)}
-            </Text>
+            <Text>Nettobetrag</Text>
+            <Text>{formatPrice(netTotal)}</Text>
           </View>
           <View style={styles.totalsRow}>
-            <Text>Netto</Text>
-            <Text>{formatPrice(netTotalInCents)}</Text>
-          </View>
-          <View style={styles.totalsRow}>
-            <Text>MwSt. ({Math.round(TAX_RATE * 100)}%)</Text>
+            <Text>zzgl. MwSt. ({Math.round(TAX_RATE * 100)}%)</Text>
             <Text>{formatPrice(taxInCents)}</Text>
           </View>
           <View style={styles.totalsRowGrand}>
-            <Text>Gesamtsumme</Text>
+            <Text>Gesamtbetrag (brutto)</Text>
             <Text>{formatPrice(totalInCents)}</Text>
           </View>
         </View>
 
         <View style={styles.notice}>
           <Text>
-            Im Gesamtbetrag ist die gesetzliche Mehrwertsteuer von{" "}
-            {Math.round(TAX_RATE * 100)}% enthalten. Diese Rechnung ist nach
-            \u00a7 14 UStG erstellt und ohne Unterschrift g\u00fcltig. Alle
-            Produkte sind ausschlie\u00dflich als Referenzmaterialien f\u00fcr
-            die In-vitro-Forschung bestimmt.
+            {"Alle Betr\u00E4ge in Euro. Rechnungsstellung gem\u00E4\u00DF \u00A7 14 UStG. "}
+            {"Diese Rechnung ist ohne Unterschrift g\u00FCltig. "}
+            {"Alle Produkte sind ausschlie\u00DFlich als Referenzmaterialien f\u00FCr die In-vitro-Forschung bestimmt."}
           </Text>
         </View>
 
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text>
-            {SELLER_DETAILS.companyName} \u00b7 {SELLER_DETAILS.streetLine1} \u00b7{" "}
-            {SELLER_DETAILS.postalCodeCity} \u00b7 {SELLER_DETAILS.country}
+            {SELLER_DETAILS.companyName} {" \u00B7 "} {SELLER_DETAILS.streetLine1} {" \u00B7 "}
+            {SELLER_DETAILS.postalCodeCity} {" \u00B7 "} {SELLER_DETAILS.country}
           </Text>
           <Text>
-            Gesch\u00e4ftsf\u00fchrer: {SELLER_DETAILS.managingDirector} \u00b7{" "}
-            {SELLER_DETAILS.registerCourt} {SELLER_DETAILS.registerNumber} \u00b7
+            {"Gesch\u00E4ftsf\u00FChrer: "}{SELLER_DETAILS.managingDirector} {" \u00B7 "}
+            {SELLER_DETAILS.registerCourt} {SELLER_DETAILS.registerNumber} {" \u00B7 "}
             USt-IdNr {SELLER_DETAILS.vatId}
           </Text>
           <Text>
-            E-Mail: {SELLER_DETAILS.email} \u00b7 Telefon: {SELLER_DETAILS.phone}
+            E-Mail: {SELLER_DETAILS.email} {" \u00B7 "} Telefon: {SELLER_DETAILS.phone}
           </Text>
         </View>
       </Page>
