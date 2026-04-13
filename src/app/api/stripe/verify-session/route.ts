@@ -261,6 +261,7 @@ export async function POST(req: NextRequest) {
               sku: item.sku,
               quantity: item.quantity,
               priceInCents: item.priceInCents,
+              productId: item.productId,
             })),
             subtotalInCents: fullOrder.subtotalInCents,
             shippingInCents: fullOrder.shippingInCents,

@@ -223,6 +223,7 @@ export async function POST(req: NextRequest) {
         sku: item.sku,
         quantity: item.quantity,
         priceInCents: item.priceInCents,
+        productId: item.productId,
       })),
       subtotalInCents,
       shippingInCents,

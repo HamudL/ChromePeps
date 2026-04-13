@@ -295,6 +295,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           sku: item.sku,
           quantity: item.quantity,
           priceInCents: item.priceInCents,
+          productId: item.productId,
         })),
         subtotalInCents: fullOrder.subtotalInCents,
         shippingInCents: fullOrder.shippingInCents,
