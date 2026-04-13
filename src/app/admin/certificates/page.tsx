@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Download,
   Upload,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,6 +86,8 @@ export default function AdminCertificatesPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingCert, setEditingCert] = useState<Certificate | null>(null);
   const [filterProduct, setFilterProduct] = useState<string>("all");
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
   const [form, setForm] = useState(defaultForm);
 
   const loadData = useCallback(async () => {
@@ -201,6 +204,30 @@ export default function AdminCertificatesPage() {
     setSaving(false);
   }
 
+  async function handleSync() {
+    setSyncing(true);
+    setSyncResult(null);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/certificates/sync", {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setError(json.error || "Sync fehlgeschlagen.");
+      } else {
+        const { imported, skipped, errors: syncErrors } = json.data;
+        setSyncResult(
+          `${imported} importiert, ${skipped} übersprungen${syncErrors?.length ? `, ${syncErrors.length} Fehler` : ""}`
+        );
+        if (imported > 0) await loadData();
+      }
+    } catch {
+      setError("Netzwerkfehler beim Sync.");
+    }
+    setSyncing(false);
+  }
+
   async function handleDelete(id: string) {
     try {
       const res = await fetch(`/api/admin/certificates/${id}`, {
@@ -235,10 +262,20 @@ export default function AdminCertificatesPage() {
             COA-Verwaltung ({certificates.length} Einträge)
           </p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Neues Zertifikat
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleSync} disabled={syncing}>
+            {syncing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Spreadsheet Sync
+          </Button>
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Neues Zertifikat
+          </Button>
+        </div>
       </div>
 
       {/* Filter */}
@@ -262,6 +299,12 @@ export default function AdminCertificatesPage() {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
           {error}
+        </div>
+      )}
+
+      {syncResult && (
+        <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">
+          Sync abgeschlossen: {syncResult}
         </div>
       )}
 
