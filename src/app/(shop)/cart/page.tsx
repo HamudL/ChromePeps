@@ -239,13 +239,6 @@ export default function CartPage() {
                 </p>
               )}
 
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">
-                  MwSt. 19% (enthalten)
-                </span>
-                <span>{formatPrice(estimatedTax)}</span>
-              </div>
-
               <Separator />
 
               <div className="flex justify-between font-semibold text-lg">
@@ -253,16 +246,16 @@ export default function CartPage() {
                 <span>{formatPrice(total)}</span>
               </div>
 
+              <p className="text-xs text-muted-foreground">
+                Alle Preise inkl. 19% MwSt.
+              </p>
+
               <Button className="w-full" size="lg" asChild>
                 <Link href="/checkout">
                   Zur Kasse
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                Alle Preise inkl. MwSt. Versandkosten werden an der Kasse berechnet.
-              </p>
             </CardContent>
           </Card>
         </div>

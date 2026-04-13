@@ -905,13 +905,13 @@ export default function CheckoutPage() {
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-muted-foreground">Zwischensumme</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-green-600">
-                      Discount ({appliedPromo?.code})
+                      Rabatt ({appliedPromo?.code})
                     </span>
                     <span className="text-green-600 font-medium">
                       &minus;{formatPrice(discount)}
@@ -919,29 +919,26 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Shipping</span>
+                  <span className="text-muted-foreground">Versand</span>
                   <span>
                     {shipping === 0 ? (
-                      <span className="text-green-600 font-medium">Free</span>
+                      <span className="text-green-600 font-medium">Kostenlos</span>
                     ) : (
                       formatPrice(shipping)
                     )}
                   </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    MwSt. 19% (enthalten)
-                  </span>
-                  <span>{formatPrice(estimatedTax)}</span>
                 </div>
               </div>
 
               <Separator />
 
               <div className="flex justify-between font-semibold text-lg">
-                <span>Total</span>
+                <span>Gesamt</span>
                 <span>{formatPrice(total)}</span>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Alle Preise inkl. 19% MwSt.
+              </p>
 
               <Button
                 variant="outline"
@@ -949,7 +946,7 @@ export default function CheckoutPage() {
                 className="w-full"
                 asChild
               >
-                <Link href="/cart">Edit Cart</Link>
+                <Link href="/cart">Warenkorb bearbeiten</Link>
               </Button>
             </CardContent>
           </Card>
