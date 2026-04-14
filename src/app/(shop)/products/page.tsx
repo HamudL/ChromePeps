@@ -1,12 +1,18 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, PackageSearch } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  FlaskConical,
+  PackageSearch,
+  ShieldCheck,
+} from "lucide-react";
 import { db } from "@/lib/db";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { ProductCard } from "@/components/shop/product-card";
 import { SearchBar } from "@/components/shop/search-bar";
-import { ProductFilters } from "@/components/shop/product-filters";
+import { CategoryPills, SortSelect } from "@/components/shop/product-filters";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   productCardSelect,
   getBestsellerProductIds,
@@ -178,165 +184,190 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   const hasActiveFilters = !!(search || category || sort !== "newest");
 
+  const currentCategoryName = category
+    ? categories.find((c) => c.slug === category)?.name
+    : undefined;
+
+  const pageTitle = search
+    ? `Suchergebnisse`
+    : currentCategoryName ?? "Alle Produkte";
+
+  const heroSubtitle = search
+    ? `${total} ${total === 1 ? "Treffer" : "Treffer"} für „${search}"`
+    : `${total} hochreine Forschungspeptide — jede Charge unabhängig durch Janoshik drittlabor-verifiziert.`;
+
   return (
-    <div className="container py-8 md:py-12">
-      {/* Page header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">
-          {category
-            ? categories.find((c) => c.slug === category)?.name ?? "Products"
-            : "All Products"}
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          {total} {total === 1 ? "product" : "products"} found
-          {search && (
-            <>
-              {" "}
-              for &ldquo;<span className="font-medium text-foreground">{search}</span>&rdquo;
-            </>
-          )}
-        </p>
-      </div>
-
-      {/* Search & Filters */}
-      <div className="space-y-4 mb-8">
-        <SearchBar />
-        <ProductFilters categories={categories} />
-      </div>
-
-      <Separator className="mb-8" />
-
-      {/* Product Grid */}
-      {products.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <nav
-              className="mt-12 flex items-center justify-center gap-2"
-              aria-label="Pagination"
+    <div className="flex flex-col">
+      {/* ── Hero ── */}
+      <section className="relative hero-ambient border-b border-border/60">
+        <div className="absolute inset-0 subtle-grid opacity-30" />
+        <div className="container relative py-16 md:py-20 lg:py-24">
+          <div className="max-w-3xl space-y-5">
+            <Badge
+              variant="outline"
+              className="border-primary/30 bg-primary/5 px-3 py-1 text-xs"
             >
-              {page > 1 ? (
-                <Button asChild variant="outline" size="sm">
-                  <Link
-                    href={buildPageUrl(
-                      { search, category, sort },
-                      page - 1
-                    )}
-                  >
-                    <ChevronLeft className="mr-1 h-4 w-4" />
-                    Previous
-                  </Link>
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" disabled>
-                  <ChevronLeft className="mr-1 h-4 w-4" />
-                  Previous
-                </Button>
-              )}
+              <FlaskConical className="mr-1.5 h-3 w-3 text-primary" />
+              Forschungskatalog
+            </Badge>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+              {pageTitle}
+            </h1>
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
+              {heroSubtitle}
+            </p>
 
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => {
-                    // Show first, last, and pages near current
-                    if (p === 1 || p === totalPages) return true;
-                    if (Math.abs(p - page) <= 1) return true;
-                    return false;
-                  })
-                  .reduce<(number | "ellipsis")[]>((acc, p, idx, arr) => {
-                    if (idx > 0) {
-                      const prev = arr[idx - 1];
-                      if (p - prev > 1) {
-                        acc.push("ellipsis");
-                      }
-                    }
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((item, idx) => {
-                    if (item === "ellipsis") {
-                      return (
-                        <span
-                          key={`ellipsis-${idx}`}
-                          className="px-2 text-muted-foreground"
-                        >
-                          ...
-                        </span>
-                      );
-                    }
-                    return item === page ? (
-                      <Button
-                        key={item}
-                        variant="default"
-                        size="sm"
-                        className="min-w-[2.25rem]"
-                        disabled
-                      >
-                        {item}
-                      </Button>
-                    ) : (
-                      <Button
-                        key={item}
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="min-w-[2.25rem]"
-                      >
-                        <Link
-                          href={buildPageUrl(
-                            { search, category, sort },
-                            item
-                          )}
-                        >
-                          {item}
-                        </Link>
-                      </Button>
-                    );
-                  })}
+            {/* Trust indicators inline */}
+            <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                <span>Janoshik HPLC-verifiziert</span>
               </div>
-
-              {page < totalPages ? (
-                <Button asChild variant="outline" size="sm">
-                  <Link
-                    href={buildPageUrl(
-                      { search, category, sort },
-                      page + 1
-                    )}
-                  >
-                    Next
-                    <ChevronRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" disabled>
-                  Next
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              )}
-            </nav>
-          )}
-        </>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <PackageSearch className="h-16 w-16 text-muted-foreground/40 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Keine Produkte gefunden</h2>
-          <p className="text-muted-foreground mb-6 max-w-md">
-            {hasActiveFilters
-              ? "Versuchen Sie, Ihre Suche oder Filter anzupassen."
-              : "Schauen Sie bald wieder vorbei — neue Produkte sind in Vorbereitung."}
-          </p>
-          {hasActiveFilters && (
-            <Button asChild variant="outline">
-              <Link href="/products">Alle Filter zurücksetzen</Link>
-            </Button>
-          )}
+              <span className="text-muted-foreground/40">·</span>
+              <div className="flex items-center gap-1.5">
+                <span>Versand innerhalb 24h</span>
+              </div>
+              <span className="text-muted-foreground/40">·</span>
+              <div className="flex items-center gap-1.5">
+                <span>Gratis ab 100&nbsp;€</span>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+      </section>
+
+      {/* ── Sticky Filter Bar ── */}
+      <div className="sticky top-16 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
+        <div className="container py-3.5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            {/* Category pills — scrollable on mobile */}
+            <div className="flex-1 min-w-0 -mx-4 px-4 md:mx-0 md:px-0">
+              <CategoryPills
+                categories={categories}
+                currentCategory={category}
+              />
+            </div>
+
+            {/* Search + Sort */}
+            <div className="flex items-center gap-3 shrink-0">
+              <SearchBar />
+              <SortSelect />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Product Grid ── */}
+      <section className="container py-10 md:py-14">
+        {products.length > 0 ? (
+          <>
+            {/* Result count (editorial) */}
+            <div className="mb-8 flex items-baseline justify-between">
+              <p className="text-xs uppercase tracking-[0.15em] font-semibold text-muted-foreground">
+                {total} {total === 1 ? "Produkt" : "Produkte"}
+                {hasActiveFilters && " · gefiltert"}
+              </p>
+              {hasActiveFilters && (
+                <Link
+                  href="/products"
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-4 decoration-dotted"
+                >
+                  Filter zurücksetzen
+                </Link>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10 md:gap-x-6 md:gap-y-12">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {/* Editorial Pagination */}
+            {totalPages > 1 && (
+              <nav
+                className="mt-16 flex items-center justify-center gap-6 border-t border-border/60 pt-10"
+                aria-label="Pagination"
+              >
+                {page > 1 ? (
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <Link
+                      href={buildPageUrl({ search, category, sort }, page - 1)}
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      Zurück
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled
+                    className="gap-2 text-muted-foreground/40"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Zurück
+                  </Button>
+                )}
+
+                <span className="text-xs uppercase tracking-[0.15em] font-semibold text-muted-foreground tabular-nums">
+                  Seite {page}
+                  <span className="mx-2 text-muted-foreground/40">/</span>
+                  {totalPages}
+                </span>
+
+                {page < totalPages ? (
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <Link
+                      href={buildPageUrl({ search, category, sort }, page + 1)}
+                    >
+                      Weiter
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled
+                    className="gap-2 text-muted-foreground/40"
+                  >
+                    Weiter
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </nav>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-24 md:py-32 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-6">
+              <PackageSearch className="h-7 w-7 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Keine Produkte gefunden</h2>
+            <p className="text-muted-foreground max-w-md mb-6 leading-relaxed">
+              {hasActiveFilters
+                ? "Versuchen Sie, Ihre Suche oder Filter anzupassen."
+                : "Schauen Sie bald wieder vorbei — neue Produkte sind in Vorbereitung."}
+            </p>
+            {hasActiveFilters && (
+              <Button asChild variant="outline">
+                <Link href="/products">Alle Filter zurücksetzen</Link>
+              </Button>
+            )}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
