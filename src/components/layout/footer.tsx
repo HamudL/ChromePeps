@@ -6,7 +6,7 @@ export function Footer() {
   return (
     <footer className="section-dark border-t border-white/5">
       <div className="container py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 space-y-3">
             <h3 className="text-lg font-bold chrome-text">{APP_NAME}</h3>
@@ -18,17 +18,6 @@ export function Footer() {
               <p className="text-sm font-medium text-white/80">Newsletter</p>
               <NewsletterForm />
             </div>
-          </div>
-
-          {/* Products */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-white/80">Produkte</h4>
-            <nav aria-label="Produkte" className="flex flex-col gap-2 text-sm text-white/40">
-              <Link href="/products?category=growth-hormone-peptides" className="hover:text-white transition-colors">GH Peptides</Link>
-              <Link href="/products?category=metabolic-peptides" className="hover:text-white transition-colors">Metabolic Peptides</Link>
-              <Link href="/products?category=research-blends" className="hover:text-white transition-colors">Research Blends</Link>
-              <Link href="/products?category=cosmetic-peptides" className="hover:text-white transition-colors">Cosmetic Peptides</Link>
-            </nav>
           </div>
 
           {/* Service */}

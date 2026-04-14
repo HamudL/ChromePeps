@@ -4,25 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
 import { WishlistButton } from "@/components/shop/wishlist-button";
 import { formatPrice, cn } from "@/lib/utils";
-import { computeProductBadges, type ProductBadge } from "@/lib/products/badges";
 import type { ProductCardData } from "@/types";
-
-/**
- * Visual styles for each badge tone. Kept in the client component because
- * Tailwind's JIT needs to see these class strings literally to emit them.
- */
-const TONE_CLASSES: Record<ProductBadge["tone"], string> = {
-  destructive: "bg-red-600 text-white hover:bg-red-600 border-transparent",
-  warning: "bg-amber-500 text-white hover:bg-amber-500 border-transparent",
-  success: "bg-emerald-600 text-white hover:bg-emerald-600 border-transparent",
-  info: "bg-primary text-primary-foreground hover:bg-primary border-transparent",
-  muted: "bg-muted text-muted-foreground hover:bg-muted border-transparent",
-};
 
 export function ProductCard({ product }: { product: ProductCardData }) {
   const addItem = useCartStore((s) => s.addItem);
@@ -33,14 +19,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     product.compareAtPriceInCents &&
     product.compareAtPriceInCents > product.priceInCents;
   const image = product.images[0];
-
-  const badges = computeProductBadges({
-    priceInCents: product.priceInCents,
-    compareAtPriceInCents: product.compareAtPriceInCents,
-    stock: product.stock,
-    createdAt: product.createdAt,
-    isBestseller: product.isBestseller,
-  });
 
   const variantPrices = product.variants.map((v) => v.priceInCents);
   const hasVariants = variantPrices.length > 0;
@@ -94,21 +72,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             Kein Bild
           </div>
         )}
-
-        {/* Status badges (top-left) */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-          {badges.map((badge) => (
-            <Badge
-              key={badge.kind}
-              className={cn(
-                "text-[10px] font-semibold uppercase tracking-wider shadow-sm",
-                TONE_CLASSES[badge.tone]
-              )}
-            >
-              {badge.label}
-            </Badge>
-          ))}
-        </div>
 
         {/* mg-Size chip (top-right) — always visible */}
         {product.weight && (
