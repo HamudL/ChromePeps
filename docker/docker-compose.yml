@@ -1,16 +1,10 @@
 services:
   app:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args:
-        # NEXT_PUBLIC_* must be available at build time, not just runtime.
-        # Compose pulls these from ../.env via variable substitution.
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
-        SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN:-}
-        SENTRY_ORG: ${SENTRY_ORG:-}
-        SENTRY_PROJECT: ${SENTRY_PROJECT:-}
+    # Image is built by GitHub Actions and pushed to GHCR.
+    # VPS only pulls the pre-built image — no more heavy builds on the
+    # production server that could OOM the whole VPS.
+    image: ghcr.io/hamudl/chromepeps:latest
+    pull_policy: always
     container_name: chromepeps-app
     restart: unless-stopped
     # Runtime memory cap — prevents the Node.js app from growing unbounded and
