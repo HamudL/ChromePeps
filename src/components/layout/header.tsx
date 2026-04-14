@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { ShoppingCart, User, Menu, LogOut, Package, Settings, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/store/cart-store";
 import { APP_NAME } from "@/lib/constants";
+import { LogoIcon } from "@/components/brand/logo-icon";
 import { useState } from "react";
 
 const navLinks = [
@@ -27,6 +29,8 @@ const navLinks = [
 
 export function Header() {
   const { data: session } = useSession();
+  const pathname = usePathname();
+  const isHomepage = pathname === "/";
   // Individual selector for items — compute totalItems from it directly.
   // Never call store methods (s.totalItems()) inside selectors with Zustand v5 + React 19.
   const items = useCartStore((s) => s.items);
@@ -61,10 +65,21 @@ export function Header() {
         </Sheet>
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold tracking-tight chrome-text">
-            {APP_NAME}
-          </span>
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          aria-label={`${APP_NAME} Startseite`}
+        >
+          {/* Text: only on desktop (sm+) AND not on homepage.
+              On mobile or homepage, the icon carries the brand alone. */}
+          {!isHomepage && (
+            <span className="hidden sm:inline text-xl font-bold tracking-tight chrome-text">
+              {APP_NAME}
+            </span>
+          )}
+          {/* Icon: always visible. Mobile gets a slightly smaller size
+              than desktop so the wider chrome logo doesn't crowd the nav. */}
+          <LogoIcon size={36} className="shrink-0" />
         </Link>
 
         {/* Desktop nav */}
