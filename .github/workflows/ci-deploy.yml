@@ -11,6 +11,10 @@ concurrency:
   group: deploy
   cancel-in-progress: false
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   # ──────────────────────────────────────────────
   # 1. Lint + Typecheck
@@ -51,38 +55,68 @@ jobs:
       - run: npm run test:run
 
   # ──────────────────────────────────────────────
-  # 3. Build Verification
+  # 3. Build Docker image + push to GHCR
   # ──────────────────────────────────────────────
-  build:
+  # Image is built in the cloud (free GitHub runners) and pushed to
+  # GitHub Container Registry. The VPS then just pulls the pre-built
+  # image in seconds, avoiding OOM crashes from building on the 1.8 GB VPS.
+  build-and-push:
     needs: unit-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      # Dummy values so the build doesn't fail on missing env vars.
-      # The real values are only needed at runtime on the VPS.
-      NEXT_PUBLIC_APP_URL: https://chromepeps.com
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_placeholder
-      DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - run: npm ci
-      - run: npx prisma generate
-      - run: npm run build
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_APP_URL=https://chromepeps.com
+            NEXT_PUBLIC_SENTRY_DSN=
 
   # ──────────────────────────────────────────────
   # 4. Deploy to VPS (only on push to main)
   # ──────────────────────────────────────────────
+  # The deploy just runs bash deploy.sh on the VPS, which now pulls
+  # the pre-built image from GHCR instead of building locally.
   deploy:
-    needs: build
+    needs: build-and-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
@@ -92,6 +126,6 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script_stop: true
-          command_timeout: 12m
+          command_timeout: 5m
           script: |
             cd /opt/chromepeps/docker && bash deploy.sh
