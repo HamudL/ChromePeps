@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 
 // POST /api/promos/validate — validate a promo code for the current user
 export async function POST(req: NextRequest) {
@@ -39,66 +40,29 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Check active
-  if (!promo.isActive) {
-    return NextResponse.json(
-      { success: false, error: "This promo code is no longer active" },
-      { status: 400 }
-    );
-  }
-
-  // Check dates
-  const now = new Date();
-  if (promo.startsAt && promo.startsAt > now) {
-    return NextResponse.json(
-      { success: false, error: "This promo code is not yet valid" },
-      { status: 400 }
-    );
-  }
-  if (promo.expiresAt && promo.expiresAt < now) {
-    return NextResponse.json(
-      { success: false, error: "This promo code has expired" },
-      { status: 400 }
-    );
-  }
-
-  // Check max uses
-  if (promo.maxUses !== null && promo.usedCount >= promo.maxUses) {
-    return NextResponse.json(
-      { success: false, error: "This promo code has reached its usage limit" },
-      { status: 400 }
-    );
-  }
-
-  // Check if user already used this code
-  const alreadyUsed = await db.promoUsage.findFirst({
+  // Whether the current user has already redeemed this code. This is
+  // the only check that depends on the DB and can't live in the pure
+  // helper.
+  const alreadyUsed = !!(await db.promoUsage.findFirst({
     where: { promoId: promo.id, userId: session.user.id },
+  }));
+
+  // All other rules (active, dates, max-uses, min-order, discount
+  // calculation) are delegated to the shared pure helper so this
+  // endpoint, POST /api/stripe/checkout, and POST /api/checkout/
+  // bank-transfer all agree on what "valid" means.
+  const check = checkPromoApplicability({
+    promo,
+    now: new Date(),
+    subtotalInCents,
+    alreadyUsedByUser: alreadyUsed,
   });
-  if (alreadyUsed) {
+
+  if (!check.applicable) {
     return NextResponse.json(
-      { success: false, error: "You have already used this promo code" },
+      { success: false, error: check.message },
       { status: 400 }
     );
-  }
-
-  // Check minimum order
-  if (promo.minOrderCents && subtotalInCents < promo.minOrderCents) {
-    const minEur = (promo.minOrderCents / 100).toFixed(2);
-    return NextResponse.json(
-      {
-        success: false,
-        error: `Minimum order of ${minEur} EUR required for this code`,
-      },
-      { status: 400 }
-    );
-  }
-
-  // Calculate discount
-  let discountAmount: number;
-  if (promo.discountType === "PERCENTAGE") {
-    discountAmount = Math.round((subtotalInCents * promo.discountValue) / 100);
-  } else {
-    discountAmount = Math.min(promo.discountValue, subtotalInCents);
   }
 
   return NextResponse.json({
@@ -108,7 +72,7 @@ export async function POST(req: NextRequest) {
       code: promo.code,
       discountType: promo.discountType,
       discountValue: promo.discountValue,
-      discountAmount,
+      discountAmount: check.discountInCents,
       description: promo.description,
     },
   });

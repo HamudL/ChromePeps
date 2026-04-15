@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { generateOrderNumber } from "@/lib/order/generate-order-number";
+import { calculateOrderTotals } from "@/lib/order/calculate-totals";
+import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { cacheDel } from "@/lib/redis";
 import { CACHE_KEYS } from "@/lib/constants";
@@ -101,7 +103,9 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Validate and apply promo code
+  // Validate and apply promo code. Silently drops invalid codes for
+  // the same reason as /api/stripe/checkout — the UI has already shown
+  // the specific failure message through /api/promos/validate.
   let discountInCents = 0;
   let validatedPromoId: string | null = null;
   let promoCodeStr: string | null = null;
@@ -111,36 +115,25 @@ export async function POST(req: NextRequest) {
       where: { code: promoCode.toUpperCase() },
     });
 
-    if (promo && promo.isActive) {
-      const now = new Date();
-      const notExpired = !promo.expiresAt || promo.expiresAt > now;
-      const notEarly = !promo.startsAt || promo.startsAt <= now;
-      const notMaxed = !promo.maxUses || promo.usedCount < promo.maxUses;
-      const meetsMin =
-        !promo.minOrderCents || subtotalInCents >= promo.minOrderCents;
-
-      const alreadyUsed = await db.promoUsage.findFirst({
+    if (promo) {
+      const alreadyUsed = !!(await db.promoUsage.findFirst({
         where: { promoId: promo.id, userId: session.user.id },
+      }));
+      const check = checkPromoApplicability({
+        promo,
+        now: new Date(),
+        subtotalInCents,
+        alreadyUsedByUser: alreadyUsed,
       });
-
-      if (notExpired && notEarly && notMaxed && meetsMin && !alreadyUsed) {
+      if (check.applicable) {
         validatedPromoId = promo.id;
         promoCodeStr = promo.code;
-        if (promo.discountType === "PERCENTAGE") {
-          discountInCents = Math.round(
-            (subtotalInCents * promo.discountValue) / 100
-          );
-        } else {
-          discountInCents = Math.min(promo.discountValue, subtotalInCents);
-        }
+        discountInCents = check.discountInCents;
       }
     }
   }
 
-  const subtotalAfterDiscount = Math.max(0, subtotalInCents - discountInCents);
-  const shippingInCents = subtotalAfterDiscount >= 10000 ? 0 : 599;
-  const totalInCents = subtotalAfterDiscount + shippingInCents;
-  const taxInCents = Math.round(totalInCents - totalInCents / 1.19);
+  const totals = calculateOrderTotals({ subtotalInCents, discountInCents });
 
   // Create order in a transaction
   const order = await db.$transaction(async (tx) => {
@@ -151,12 +144,12 @@ export async function POST(req: NextRequest) {
         status: "PENDING",
         paymentStatus: "PENDING",
         paymentMethod: "BANK_TRANSFER",
-        subtotalInCents,
-        discountInCents,
+        subtotalInCents: totals.subtotalInCents,
+        discountInCents: totals.discountInCents,
         promoCode: promoCodeStr,
-        taxInCents,
-        shippingInCents,
-        totalInCents,
+        taxInCents: totals.taxInCents,
+        shippingInCents: totals.shippingInCents,
+        totalInCents: totals.totalInCents,
         shippingAddressId,
         billingAddressId: shippingAddressId,
         items: { createMany: { data: orderItems } },
@@ -235,11 +228,11 @@ export async function POST(req: NextRequest) {
         priceInCents: item.priceInCents,
         productId: item.productId,
       })),
-      subtotalInCents,
-      shippingInCents,
-      taxInCents,
-      discountInCents,
-      totalInCents,
+      subtotalInCents: totals.subtotalInCents,
+      shippingInCents: totals.shippingInCents,
+      taxInCents: totals.taxInCents,
+      discountInCents: totals.discountInCents,
+      totalInCents: totals.totalInCents,
       paymentMethod: "BANK_TRANSFER",
       shippingAddress: {
         firstName: address.firstName,

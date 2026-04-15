@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { absoluteUrl } from "@/lib/utils";
+import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 
 // POST /api/stripe/checkout — create Stripe Checkout Session
 export async function POST(req: NextRequest) {
@@ -136,7 +137,11 @@ export async function POST(req: NextRequest) {
     return sum + price * item.quantity;
   }, 0);
 
-  // Validate and apply promo code
+  // Validate and apply promo code. This silently drops invalid codes —
+  // the UI is expected to have called POST /api/promos/validate first,
+  // which surfaces the specific error message. Here we re-check the
+  // rules as a defense-in-depth measure before we actually create the
+  // Stripe session.
   let discountAmount = 0;
   let validatedPromoId: string | null = null;
   // Matching db row kept around so we can cache the Stripe coupon ID on it.
@@ -147,26 +152,20 @@ export async function POST(req: NextRequest) {
       where: { code: promoCode.toUpperCase() },
     });
 
-    if (promo && promo.isActive) {
-      const now = new Date();
-      const notExpired = !promo.expiresAt || promo.expiresAt > now;
-      const notEarly = !promo.startsAt || promo.startsAt <= now;
-      const notMaxed = !promo.maxUses || promo.usedCount < promo.maxUses;
-      const meetsMin = !promo.minOrderCents || subtotal >= promo.minOrderCents;
-
-      // Check user hasn't used it
-      const alreadyUsed = await db.promoUsage.findFirst({
+    if (promo) {
+      const alreadyUsed = !!(await db.promoUsage.findFirst({
         where: { promoId: promo.id, userId: session.user.id },
+      }));
+      const check = checkPromoApplicability({
+        promo,
+        now: new Date(),
+        subtotalInCents: subtotal,
+        alreadyUsedByUser: alreadyUsed,
       });
-
-      if (notExpired && notEarly && notMaxed && meetsMin && !alreadyUsed) {
+      if (check.applicable) {
         validatedPromoId = promo.id;
         validatedPromo = promo;
-        if (promo.discountType === "PERCENTAGE") {
-          discountAmount = Math.round((subtotal * promo.discountValue) / 100);
-        } else {
-          discountAmount = Math.min(promo.discountValue, subtotal);
-        }
+        discountAmount = check.discountInCents;
       }
     }
   }

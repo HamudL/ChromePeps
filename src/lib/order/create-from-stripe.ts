@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 import { generateOrderNumber } from "@/lib/order/generate-order-number";
+import { calculateOrderTotals } from "@/lib/order/calculate-totals";
 
 /**
  * Shared order-creation logic used by both the Stripe webhook handler and
@@ -79,15 +80,15 @@ export async function createOrderFromStripeSession(
   // checkout creation.
   const promoId = stripeSession.metadata?.promoId ?? null;
   const promoCodeStr = stripeSession.metadata?.promoCode ?? null;
-  const discountInCents =
+  const rawDiscount =
     parseInt(stripeSession.metadata?.discountAmount ?? "0") || 0;
 
-  // All prices are gross (incl. 19% MwSt.); MwSt is extracted from the total
-  // rather than added on top. Shipping is 5,99 € under 100,00 €, free above.
-  const subtotalAfterDiscount = Math.max(0, subtotalInCents - discountInCents);
-  const shippingInCents = subtotalAfterDiscount >= 10000 ? 0 : 599;
-  const totalInCents = subtotalAfterDiscount + shippingInCents;
-  const taxInCents = Math.round(totalInCents - totalInCents / 1.19);
+  // Delegate the math to the shared pure helper so Stripe, bank-transfer,
+  // and the verify-session fallback all produce byte-identical totals.
+  const totals = calculateOrderTotals({
+    subtotalInCents,
+    discountInCents: rawDiscount,
+  });
 
   const order = await tx.order.create({
     data: {
@@ -100,12 +101,12 @@ export async function createOrderFromStripeSession(
         typeof stripeSession.payment_intent === "string"
           ? stripeSession.payment_intent
           : stripeSession.payment_intent?.id ?? null,
-      subtotalInCents,
-      discountInCents,
+      subtotalInCents: totals.subtotalInCents,
+      discountInCents: totals.discountInCents,
       promoCode: promoCodeStr,
-      taxInCents,
-      shippingInCents,
-      totalInCents,
+      taxInCents: totals.taxInCents,
+      shippingInCents: totals.shippingInCents,
+      totalInCents: totals.totalInCents,
       shippingAddressId: shippingAddressId ?? null,
       billingAddressId: shippingAddressId ?? null,
       items: { createMany: { data: orderItems } },
@@ -129,7 +130,7 @@ export async function createOrderFromStripeSession(
         promoId,
         userId,
         orderId: order.id,
-        discountAmount: discountInCents,
+        discountAmount: totals.discountInCents,
       },
     });
     await tx.promoCode.update({
