@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import nextDynamic from "next/dynamic";
 import Link from "next/link";
 import { format } from "date-fns";
 import {
@@ -32,7 +33,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RevenueChart } from "@/components/admin/revenue-chart";
+// Lazy-load the revenue chart: recharts + decimal.js weigh ~370 KB and only
+// the admin dashboard needs them. With next/dynamic, the chart code is
+// fetched on demand instead of blocking the initial admin page render.
+// `nextDynamic` alias avoids colliding with the `export const dynamic`
+// route segment option on this page.
+const RevenueChart = nextDynamic(
+  () =>
+    import("@/components/admin/revenue-chart").then((m) => m.RevenueChart),
+  {
+    loading: () => (
+      <div className="flex h-[350px] items-center justify-center text-muted-foreground text-sm">
+        Lade Chart…
+      </div>
+    ),
+  }
+);
 import { LowStockWidget } from "@/components/admin/low-stock-widget";
 
 async function getDashboardStats() {

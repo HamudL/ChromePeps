@@ -1,6 +1,12 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { randomBytes } from "crypto";
+
+// NOTE: Do NOT add Node-only imports (crypto, fs, path, stream, etc.) to
+// this file. It is imported by client components for `cn`, `formatPrice`,
+// etc., and every import here becomes part of the browser bundle. If a
+// helper needs Node built-ins, put it under src/lib/{server,order,...}/
+// so it stays out of the client tree. generateOrderNumber lives at
+// src/lib/order/generate-order-number.ts for exactly that reason.
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,12 +17,6 @@ export function formatPrice(cents: number, currency = "EUR"): string {
     style: "currency",
     currency,
   }).format(cents / 100);
-}
-
-export function generateOrderNumber(): string {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = randomBytes(4).toString("hex").toUpperCase();
-  return `CP-${timestamp}-${random}`;
 }
 
 export function slugify(text: string): string {

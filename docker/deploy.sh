@@ -6,8 +6,12 @@
 #  1. Backs up the database
 #  2. Pulls latest code (for prisma schema)
 #  3. Pulls the pre-built image from GHCR
-#  4. Runs prisma db push
-#  5. Restarts containers
+#  4. Applies any schema changes via `prisma db push` using a one-off
+#     container BEFORE restarting the app. This closes a window where
+#     the new app code used to start serving requests against the OLD
+#     schema — backwards-compatible changes (nullable columns etc.)
+#     worked, but anything reading a new column would crash.
+#  5. Restarts app + nginx with the new image
 #
 # This avoids the OOM kills that happened when building Next.js on the
 # 1.8 GB VPS. Deploy now takes ~30 seconds instead of 4 minutes.
@@ -61,8 +65,19 @@ if ! docker compose pull app; then
   exit 1
 fi
 
-# 4. Recreate app + nginx with the new image (DB + Redis untouched)
-log "[4/5] Restarting app + nginx..."
+# 4. Apply schema changes BEFORE the restart. `compose run` spins up a
+#    one-off container from the freshly pulled image, inheriting the
+#    existing env file + network, runs prisma db push, and exits. The
+#    old app container is still serving traffic during this step.
+#    Only when the schema is up to date do we cut over.
+log "[4/5] Applying database schema (prisma db push)..."
+if ! docker compose run --rm --no-deps -T app npx prisma db push --skip-generate; then
+  log "ERROR: prisma db push failed. Old app container is still serving. Aborting deploy."
+  exit 1
+fi
+
+# 5. Recreate app + nginx with the new image (DB + Redis untouched)
+log "[5/5] Restarting app + nginx..."
 docker compose up -d --force-recreate app nginx
 
 # Wait for app to become healthy
@@ -74,10 +89,6 @@ for i in $(seq 1 30); do
   fi
   sleep 1
 done
-
-# 5. Run prisma db push in the new container
-log "[5/5] Running post-deploy tasks..."
-docker compose exec -T app npx prisma db push --skip-generate 2>&1 || true
 
 # Cleanup: remove old dangling images
 docker image prune -f 2>/dev/null || true

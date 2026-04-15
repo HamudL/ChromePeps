@@ -139,6 +139,9 @@ export async function POST(req: NextRequest) {
   // Validate and apply promo code
   let discountAmount = 0;
   let validatedPromoId: string | null = null;
+  // Matching db row kept around so we can cache the Stripe coupon ID on it.
+  let validatedPromo: Awaited<ReturnType<typeof db.promoCode.findUnique>> =
+    null;
   if (promoCode) {
     const promo = await db.promoCode.findUnique({
       where: { code: promoCode.toUpperCase() },
@@ -158,6 +161,7 @@ export async function POST(req: NextRequest) {
 
       if (notExpired && notEarly && notMaxed && meetsMin && !alreadyUsed) {
         validatedPromoId = promo.id;
+        validatedPromo = promo;
         if (promo.discountType === "PERCENTAGE") {
           discountAmount = Math.round((subtotal * promo.discountValue) / 100);
         } else {
@@ -170,16 +174,50 @@ export async function POST(req: NextRequest) {
   const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
   const shippingCost = subtotalAfterDiscount >= 10000 ? 0 : 599;
 
-  // Create a Stripe coupon for the discount
+  // Get (or lazily create) the Stripe coupon for this promo. Caching the
+  // ID on the PromoCode row means we only hit stripe.coupons.create once
+  // per promo instead of once per checkout.
+  //
+  // Important subtlety for PERCENTAGE promos: the discount AMOUNT can vary
+  // per checkout (it's a share of the subtotal), so caching a fixed
+  // `amount_off` coupon would be wrong. We create the coupon with
+  // `percent_off` for percentage promos — that one IS stable and safe to
+  // cache. FIXED_AMOUNT promos yield a stable `amount_off` and are also
+  // safe to cache.
   let stripeCouponId: string | undefined;
-  if (discountAmount > 0) {
-    const coupon = await stripe.coupons.create({
-      amount_off: discountAmount,
-      currency: "eur",
-      duration: "once",
-      name: `Promo: ${promoCode.toUpperCase()}`,
-    });
-    stripeCouponId = coupon.id;
+  if (discountAmount > 0 && validatedPromo && validatedPromoId) {
+    if (validatedPromo.stripeCouponId) {
+      stripeCouponId = validatedPromo.stripeCouponId;
+    } else {
+      const coupon =
+        validatedPromo.discountType === "PERCENTAGE"
+          ? await stripe.coupons.create({
+              percent_off: validatedPromo.discountValue,
+              duration: "once",
+              name: `Promo: ${promoCode.toUpperCase()}`,
+            })
+          : await stripe.coupons.create({
+              amount_off: validatedPromo.discountValue,
+              currency: "eur",
+              duration: "once",
+              name: `Promo: ${promoCode.toUpperCase()}`,
+            });
+      stripeCouponId = coupon.id;
+      // Persist the ID for next time. Fire-and-forget — even if this
+      // fails (e.g. concurrent writes), the worst case is we create the
+      // same coupon twice, not a functional bug.
+      db.promoCode
+        .update({
+          where: { id: validatedPromoId },
+          data: { stripeCouponId: coupon.id },
+        })
+        .catch((err) => {
+          console.error(
+            "[stripe checkout] failed to cache stripeCouponId:",
+            err instanceof Error ? err.message : err
+          );
+        });
+    }
   }
 
   if (shippingCost > 0) {

@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
-import { generateOrderNumber } from "@/lib/utils";
+import { generateOrderNumber } from "@/lib/order/generate-order-number";
 
 /**
  * Shared order-creation logic used by both the Stripe webhook handler and

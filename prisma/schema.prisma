@@ -402,6 +402,13 @@ model PromoCode {
   isCombinable  Boolean      @default(false)
   startsAt      DateTime?
   expiresAt     DateTime?
+  // Stripe Coupon ID cache. We used to create a new Stripe coupon on every
+  // checkout that applied this promo — 100 checkouts meant 100 Stripe API
+  // calls + 100 dashboard entries, all describing the same discount. Now
+  // the first checkout creates the coupon and persists its ID; later
+  // checkouts reuse it. Nullable so the migration stays backwards-
+  // compatible (old code reading the record just sees `undefined`).
+  stripeCouponId String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
