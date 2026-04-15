@@ -68,7 +68,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
-          <div className="h-full w-full flex items-center justify-center text-muted-foreground/40 text-xs">
+          <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs font-medium">
             Kein Bild
           </div>
         )}
@@ -114,7 +114,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       {/* Content (outside the image card, editorial style) */}
       <div className="mt-4 space-y-1.5 px-0.5">
         {/* Category — uppercase tracking */}
-        <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-muted-foreground">
+        <p className="text-xs uppercase tracking-[0.15em] font-semibold text-muted-foreground">
           {product.category.name}
         </p>
 

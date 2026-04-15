@@ -23,12 +23,11 @@ export function Footer() {
           {/* Service */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-white/80">Service</h4>
-            <nav aria-label="Service" className="flex flex-col gap-2 text-sm text-white/40">
+            <nav aria-label="Service" className="flex flex-col gap-2 text-sm text-white/60">
               <Link href="/kontakt" className="hover:text-white transition-colors">Kontakt</Link>
               <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
               <Link href="/ueber-uns" className="hover:text-white transition-colors">Über uns</Link>
               <Link href="/qualitaetskontrolle" className="hover:text-white transition-colors">Qualitätskontrolle</Link>
-              <Link href="/analysezertifikate" className="hover:text-white transition-colors">Analysezertifikate</Link>
               <Link href="/versand" className="hover:text-white transition-colors">Versand</Link>
               <Link href="/zahlung" className="hover:text-white transition-colors">Zahlung</Link>
               <Link href="/dashboard" className="hover:text-white transition-colors">Mein Konto</Link>
@@ -38,7 +37,7 @@ export function Footer() {
           {/* Legal */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-white/80">Rechtliches</h4>
-            <nav aria-label="Rechtliches" className="flex flex-col gap-2 text-sm text-white/40">
+            <nav aria-label="Rechtliches" className="flex flex-col gap-2 text-sm text-white/60">
               <Link href="/impressum" className="hover:text-white transition-colors">Impressum</Link>
               <Link href="/datenschutz" className="hover:text-white transition-colors">Datenschutz</Link>
               <Link href="/agb" className="hover:text-white transition-colors">AGB</Link>
@@ -49,10 +48,10 @@ export function Footer() {
 
         {/* Disclaimer */}
         <div className="mt-8 pt-8 border-t border-white/10">
-          <p className="text-xs text-white/30 text-center max-w-3xl mx-auto">
+          <p className="text-xs text-white/60 text-center max-w-3xl mx-auto">
             {RESEARCH_DISCLAIMER}
           </p>
-          <p className="text-xs text-white/20 text-center mt-4">
+          <p className="text-xs text-white/50 text-center mt-4">
             &copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.
           </p>
         </div>

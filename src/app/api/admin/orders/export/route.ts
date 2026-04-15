@@ -74,14 +74,28 @@ export async function GET(req: NextRequest) {
         (where.createdAt as { lte?: Date }).lte = d;
       }
     }
+  } else {
+    // Default window: last 12 months. Without this default, the export
+    // would load every order ever into memory on every call — OOM bait
+    // once the catalog has any real history. Admins that need older
+    // data can pass explicit `from`/`to` query params.
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+    where.createdAt = { gte: twelveMonthsAgo };
   }
   if (statusFilter && statusFilter !== "ALL") {
     where.status = statusFilter as Prisma.EnumOrderStatusFilter;
   }
 
+  // Hard cap even on filtered exports — 10 000 rows is ~2 MB of CSV which
+  // still fits comfortably in the 512 MB container memory cap. If this ever
+  // becomes limiting, switch to a streaming pagination loop.
+  const MAX_EXPORT_ROWS = 10_000;
+
   const orders = await db.order.findMany({
     where,
     orderBy: { createdAt: "desc" },
+    take: MAX_EXPORT_ROWS,
     include: {
       user: { select: { name: true, email: true } },
       items: {

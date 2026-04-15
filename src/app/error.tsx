@@ -2,8 +2,12 @@
 
 /**
  * Page-level error boundary — catches errors in page components.
- * Shows a useful error message with stack trace for debugging.
+ * In development, shows full error message + stack trace for debugging.
+ * In production, shows only a generic message and the digest (for support
+ * reference) so we don't leak internal paths, module names, or query shapes.
  */
+const isDev = process.env.NODE_ENV === "development";
+
 export default function Error({
   error,
   reset,
@@ -20,14 +24,16 @@ export default function Error({
           Something went wrong
         </h2>
         <p className="text-muted-foreground">
-          {error.message || "An unexpected error occurred."}
+          {isDev
+            ? error.message || "An unexpected error occurred."
+            : "An unexpected error occurred. Please try again or contact support."}
         </p>
         {error.digest && (
           <p className="text-xs text-muted-foreground">
-            Digest: <code>{error.digest}</code>
+            Reference: <code>{error.digest}</code>
           </p>
         )}
-        {error.stack && (
+        {isDev && error.stack && (
           <pre className="text-left bg-muted rounded-lg p-4 overflow-auto text-xs max-h-60 mt-4">
             {error.stack}
           </pre>

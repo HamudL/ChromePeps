@@ -15,8 +15,20 @@ import type { Prisma } from "@prisma/client";
 // GET /api/products — public, cached, filterable
 export async function GET(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
+  // Two rate-limit layers:
+  //   1. A generous overall budget (120/min) — the common case of a user
+  //      browsing and changing filters fits comfortably.
+  //   2. A tighter anti-cache-bust budget (30/min on the same IP keyed by
+  //      `products:ip:`) — a malicious client sending many unique filter
+  //      combinations can otherwise bypass the Redis cache and force raw
+  //      DB hits. The smaller limit kicks in before we ever touch Postgres.
   const limit = await rateLimit(ip, { maxRequests: 120, windowMs: 60_000 });
   if (!limit.success) return rateLimitExceeded(limit);
+  const antiCacheBust = await rateLimit(`products:ip:${ip}`, {
+    maxRequests: 30,
+    windowMs: 60_000,
+  });
+  if (!antiCacheBust.success) return rateLimitExceeded(antiCacheBust);
 
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = productFilterSchema.safeParse(params);

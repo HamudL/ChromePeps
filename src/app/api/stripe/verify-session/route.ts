@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { generateOrderNumber } from "@/lib/utils";
 import { cacheDel } from "@/lib/redis";
 import { CACHE_KEYS } from "@/lib/constants";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
+import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
 
 /**
  * POST /api/stripe/verify-session
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const shippingAddressId = stripeSession.metadata?.shippingAddressId;
+  const shippingAddressId = stripeSession.metadata?.shippingAddressId ?? null;
 
   // Get user's cart
   const cart = await db.cart.findUnique({
@@ -114,117 +114,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Build order items from cart
-  let subtotalInCents = 0;
-  const orderItems: Array<{
-    productId: string;
-    variantId: string | null;
-    productName: string;
-    variantName: string | null;
-    sku: string;
-    quantity: number;
-    priceInCents: number;
-  }> = [];
-
-  for (const item of cart.items) {
-    const price = item.variant?.priceInCents ?? item.product.priceInCents;
-    const sku = item.variant?.sku ?? item.product.sku;
-    subtotalInCents += price * item.quantity;
-    orderItems.push({
-      productId: item.productId,
-      variantId: item.variantId,
-      productName: item.product.name,
-      variantName: item.variant?.name ?? null,
-      sku,
-      quantity: item.quantity,
-      priceInCents: price,
-    });
-  }
-
-  // Promo data from Stripe metadata
-  const promoId = stripeSession.metadata?.promoId ?? null;
-  const promoCodeStr = stripeSession.metadata?.promoCode ?? null;
-  const discountInCents =
-    parseInt(stripeSession.metadata?.discountAmount ?? "0") || 0;
-
-  const subtotalAfterDiscount = Math.max(0, subtotalInCents - discountInCents);
-  const shippingInCents = subtotalAfterDiscount >= 10000 ? 0 : 599;
-  const totalInCents = subtotalAfterDiscount + shippingInCents;
-  const taxInCents = Math.round(totalInCents - totalInCents / 1.19);
-
   try {
+    // Delegate the actual order transaction to the shared helper. An
+    // in-transaction recheck protects us against webhook races.
     const txResult = await db.$transaction(async (tx) => {
-      // Double-check inside transaction to prevent duplicates
       const doubleCheck = await tx.order.findUnique({
         where: { stripeSessionId: sessionId },
       });
       if (doubleCheck) return { order: doubleCheck, wasCreated: false };
 
-      const created = await tx.order.create({
-        data: {
-          orderNumber: generateOrderNumber(),
-          userId,
-          status: "PROCESSING",
-          paymentStatus: "SUCCEEDED",
-          stripeSessionId: sessionId,
-          stripePaymentIntentId:
-            typeof stripeSession.payment_intent === "string"
-              ? stripeSession.payment_intent
-              : stripeSession.payment_intent?.id ?? null,
-          subtotalInCents,
-          discountInCents,
-          promoCode: promoCodeStr,
-          taxInCents,
-          shippingInCents,
-          totalInCents,
-          shippingAddressId: shippingAddressId ?? null,
-          billingAddressId: shippingAddressId ?? null,
-          items: { createMany: { data: orderItems } },
-          events: {
-            create: {
-              status: "PROCESSING",
-              note: promoCodeStr
-                ? `Payment confirmed via Stripe (Promo: ${promoCodeStr})`
-                : "Payment confirmed via Stripe",
-            },
-          },
-        },
+      const created = await createOrderFromStripeSession({
+        tx,
+        userId,
+        stripeSession,
+        cart,
+        shippingAddressId,
       });
-
-      // Record promo usage
-      if (promoId) {
-        await tx.promoUsage.create({
-          data: {
-            promoId,
-            userId,
-            orderId: created.id,
-            discountAmount: discountInCents,
-          },
-        });
-        await tx.promoCode.update({
-          where: { id: promoId },
-          data: { usedCount: { increment: 1 } },
-        });
-      }
-
-      // Decrement stock
-      for (const item of cart.items) {
-        if (item.variantId) {
-          await tx.productVariant.updateMany({
-            where: { id: item.variantId, stock: { gte: item.quantity } },
-            data: { stock: { decrement: item.quantity } },
-          });
-        } else {
-          await tx.product.updateMany({
-            where: { id: item.productId, stock: { gte: item.quantity } },
-            data: { stock: { decrement: item.quantity } },
-          });
-        }
-      }
-
-      // Clear cart
-      await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-
       return { order: created, wasCreated: true };
     });
 

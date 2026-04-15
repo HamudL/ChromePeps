@@ -91,6 +91,7 @@ export default function RegisterPage() {
 
   return (
     <Card className="w-full max-w-md shadow-lg">
+      <h1 className="sr-only">Create a {APP_NAME} account</h1>
       <CardHeader className="text-center space-y-1">
         <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
         <CardDescription>
@@ -101,7 +102,11 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            <div
+              id="register-error"
+              role="alert"
+              className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+            >
               {error}
             </div>
           )}
@@ -116,9 +121,13 @@ export default function RegisterPage() {
               required
               autoComplete="name"
               disabled={isPending}
+              aria-invalid={!!fieldErrors.name}
+              aria-describedby={fieldErrors.name ? "name-error" : undefined}
             />
             {fieldErrors.name && (
-              <p className="text-xs text-destructive">{fieldErrors.name}</p>
+              <p id="name-error" role="alert" className="text-xs text-destructive">
+                {fieldErrors.name}
+              </p>
             )}
           </div>
 
@@ -132,9 +141,13 @@ export default function RegisterPage() {
               required
               autoComplete="email"
               disabled={isPending}
+              aria-invalid={!!fieldErrors.email}
+              aria-describedby={fieldErrors.email ? "email-error" : undefined}
             />
             {fieldErrors.email && (
-              <p className="text-xs text-destructive">{fieldErrors.email}</p>
+              <p id="email-error" role="alert" className="text-xs text-destructive">
+                {fieldErrors.email}
+              </p>
             )}
           </div>
 
@@ -148,11 +161,17 @@ export default function RegisterPage() {
               required
               autoComplete="new-password"
               disabled={isPending}
+              aria-invalid={!!fieldErrors.password}
+              aria-describedby={
+                fieldErrors.password ? "password-error" : "password-hint"
+              }
             />
             {fieldErrors.password && (
-              <p className="text-xs text-destructive">{fieldErrors.password}</p>
+              <p id="password-error" role="alert" className="text-xs text-destructive">
+                {fieldErrors.password}
+              </p>
             )}
-            <p className="text-xs text-muted-foreground">
+            <p id="password-hint" className="text-xs text-muted-foreground">
               Must contain uppercase, lowercase, and a number.
             </p>
           </div>
@@ -167,9 +186,17 @@ export default function RegisterPage() {
               required
               autoComplete="new-password"
               disabled={isPending}
+              aria-invalid={!!fieldErrors.confirmPassword}
+              aria-describedby={
+                fieldErrors.confirmPassword ? "confirmPassword-error" : undefined
+              }
             />
             {fieldErrors.confirmPassword && (
-              <p className="text-xs text-destructive">
+              <p
+                id="confirmPassword-error"
+                role="alert"
+                className="text-xs text-destructive"
+              >
                 {fieldErrors.confirmPassword}
               </p>
             )}

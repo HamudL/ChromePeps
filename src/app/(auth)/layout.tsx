@@ -8,6 +8,7 @@ export const metadata: Metadata = {
     default: "Account",
     template: `%s | ${APP_NAME}`,
   },
+  robots: { index: false, follow: false },
 };
 
 export default function AuthLayout({

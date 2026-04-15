@@ -1,3 +1,16 @@
+/**
+ * ⚠️  PUBLIC ACCESS DISABLED
+ *
+ * This route is intentionally blocked by src/middleware.ts. The CoA listing
+ * is no longer a public feature — certificates are sent privately per email
+ * alongside each order confirmation.
+ *
+ * Do NOT remove this file without also removing the matching redirect rule
+ * in src/middleware.ts, and do NOT re-expose this route unless the business
+ * decision changes. If you're looking for why /analysezertifikate shows a
+ * redirect, that's the reason. Admins can still manage certificates from
+ * /admin/certificates.
+ */
 export const dynamic = "force-dynamic";
 
 import { ShieldCheck } from "lucide-react";

@@ -62,6 +62,7 @@ export default function ResetPasswordPage({
   if (done) {
     return (
       <Card className="w-full max-w-md shadow-lg">
+        <h1 className="sr-only">Passwort erfolgreich geändert</h1>
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
             <CheckCircle2 className="h-6 w-6 text-green-600" />
@@ -80,6 +81,7 @@ export default function ResetPasswordPage({
 
   return (
     <Card className="w-full max-w-md shadow-lg">
+      <h1 className="sr-only">Neues Passwort setzen</h1>
       <CardHeader className="text-center space-y-1">
         <CardTitle className="text-2xl font-bold">Neues Passwort</CardTitle>
         <CardDescription>
@@ -90,7 +92,10 @@ export default function ResetPasswordPage({
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            <div
+              role="alert"
+              className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+            >
               {error}
             </div>
           )}

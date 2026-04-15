@@ -17,11 +17,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Two layers of rate-limiting — per user (tight) AND per IP (looser).
+  // The per-user limit alone would let an attacker bypass it by spinning
+  // up multiple free accounts; the per-IP limit catches that pattern.
   const limit = await rateLimit(`bank-transfer:${session.user.id}`, {
     maxRequests: 5,
     windowMs: 60_000,
   });
   if (!limit.success) return rateLimitExceeded(limit);
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  const ip = forwardedFor?.split(",")[0].trim() ?? "unknown";
+  const ipLimit = await rateLimit(`bank-transfer:ip:${ip}`, {
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
+  if (!ipLimit.success) return rateLimitExceeded(ipLimit);
 
   const body = await req.json();
   const { shippingAddressId, promoCode } = body;

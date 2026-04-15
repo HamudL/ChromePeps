@@ -321,11 +321,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 {specs.map((spec) => (
-                  <div key={spec.label} className="flex items-start gap-2">
-                    <div className="mt-0.5 text-muted-foreground">{spec.icon}</div>
-                    <div>
+                  <div key={spec.label} className="flex items-start gap-2 min-w-0">
+                    <div className="mt-0.5 text-muted-foreground shrink-0">{spec.icon}</div>
+                    <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">{spec.label}</p>
-                      <p className="text-sm font-medium">{spec.value}</p>
+                      <p className="text-sm font-medium break-words">{spec.value}</p>
                     </div>
                   </div>
                 ))}

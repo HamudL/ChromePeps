@@ -1,3 +1,14 @@
+/**
+ * ⚠️  PUBLIC ACCESS DISABLED
+ *
+ * This route is intentionally blocked by src/middleware.ts. The CoA listing
+ * is no longer a public feature — certificates are sent privately per email
+ * alongside each order confirmation.
+ *
+ * Do NOT remove this file without also removing the matching redirect rule
+ * in src/middleware.ts, and do NOT re-expose this route unless the business
+ * decision changes.
+ */
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";

@@ -2,16 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { generateOrderNumber } from "@/lib/utils";
 import { cacheDel } from "@/lib/redis";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { CACHE_KEYS } from "@/lib/constants";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
+import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
 import type Stripe from "stripe";
 
 // Disable body parsing — Stripe needs the raw body for signature verification
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  // Belt-and-suspenders rate limit by client IP. Stripe signature
+  // verification is the primary defense, but an attacker with leaked
+  // webhook secret could still flood this endpoint until the secret is
+  // rotated. The limit is generous (60/min) so Stripe's own retries are
+  // never rejected.
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  const ip = forwardedFor?.split(",")[0].trim() ?? "unknown";
+  const limit = await rateLimit(`stripe-webhook:${ip}`, {
+    maxRequests: 60,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
+
   const body = await req.text();
   const headersList = await headers();
   const signature = headersList.get("stripe-signature");
@@ -104,7 +118,7 @@ export async function POST(req: NextRequest) {
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId;
-  const shippingAddressId = session.metadata?.shippingAddressId;
+  const shippingAddressId = session.metadata?.shippingAddressId ?? null;
 
   if (!userId) {
     console.error("[Stripe Webhook] No userId in session metadata");
@@ -152,114 +166,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     );
   }
 
-  let subtotalInCents = 0;
-  const orderItems: Array<{
-    productId: string;
-    variantId: string | null;
-    productName: string;
-    variantName: string | null;
-    sku: string;
-    quantity: number;
-    priceInCents: number;
-  }> = [];
-
-  for (const item of cart.items) {
-    const price = item.variant?.priceInCents ?? item.product.priceInCents;
-    const sku = item.variant?.sku ?? item.product.sku;
-    subtotalInCents += price * item.quantity;
-    orderItems.push({
-      productId: item.productId,
-      variantId: item.variantId,
-      productName: item.product.name,
-      variantName: item.variant?.name ?? null,
-      sku,
-      quantity: item.quantity,
-      priceInCents: price,
-    });
-  }
-
-  // Promo code data from metadata
-  const promoId = session.metadata?.promoId ?? null;
-  const promoCodeStr = session.metadata?.promoCode ?? null;
-  const discountInCents = parseInt(session.metadata?.discountAmount ?? "0") || 0;
-
-  const subtotalAfterDiscount = Math.max(0, subtotalInCents - discountInCents);
-  const shippingInCents = subtotalAfterDiscount >= 10000 ? 0 : 599;
-  const totalInCents = subtotalAfterDiscount + shippingInCents;
-  const taxInCents = Math.round(totalInCents - totalInCents / 1.19);
-
+  // Delegate the actual order transaction to the shared helper so this
+  // path and /api/stripe/verify-session stay in sync.
   const createdOrderId = await db.$transaction(async (tx) => {
-    const order = await tx.order.create({
-      data: {
-        orderNumber: generateOrderNumber(),
-        userId,
-        status: "PROCESSING",
-        paymentStatus: "SUCCEEDED",
-        stripeSessionId: session.id,
-        stripePaymentIntentId:
-          typeof session.payment_intent === "string"
-            ? session.payment_intent
-            : session.payment_intent?.id ?? null,
-        subtotalInCents,
-        discountInCents,
-        promoCode: promoCodeStr,
-        taxInCents,
-        shippingInCents,
-        totalInCents,
-        shippingAddressId: shippingAddressId ?? null,
-        billingAddressId: shippingAddressId ?? null,
-        items: { createMany: { data: orderItems } },
-        events: {
-          create: {
-            status: "PROCESSING",
-            note: promoCodeStr
-              ? `Payment confirmed via Stripe (Promo: ${promoCodeStr})`
-              : "Payment confirmed via Stripe",
-          },
-        },
-      },
+    const order = await createOrderFromStripeSession({
+      tx,
+      userId,
+      stripeSession: session,
+      cart,
+      shippingAddressId,
     });
-
-    // Record promo usage and increment counter
-    if (promoId) {
-      await tx.promoUsage.create({
-        data: {
-          promoId,
-          userId,
-          orderId: order.id,
-          discountAmount: discountInCents,
-        },
-      });
-      await tx.promoCode.update({
-        where: { id: promoId },
-        data: { usedCount: { increment: 1 } },
-      });
-    }
-
-    // Decrement stock (with validation to prevent negative stock)
-    for (const item of cart.items) {
-      if (item.variantId) {
-        const updated = await tx.productVariant.updateMany({
-          where: { id: item.variantId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
-        });
-        if (updated.count === 0) {
-          throw new Error(`Insufficient stock for variant ${item.variantId}`);
-        }
-      } else {
-        const updated = await tx.product.updateMany({
-          where: { id: item.productId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
-        });
-        if (updated.count === 0) {
-          throw new Error(`Insufficient stock for product ${item.productId}`);
-        }
-      }
-    }
-
-    // Clear cart
-    await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-
     return order.id;
   });
 

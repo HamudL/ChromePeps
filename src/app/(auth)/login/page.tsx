@@ -97,6 +97,7 @@ export default function LoginPage() {
 
   return (
     <Card className="w-full max-w-md shadow-lg">
+      <h1 className="sr-only">Sign in to {APP_NAME}</h1>
       <CardHeader className="text-center space-y-1">
         <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
         <CardDescription>
@@ -107,7 +108,11 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            <div
+              id="login-error"
+              role="alert"
+              className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+            >
               {error}
             </div>
           )}

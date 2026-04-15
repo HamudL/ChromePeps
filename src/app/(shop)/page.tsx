@@ -9,6 +9,7 @@ import {
   Truck,
   CreditCard,
   Eye,
+  Mail,
   Microscope,
   Package,
   BadgeCheck,
@@ -67,7 +68,7 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* ── Hero ── */}
-      <section className="relative hero-ambient">
+      <section className="relative hero-ambient" aria-label="Hero">
         <div className="absolute inset-0 subtle-grid opacity-30" />
         <div className="container relative py-24 md:py-32 lg:py-40">
           <FadeUp>
@@ -86,7 +87,7 @@ export default async function HomePage() {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base">
-                  <Link href="/analysezertifikate">Analysezertifikate</Link>
+                  <Link href="/qualitaetskontrolle">Qualitätskontrolle</Link>
                 </Button>
               </div>
             </div>
@@ -139,11 +140,11 @@ export default async function HomePage() {
                 linkText: "Zahlungsoptionen",
               },
               {
-                icon: Eye,
-                title: "Transparente Ergebnisse",
-                desc: "Alle Analysezertifikate öffentlich einsehbar und verifizierbar.",
-                link: "/analysezertifikate",
-                linkText: "Zertifikate ansehen",
+                icon: Mail,
+                title: "CoA zu jeder Bestellung",
+                desc: "Das passende Analysezertifikat erhalten Sie automatisch per E-Mail mit Ihrer Bestellung.",
+                link: "/qualitaetskontrolle",
+                linkText: "Qualitätskontrolle",
               },
             ].map((card, i) => (
               <FadeUp key={card.title} delay={i * 0.1}>

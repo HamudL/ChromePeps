@@ -24,7 +24,6 @@ const navLinks = [
   { href: "/products", label: "Shop" },
   { href: "/qualitaetskontrolle", label: "Qualität" },
   { href: "/faq", label: "FAQ" },
-  { href: "/analysezertifikate", label: "COAs" },
 ];
 
 export function Header() {

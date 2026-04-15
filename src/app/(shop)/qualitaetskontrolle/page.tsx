@@ -1,12 +1,10 @@
-import Link from "next/link";
 import {
   ShieldCheck,
   Microscope,
   Package,
   Eye,
-  ArrowRight,
+  Mail,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -79,17 +77,15 @@ export default function QualitaetskontrollePage() {
           ))}
         </div>
 
-        {/* CTA */}
+        {/* CoA note */}
         <div className="text-center mt-12 pt-8 border-t">
-          <p className="text-muted-foreground mb-4">
-            Alle Testergebnisse sind öffentlich einsehbar.
-          </p>
-          <Button asChild size="lg" className="gap-2">
-            <Link href="/analysezertifikate">
-              Analysezertifikate ansehen
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="mx-auto inline-flex items-center gap-3 rounded-xl border bg-muted/40 px-5 py-4">
+            <Mail className="h-5 w-5 text-primary shrink-0" />
+            <p className="text-sm text-muted-foreground text-left">
+              Das Analysezertifikat (CoA) wird automatisch per E-Mail mit Ihrer
+              Bestellung versendet.
+            </p>
+          </div>
         </div>
       </section>
     </div>

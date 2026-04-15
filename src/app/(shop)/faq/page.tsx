@@ -28,7 +28,7 @@ const faqs: { question: string; answer: string }[] = [
   {
     question: "Gibt es ein Analysezertifikat (CoA)?",
     answer:
-      "Ja. Zu jedem Produkt stellen wir ein Analysezertifikat mit HPLC- und MS-Daten bereit. Sie finden das CoA auf der jeweiligen Produktseite oder können es per E-Mail anfordern.",
+      "Ja. Zu jedem Produkt stellen wir ein Analysezertifikat (HPLC- und MS-Daten) bereit. Sie erhalten das passende CoA automatisch per E-Mail zusammen mit Ihrer Bestellung.",
   },
   {
     question: "Wie lagere ich die Referenzmaterialien richtig?",

@@ -36,5 +36,12 @@ export function HeroLogo() {
 
   // SSR + mobile → static CSS logo (no WebGL, no animation loop)
   if (!mounted || !isDesktop) return <StaticLogo />;
-  return <ChromeLogo3D />;
+  // Desktop WebGL logo has no DOM heading — add a visually hidden h1 so the
+  // page retains its document outline for screen readers and assistive tech.
+  return (
+    <>
+      <h1 className="sr-only">ChromePeps — Premium Forschungspeptide</h1>
+      <ChromeLogo3D />
+    </>
+  );
 }

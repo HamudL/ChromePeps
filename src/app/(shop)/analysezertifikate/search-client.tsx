@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * ⚠️  PUBLIC ACCESS DISABLED
+ *
+ * Supports /analysezertifikate, which is intentionally blocked by
+ * src/middleware.ts. This client component is kept alive with the parent
+ * route so the file tree is self-consistent, but it is never rendered in
+ * production — the middleware redirect kicks in before the parent page
+ * runs. See src/app/(shop)/analysezertifikate/page.tsx for the full note.
+ */
 import { useState } from "react";
 import Link from "next/link";
 import { Search, ArrowRight, FileCheck } from "lucide-react";

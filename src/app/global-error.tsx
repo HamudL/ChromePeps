@@ -12,6 +12,8 @@ import * as Sentry from "@sentry/nextjs";
  * (theme provider, fonts, JSON-LD serialization, etc.) we still want
  * a ticket in the dashboard instead of a silent white screen.
  */
+const isDev = process.env.NODE_ENV === "development";
+
 export default function GlobalError({
   error,
   reset,
@@ -29,7 +31,7 @@ export default function GlobalError({
   console.error("[GlobalError]", error.message, error.stack);
 
   return (
-    <html lang="en">
+    <html lang="de">
       <body style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
         <div
           style={{
@@ -45,14 +47,16 @@ export default function GlobalError({
             Something went wrong
           </h1>
           <p style={{ color: "#374151", marginBottom: "1rem" }}>
-            {error.message || "An unexpected error occurred."}
+            {isDev
+              ? error.message || "An unexpected error occurred."
+              : "An unexpected error occurred. Please try again or contact support."}
           </p>
           {error.digest && (
             <p style={{ color: "#6b7280", fontSize: "0.875rem" }}>
-              Error digest: <code>{error.digest}</code>
+              Reference: <code>{error.digest}</code>
             </p>
           )}
-          {error.stack && (
+          {isDev && error.stack && (
             <pre
               style={{
                 background: "#1f2937",

@@ -239,52 +239,82 @@ export async function PUT(req: NextRequest) {
     update: {},
   });
 
-  // Validate every item before syncing
-  const validatedItems: Array<{
-    productId: string;
-    variantId: string | null;
-    quantity: number;
-  }> = [];
+  // Batch-validate every product and variant in two queries instead of
+  // running a findUnique per item. Previously, syncing a 10-item cart meant
+  // up to ~30 sequential DB round-trips (product lookup, variant lookup,
+  // deleteMany, then one create per item).
+  const productIds = Array.from(
+    new Set(parsed.data.items.map((i) => i.productId))
+  );
+  const variantIds = parsed.data.items
+    .map((i) => i.variantId)
+    .filter((v): v is string => typeof v === "string" && v.length > 0);
 
-  for (const item of parsed.data.items) {
-    const product = await db.product.findUnique({
-      where: { id: item.productId, isActive: true },
-    });
-    if (!product) continue; // skip invalid / inactive products
+  const [products, variants] = await Promise.all([
+    productIds.length > 0
+      ? db.product.findMany({
+          where: { id: { in: productIds }, isActive: true },
+          select: { id: true, stock: true },
+        })
+      : Promise.resolve([]),
+    variantIds.length > 0
+      ? db.productVariant.findMany({
+          where: { id: { in: variantIds }, isActive: true },
+          select: { id: true, stock: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const productMap = new Map(products.map((p) => [p.id, p]));
+  const variantMap = new Map(variants.map((v) => [v.id, v]));
+
+  const validatedItems = parsed.data.items.flatMap((item) => {
+    const product = productMap.get(item.productId);
+    if (!product) return []; // skip invalid / inactive products
 
     if (item.variantId) {
-      const variant = await db.productVariant.findUnique({
-        where: { id: item.variantId, isActive: true },
-      });
-      if (!variant) continue; // skip invalid / inactive variants
-      validatedItems.push({
-        productId: item.productId,
-        variantId: item.variantId,
-        quantity: Math.min(item.quantity, 99, variant.stock),
-      });
-    } else {
-      validatedItems.push({
-        productId: item.productId,
-        variantId: null,
-        quantity: Math.min(item.quantity, 99, product.stock),
-      });
+      const variant = variantMap.get(item.variantId);
+      if (!variant) return []; // skip invalid / inactive variants
+      const quantity = Math.min(item.quantity, 99, variant.stock);
+      if (quantity <= 0) return [];
+      return [
+        {
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity,
+        },
+      ];
     }
-  }
 
-  // Clear existing items and replace with validated client cart
-  await db.cartItem.deleteMany({ where: { cartId: cart.id } });
-
-  for (const item of validatedItems) {
-    if (item.quantity <= 0) continue;
-    await db.cartItem.create({
-      data: {
-        cartId: cart.id,
+    const quantity = Math.min(item.quantity, 99, product.stock);
+    if (quantity <= 0) return [];
+    return [
+      {
         productId: item.productId,
-        variantId: item.variantId,
-        quantity: item.quantity,
+        variantId: null as string | null,
+        quantity,
       },
-    });
-  }
+    ];
+  });
+
+  // Clear existing items and replace with the validated client cart in a
+  // single atomic transaction. Without the transaction, a crash between
+  // deleteMany and createMany would leave the user with an empty cart.
+  await db.$transaction([
+    db.cartItem.deleteMany({ where: { cartId: cart.id } }),
+    ...(validatedItems.length > 0
+      ? [
+          db.cartItem.createMany({
+            data: validatedItems.map((i) => ({
+              cartId: cart.id,
+              productId: i.productId,
+              variantId: i.variantId,
+              quantity: i.quantity,
+            })),
+          }),
+        ]
+      : []),
+  ]);
 
   await cacheDel(CACHE_KEYS.CART(userId));
 

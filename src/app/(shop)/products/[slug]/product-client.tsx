@@ -54,8 +54,10 @@ export function ImageGallery({
             <button
               key={i}
               onClick={() => setSelected(i)}
+              aria-label={`Bild ${i + 1} anzeigen`}
               className={cn(
                 "relative h-16 w-16 shrink-0 rounded-md border overflow-hidden transition-all",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                 i === selected
                   ? "ring-2 ring-primary border-primary"
                   : "opacity-70 hover:opacity-100"

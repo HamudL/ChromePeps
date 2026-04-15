@@ -14,6 +14,47 @@ const ALLOWED_TYPES = [
 const MAX_SIZE_IMAGE = 5 * 1024 * 1024; // 5MB
 const MAX_SIZE_PDF = 10 * 1024 * 1024; // 10MB
 
+/**
+ * Verify that the first bytes of the buffer match the magic number for the
+ * claimed MIME type. The browser-supplied `file.type` header is trivially
+ * spoofable — this check ensures that "image/png" actually contains PNG
+ * bytes, blocking a malicious admin from uploading a script disguised as an
+ * image. AVIF is intentionally not magic-checked (its `ftypavif` / `ftypheic`
+ * variants make inline detection messy); we fall back to MIME for AVIF only.
+ */
+function verifyMagicBytes(buffer: Buffer, claimedType: string): boolean {
+  if (claimedType === "image/avif") {
+    // AVIF uses an ISO-BMFF box structure. A minimal-risk heuristic: the box
+    // type at offset 4-8 must be "ftyp" and the brand at 8-12 must contain
+    // "avif" or "heic"/"heif"/"mif1". We only spot-check the "ftyp" box.
+    return (
+      buffer.length >= 12 && buffer.subarray(4, 8).toString("ascii") === "ftyp"
+    );
+  }
+  const head = buffer.subarray(0, 16);
+  const hex = head.toString("hex");
+  switch (claimedType) {
+    case "image/jpeg":
+      // FF D8 FF
+      return hex.startsWith("ffd8ff");
+    case "image/png":
+      // 89 50 4E 47 0D 0A 1A 0A
+      return hex.startsWith("89504e470d0a1a0a");
+    case "image/webp":
+      // RIFF....WEBP
+      return (
+        buffer.length >= 12 &&
+        buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+        buffer.subarray(8, 12).toString("ascii") === "WEBP"
+      );
+    case "application/pdf":
+      // %PDF-
+      return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
+    default:
+      return false;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -53,6 +94,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Magic-byte verification: don't trust `file.type` alone — that's the
+    // browser-supplied Content-Type header and can be spoofed. This blocks a
+    // compromised admin session from uploading a script renamed to .jpg.
+    if (!verifyMagicBytes(buffer, file.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `File "${file.name}" contents don't match its declared type (${file.type}).`,
+        },
+        { status: 400 }
+      );
+    }
+
     const MIME_TO_EXT: Record<string, string> = {
       "image/jpeg": "jpg",
       "image/png": "png",
@@ -63,7 +119,6 @@ export async function POST(req: NextRequest) {
     const ext = MIME_TO_EXT[file.type] ?? "jpg";
     const subDir = isPdf ? "certificates" : "products";
     const uniqueName = `${Date.now()}-${randomBytes(6).toString("hex")}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
     const uploadDir = join(process.cwd(), "public", "uploads", subDir);
     await mkdir(uploadDir, { recursive: true });
     await writeFile(join(uploadDir, uniqueName), buffer);
