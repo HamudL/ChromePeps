@@ -8,8 +8,13 @@ export function getStripe(): Stripe {
     if (!key) {
       throw new Error("STRIPE_SECRET_KEY is not set");
     }
+    // No explicit apiVersion: the SDK pins its own bundled default
+    // (currently "2026-03-25.dahlia" for stripe@22) and the TypeScript
+    // types are narrowed to match exactly that version. Passing an
+    // older string would immediately break the compile on every
+    // SDK upgrade. If a specific API version needs to be overridden
+    // for a rollout, add it back with `as Stripe.LatestApiVersion`.
     _stripe = new Stripe(key, {
-      apiVersion: "2025-02-24.acacia",
       typescript: true,
     });
   }
