@@ -5,13 +5,15 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/validators/auth";
 import type { Role } from "@prisma/client";
+import { authConfig } from "@/lib/auth.config";
 
 // IMPORTANT: do NOT statically import `@/lib/redis` at the top of this
-// file. This module is transitively imported by `src/middleware.ts`, which
-// runs on the Edge Runtime where `ioredis` is not usable (it touches
-// Node-only APIs like `net` and `Buffer` at module-load time). The session
-// callback dynamically imports the Redis helpers so they only get bundled
-// into the Node runtime chunks, never into the edge middleware bundle.
+// file. This module is transitively imported by code that runs on the
+// Edge Runtime (where `ioredis` touches Node-only APIs at module-load
+// time). The session callback below dynamic-imports the Redis helpers
+// so they only get bundled into the Node runtime chunks. The middleware
+// NEVER imports this file — it uses src/lib/auth.config.ts directly —
+// so even the dynamic import is never reached in the Edge bundle.
 
 // Short TTL for the session-callback user lookup. This turns the "does this
 // user still exist?" check from a per-request DB hit into a per-minute one.
@@ -52,6 +54,14 @@ declare module "next-auth" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Spread the edge-safe base config (providers shape, pages, jwt +
+  // authorized callbacks). We override `providers` below with the real
+  // Credentials `authorize` function that does bcrypt + DB lookup, and
+  // add the Prisma adapter + the full `session` callback with Redis
+  // caching. Those can't go into auth.config.ts because middleware
+  // imports that and middleware runs in Edge Runtime.
+  ...authConfig,
+
   // KNOWN LIMITATION: Type cast required due to a version skew between
   // next-auth@5.0.0-beta.25 and @auth/prisma-adapter's expected @auth/core
   // version. Both packages ship their own copy of @auth/core, and TS sees the
@@ -62,11 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // matches how upstream examples paper over the same issue.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   adapter: PrismaAdapter(db) as any,
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
+
   providers: [
     Credentials({
       name: "credentials",
@@ -101,14 +107,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id!;
-        token.role = user.role;
-      }
-      return token;
-    },
+    // Preserve the edge-safe jwt and authorized callbacks from the
+    // base config. Overriding the callbacks object would drop them.
+    ...authConfig.callbacks,
+
     async session({ session, token }) {
       if (token) {
         // Verify the user still exists in the DB (handles DB wipe / re-seed).
@@ -117,9 +121,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // fall through to null and we degrade gracefully to the old behavior.
         //
         // Dynamic import (not a top-level import) — see the note at the top
-        // of this file: `@/lib/redis` must not be pulled into the edge
-        // middleware bundle. The session callback only runs on Node runtime
-        // (server components + API routes), so the dynamic import is safe.
+        // of this file. This callback runs in Node only; middleware uses
+        // authConfig directly and never reaches this code path.
         const { cacheGet, cacheSet } = await import("@/lib/redis");
         const cacheKey = `auth:session-user:${token.id}`;
         let cached = await cacheGet<CachedSessionUser>(cacheKey);
@@ -141,30 +144,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = cached.row.role;
       }
       return session;
-    },
-    async authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isAdmin = auth?.user?.role === "ADMIN";
-      const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-      const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard");
-      const isCheckoutRoute = nextUrl.pathname.startsWith("/checkout");
-      const isAuthRoute =
-        nextUrl.pathname.startsWith("/login") ||
-        nextUrl.pathname.startsWith("/register");
-
-      if (isAdminRoute && !isAdmin) {
-        return Response.redirect(new URL("/login", nextUrl));
-      }
-
-      if ((isDashboardRoute || isCheckoutRoute) && !isLoggedIn) {
-        return Response.redirect(new URL("/login", nextUrl));
-      }
-
-      if (isAuthRoute && isLoggedIn) {
-        return Response.redirect(new URL("/", nextUrl));
-      }
-
-      return true;
     },
   },
 });

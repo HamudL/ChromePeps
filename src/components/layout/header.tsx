@@ -133,9 +133,19 @@ export function Header() {
                   </>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={async () => {
-                  try { await signOut({ redirect: false }); } catch { /* ensure reload even if signOut fails */ }
-                  window.location.href = "/";
+                <DropdownMenuItem onClick={() => {
+                  // Let NextAuth handle the whole flow: it POSTs to
+                  // /api/auth/signout with the CSRF token, the server
+                  // clears the session cookie via Set-Cookie, AND the
+                  // browser navigates to callbackUrl in one atomic
+                  // form submission. No React re-renders in between —
+                  // which avoids the race where pages with a
+                  // `useSession() → unauthenticated → router.push("/login")`
+                  // effect (like /checkout) fire their redirect
+                  // between signOut's session-cleared event and our
+                  // own hard navigation, and the user ends up at
+                  // /login?callbackUrl=… instead of on the home page.
+                  signOut({ callbackUrl: "/", redirect: true });
                 }}>
                   <LogOut className="mr-2 h-4 w-4" />Log out
                 </DropdownMenuItem>
