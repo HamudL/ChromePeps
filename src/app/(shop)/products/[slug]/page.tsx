@@ -15,6 +15,7 @@ import {
   Mail,
   Sparkles,
   ChevronRight,
+  Check,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
@@ -194,6 +195,18 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   if (product.weight)
     specs.push({ icon: <Dna className="h-4 w-4" />, label: "Gewicht", value: product.weight });
 
+  // Quick-specs for the buy panel: the subset of fields that are
+  // useful to surface next to the CTA. Keeping this separate from
+  // `specs` means we can show up to 4 inline bullets in the hero
+  // without either (a) duplicating all 6 specs or (b) coupling the
+  // bullet order to the spec-card order.
+  const quickSpecs: { label: string; value: string }[] = [
+    product.purity && { label: "Reinheit", value: product.purity },
+    product.form && { label: "Form", value: product.form },
+    product.weight && { label: "Gewicht", value: product.weight },
+    product.storageTemp && { label: "Lagerung", value: product.storageTemp },
+  ].filter((x): x is { label: string; value: string } => Boolean(x));
+
   // Compute displayed price for the hero headline. For variant
   // products we show a range; for single-SKU products we show a
   // single price with optional compare-at strikethrough.
@@ -361,6 +374,38 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                       }))}
                     />
                   </div>
+
+                  {/* Quick-spec bullets inline in the buy panel.
+                      Surfaces the most purchase-relevant facts
+                      (Reinheit / Form / Gewicht / Lagerung) right
+                      next to the price so the right column has a
+                      proper center of gravity instead of ending at
+                      the CTA. Shown only when at least two specs
+                      are present so single-spec products don't get
+                      a lonely bullet. */}
+                  {quickSpecs.length >= 2 && (
+                    <>
+                      <div className="my-5 h-px bg-border" />
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5">
+                        {quickSpecs.map((spec) => (
+                          <li
+                            key={spec.label}
+                            className="flex items-start gap-2 text-sm"
+                          >
+                            <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                            <span className="min-w-0">
+                              <span className="text-muted-foreground">
+                                {spec.label}:{" "}
+                              </span>
+                              <span className="font-semibold break-words">
+                                {spec.value}
+                              </span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
                 </div>
 
                 {/* Trust-indicator row (matches products page hero) */}
@@ -378,6 +423,27 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   <div className="flex items-center gap-1.5">
                     <Mail className="h-3.5 w-3.5 text-primary" />
                     <span>CoA per E-Mail</span>
+                  </div>
+                </div>
+
+                {/* CoA reminder callout. Doubles as a content block
+                    that fills the right column below the trust row,
+                    and as a gentle reinforcement of the new
+                    "CoAs delivered per email" model so customers
+                    know where the certificate will arrive. */}
+                <div className="flex gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">
+                      Analysezertifikat inklusive
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                      Das passende CoA erhalten Sie automatisch per E-Mail
+                      zusammen mit Ihrer Bestellung — unabhängig durch
+                      Janoshik verifiziert.
+                    </p>
                   </div>
                 </div>
               </div>
