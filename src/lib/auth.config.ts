@@ -69,10 +69,27 @@ export const authConfig = {
       return token;
     },
 
+    // session is what the `authorized` callback below receives as
+    // `auth`. NextAuth's default copies only name/email/image from
+    // the token, so if we don't explicitly copy `id` and `role`
+    // here the middleware's role check (`auth.user.role === "ADMIN"`)
+    // would read `undefined` and every admin would be redirected to
+    // /login when trying to reach /admin. Must stay edge-safe — no
+    // DB/Redis. The Node-side session callback in src/lib/auth.ts
+    // overrides this one to also do the "user still exists" DB
+    // verify with a Redis cache in front.
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as Role;
+      }
+      return session;
+    },
+
     // authorized runs in middleware on every matched route. It
-    // receives the `auth` object derived from the token (populated
-    // by the jwt callback above). It must be edge-safe and
-    // synchronous-equivalent (no DB/cache calls).
+    // receives the `auth` object derived from the session (populated
+    // by the session + jwt callbacks above). It must be edge-safe
+    // and synchronous-equivalent (no DB/cache calls).
     async authorized({ auth, request: { nextUrl } }) {
       const role = auth?.user?.role as Role | undefined;
       const isLoggedIn = !!auth?.user;
