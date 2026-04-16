@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ShoppingCart, Minus, Plus, Check } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Check, Copy, Dna } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
@@ -279,6 +279,68 @@ export function AddToCartButton({
           </>
         )}
       </Button>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------
+ * Sequence Copy Block
+ * A framed monospace display of the amino acid sequence with a
+ * copy-to-clipboard button. Small convenience for researchers who
+ * want to paste sequences straight into their lab notebook or
+ * bioinformatics tool without retyping them.
+ * ----------------------------------------------------------------*/
+
+export function SequenceCopyBlock({ sequence }: { sequence: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(sequence);
+      setCopied(true);
+      // Reset the "Copied" state after ~1.5 s so repeated copies
+      // still give visual feedback on each click.
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard API can fail in insecure contexts (http:); in that
+      // case do nothing — the plain-text sequence is still visible.
+    }
+  };
+
+  return (
+    <div className="rounded-xl border bg-card overflow-hidden">
+      {/* Header bar */}
+      <div className="flex items-center justify-between gap-3 border-b bg-muted/30 px-4 py-2.5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          <Dna className="h-3.5 w-3.5 text-primary" />
+          Aminosäuresequenz
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleCopy}
+          className="h-7 gap-1.5 text-xs"
+          aria-label="Sequenz kopieren"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5" />
+              Kopiert
+            </>
+          ) : (
+            <>
+              <Copy className="h-3.5 w-3.5" />
+              Kopieren
+            </>
+          )}
+        </Button>
+      </div>
+      {/* Sequence body */}
+      <div className="overflow-x-auto p-4">
+        <code className="font-mono text-sm break-all leading-relaxed text-foreground/90">
+          {sequence}
+        </code>
+      </div>
     </div>
   );
 }
