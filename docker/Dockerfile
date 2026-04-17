@@ -47,11 +47,12 @@ ARG SENTRY_PROJECT
 ENV SENTRY_PROJECT=${SENTRY_PROJECT}
 
 # Build Next.js (standalone output).
-# V8 heap limit — 1280 MB fits the 1.8 GB RAM + 2 GB swap VPS when app + nginx
-# containers are stopped during build (via deploy.sh). The build needs ~1.1 GB.
+# V8 heap limit — builds run on GitHub Actions runners (7 GB RAM), not on the
+# VPS, so we size for headroom rather than the VPS's 1.8 GB. 4096 MB is plenty
+# for Next's typecheck + minification + source-map upload pass.
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=1280"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # ---- Stage 3: Production Runner ----
