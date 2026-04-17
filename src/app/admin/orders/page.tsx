@@ -141,10 +141,15 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                     <TableCell>
                       <div>
                         <p className="text-sm font-medium">
-                          {order.user.name ?? "N/A"}
+                          {order.user?.name ?? order.guestName ?? "N/A"}
+                          {!order.user && (
+                            <span className="ml-1.5 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                              · Gast
+                            </span>
+                          )}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {order.user.email}
+                          {order.user?.email ?? order.guestEmail ?? "—"}
                         </p>
                       </div>
                     </TableCell>

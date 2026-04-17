@@ -96,7 +96,6 @@ export const authConfig = {
       const isAdmin = role === "ADMIN";
       const isAdminRoute = nextUrl.pathname.startsWith("/admin");
       const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard");
-      const isCheckoutRoute = nextUrl.pathname.startsWith("/checkout");
       const isAuthRoute =
         nextUrl.pathname.startsWith("/login") ||
         nextUrl.pathname.startsWith("/register");
@@ -105,7 +104,12 @@ export const authConfig = {
         return Response.redirect(new URL("/login", nextUrl));
       }
 
-      if ((isDashboardRoute || isCheckoutRoute) && !isLoggedIn) {
+      // /dashboard still requires a real account (it's the user's
+      // order history and profile, which a guest email doesn't
+      // have). /checkout is deliberately NOT gated any more — guest
+      // checkout is supported, and the checkout page itself asks for
+      // a contact email + address when the user isn't signed in.
+      if (isDashboardRoute && !isLoggedIn) {
         return Response.redirect(new URL("/login", nextUrl));
       }
 

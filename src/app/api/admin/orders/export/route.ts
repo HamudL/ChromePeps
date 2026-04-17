@@ -151,8 +151,10 @@ export async function GET(req: NextRequest) {
       toCsvRow([
         order.orderNumber,
         formatDate(order.createdAt),
-        order.user.name ?? "",
-        order.user.email ?? "",
+        // Prefer the account's name/email; fall back to guestName/
+        // guestEmail for guest orders so the export stays complete.
+        order.user?.name ?? order.guestName ?? "",
+        order.user?.email ?? order.guestEmail ?? "",
         order.status,
         order.paymentStatus,
         order.paymentMethod,

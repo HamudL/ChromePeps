@@ -16,6 +16,9 @@ import {
   X,
   Check,
   Building2,
+  LogIn,
+  User as UserIcon,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,6 +91,11 @@ const INITIAL_ADDRESS_FORM = {
 export default function CheckoutPage() {
   const router = useRouter();
   const { status: authStatus } = useSession();
+  // Derived flag used throughout: guests see the inline contact +
+  // address form, authenticated users see the saved-addresses
+  // dropdown + add-address dialog. `authStatus === "loading"` falls
+  // into neither branch — the page shows a spinner until it resolves.
+  const isGuest = authStatus === "unauthenticated";
 
   const items = useCartStore((s) => s.items);
 
@@ -97,6 +105,23 @@ export default function CheckoutPage() {
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  // Guest-mode state. These fields only populate when the shopper
+  // proceeds without an account. The server API accepts either a
+  // `shippingAddressId` (auth) OR a full `shippingAddress` object
+  // + `guestEmail` + `guestName` (guest).
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestFirstName, setGuestFirstName] = useState("");
+  const [guestLastName, setGuestLastName] = useState("");
+  const [guestForm, setGuestForm] = useState({
+    street: "",
+    street2: "",
+    city: "",
+    postalCode: "",
+    country: "DE",
+    phone: "",
+    company: "",
+  });
 
   // Promo code
   const [promoInput, setPromoInput] = useState("");
@@ -124,12 +149,11 @@ export default function CheckoutPage() {
     setMounted(true);
   }, []);
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (authStatus === "unauthenticated") {
-      router.push("/login?callbackUrl=/checkout");
-    }
-  }, [authStatus, router]);
+  // Guest checkout is allowed now — we do NOT auto-redirect
+  // unauthenticated users to /login any more. The page renders a
+  // guest contact + inline address form for them instead. The login
+  // banner at the top of the page offers to sign in for anyone who
+  // prefers it.
 
   // Fetch addresses
   const fetchAddresses = useCallback(async () => {
@@ -215,7 +239,16 @@ export default function CheckoutPage() {
       const res = await fetch("/api/promos/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, subtotalInCents }),
+        body: JSON.stringify({
+          code,
+          subtotalInCents,
+          // Guests pass their email so the "one redemption per
+          // buyer" rule can be enforced. Auth users are already
+          // identified via session cookie on the server side.
+          ...(isGuest && guestEmail.trim()
+            ? { guestEmail: guestEmail.trim().toLowerCase() }
+            : {}),
+        }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -237,7 +270,10 @@ export default function CheckoutPage() {
     setPromoError(null);
   };
 
-  // Sync Zustand cart to server DB before checkout
+  // Sync Zustand cart to server DB before checkout. Only runs for
+  // authenticated users — guest checkouts pass items in the body of
+  // the checkout request instead (no server-side Cart row exists
+  // for guests, by design).
   const syncCartToServer = async (): Promise<boolean> => {
     try {
       const syncItems = items.map((item) => ({
@@ -262,39 +298,99 @@ export default function CheckoutPage() {
     }
   };
 
-  // Handle checkout (routes to Stripe or bank transfer)
-  const handleCheckout = async () => {
-    if (!selectedAddressId) {
-      setCheckoutError("Please select a shipping address.");
-      return;
+  // Build the guest-mode payload shape shared by Stripe + bank
+  // transfer. Returns null if a required field is missing, with the
+  // error already surfaced through `setCheckoutError`. Both API
+  // routes accept EITHER { shippingAddressId } for auth users OR
+  // { guestEmail, guestName, shippingAddress, items } for guests.
+  const buildGuestPayload = () => {
+    const email = guestEmail.trim().toLowerCase();
+    const firstName = guestFirstName.trim();
+    const lastName = guestLastName.trim();
+    const street = guestForm.street.trim();
+    const city = guestForm.city.trim();
+    const postalCode = guestForm.postalCode.trim();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setCheckoutError("Bitte eine gültige E-Mail-Adresse eingeben.");
+      return null;
+    }
+    if (!firstName || !lastName) {
+      setCheckoutError("Bitte Vor- und Nachname angeben.");
+      return null;
+    }
+    if (!street || !city || !postalCode) {
+      setCheckoutError("Bitte Lieferadresse vollständig ausfüllen.");
+      return null;
     }
 
+    return {
+      guestEmail: email,
+      guestName: `${firstName} ${lastName}`.trim(),
+      shippingAddress: {
+        firstName,
+        lastName,
+        street,
+        street2: guestForm.street2.trim() || null,
+        city,
+        postalCode,
+        country: guestForm.country,
+        phone: guestForm.phone.trim() || null,
+        company: guestForm.company.trim() || null,
+      },
+      items: items.map((item) => ({
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+      })),
+    };
+  };
+
+  // Handle checkout (routes to Stripe or bank transfer)
+  const handleCheckout = async () => {
     setCheckoutError(null);
     setCheckoutLoading(true);
 
-    // Sync client cart to server before checkout
-    const synced = await syncCartToServer();
-    if (!synced) {
-      setCheckoutLoading(false);
-      return;
+    let payload: Record<string, unknown>;
+    if (isGuest) {
+      const guestPayload = buildGuestPayload();
+      if (!guestPayload) {
+        setCheckoutLoading(false);
+        return;
+      }
+      payload = { ...guestPayload, promoCode: appliedPromo?.code ?? null };
+    } else {
+      if (!selectedAddressId) {
+        setCheckoutError("Please select a shipping address.");
+        setCheckoutLoading(false);
+        return;
+      }
+      // Auth users: sync the Zustand cart so the server has the
+      // same items when it reads db.cart inside the checkout route.
+      const synced = await syncCartToServer();
+      if (!synced) {
+        setCheckoutLoading(false);
+        return;
+      }
+      payload = {
+        shippingAddressId: selectedAddressId,
+        promoCode: appliedPromo?.code ?? null,
+      };
     }
 
     if (paymentMethod === "BANK_TRANSFER") {
-      await handleBankTransferCheckout();
+      await handleBankTransferCheckout(payload);
     } else {
-      await handleStripeCheckout();
+      await handleStripeCheckout(payload);
     }
   };
 
-  const handleStripeCheckout = async () => {
+  const handleStripeCheckout = async (payload: Record<string, unknown>) => {
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shippingAddressId: selectedAddressId,
-          promoCode: appliedPromo?.code ?? null,
-        }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -311,15 +407,14 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleBankTransferCheckout = async () => {
+  const handleBankTransferCheckout = async (
+    payload: Record<string, unknown>
+  ) => {
     try {
       const res = await fetch("/api/checkout/bank-transfer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shippingAddressId: selectedAddressId,
-          promoCode: appliedPromo?.code ?? null,
-        }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -343,10 +438,6 @@ export default function CheckoutPage() {
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
-  }
-
-  if (authStatus === "unauthenticated") {
-    return null; // Redirect is happening
   }
 
   // Empty cart
@@ -390,19 +481,221 @@ export default function CheckoutPage() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column - Address & Payment */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Guest-mode banner: softly suggests logging in for
+              saved addresses + order history, but doesn't block
+              checkout. Hidden for authenticated users. */}
+          {isGuest && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <LogIn className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">
+                  Du bestellst als Gast
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Schon ein Konto? Mit Login siehst du deine
+                  Bestellhistorie und gespeicherte Adressen.
+                </p>
+              </div>
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+              >
+                <Link href="/login?callbackUrl=/checkout">Einloggen</Link>
+              </Button>
+            </div>
+          )}
+
+          {/* Guest Contact Section — email + name. Only the
+              authenticated flow draws this info from the session;
+              guests provide it here so the order confirmation has
+              somewhere to go. */}
+          {isGuest && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserIcon className="h-5 w-5" />
+                  Kontaktdaten
+                </CardTitle>
+                <CardDescription>
+                  Für Bestellbestätigung und Updates zum Versand.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="guestEmail">E-Mail-Adresse</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="guestEmail"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      placeholder="du@beispiel.de"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="guestFirstName">Vorname</Label>
+                    <Input
+                      id="guestFirstName"
+                      autoComplete="given-name"
+                      required
+                      value={guestFirstName}
+                      onChange={(e) => setGuestFirstName(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="guestLastName">Nachname</Label>
+                    <Input
+                      id="guestLastName"
+                      autoComplete="family-name"
+                      required
+                      value={guestLastName}
+                      onChange={(e) => setGuestLastName(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Shipping Address Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                Shipping Address
+                {isGuest ? "Lieferadresse" : "Shipping Address"}
               </CardTitle>
               <CardDescription>
-                Select where to ship your order
+                {isGuest
+                  ? "Wohin soll die Bestellung geliefert werden?"
+                  : "Select where to ship your order"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {loadingAddresses ? (
+              {/* Guest inline address form — no "saved addresses"
+                  for guests (nowhere to save to). They fill in a
+                  one-time delivery address that persists only on
+                  the order record. */}
+              {isGuest ? (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="guestCompany">
+                      Firma (optional)
+                    </Label>
+                    <Input
+                      id="guestCompany"
+                      autoComplete="organization"
+                      value={guestForm.company}
+                      onChange={(e) =>
+                        setGuestForm((p) => ({ ...p, company: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="guestStreet">
+                      Straße und Hausnummer
+                    </Label>
+                    <Input
+                      id="guestStreet"
+                      autoComplete="street-address"
+                      required
+                      value={guestForm.street}
+                      onChange={(e) =>
+                        setGuestForm((p) => ({ ...p, street: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="guestStreet2">
+                      Adresszusatz (optional)
+                    </Label>
+                    <Input
+                      id="guestStreet2"
+                      value={guestForm.street2}
+                      onChange={(e) =>
+                        setGuestForm((p) => ({ ...p, street2: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="guestPostalCode">PLZ</Label>
+                      <Input
+                        id="guestPostalCode"
+                        autoComplete="postal-code"
+                        required
+                        value={guestForm.postalCode}
+                        onChange={(e) =>
+                          setGuestForm((p) => ({
+                            ...p,
+                            postalCode: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-2 col-span-2">
+                      <Label htmlFor="guestCity">Stadt</Label>
+                      <Input
+                        id="guestCity"
+                        autoComplete="address-level2"
+                        required
+                        value={guestForm.city}
+                        onChange={(e) =>
+                          setGuestForm((p) => ({ ...p, city: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="guestCountry">Land</Label>
+                      <Select
+                        value={guestForm.country}
+                        onValueChange={(v) =>
+                          setGuestForm((p) => ({ ...p, country: v }))
+                        }
+                      >
+                        <SelectTrigger id="guestCountry">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="DE">Deutschland</SelectItem>
+                          <SelectItem value="AT">Österreich</SelectItem>
+                          <SelectItem value="CH">Schweiz</SelectItem>
+                          <SelectItem value="NL">Niederlande</SelectItem>
+                          <SelectItem value="BE">Belgien</SelectItem>
+                          <SelectItem value="FR">Frankreich</SelectItem>
+                          <SelectItem value="IT">Italien</SelectItem>
+                          <SelectItem value="ES">Spanien</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="guestPhone">
+                        Telefon (optional)
+                      </Label>
+                      <Input
+                        id="guestPhone"
+                        type="tel"
+                        autoComplete="tel"
+                        value={guestForm.phone}
+                        onChange={(e) =>
+                          setGuestForm((p) => ({ ...p, phone: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : loadingAddresses ? (
                 <div className="space-y-3">
                   <div className="h-10 bg-muted animate-pulse rounded-md" />
                   <div className="h-16 bg-muted animate-pulse rounded-md" />
@@ -474,14 +767,19 @@ export default function CheckoutPage() {
                 </>
               )}
 
-              {/* Add New Address Dialog */}
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add New Address
-                  </Button>
-                </DialogTrigger>
+              {/* Add New Address Dialog — authenticated users only.
+                  Guests use the inline form above, which pushes
+                  a one-time address straight into the order
+                  record instead of persisting to their (non-
+                  existent) profile. */}
+              {!isGuest && (
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add New Address
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle>Add New Address</DialogTitle>
@@ -689,7 +987,8 @@ export default function CheckoutPage() {
                     </Button>
                   </DialogFooter>
                 </DialogContent>
-              </Dialog>
+                </Dialog>
+              )}
             </CardContent>
           </Card>
 
@@ -836,7 +1135,13 @@ export default function CheckoutPage() {
                 size="lg"
                 onClick={handleCheckout}
                 disabled={
-                  checkoutLoading || !selectedAddressId || items.length === 0
+                  checkoutLoading ||
+                  items.length === 0 ||
+                  // For authenticated users: a saved address must
+                  // be picked. Guests fill the inline form instead
+                  // (validated inside handleCheckout via
+                  // buildGuestPayload).
+                  (!isGuest && !selectedAddressId)
                 }
               >
                 {checkoutLoading ? (

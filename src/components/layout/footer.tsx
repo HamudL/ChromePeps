@@ -28,6 +28,7 @@ export function Footer() {
               <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
               <Link href="/ueber-uns" className="hover:text-white transition-colors">Über uns</Link>
               <Link href="/qualitaetskontrolle" className="hover:text-white transition-colors">Qualitätskontrolle</Link>
+              <Link href="/order-status" className="hover:text-white transition-colors">Bestellung verfolgen</Link>
               <Link href="/versand" className="hover:text-white transition-colors">Versand</Link>
               <Link href="/zahlung" className="hover:text-white transition-colors">Zahlung</Link>
               <Link href="/dashboard" className="hover:text-white transition-colors">Mein Konto</Link>

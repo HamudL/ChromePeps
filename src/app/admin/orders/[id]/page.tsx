@@ -179,11 +179,16 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             <CardContent className="space-y-3">
               <div>
                 <p className="font-medium">
-                  {order.user.name ?? "N/A"}
+                  {order.user?.name ?? order.guestName ?? "N/A"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {order.user.email}
+                  {order.user?.email ?? order.guestEmail ?? "—"}
                 </p>
+                {!order.user && order.guestEmail && (
+                  <p className="text-xs text-muted-foreground/70 italic mt-1">
+                    Gastbestellung
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

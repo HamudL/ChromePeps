@@ -7,6 +7,7 @@ import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { CACHE_KEYS } from "@/lib/constants";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
+import { resolveCartFromStripeSession } from "@/lib/order/resolve-cart-from-stripe";
 import type Stripe from "stripe";
 
 // Disable body parsing — Stripe needs the raw body for signature verification
@@ -117,11 +118,15 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const userId = session.metadata?.userId;
+  const userId = session.metadata?.userId ?? null;
+  const guestEmail = session.metadata?.guestEmail ?? null;
+  const guestName = session.metadata?.guestName ?? null;
   const shippingAddressId = session.metadata?.shippingAddressId ?? null;
 
-  if (!userId) {
-    console.error("[Stripe Webhook] No userId in session metadata");
+  if (!userId && !guestEmail) {
+    console.error(
+      "[Stripe Webhook] Session has neither userId nor guestEmail in metadata"
+    );
     return;
   }
 
@@ -135,34 +140,35 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // Get user's cart
-  const cart = await db.cart.findUnique({
-    where: { userId },
-    include: {
-      items: {
-        include: { product: true, variant: true },
-      },
-    },
-  });
-
-  if (!cart || cart.items.length === 0) {
-    // Re-check if order was created between our first check and now
+  // Resolve the cart. For auth users this reads their server-side
+  // Cart row; for guests it parses the compact item list from the
+  // session metadata that /api/stripe/checkout stamped there.
+  const cart = await resolveCartFromStripeSession(session);
+  if (!cart) {
+    // Re-check if the verify-session fallback beat us to creating
+    // the order in the brief window since our first look-up.
     const raceCheck = await db.order.findUnique({
       where: { stripeSessionId: session.id },
       select: { id: true },
     });
     if (raceCheck) {
-      console.log("[Stripe Webhook] Order created by fallback for session:", session.id);
+      console.log(
+        "[Stripe Webhook] Order created by fallback for session:",
+        session.id
+      );
       return;
     }
     console.error(
-      "[Stripe Webhook] CRITICAL: Cart empty for user after payment:",
+      "[Stripe Webhook] CRITICAL: Cannot resolve cart for session:",
+      session.id,
+      "(userId:",
       userId,
-      "Session:",
-      session.id
+      "guestEmail:",
+      guestEmail,
+      ")"
     );
     throw new Error(
-      `Cart empty for user ${userId} after payment (session: ${session.id}). Payment collected but no order created.`
+      `Cart unresolvable after payment for session ${session.id}. Payment collected but no order created.`
     );
   }
 
@@ -172,6 +178,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const order = await createOrderFromStripeSession({
       tx,
       userId,
+      guestEmail: userId ? null : guestEmail,
+      guestName: userId ? null : guestName,
       stripeSession: session,
       cart,
       shippingAddressId,
@@ -179,31 +187,50 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return order.id;
   });
 
-  await cacheDel(CACHE_KEYS.CART(userId));
+  if (userId) {
+    await cacheDel(CACHE_KEYS.CART(userId));
+  }
 
   // Send order confirmation email. Never block on mail failures — we've
-  // already committed the order. Log and move on if anything goes wrong.
+  // already committed the order. Log and move on if anything goes
+  // wrong. For guest orders the recipient info comes from the session
+  // metadata; for auth users we read from the DB to pick up the most
+  // recent profile name.
   try {
-    const [user, fullOrder] = await Promise.all([
-      db.user.findUnique({
+    const fullOrder = await db.order.findUnique({
+      where: { id: createdOrderId },
+      include: { items: true, shippingAddress: true },
+    });
+    if (!fullOrder) return;
+
+    let recipientEmail: string | null = null;
+    let recipientName: string | null = null;
+    if (userId) {
+      const user = await db.user.findUnique({
         where: { id: userId },
         select: { email: true, name: true },
-      }),
-      db.order.findUnique({
-        where: { id: createdOrderId },
-        include: { items: true, shippingAddress: true },
-      }),
-    ]);
+      });
+      recipientEmail = user?.email ?? null;
+      recipientName = user?.name ?? null;
+    } else {
+      recipientEmail = guestEmail;
+      recipientName = guestName;
+    }
 
-    if (user?.email && fullOrder) {
+    if (recipientEmail) {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-      await sendOrderConfirmationEmail({
-        to: user.email,
-        customerName: user.name,
-        orderNumber: fullOrder.orderNumber,
-        orderUrl: baseUrl
+      const orderUrl = baseUrl
+        ? userId
           ? `${baseUrl}/dashboard/orders/${fullOrder.id}`
-          : undefined,
+          : `${baseUrl}/order-status?orderNumber=${encodeURIComponent(
+              fullOrder.orderNumber
+            )}&email=${encodeURIComponent(recipientEmail)}`
+        : undefined;
+      await sendOrderConfirmationEmail({
+        to: recipientEmail,
+        customerName: recipientName,
+        orderNumber: fullOrder.orderNumber,
+        orderUrl,
         placedAt: fullOrder.createdAt,
         items: fullOrder.items.map((item) => ({
           name: item.productName,

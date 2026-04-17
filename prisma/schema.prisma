@@ -236,7 +236,16 @@ enum PaymentStatus {
 model Order {
   id                    String        @id @default(cuid())
   orderNumber           String        @unique
-  userId                String
+  // userId is now NULLABLE to support guest checkout. Exactly one of
+  // (userId, guestEmail) must be set — enforced at the application
+  // layer, not the DB, because Postgres/Prisma can't express an
+  // "either-or non-null" constraint cleanly without a CHECK clause.
+  userId                String?
+  // guestEmail/guestName populate ONLY for orders placed without an
+  // account. For authenticated orders these stay null and the
+  // address/email come from the linked User row.
+  guestEmail            String?
+  guestName             String?
   status                OrderStatus   @default(PENDING)
   paymentStatus         PaymentStatus @default(PENDING)
   paymentMethod         String        @default("STRIPE") @db.VarChar(20)
@@ -260,7 +269,7 @@ model Order {
   discountInCents       Int           @default(0)
   promoCode             String?       @db.VarChar(20)
 
-  user            User         @relation(fields: [userId], references: [id])
+  user            User?        @relation(fields: [userId], references: [id])
   items           OrderItem[]
   shippingAddress Address?     @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
   billingAddress  Address?     @relation("BillingAddress", fields: [billingAddressId], references: [id])
@@ -269,6 +278,9 @@ model Order {
   invoice         Invoice?
 
   @@index([userId])
+  // Guest-order lookup by email (public order-status page). Compound
+  // with orderNumber for the auth check.
+  @@index([guestEmail])
   @@index([status])
   @@index([orderNumber])
   @@index([stripePaymentIntentId])
@@ -335,7 +347,13 @@ model OrderEvent {
 
 model Address {
   id         String  @id @default(cuid())
-  userId     String
+  // Nullable to support guest-order addresses. Guest addresses are
+  // created inline at checkout, attached to the Order via
+  // shippingAddressId, and never show up in any user's "my
+  // addresses" list. They persist as rows so historical orders can
+  // still resolve to their shipping info, and cleanup (if wanted)
+  // can be done with a soft retention job.
+  userId     String?
   label      String? @db.VarChar(50)
   company    String?
   firstName  String
@@ -349,7 +367,7 @@ model Address {
   phone      String?
   isDefault  Boolean @default(false)
 
-  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   shippingOrders Order[] @relation("ShippingAddress")
   billingOrders  Order[] @relation("BillingAddress")
 
@@ -422,17 +440,24 @@ model PromoCode {
 model PromoUsage {
   id             String   @id @default(cuid())
   promoId        String
-  userId         String
+  // userId is nullable so guest checkouts can redeem promo codes.
+  // For guest redemptions, guestEmail carries the "already used this
+  // code?" check instead. Exactly one of (userId, guestEmail) must
+  // be set per row — enforced at the application layer.
+  userId         String?
+  guestEmail     String?
   orderId        String   @unique
   discountAmount Int      // actual discount applied in cents
   createdAt      DateTime @default(now())
 
   promo PromoCode @relation(fields: [promoId], references: [id], onDelete: Cascade)
-  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   order Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([promoId])
   @@index([userId])
+  // Guest "once per email per promo" check lookup.
+  @@index([promoId, guestEmail])
   @@map("promo_usages")
 }
 
