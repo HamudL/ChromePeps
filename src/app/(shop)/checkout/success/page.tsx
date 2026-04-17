@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, use } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import {
   CheckCircle2,
   Package,
@@ -11,6 +12,7 @@ import {
   Copy,
   Check,
   Loader2,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +54,12 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
     orderNumber: string;
   } | null>(null);
   const [verifying, setVerifying] = useState(!!sessionId);
+  // `/dashboard` requires a real account — sending a guest there
+  // just bounces them to /login, which is confusing right after
+  // they've completed a purchase. The post-order CTA switches to
+  // "Bestellung verfolgen" → /order-status for guests.
+  const { status: authStatus } = useSession();
+  const isGuest = authStatus === "unauthenticated";
 
   useEffect(() => {
     setMounted(true);
@@ -275,10 +283,17 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
 
             <div className="space-y-3">
               <Button className="w-full" size="lg" asChild>
-                <Link href="/dashboard">
-                  <Package className="mr-2 h-4 w-4" />
-                  View My Orders
-                </Link>
+                {isGuest ? (
+                  <Link href="/order-status">
+                    <Search className="mr-2 h-4 w-4" />
+                    Bestellung verfolgen
+                  </Link>
+                ) : (
+                  <Link href="/dashboard">
+                    <Package className="mr-2 h-4 w-4" />
+                    View My Orders
+                  </Link>
+                )}
               </Button>
               <Button variant="outline" className="w-full" size="lg" asChild>
                 <Link href="/products">
