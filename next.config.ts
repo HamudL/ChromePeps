@@ -17,10 +17,21 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     // CSP: Next.js requires 'unsafe-inline' for hydration scripts and styles.
+    // Dev additionally requires 'unsafe-eval' because webpack's eval-source-map
+    // devtool loads chunks via eval() — without it, the client bundle fails
+    // silently and React never hydrates.
     // Plausible, Sentry tunnel, and image CDNs are explicitly allowed.
+    const isDev = process.env.NODE_ENV !== "production";
+    const scriptSrc = [
+      "script-src 'self' 'unsafe-inline'",
+      isDev && "'unsafe-eval'",
+      "analytics.chromepeps.com *.googletagmanager.com",
+    ]
+      .filter(Boolean)
+      .join(" ");
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' analytics.chromepeps.com *.googletagmanager.com",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com *.edgeone.app *.google-analytics.com *.googletagmanager.com",
       "font-src 'self'",

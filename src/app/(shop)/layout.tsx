@@ -7,6 +7,7 @@ import { WishlistInitializer } from "@/components/shop/wishlist-initializer";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { Toaster } from "sonner";
 import { ResearchDisclaimer } from "@/components/shop/research-disclaimer";
+import { MouseSpotlight } from "@/components/shop/mouse-spotlight";
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       >
         Zum Inhalt springen
       </a>
+      <MouseSpotlight />
       <AnnouncementBar />
       <Header />
       <CartSheet />

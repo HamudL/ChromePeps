@@ -28,6 +28,7 @@ import type { ProductCardData } from "@/types";
 
 import { FadeUp } from "./home-animations";
 import { HeroLogo } from "./hero-logo";
+import { PeptideNetwork } from "@/components/shop/peptide-network";
 
 async function getBestsellers(): Promise<ProductCardData[]> {
   const [products, bestsellerIds] = await Promise.all([
@@ -68,8 +69,18 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* ── Hero ── */}
-      <section className="relative hero-ambient" aria-label="Hero">
+      <section className="relative hero-ambient overflow-hidden" aria-label="Hero">
         <div className="absolute inset-0 subtle-grid opacity-30" />
+        <PeptideNetwork />
+        {/* Soft radial vignette keeps the text legible over the particle network */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 hidden md:block"
+          style={{
+            background:
+              "radial-gradient(620px 360px at 50% 50%, hsl(var(--background) / 0.85), transparent 70%)",
+          }}
+        />
         <div className="container relative py-24 md:py-32 lg:py-40">
           <FadeUp>
             <div className="mx-auto max-w-3xl text-center space-y-8">

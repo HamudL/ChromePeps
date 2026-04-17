@@ -6,6 +6,7 @@ import {
   Mail,
 } from "lucide-react";
 import type { Metadata } from "next";
+import { PeptideNetwork } from "@/components/shop/peptide-network";
 
 export const metadata: Metadata = {
   title: "Qualitätskontrolle | ChromePeps",
@@ -44,8 +45,18 @@ export default function QualitaetskontrollePage() {
   return (
     <div className="flex flex-col">
       {/* Hero (dark) */}
-      <section className="section-dark">
-        <div className="container py-16 md:py-20 text-center">
+      <section className="section-dark relative overflow-hidden">
+        <PeptideNetwork dark count={60} />
+        {/* Vignette for text legibility on particle backdrop */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 hidden md:block"
+          style={{
+            background:
+              "radial-gradient(520px 280px at 50% 55%, hsl(20 14% 7% / 0.7), transparent 70%)",
+          }}
+        />
+        <div className="container relative py-16 md:py-20 text-center">
           <ShieldCheck className="mx-auto h-10 w-10 text-primary mb-4" />
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
             Qualitätskontrolle

@@ -197,4 +197,43 @@
   .animate-fade-in {
     animation: fadeIn 0.3s ease-out both;
   }
+
+  /* ===== Animations Demo Page ===== */
+  @keyframes animDemoDrift1 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(40px, -30px); }
+    66% { transform: translate(-20px, 20px); }
+  }
+  @keyframes animDemoDrift2 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(-30px, 20px); }
+    66% { transform: translate(25px, -15px); }
+  }
+  @keyframes animDemoDrift3 {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, -30px); }
+  }
+  @keyframes animDemoHelixSpin {
+    from { transform: rotateY(0deg); }
+    to   { transform: rotateY(360deg); }
+  }
+  @keyframes animDemoGrainFlicker {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-3%, 2%); }
+    50% { transform: translate(2%, -1%); }
+    75% { transform: translate(-1%, 3%); }
+  }
+  @keyframes animDemoShimmerSweep {
+    0%   { transform: translateX(0) skewX(-12deg); }
+    100% { transform: translateX(600%) skewX(-12deg); }
+  }
+  .anim-demo-grain {
+    animation: animDemoGrainFlicker 1.6s steps(4) infinite;
+  }
+  .anim-demo-shimmer-btn .anim-demo-shimmer-sweep {
+    transform: translateX(0) skewX(-12deg);
+  }
+  .anim-demo-shimmer-btn:hover .anim-demo-shimmer-sweep {
+    animation: animDemoShimmerSweep 900ms ease-out;
+  }
 }

@@ -20,6 +20,7 @@ import {
 import type { ProductCardData } from "@/types";
 import type { Prisma } from "@prisma/client";
 import type { Metadata } from "next";
+import { PeptideNetwork } from "@/components/shop/peptide-network";
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -199,8 +200,18 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   return (
     <div className="flex flex-col">
       {/* ── Hero ── */}
-      <section className="relative hero-ambient border-b border-border/60">
+      <section className="relative hero-ambient border-b border-border/60 overflow-hidden">
         <div className="absolute inset-0 subtle-grid opacity-30" />
+        <PeptideNetwork />
+        {/* Vignette keeps the headline readable over the particles */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 hidden md:block"
+          style={{
+            background:
+              "radial-gradient(720px 360px at 30% 50%, hsl(var(--background) / 0.8), transparent 70%)",
+          }}
+        />
         <div className="container relative py-16 md:py-20 lg:py-24">
           <div className="max-w-3xl space-y-5">
             <Badge
