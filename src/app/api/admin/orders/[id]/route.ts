@@ -59,6 +59,40 @@ export async function PATCH(
   const { id } = await params;
   const body = await req.json();
 
+  // Handle isTestOrder-only toggle (mark/unmark test order). Kein Status-Wechsel,
+  // keine Mails — reine Metadaten-Änderung.
+  if (typeof body.isTestOrder === "boolean" && !body.status && !body.paymentStatus) {
+    const existing = await db.order.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    const order = await db.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id },
+        data: { isTestOrder: body.isTestOrder },
+        include: { items: true, events: { orderBy: { createdAt: "desc" } } },
+      });
+
+      await tx.orderEvent.create({
+        data: {
+          orderId: id,
+          status: existing.status,
+          note: body.isTestOrder
+            ? "Als Testbestellung markiert"
+            : "Testbestellung-Kennzeichnung entfernt",
+        },
+      });
+
+      return updated;
+    });
+
+    return NextResponse.json({ success: true, data: order });
+  }
+
   // Handle paymentStatus-only update (Mark as Paid)
   if (body.paymentStatus && !body.status) {
     const existing = await db.order.findUnique({ where: { id } });
@@ -207,7 +241,12 @@ export async function PATCH(
         },
       });
 
-      if (fullOrder?.user?.email) {
+      // Test-Orders bekommen NIE eine Mail — sie existieren nur, damit Admin
+      // den Fulfillment-Flow durchspielen kann, ohne echten Empfänger zu
+      // belasten. Früher Exit vor sendOrder*Email-Aufrufen.
+      if (fullOrder?.isTestOrder) {
+        // noop — status update stays, but we skip transactional mail.
+      } else if (fullOrder?.user?.email) {
         if (becameShipped) {
           await sendOrderShippedEmail({
             to: fullOrder.user.email,

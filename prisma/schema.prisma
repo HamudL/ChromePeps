@@ -269,6 +269,12 @@ model Order {
   discountInCents       Int           @default(0)
   promoCode             String?       @db.VarChar(20)
 
+  // Admin-only Flag: markiert fiktive Orders, die Dashboards, Statistiken,
+  // Exports und Email-Versand NICHT beeinflussen sollen. Pattern analog zu
+  // status=ARCHIVED — überall wo Orders gezählt werden, wird
+  // { isTestOrder: false } gefiltert.
+  isTestOrder           Boolean       @default(false)
+
   user            User?        @relation(fields: [userId], references: [id])
   items           OrderItem[]
   shippingAddress Address?     @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
@@ -284,6 +290,7 @@ model Order {
   @@index([status])
   @@index([orderNumber])
   @@index([stripePaymentIntentId])
+  @@index([isTestOrder])
   @@map("orders")
 }
 

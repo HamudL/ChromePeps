@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/table";
 import { OrderStatusForm } from "@/components/admin/order-status-form";
 import { OrderArchiveButton } from "@/components/admin/order-archive-button";
+import { TestOrderToggle } from "@/components/admin/test-order-toggle";
 import { notFound } from "next/navigation";
 
 interface Props {
@@ -63,7 +64,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           </Link>
         </Button>
         <div className="flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-2xl font-bold tracking-tight">
               Order {order.orderNumber}
             </h2>
@@ -73,6 +74,15 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             >
               {ORDER_STATUS_LABELS[order.status] ?? order.status}
             </Badge>
+            {order.isTestOrder && (
+              <Badge
+                variant="outline"
+                className="text-[10px] font-semibold uppercase tracking-wider border-amber-400 text-amber-700 bg-amber-50"
+                title="Testbestellung — nicht in Statistiken/Exports/E-Mails enthalten"
+              >
+                Testbestellung
+              </Badge>
+            )}
           </div>
           <p className="text-muted-foreground">
             Placed on {format(new Date(order.createdAt), "MMMM d, yyyy 'at' HH:mm")}
@@ -344,6 +354,12 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             currentTracking={order.trackingNumber}
             paymentMethod={order.paymentMethod}
             paymentStatus={order.paymentStatus}
+          />
+
+          {/* Test-Order toggle */}
+          <TestOrderToggle
+            orderId={order.id}
+            isTestOrder={order.isTestOrder}
           />
 
           {/* Archive */}

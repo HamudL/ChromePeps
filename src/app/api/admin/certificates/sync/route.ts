@@ -25,14 +25,10 @@ const PRODUCT_MAP: Record<string, string> = {
 /** Extract product slug from spreadsheet name like "Semaglutide 5mg" */
 function matchProductSlug(name: string): string | null {
   const lower = name.toLowerCase().trim();
-  // Try exact match first (without mg)
   const withoutMg = lower.replace(/\s*\d+\s*mg$/i, "").trim();
-  // Try direct map
   if (PRODUCT_MAP[withoutMg]) return PRODUCT_MAP[withoutMg];
-  // Try with dashes instead of spaces
   const dashed = withoutMg.replace(/\s+/g, "-");
   if (PRODUCT_MAP[dashed]) return PRODUCT_MAP[dashed];
-  // Try without dashes/spaces
   const compact = withoutMg.replace(/[-\s]+/g, "");
   if (PRODUCT_MAP[compact]) return PRODUCT_MAP[compact];
   return null;
@@ -40,7 +36,6 @@ function matchProductSlug(name: string): string | null {
 
 /** Try to parse date from batch number like "CS-se5-0116" → Jan 16 */
 function parseBatchDate(batch: string): Date {
-  // Pattern: last 4 digits = MMDD (e.g. "0116" = Jan 16, "0202" = Feb 2)
   const match = batch.match(/(\d{2})(\d{2})$/);
   if (match) {
     const month = parseInt(match[1], 10);
@@ -48,12 +43,11 @@ function parseBatchDate(batch: string): Date {
     if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
       const year = new Date().getFullYear();
       const d = new Date(year, month - 1, day);
-      // If future date, use previous year
       if (d > new Date()) d.setFullYear(year - 1);
       return d;
     }
   }
-  return new Date(); // fallback
+  return new Date();
 }
 
 /** Parse CSV — handles quoted fields with commas inside */
@@ -81,6 +75,22 @@ function parseCSVLine(line: string): string[] {
   return fields;
 }
 
+interface CreatedEntry {
+  productName: string;
+  batchNumber: string;
+  reportUrl: string | null;
+}
+interface UpdatedEntry {
+  productName: string;
+  batchNumber: string;
+  changedFields: string[];
+}
+interface SkippedEntry {
+  productName: string;
+  batchNumber: string;
+  reason: string;
+}
+
 export async function POST() {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -91,7 +101,6 @@ export async function POST() {
   }
 
   try {
-    // 1. Fetch CSV from Google Sheets
     const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
     if (!res.ok) {
       return NextResponse.json(
@@ -102,10 +111,12 @@ export async function POST() {
     const csv = await res.text();
     const lines = csv.split("\n").filter((l) => l.trim());
 
-    // 2. Find header row (contains "Name" and "Batch")
     let dataStartIndex = -1;
     for (let i = 0; i < Math.min(lines.length, 15); i++) {
-      if (lines[i].toLowerCase().includes("name") && lines[i].toLowerCase().includes("batch")) {
+      if (
+        lines[i].toLowerCase().includes("name") &&
+        lines[i].toLowerCase().includes("batch")
+      ) {
         dataStartIndex = i + 1;
         break;
       }
@@ -117,48 +128,61 @@ export async function POST() {
       );
     }
 
-    // 3. Pre-load all products for lookup
     const products = await db.product.findMany({
       where: { isActive: true },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, name: true },
     });
-    const slugToId = new Map(products.map((p) => [p.slug, p.id]));
+    const slugToProduct = new Map(products.map((p) => [p.slug, p]));
 
-    // 4. Pre-load existing COAs for dedup
+    // Pre-load all existing COAs für differenziertes Diff (create/update).
+    // Map key: `${productId}:${batchNumber}` → bestehender Eintrag mit den
+    // Feldern, die wir potenziell aktualisieren würden.
     const existingCoas = await db.certificateOfAnalysis.findMany({
-      select: { productId: true, batchNumber: true },
+      select: {
+        id: true,
+        productId: true,
+        batchNumber: true,
+        reportUrl: true,
+        testMethod: true,
+        laboratory: true,
+      },
     });
-    const existingSet = new Set(
-      existingCoas.map((c) => `${c.productId}:${c.batchNumber}`)
+    const existingMap = new Map(
+      existingCoas.map((c) => [`${c.productId}:${c.batchNumber}`, c])
     );
 
-    // 5. Process data rows
-    let imported = 0;
-    let skipped = 0;
+    const created: CreatedEntry[] = [];
+    const updated: UpdatedEntry[] = [];
+    const skipped: SkippedEntry[] = [];
     const errors: string[] = [];
 
     for (let i = dataStartIndex; i < lines.length; i++) {
       const fields = parseCSVLine(lines[i]);
       const name = fields[0];
       const batch = fields[1];
-      const latestUrl = fields[2];
 
       if (!name || !batch) continue;
 
-      // Match product
       const slug = matchProductSlug(name);
       if (!slug) {
-        skipped++;
-        continue; // Product not in our shop
-      }
-
-      const productId = slugToId.get(slug);
-      if (!productId) {
-        skipped++;
+        skipped.push({
+          productName: name,
+          batchNumber: batch,
+          reason: "Kein Produkt-Mapping im Shop",
+        });
         continue;
       }
 
-      // Check all URL columns (latest + previous COAs)
+      const product = slugToProduct.get(slug);
+      if (!product) {
+        skipped.push({
+          productName: name,
+          batchNumber: batch,
+          reason: `Slug '${slug}' existiert nicht oder ist inaktiv`,
+        });
+        continue;
+      }
+
       const urls: string[] = [];
       for (let col = 2; col < fields.length; col++) {
         const url = fields[col]?.trim();
@@ -166,39 +190,90 @@ export async function POST() {
       }
 
       if (urls.length === 0) {
-        skipped++;
+        skipped.push({
+          productName: product.name,
+          batchNumber: batch,
+          reason: "Keine Report-URL in der Zeile",
+        });
         continue;
       }
 
-      // Import the latest COA (column C) — use batch number as-is
-      const dedupKey = `${productId}:${batch}`;
-      if (existingSet.has(dedupKey)) {
-        skipped++;
+      const latestUrl = urls[0];
+      const dedupKey = `${product.id}:${batch}`;
+      const existing = existingMap.get(dedupKey);
+
+      if (!existing) {
+        try {
+          await db.certificateOfAnalysis.create({
+            data: {
+              productId: product.id,
+              batchNumber: batch,
+              testDate: parseBatchDate(batch),
+              testMethod: "HPLC",
+              laboratory: "Janoshik",
+              reportUrl: latestUrl,
+              isPublished: true,
+            },
+          });
+          created.push({
+            productName: product.name,
+            batchNumber: batch,
+            reportUrl: latestUrl,
+          });
+        } catch (err) {
+          errors.push(`Zeile ${i + 1}: ${(err as Error).message}`);
+        }
+        continue;
+      }
+
+      // Bestehender Eintrag — nur dann updaten, wenn sich etwas Sichtbares
+      // geändert hat (aktuell primär die Report-URL, da Janoshik Links
+      // gelegentlich neu ausgibt).
+      const changedFields: string[] = [];
+      const updateData: {
+        reportUrl?: string;
+      } = {};
+      if (existing.reportUrl !== latestUrl) {
+        changedFields.push("reportUrl");
+        updateData.reportUrl = latestUrl;
+      }
+
+      if (changedFields.length === 0) {
+        skipped.push({
+          productName: product.name,
+          batchNumber: batch,
+          reason: "Unverändert",
+        });
         continue;
       }
 
       try {
-        await db.certificateOfAnalysis.create({
-          data: {
-            productId,
-            batchNumber: batch,
-            testDate: parseBatchDate(batch),
-            testMethod: "HPLC",
-            laboratory: "Janoshik",
-            reportUrl: urls[0], // Latest Janoshik URL
-            isPublished: true,
-          },
+        await db.certificateOfAnalysis.update({
+          where: { id: existing.id },
+          data: updateData,
         });
-        existingSet.add(dedupKey);
-        imported++;
+        updated.push({
+          productName: product.name,
+          batchNumber: batch,
+          changedFields,
+        });
       } catch (err) {
-        errors.push(`Zeile ${i + 1}: ${(err as Error).message}`);
+        errors.push(`Zeile ${i + 1} (Update): ${(err as Error).message}`);
       }
     }
 
     return NextResponse.json({
       success: true,
-      data: { imported, skipped, errors: errors.slice(0, 5) },
+      data: {
+        created,
+        updated,
+        skipped,
+        errors: errors.slice(0, 10),
+        // Kompakt-Counts — bleibt rückwärtskompatibel falls irgendwo im Code
+        // noch auf imported/skipped gelesen wird (z.B. alter Client während
+        // Deploy-Übergang).
+        imported: created.length,
+      },
     });
   } catch (err) {
     return NextResponse.json(

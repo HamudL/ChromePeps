@@ -31,18 +31,21 @@ export async function GET() {
     ordersByStatus,
     monthlyRevenue,
   ] = await Promise.all([
-    // Total revenue (only succeeded payments)
+    // Total revenue (only succeeded payments) — Testbestellungen werden
+    // überall in der Admin-Statistik ausgeblendet, damit die Zahlen nicht
+    // durch Probe-Orders verzerrt werden.
     db.order.aggregate({
-      where: { paymentStatus: "SUCCEEDED" },
+      where: { paymentStatus: "SUCCEEDED", isTestOrder: false },
       _sum: { totalInCents: true },
     }),
 
-    db.order.count(),
+    db.order.count({ where: { isTestOrder: false } }),
     db.product.count({ where: { isActive: true } }),
     db.user.count(),
 
     // Recent orders
     db.order.findMany({
+      where: { isTestOrder: false },
       orderBy: { createdAt: "desc" },
       take: 5,
       select: {
@@ -60,6 +63,7 @@ export async function GET() {
     // Orders grouped by status
     db.order.groupBy({
       by: ["status"],
+      where: { isTestOrder: false },
       _count: true,
     }),
 
@@ -68,6 +72,7 @@ export async function GET() {
       where: {
         paymentStatus: "SUCCEEDED",
         createdAt: { gte: twelveMonthsAgo },
+        isTestOrder: false,
       },
       select: { totalInCents: true, createdAt: true },
     }),

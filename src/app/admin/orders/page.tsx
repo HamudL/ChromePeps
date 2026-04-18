@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TestOrderCreateDialog } from "@/components/admin/test-order-create-dialog";
 import type { Prisma } from "@prisma/client";
 
 const STATUSES = [
@@ -39,7 +40,7 @@ const STATUSES = [
 ] as const;
 
 interface Props {
-  searchParams: Promise<{ page?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; showTest?: string }>;
 }
 
 export default async function AdminOrdersPage({ searchParams }: Props) {
@@ -47,14 +48,19 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1"));
   const statusFilter = params.status ?? "ALL";
+  const showTest = params.showTest === "1";
   const skip = (page - 1) * ADMIN_ITEMS_PER_PAGE;
 
-  const where: Prisma.OrderWhereInput =
-    statusFilter !== "ALL"
+  const where: Prisma.OrderWhereInput = {
+    ...(statusFilter !== "ALL"
       ? { status: statusFilter as Prisma.EnumOrderStatusFilter }
-      : { status: { not: "ARCHIVED" } };
+      : { status: { not: "ARCHIVED" } }),
+    // Testbestellungen werden standardmäßig ausgeblendet. Admin kann per
+    // Toggle einblenden, um Test-Orders gezielt zu prüfen.
+    ...(showTest ? {} : { isTestOrder: false }),
+  };
 
-  const [orders, total] = await Promise.all([
+  const [orders, total, catalogProducts] = await Promise.all([
     db.order.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -65,13 +71,51 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       },
     }),
     db.order.count({ where }),
+    // Preload für den "Test-Order anlegen"-Dialog — eine kompakte Liste
+    // aktiver Produkte inkl. Varianten. Kein paging nötig; der Dialog
+    // macht clientseitige Textsuche.
+    db.product.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+      take: 200,
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        priceInCents: true,
+        variants: {
+          where: { isActive: true },
+          select: { id: true, name: true, priceInCents: true },
+          orderBy: { priceInCents: "asc" },
+        },
+      },
+    }),
   ]);
 
   const totalPages = Math.ceil(total / ADMIN_ITEMS_PER_PAGE);
 
+  const exportParts: string[] = [];
+  if (statusFilter !== "ALL") exportParts.push(`status=${statusFilter}`);
+  if (showTest) exportParts.push("includeTest=true");
   const exportHref = `/api/admin/orders/export${
-    statusFilter !== "ALL" ? `?status=${statusFilter}` : ""
+    exportParts.length > 0 ? `?${exportParts.join("&")}` : ""
   }`;
+
+  function buildOrdersHref(overrides: {
+    status?: string;
+    page?: number;
+    showTest?: boolean;
+  }): string {
+    const next = new URLSearchParams();
+    const status = overrides.status ?? statusFilter;
+    if (status && status !== "ALL") next.set("status", status);
+    const pageNext = overrides.page;
+    if (pageNext && pageNext > 1) next.set("page", String(pageNext));
+    const showTestNext = overrides.showTest ?? showTest;
+    if (showTestNext) next.set("showTest", "1");
+    const qs = next.toString();
+    return `/admin/orders${qs ? `?${qs}` : ""}`;
+  }
 
   return (
     <div className="space-y-6">
@@ -82,18 +126,21 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
             Manage customer orders ({total} total)
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <a href={exportHref}>
-            <Download className="mr-2 h-4 w-4" />
-            CSV exportieren
-          </a>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <TestOrderCreateDialog products={catalogProducts} />
+          <Button asChild variant="outline" size="sm">
+            <a href={exportHref}>
+              <Download className="mr-2 h-4 w-4" />
+              CSV exportieren
+            </a>
+          </Button>
+        </div>
       </div>
 
       {/* Status Filter Tabs */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {STATUSES.map((s) => (
               <Button
                 key={s}
@@ -101,13 +148,29 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                 variant={statusFilter === s ? "default" : "outline"}
                 size="sm"
               >
-                <Link
-                  href={`/admin/orders${s !== "ALL" ? `?status=${s}` : ""}`}
-                >
+                <Link href={buildOrdersHref({ status: s, page: 1 })}>
                   {s === "ALL" ? "All" : ORDER_STATUS_LABELS[s] ?? s}
                 </Link>
               </Button>
             ))}
+            <div className="ml-auto">
+              <Button
+                asChild
+                variant={showTest ? "default" : "outline"}
+                size="sm"
+              >
+                <Link
+                  href={buildOrdersHref({ showTest: !showTest, page: 1 })}
+                  title={
+                    showTest
+                      ? "Testbestellungen werden aktuell angezeigt — klicken zum Ausblenden"
+                      : "Testbestellungen einblenden (standardmäßig versteckt)"
+                  }
+                >
+                  {showTest ? "Test-Orders sichtbar" : "Test-Orders einblenden"}
+                </Link>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -157,15 +220,26 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                       {format(new Date(order.createdAt), "MMM d, yyyy HH:mm")}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-xs",
-                          ORDER_STATUS_COLORS[order.status]
+                      <div className="flex items-center gap-1.5">
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "text-xs",
+                            ORDER_STATUS_COLORS[order.status]
+                          )}
+                        >
+                          {ORDER_STATUS_LABELS[order.status] ?? order.status}
+                        </Badge>
+                        {order.isTestOrder && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-semibold uppercase tracking-wider border-amber-400 text-amber-700 bg-amber-50"
+                            title="Testbestellung — nicht in Statistiken/Exports enthalten"
+                          >
+                            Test
+                          </Badge>
                         )}
-                      >
-                        {ORDER_STATUS_LABELS[order.status] ?? order.status}
-                      </Badge>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -213,20 +287,12 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           <div className="flex gap-2">
             {page > 1 && (
               <Button asChild variant="outline" size="sm">
-                <Link
-                  href={`/admin/orders?page=${page - 1}${statusFilter !== "ALL" ? `&status=${statusFilter}` : ""}`}
-                >
-                  Previous
-                </Link>
+                <Link href={buildOrdersHref({ page: page - 1 })}>Previous</Link>
               </Button>
             )}
             {page < totalPages && (
               <Button asChild variant="outline" size="sm">
-                <Link
-                  href={`/admin/orders?page=${page + 1}${statusFilter !== "ALL" ? `&status=${statusFilter}` : ""}`}
-                >
-                  Next
-                </Link>
+                <Link href={buildOrdersHref({ page: page + 1 })}>Next</Link>
               </Button>
             )}
           </div>

@@ -65,13 +65,20 @@ async function getDashboardStats() {
     monthlyRevenue,
   ] = await Promise.all([
     db.order.aggregate({
-      where: { paymentStatus: "SUCCEEDED", status: { not: "ARCHIVED" } },
+      where: {
+        paymentStatus: "SUCCEEDED",
+        status: { not: "ARCHIVED" },
+        isTestOrder: false,
+      },
       _sum: { totalInCents: true },
     }),
-    db.order.count({ where: { status: { not: "ARCHIVED" } } }),
+    db.order.count({
+      where: { status: { not: "ARCHIVED" }, isTestOrder: false },
+    }),
     db.product.count({ where: { isActive: true } }),
     db.user.count(),
     db.order.findMany({
+      where: { isTestOrder: false },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: {
@@ -81,18 +88,34 @@ async function getDashboardStats() {
     }),
     db.order.groupBy({
       by: ["status"],
+      where: { isTestOrder: false },
       _count: true,
     }),
     db.order.findMany({
       where: {
         paymentStatus: "SUCCEEDED",
         createdAt: { gte: twelveMonthsAgo },
+        isTestOrder: false,
       },
       select: { totalInCents: true, createdAt: true },
     }),
   ]);
 
   const revenueByMonth: Record<string, { revenue: number; orders: number }> = {};
+
+  // Alle 12 Monate vorab mit 0 seeden — sonst zeichnet recharts bei nur 1–2
+  // gefüllten Monaten eine quasi unsichtbare Linie über 1 Punkt. Mit Seed
+  // erscheint die volle Zeitreihe und die Kurve ist lesbar.
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(
+      twelveMonthsAgo.getFullYear(),
+      twelveMonthsAgo.getMonth() + i,
+      1,
+    );
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    revenueByMonth[key] = { revenue: 0, orders: 0 };
+  }
+
   for (const order of monthlyRevenue) {
     const key = `${order.createdAt.getFullYear()}-${String(order.createdAt.getMonth() + 1).padStart(2, "0")}`;
     if (!revenueByMonth[key]) revenueByMonth[key] = { revenue: 0, orders: 0 };
@@ -184,7 +207,7 @@ export default async function AdminDashboardPage() {
             <CardDescription>Monthly revenue over the past 12 months</CardDescription>
           </CardHeader>
           <CardContent>
-            {stats.revenueByMonth.length > 0 ? (
+            {stats.revenueByMonth.some((m) => m.revenue > 0) ? (
               <RevenueChart data={stats.revenueByMonth} />
             ) : (
               <div className="flex h-[350px] items-center justify-center text-muted-foreground">

@@ -45,16 +45,34 @@ async function credentialSignIn(email: string, password: string) {
 
   const data = await res.json();
 
-  if (res.ok) {
+  // NextAuth v5 antwortet mit HTTP 200 SOWOHL bei Erfolg als auch bei Fehler —
+  // die Unterscheidung steckt in data.url. Bei Erfolg ist das die callbackUrl,
+  // bei Fehler eine /api/auth/signin?error=... URL. res.ok allein reicht also
+  // nicht, sonst landet der User bei falschem Passwort einfach auf /.
+  let errorParam: string | null = null;
+  try {
+    errorParam = new URL(data.url).searchParams.get("error");
+  } catch {
+    /* data.url fehlt oder ist kein gültiges URL — behandeln wie Erfolg, wenn res.ok */
+  }
+
+  if (res.ok && !errorParam) {
     return { ok: true, error: null };
   }
 
-  // Extract error from redirect URL
-  try {
-    const errorParam = new URL(data.url).searchParams.get("error");
-    return { ok: false, error: errorParam ?? "CredentialsSignin" };
-  } catch {
-    return { ok: false, error: "CredentialsSignin" };
+  return { ok: false, error: errorParam ?? "CredentialsSignin" };
+}
+
+function errorMessageFor(code: string): string {
+  switch (code) {
+    case "CredentialsSignin":
+      return "E-Mail oder Passwort ist falsch.";
+    case "AccessDenied":
+      return "Zugriff verweigert. Bitte verifiziere deine E-Mail-Adresse.";
+    case "Configuration":
+      return "Server-Konfigurationsfehler. Bitte später erneut versuchen.";
+    default:
+      return "Anmeldung fehlgeschlagen. Bitte erneut versuchen.";
   }
 }
 
@@ -86,10 +104,10 @@ export default function LoginPage() {
         const params = new URLSearchParams(window.location.search);
         window.location.href = params.get("callbackUrl") ?? "/";
       } else {
-        setError("Invalid email or password.");
+        setError(errorMessageFor(result.error ?? "CredentialsSignin"));
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Etwas ist schiefgelaufen. Bitte erneut versuchen.");
     } finally {
       setIsPending(false);
     }

@@ -15,6 +15,29 @@ interface RevenueChartProps {
   data: { month: string; revenue: number; orders: number }[];
 }
 
+const MONTH_SHORT_DE = [
+  "Jan",
+  "Feb",
+  "Mrz",
+  "Apr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Dez",
+];
+
+function formatMonthTick(monthKey: string): string {
+  // monthKey: "2026-04" -> "Apr 26"
+  const [year, month] = monthKey.split("-");
+  const monthIdx = Number.parseInt(month, 10) - 1;
+  const short = MONTH_SHORT_DE[monthIdx] ?? month;
+  return `${short} ${year.slice(2)}`;
+}
+
 export function RevenueChart({ data }: RevenueChartProps) {
   const formatted = data.map((d) => ({
     month: d.month,
@@ -31,6 +54,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
           className="text-xs"
           tickLine={false}
           axisLine={false}
+          tickFormatter={formatMonthTick}
         />
         <YAxis
           yAxisId="revenue"
@@ -51,6 +75,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
           allowDecimals={false}
         />
         <Tooltip
+          labelFormatter={(label: string) => formatMonthTick(label)}
           formatter={(value: number, name: string) => {
             if (name === "revenue") {
               return [

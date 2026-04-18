@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FlaskConical } from "lucide-react";
+import { LogoIcon } from "@/components/brand/logo-icon";
 import { APP_NAME } from "@/lib/constants";
 import type { Metadata } from "next";
 
@@ -21,10 +21,8 @@ export default function AuthLayout({
       <div className="w-full max-w-md space-y-8">
         {/* Logo */}
         <div className="text-center">
-          <Link href="/" className="inline-flex flex-col items-center gap-2 group">
-            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              <FlaskConical className="h-6 w-6 text-primary" />
-            </div>
+          <Link href="/" className="inline-flex flex-col items-center gap-3 group">
+            <LogoIcon size={56} priority className="transition-transform group-hover:scale-105" />
             <span className="text-2xl font-bold tracking-tight chrome-text">
               {APP_NAME}
             </span>

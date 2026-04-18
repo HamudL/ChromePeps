@@ -11,6 +11,12 @@ import {
   Download,
   Upload,
   RefreshCw,
+  X,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle2,
+  RefreshCcw,
+  MinusCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +51,28 @@ interface Product {
   id: string;
   name: string;
   slug: string;
+}
+
+interface SyncCreatedEntry {
+  productName: string;
+  batchNumber: string;
+  reportUrl: string | null;
+}
+interface SyncUpdatedEntry {
+  productName: string;
+  batchNumber: string;
+  changedFields: string[];
+}
+interface SyncSkippedEntry {
+  productName: string;
+  batchNumber: string;
+  reason: string;
+}
+interface SyncResult {
+  created: SyncCreatedEntry[];
+  updated: SyncUpdatedEntry[];
+  skipped: SyncSkippedEntry[];
+  errors: string[];
 }
 
 interface Certificate {
@@ -87,7 +115,8 @@ export default function AdminCertificatesPage() {
   const [editingCert, setEditingCert] = useState<Certificate | null>(null);
   const [filterProduct, setFilterProduct] = useState<string>("all");
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [syncDetailsOpen, setSyncDetailsOpen] = useState(false);
   const [form, setForm] = useState(defaultForm);
 
   const loadData = useCallback(async () => {
@@ -207,6 +236,7 @@ export default function AdminCertificatesPage() {
   async function handleSync() {
     setSyncing(true);
     setSyncResult(null);
+    setSyncDetailsOpen(false);
     setError("");
     try {
       const res = await fetch("/api/admin/certificates/sync", {
@@ -216,11 +246,19 @@ export default function AdminCertificatesPage() {
       if (!json.success) {
         setError(json.error || "Sync fehlgeschlagen.");
       } else {
-        const { imported, skipped, errors: syncErrors } = json.data;
-        setSyncResult(
-          `${imported} importiert, ${skipped} übersprungen${syncErrors?.length ? `, ${syncErrors.length} Fehler` : ""}`
-        );
-        if (imported > 0) await loadData();
+        const result: SyncResult = {
+          created: json.data.created ?? [],
+          updated: json.data.updated ?? [],
+          skipped: json.data.skipped ?? [],
+          errors: json.data.errors ?? [],
+        };
+        setSyncResult(result);
+        // Panel direkt aufklappen, wenn was Neues/Aktualisiertes passiert
+        // ist — Admin soll die neuen Chargen sofort sehen.
+        if (result.created.length > 0 || result.updated.length > 0) {
+          setSyncDetailsOpen(true);
+          await loadData();
+        }
       }
     } catch {
       setError("Netzwerkfehler beim Sync.");
@@ -303,8 +341,240 @@ export default function AdminCertificatesPage() {
       )}
 
       {syncResult && (
-        <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">
-          Sync abgeschlossen: {syncResult}
+        <div className="border border-border rounded-lg bg-background shadow-sm">
+          {/* Summary-Zeile */}
+          <div className="flex items-center justify-between gap-3 px-4 py-3 border-b bg-green-50/50">
+            <button
+              type="button"
+              onClick={() => setSyncDetailsOpen((prev) => !prev)}
+              className="flex items-center gap-2 text-sm font-medium text-left flex-1"
+            >
+              {syncDetailsOpen ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span className="text-green-700">
+                Sync abgeschlossen:
+              </span>
+              <span className="flex items-center gap-1 text-green-700">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {syncResult.created.length} neu
+              </span>
+              <span className="text-muted-foreground/40">·</span>
+              <span className="flex items-center gap-1 text-blue-700">
+                <RefreshCcw className="h-3.5 w-3.5" />
+                {syncResult.updated.length} aktualisiert
+              </span>
+              <span className="text-muted-foreground/40">·</span>
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <MinusCircle className="h-3.5 w-3.5" />
+                {syncResult.skipped.length} unverändert/übersprungen
+              </span>
+              {syncResult.errors.length > 0 && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span className="text-red-700">
+                    {syncResult.errors.length} Fehler
+                  </span>
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSyncResult(null);
+                setSyncDetailsOpen(false);
+              }}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title="Schließen"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {syncDetailsOpen && (
+            <div className="px-4 py-3 space-y-4 text-sm">
+              {syncResult.created.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-green-700 mb-2 flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Neu ({syncResult.created.length})
+                  </h4>
+                  <div className="rounded-md border overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-medium">
+                            Produkt
+                          </th>
+                          <th className="text-left px-3 py-2 font-medium">
+                            Charge
+                          </th>
+                          <th className="text-left px-3 py-2 font-medium">
+                            Report
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {syncResult.created.map((e, idx) => (
+                          <tr
+                            key={`created-${idx}`}
+                            className="border-t"
+                          >
+                            <td className="px-3 py-1.5">{e.productName}</td>
+                            <td className="px-3 py-1.5">
+                              <code className="bg-muted px-1.5 py-0.5 rounded">
+                                {e.batchNumber}
+                              </code>
+                            </td>
+                            <td className="px-3 py-1.5">
+                              {e.reportUrl ? (
+                                <a
+                                  href={e.reportUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline inline-flex items-center gap-1"
+                                >
+                                  Öffnen
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  —
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {syncResult.updated.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-blue-700 mb-2 flex items-center gap-1.5">
+                    <RefreshCcw className="h-4 w-4" />
+                    Aktualisiert ({syncResult.updated.length})
+                  </h4>
+                  <div className="rounded-md border overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-medium">
+                            Produkt
+                          </th>
+                          <th className="text-left px-3 py-2 font-medium">
+                            Charge
+                          </th>
+                          <th className="text-left px-3 py-2 font-medium">
+                            Geänderte Felder
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {syncResult.updated.map((e, idx) => (
+                          <tr
+                            key={`updated-${idx}`}
+                            className="border-t"
+                          >
+                            <td className="px-3 py-1.5">{e.productName}</td>
+                            <td className="px-3 py-1.5">
+                              <code className="bg-muted px-1.5 py-0.5 rounded">
+                                {e.batchNumber}
+                              </code>
+                            </td>
+                            <td className="px-3 py-1.5">
+                              <div className="flex flex-wrap gap-1">
+                                {e.changedFields.map((f) => (
+                                  <Badge
+                                    key={f}
+                                    variant="outline"
+                                    className="text-[10px]"
+                                  >
+                                    {f}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {syncResult.skipped.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <MinusCircle className="h-4 w-4" />
+                    Übersprungen ({syncResult.skipped.length})
+                  </h4>
+                  <div className="rounded-md border overflow-hidden max-h-64 overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted/50 sticky top-0">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-medium">
+                            Produkt
+                          </th>
+                          <th className="text-left px-3 py-2 font-medium">
+                            Charge
+                          </th>
+                          <th className="text-left px-3 py-2 font-medium">
+                            Grund
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {syncResult.skipped.map((e, idx) => (
+                          <tr
+                            key={`skipped-${idx}`}
+                            className="border-t"
+                          >
+                            <td className="px-3 py-1.5 text-muted-foreground">
+                              {e.productName}
+                            </td>
+                            <td className="px-3 py-1.5">
+                              <code className="bg-muted px-1.5 py-0.5 rounded">
+                                {e.batchNumber}
+                              </code>
+                            </td>
+                            <td className="px-3 py-1.5 text-muted-foreground">
+                              {e.reason}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {syncResult.errors.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-red-700 mb-2">
+                    Fehler ({syncResult.errors.length})
+                  </h4>
+                  <ul className="list-disc list-inside space-y-0.5 text-xs text-red-700">
+                    {syncResult.errors.map((err, idx) => (
+                      <li key={`err-${idx}`}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {syncResult.created.length === 0 &&
+                syncResult.updated.length === 0 &&
+                syncResult.errors.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-3">
+                    Alle Einträge im Spreadsheet sind bereits auf dem aktuellen Stand.
+                  </p>
+                )}
+            </div>
+          )}
         </div>
       )}
 

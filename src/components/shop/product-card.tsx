@@ -54,9 +54,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         className={cn(
           "relative aspect-[4/5] overflow-hidden rounded-xl",
           "bg-gradient-to-b from-muted/40 to-muted",
-          "border border-border/60",
+          "border border-border/30",
           "transition-all duration-500 ease-out",
-          "group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-primary/10"
+          "group-hover:border-primary/30 group-hover:shadow-lg group-hover:shadow-primary/5"
         )}
       >
         {image ? (
@@ -64,7 +64,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             src={image.url}
             alt={image.alt ?? product.name}
             fill
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
@@ -76,7 +76,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         {/* mg-Size chip (top-right) — always visible */}
         {product.weight && (
           <div className="absolute top-3 right-3">
-            <span className="inline-flex items-center rounded-full border border-border/60 bg-background/90 px-2.5 py-1 text-[11px] font-mono font-medium text-foreground backdrop-blur-sm shadow-sm">
+            <span className="inline-flex items-center rounded-full border border-border/40 bg-background/90 px-2.5 py-1 text-[11px] font-mono font-medium text-foreground backdrop-blur-sm shadow-sm">
               {product.weight}
             </span>
           </div>

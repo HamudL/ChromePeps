@@ -58,8 +58,15 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
   const statusFilter = searchParams.get("status");
+  // Testbestellungen werden per Default aus allen Exporten gezogen; wenn der
+  // Admin sie explizit dabei haben will, kann `?includeTest=true` gesetzt
+  // werden (z.B. zum Prüfen eines neu angelegten Tests).
+  const includeTest = searchParams.get("includeTest") === "true";
 
   const where: Prisma.OrderWhereInput = {};
+  if (!includeTest) {
+    where.isTestOrder = false;
+  }
   if (from || to) {
     where.createdAt = {};
     if (from) {
