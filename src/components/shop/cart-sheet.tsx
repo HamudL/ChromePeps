@@ -199,7 +199,11 @@ export function CartSheet() {
                   </span>
                 </div>
 
-                {/* Included block */}
+                {/* Included block — das einzige Extra, das wir hier
+                    konkret zusagen können, ist der CoA-Versand. "Kühl-
+                    versand & Lot-Tracking" und "14 Tage Widerrufsrecht"
+                    waren im Design-Handoff Platzhalter, gehören aber
+                    inhaltlich nicht in die Sheet-Quittung. */}
                 <div className="mt-4 pt-4 border-t border-dashed">
                   <p className="font-mono text-[9.5px] tracking-[0.15em] uppercase text-primary font-semibold mb-2">
                     Zusätzlich inklusive
@@ -208,8 +212,6 @@ export function CartSheet() {
                     <IncludedItem>
                       {itemCount} × Janoshik CoA (PDF, Lot‑spezifisch)
                     </IncludedItem>
-                    <IncludedItem>Kühlversand & Lot‑Tracking</IncludedItem>
-                    <IncludedItem>14 Tage Widerrufsrecht</IncludedItem>
                   </ul>
                 </div>
               </div>

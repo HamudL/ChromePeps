@@ -76,7 +76,10 @@ export function TrustBar() {
   }, []);
 
   return (
-    <section className="section-dark">
+    // border-t/white-5 setzt eine dezente Trennung zu einer vorgelagerten
+    // dark Section (z.B. "Warum ChromePeps?"), ohne aufzufallen wenn
+    // darüber eine light Section liegt.
+    <section className="section-dark border-t border-white/5">
       <div className="container py-6">
         <div
           ref={rootRef}

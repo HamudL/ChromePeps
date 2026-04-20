@@ -74,14 +74,15 @@ export default function QualitaetskontrollePage() {
                 Sonderrollen.
               </p>
               <div className="flex flex-wrap items-center gap-3 pt-2">
+                {/* Früher gab es hier einen zweiten CTA zur öffentlichen
+                    CoA-Sammlung. Die Sammlung ist nicht mehr öffentlich —
+                    CoAs werden automatisch mit jeder Bestellung per E-Mail
+                    versandt. Daher nur noch der Shop-CTA. */}
                 <Button asChild size="lg" className="gap-2 h-11">
-                  <Link href="/analysezertifikate">
-                    CoA-Sammlung ansehen
+                  <Link href="/products">
+                    Produkte entdecken
                     <ArrowRight className="h-4 w-4" />
                   </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="h-11">
-                  <Link href="/products">Produkte entdecken</Link>
                 </Button>
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 text-xs text-muted-foreground">

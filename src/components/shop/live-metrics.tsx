@@ -47,12 +47,18 @@ const DEFAULTS: Metric[] = [
 ];
 
 export function LiveMetrics({ metrics = DEFAULTS }: LiveMetricsProps) {
+  if (metrics.length === 0) return null;
   return (
     <section className="border-y bg-background">
       <div className="container py-14 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-4 max-w-5xl mx-auto">
+        {/* Flex-Layout statt fixes 3-col-Grid: bei 1 oder 2 Tiles sitzen
+            sie nicht mehr linksbündig in einer unsichtbaren dritten
+            Spalte, sondern werden immer zentriert dargestellt. */}
+        <div className="flex flex-col md:flex-row md:flex-wrap items-center justify-center gap-10 md:gap-16 mx-auto">
           {metrics.map((m, i) => (
-            <MetricTile key={m.label} metric={m} delay={i * 120} />
+            <div key={m.label} className="w-full md:w-auto md:min-w-[14rem] md:max-w-xs">
+              <MetricTile metric={m} delay={i * 120} />
+            </div>
           ))}
         </div>
       </div>

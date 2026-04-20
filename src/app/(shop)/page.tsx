@@ -61,16 +61,15 @@ async function getCategories() {
 
 /**
  * Zahlen für den LiveMetrics-Block: getestete Chargen (alle veröffentlichten
- * COAs), Ø Reinheit der letzten 12 Monate (nur COAs mit purity-Wert),
- * ausgelieferte echte Bestellungen (Testbestellungen ausgenommen). Wird
- * direkt als Props an <LiveMetrics> durchgereicht; Defaults aus der
- * Komponente werden so nie angezeigt.
+ * COAs) und Ø Reinheit der letzten 12 Monate (nur COAs mit purity-Wert).
+ * Die "Ausgelieferte Bestellungen"-Kachel aus dem ursprünglichen Design ist
+ * bewusst weggelassen — sie gehört inhaltlich nicht auf die Startseite.
  */
 async function getLiveMetrics() {
   const twelveMonthsAgo = new Date();
   twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
-  const [batchCount, avgPurity, deliveredCount] = await Promise.all([
+  const [batchCount, avgPurity] = await Promise.all([
     db.certificateOfAnalysis.count({ where: { isPublished: true } }),
     db.certificateOfAnalysis.aggregate({
       where: {
@@ -80,15 +79,11 @@ async function getLiveMetrics() {
       },
       _avg: { purity: true },
     }),
-    db.order.count({
-      where: { status: "DELIVERED", isTestOrder: false },
-    }),
   ]);
 
   return {
     batchCount,
     avgPurity: avgPurity._avg.purity ?? null,
-    deliveredCount,
   };
 }
 
@@ -128,13 +123,6 @@ export default async function HomePage() {
       decimals: 2,
       label: "Ø Reinheit · 12 Monate",
       sub: "HPLC · Janoshik Labs",
-    });
-  }
-  if (liveMetrics.deliveredCount > 0) {
-    liveMetricsTiles.push({
-      target: liveMetrics.deliveredCount,
-      label: "Ausgelieferte Bestellungen",
-      sub: "seit Launch",
     });
   }
 
@@ -177,9 +165,6 @@ export default async function HomePage() {
           </FadeUp>
         </div>
       </section>
-
-      {/* ── Trust Bar (dark) — interaktive Pills mit Evidence-Tooltips ── */}
-      <TrustBar />
 
       {/* ── Live Metrics (light) — echte Zahlen aus DB. Wenn noch keine
           COAs/Orders vorhanden sind, wird die Section ausgeblendet statt
@@ -239,6 +224,12 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Trust Bar (dark) — interaktive Pills mit Evidence-Tooltips.
+          Platziert direkt im Anschluss an "Warum ChromePeps?" (auch
+          dark), damit die Vertrauens-Signale thematisch zusammenbleiben
+          und der Light/Dark-Rhythmus nicht gebrochen wird. ── */}
+      <TrustBar />
 
       {/* ── Qualitätsprozess (light) ── */}
       <section className="container py-16 md:py-20">
