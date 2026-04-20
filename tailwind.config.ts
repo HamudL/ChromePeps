@@ -51,6 +51,14 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Ink-Palette für dunkle Akzent-Einschübe (Apotheke-Hero,
+        // Featured-Card, Terminal-Panels). Siehe :root in globals.css.
+        ink: {
+          DEFAULT: "hsl(var(--ink))",
+          foreground: "hsl(var(--ink-foreground))",
+          muted: "hsl(var(--ink-muted))",
+          border: "hsl(var(--ink-border))",
+        },
         chrome: {
           50: "#f8f9fc",
           100: "#eef1f6",
@@ -91,6 +99,10 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-geist-sans)"],
         mono: ["var(--font-geist-mono)"],
+        // Fraunces-Serif für Apotheke-Hero-Akzent („Rein. Verifiziert.")
+        // und Kategorie-Titel. Wird per next/font/google in layout.tsx
+        // geladen und als --font-fraunces exposed.
+        serif: ["var(--font-fraunces)", "Georgia", "serif"],
       },
     },
   },

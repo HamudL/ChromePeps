@@ -47,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     const categoryEntries: SitemapEntry[] = categories.map((category) => ({
-      url: `${BASE_URL}/products?category=${category.slug}`,
+      url: `${BASE_URL}/products/category/${category.slug}`,
       lastModified: category.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.7,

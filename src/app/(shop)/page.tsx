@@ -289,7 +289,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {categories.map((cat, i) => (
                 <FadeUp key={cat.id} delay={i * 0.08}>
-                  <Link href={`/products?category=${cat.slug}`}>
+                  <Link href={`/products/category/${cat.slug}`}>
                     <Card className="group overflow-hidden h-full hover:shadow-lg transition-all duration-300 cursor-pointer">
                       <div className="relative h-48 bg-muted overflow-hidden">
                         {cat.image ? (

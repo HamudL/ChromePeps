@@ -34,6 +34,15 @@
     --ring: 45 92% 41%;
 
     --radius: 0.5rem;
+
+    /* Ink palette — für dunkle Akzent-Sections (Apotheke-Hero, Featured
+       Product Card, Terminal-Panels). NICHT das .dark-Theme — die
+       App-weite Light/Dark-Umschaltung bleibt separat; die Ink-Tokens
+       sind nur für bewusst dunkle Einschübe in hellem Kontext. */
+    --ink: 20 14% 4%;
+    --ink-foreground: 40 10% 92%;
+    --ink-muted: 30 6% 55%;
+    --ink-border: 20 10% 18%;
   }
 
   .dark {
@@ -86,6 +95,27 @@
   .section-dark {
     background-color: hsl(20 14% 8%);
     color: hsl(40 10% 92%);
+  }
+
+  /* Tieferes Ink-Dark als .section-dark — für Apotheke-Hero und
+     Featured-Boxes, wo der Kontrast zur hellen Seite maximal sein soll. */
+  .section-ink {
+    background-color: hsl(var(--ink));
+    color: hsl(var(--ink-foreground));
+  }
+
+  /* Apotheke-Grid — feines 40px-Grid für Hero-/Media-Hintergründe,
+     typisches Lab-/Formular-Muster. */
+  .apo-grid {
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 40px, hsl(45 50% 50% / 0.04) 40px 41px),
+      repeating-linear-gradient(90deg, transparent 0 40px, hsl(45 50% 50% / 0.04) 40px 41px);
+  }
+  .apo-grid-light {
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 40px, hsl(var(--border)) 40px 40.5px),
+      repeating-linear-gradient(90deg, transparent 0 40px, hsl(var(--border)) 40px 40.5px);
+    opacity: 0.4;
   }
 
   .chrome-text {

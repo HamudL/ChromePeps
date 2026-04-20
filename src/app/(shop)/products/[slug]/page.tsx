@@ -15,7 +15,6 @@ import {
   Mail,
   Sparkles,
   ChevronRight,
-  Check,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
@@ -197,7 +196,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     { name: "Products", path: "/products" },
     {
       name: product.category.name,
-      path: `/products?category=${product.category.slug}`,
+      path: `/products/category/${product.category.slug}`,
     },
     { name: product.name, path: `/products/${product.slug}` },
   ]);
@@ -217,18 +216,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     specs.push({ icon: <Layers className="h-4 w-4" />, label: "Form", value: product.form });
   if (product.weight)
     specs.push({ icon: <Dna className="h-4 w-4" />, label: "Gewicht", value: product.weight });
-
-  // Quick-specs for the buy panel: the subset of fields that are
-  // useful to surface next to the CTA. Keeping this separate from
-  // `specs` means we can show up to 4 inline bullets in the hero
-  // without either (a) duplicating all 6 specs or (b) coupling the
-  // bullet order to the spec-card order.
-  const quickSpecs: { label: string; value: string }[] = [
-    product.purity && { label: "Reinheit", value: product.purity },
-    product.form && { label: "Form", value: product.form },
-    product.weight && { label: "Gewicht", value: product.weight },
-    product.storageTemp && { label: "Lagerung", value: product.storageTemp },
-  ].filter((x): x is { label: string; value: string } => Boolean(x));
 
   // Compute displayed price for the hero headline. For variant
   // products we show a range; for single-SKU products we show a
@@ -258,78 +245,103 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
-      {/* ── Hero: product card with ambient background ── */}
-      <section className="relative hero-ambient border-b border-border/60">
-        <div className="absolute inset-0 subtle-grid opacity-30" />
+      {/* ── PDP Hero (Apotheke) ──
+          Helle Sektion, 2-col: links Media-Box (weiß, feines Grid), rechts
+          Kategorie-Crumb · H1 · shortDesc · Specs-Grid (mono) · Varianten ·
+          Preis-Zeile · CTA · Research-Callout. Die existierenden Blöcke
+          darunter (Specs, CoA, Reviews, Related) bleiben unverändert. */}
+      <section className="relative border-b border-border bg-background">
         <div className="container relative py-8 md:py-12 lg:py-14">
-          {/* Breadcrumb */}
+          {/* Breadcrumb (mono, Apotheke) */}
           <nav
             aria-label="Breadcrumb"
-            className="mb-6 flex items-center gap-1 text-xs text-muted-foreground"
+            className="mb-7 flex flex-wrap items-center gap-1.5 font-mono text-[10.5px] tracking-[0.18em] uppercase text-muted-foreground"
           >
-            <Link href="/" className="hover:text-foreground transition-colors">
+            <Link
+              href="/"
+              className="hover:text-primary transition-colors"
+            >
               Home
             </Link>
             <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
             <Link
               href="/products"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Shop
             </Link>
             <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
             <Link
-              href={`/products?category=${product.category.slug}`}
-              className="hover:text-foreground transition-colors"
+              href={`/products/category/${product.category.slug}`}
+              className="hover:text-primary transition-colors"
             >
               {product.category.name}
             </Link>
             <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-            <span className="text-foreground font-medium truncate">
-              {product.name}
-            </span>
+            <span className="text-foreground truncate">{product.name}</span>
           </nav>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* ── Image Gallery (left) ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-start">
+            {/* ── Media (left) ── Helle, gerahmte Box mit Feinem Grid
+                im Hintergrund; die existierende ImageGallery sitzt darin
+                mittig. Sticky auf lg+. */}
             <FadeUp>
               <div className="lg:sticky lg:top-24">
-                <ImageGallery
-                  images={product.images.map((img) => ({
-                    url: img.url,
-                    alt: img.alt ?? product.name,
-                  }))}
-                  productName={product.name}
-                />
+                <div className="relative rounded-sm border border-border bg-card aspect-square overflow-hidden">
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 apo-grid-light pointer-events-none"
+                  />
+                  <div className="relative z-10 h-full w-full flex items-center justify-center p-6 md:p-8">
+                    <ImageGallery
+                      images={product.images.map((img) => ({
+                        url: img.url,
+                        alt: img.alt ?? product.name,
+                      }))}
+                      productName={product.name}
+                    />
+                  </div>
+                </div>
               </div>
             </FadeUp>
 
-            {/* ── Product Info + Buy Panel (right) ── */}
+            {/* ── Buy-Panel (right) ── */}
             <FadeUp delay={0.1}>
-              <div className="space-y-6">
-                {/* Category + Name + Rating */}
-                <div className="space-y-3">
-                  <Badge
-                    variant="outline"
-                    className="border-primary/30 bg-primary/5 px-3 py-1 text-xs"
+              <div className="space-y-7">
+                {/* Kategorie + Index-Crumb (gold, mono) */}
+                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-primary font-semibold">
+                  <Link
+                    href={`/products/category/${product.category.slug}`}
+                    className="hover:underline"
                   >
-                    <FlaskConical className="mr-1.5 h-3 w-3 text-primary" />
-                    <Link
-                      href={`/products?category=${product.category.slug}`}
-                      className="hover:underline"
-                    >
-                      {product.category.name}
-                    </Link>
-                  </Badge>
+                    {product.category.name}
+                  </Link>
+                  {product.form && (
+                    <>
+                      {" \u00B7 "}
+                      <span className="text-muted-foreground">
+                        {product.form}
+                      </span>
+                    </>
+                  )}
+                </p>
 
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+                {/* H1 + Kurzbeschreibung */}
+                <div className="space-y-3">
+                  <h1 className="text-[clamp(2.2rem,4vw,3.2rem)] font-semibold tracking-[-0.03em] leading-[1]">
                     {product.name}
                   </h1>
+
+                  {product.shortDesc && (
+                    <p className="max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+                      {product.shortDesc}
+                    </p>
+                  )}
 
                   {product.reviews.length > 0 && (
                     <div className="flex items-center gap-2 pt-1">
                       <StarRating rating={avgRating} />
-                      <span className="text-sm text-muted-foreground">
+                      <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground">
                         {avgRating.toFixed(1)} · {product.reviews.length}{" "}
                         {product.reviews.length === 1
                           ? "Bewertung"
@@ -337,58 +349,62 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                       </span>
                     </div>
                   )}
-
-                  {product.shortDesc && (
-                    <p className="text-base text-muted-foreground leading-relaxed">
-                      {product.shortDesc}
-                    </p>
-                  )}
                 </div>
 
-                {/* Elevated buy panel */}
-                <div className="rounded-2xl border bg-gradient-to-br from-card to-muted/30 p-5 md:p-6 shadow-sm">
-                  {/* Price row */}
-                  <div className="flex items-baseline gap-3 flex-wrap">
-                    <span className="text-3xl md:text-4xl font-bold tabular-nums tracking-tight">
-                      {priceDisplay}
-                    </span>
-                    {product.variants.length === 0 && hasSale && (
-                      <span className="text-lg text-muted-foreground line-through tabular-nums">
-                        {formatPrice(product.compareAtPriceInCents!)}
-                      </span>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      inkl. 19% MwSt.
-                    </span>
-                    {isOutOfStock && (
-                      <Badge variant="secondary" className="ml-auto">
-                        Ausverkauft
-                      </Badge>
-                    )}
-                  </div>
+                {/* Specs-Grid (2x3) — Monospace-Labels mit feinen Linien */}
+                <dl className="grid grid-cols-2 gap-px border border-border bg-border overflow-hidden rounded-sm">
+                  {latestCoa?.purity != null && (
+                    <PdpSpec
+                      k="Reinheit"
+                      v={`${latestCoa.purity.toFixed(2)}%`}
+                      gold
+                    />
+                  )}
+                  {latestCoa && (
+                    <PdpSpec
+                      k="Methode"
+                      v={`${latestCoa.testMethod} · UV 220 nm`}
+                    />
+                  )}
+                  {latestCoa && (
+                    <PdpSpec
+                      k="Labor"
+                      v={latestCoa.laboratory}
+                    />
+                  )}
+                  {latestCoa && (
+                    <PdpSpec
+                      k="Lot"
+                      v={latestCoa.batchNumber}
+                    />
+                  )}
+                  {latestCoa && (
+                    <PdpSpec
+                      k="Test Datum"
+                      v={new Date(latestCoa.testDate).toLocaleDateString(
+                        "de-DE",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )}
+                    />
+                  )}
+                  <PdpSpec
+                    k="Auf Lager"
+                    v={
+                      isOutOfStock
+                        ? "Ausverkauft"
+                        : `${product.stock} Stk.`
+                    }
+                  />
+                </dl>
 
-                  {/* Variant selector + CTA */}
-                  <div className="mt-5 space-y-4">
-                    {product.variants.length > 0 && (
-                      <VariantSelector
-                        variants={product.variants.map((v) => ({
-                          id: v.id,
-                          name: v.name,
-                          priceInCents: v.priceInCents,
-                          stock: v.stock,
-                        }))}
-                      />
-                    )}
-
-                    <AddToCartButton
-                      product={{
-                        id: product.id,
-                        name: product.name,
-                        slug: product.slug,
-                        priceInCents: product.priceInCents,
-                        stock: product.stock,
-                        image: product.images[0]?.url ?? null,
-                      }}
+                {/* Varianten + Menge + CTA */}
+                <div className="space-y-5">
+                  {product.variants.length > 0 && (
+                    <VariantSelector
                       variants={product.variants.map((v) => ({
                         id: v.id,
                         name: v.name,
@@ -396,42 +412,73 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                         stock: v.stock,
                       }))}
                     />
+                  )}
+
+                  {/* Price-Row mit Borders oben+unten, Apotheke-Stil */}
+                  <div className="flex items-baseline justify-between gap-4 py-5 border-y border-border">
+                    <div className="flex items-baseline gap-3 flex-wrap">
+                      <span className="text-[32px] font-bold tracking-[-0.02em] tabular-nums leading-none">
+                        {priceDisplay}
+                      </span>
+                      {product.variants.length === 0 && hasSale && (
+                        <span className="text-base text-muted-foreground line-through tabular-nums">
+                          {formatPrice(product.compareAtPriceInCents!)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-mono text-[10px] tracking-[0.1em] uppercase text-muted-foreground text-right max-w-[180px] leading-relaxed">
+                      Inkl. 19 % MwSt.
+                      <br />
+                      Gratis Versand ab 100 €
+                    </p>
                   </div>
 
-                  {/* Quick-spec bullets inline in the buy panel.
-                      Surfaces the most purchase-relevant facts
-                      (Reinheit / Form / Gewicht / Lagerung) right
-                      next to the price so the right column has a
-                      proper center of gravity instead of ending at
-                      the CTA. Shown only when at least two specs
-                      are present so single-spec products don't get
-                      a lonely bullet. */}
-                  {quickSpecs.length >= 2 && (
-                    <>
-                      <div className="my-5 h-px bg-border" />
-                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5">
-                        {quickSpecs.map((spec) => (
-                          <li
-                            key={spec.label}
-                            className="flex items-start gap-2 text-sm"
-                          >
-                            <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                            <span className="min-w-0">
-                              <span className="text-muted-foreground">
-                                {spec.label}:{" "}
-                              </span>
-                              <span className="font-semibold break-words">
-                                {spec.value}
-                              </span>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
+                  <AddToCartButton
+                    product={{
+                      id: product.id,
+                      name: product.name,
+                      slug: product.slug,
+                      priceInCents: product.priceInCents,
+                      stock: product.stock,
+                      image: product.images[0]?.url ?? null,
+                    }}
+                    variants={product.variants.map((v) => ({
+                      id: v.id,
+                      name: v.name,
+                      priceInCents: v.priceInCents,
+                      stock: v.stock,
+                    }))}
+                  />
                 </div>
 
-                {/* Trust-indicator row (matches products page hero) */}
+                {/* Research-Only Callout (muted BG, gold left-border) */}
+                <div className="border-l-[3px] border-primary bg-muted/50 p-4 text-[13px] leading-relaxed text-muted-foreground">
+                  <strong className="text-foreground font-semibold">
+                    Nur für Forschungszwecke.
+                  </strong>{" "}
+                  Nicht zum menschlichen Verzehr, Arzneimittel- oder
+                  tierärztlichen Gebrauch. Verkauf an verifizierte
+                  Forschungseinrichtungen und qualifizierte Fachkräfte.
+                </div>
+
+                {/* CoA reminder callout — bleibt aus vorheriger Iteration */}
+                <div className="flex gap-3 rounded-sm border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">
+                      Analysezertifikat inklusive
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                      Das passende CoA erhalten Sie automatisch per E-Mail
+                      zusammen mit Ihrer Bestellung — unabhängig durch
+                      Janoshik verifiziert.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Trust-indicator row */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <ShieldCheck className="h-3.5 w-3.5 text-primary" />
@@ -446,27 +493,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   <div className="flex items-center gap-1.5">
                     <Mail className="h-3.5 w-3.5 text-primary" />
                     <span>CoA per E-Mail</span>
-                  </div>
-                </div>
-
-                {/* CoA reminder callout. Doubles as a content block
-                    that fills the right column below the trust row,
-                    and as a gentle reinforcement of the new
-                    "CoAs delivered per email" model so customers
-                    know where the certificate will arrive. */}
-                <div className="flex gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Mail className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold">
-                      Analysezertifikat inklusive
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                      Das passende CoA erhalten Sie automatisch per E-Mail
-                      zusammen mit Ihrer Bestellung — unabhängig durch
-                      Janoshik verifiziert.
-                    </p>
                   </div>
                 </div>
               </div>
@@ -732,6 +758,37 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </p>
         </div>
       </section>
+    </div>
+  );
+}
+
+/**
+ * Spec-Cell im PDP-Hero-Specs-Grid (Apotheke-Stil). Die Zellen sitzen
+ * in einem `gap-px` Grid mit `bg-border` Hintergrund — jede Zelle hat
+ * also eine eigene Card-Fläche, durch den Border-Hintergrund entstehen
+ * 1px-Fugen zwischen den Zellen.
+ */
+function PdpSpec({
+  k,
+  v,
+  gold,
+}: {
+  k: string;
+  v: string;
+  gold?: boolean;
+}) {
+  return (
+    <div className="bg-card px-4 py-3.5">
+      <p className="font-mono text-[9.5px] tracking-[0.15em] uppercase text-muted-foreground">
+        {k}
+      </p>
+      <p
+        className={`mt-1 font-mono text-sm font-medium ${
+          gold ? "text-primary font-semibold" : "text-foreground"
+        }`}
+      >
+        {v}
+      </p>
     </div>
   );
 }

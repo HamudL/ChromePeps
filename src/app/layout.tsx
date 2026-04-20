@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Fraunces } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/json-ld";
@@ -15,6 +16,17 @@ const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff2",
   variable: "--font-geist-mono",
   weight: "100 900",
+});
+
+// Fraunces — serif display-face für den Apotheke-Shop-Hero-Akzent
+// („Rein. Verifiziert.") und Kategorie-Titel. Nur 400/500 italic, keine
+// weiteren Weights — das hält den Font-Payload klein.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -100,7 +112,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} font-sans antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

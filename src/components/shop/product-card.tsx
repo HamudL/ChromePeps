@@ -1,29 +1,49 @@
 "use client";
 
 /**
- * Idea 03 — Product Card with Spec Drawer
+ * ProductCard — Apotheke/Rx (Prescription Label) Stil
  *
- * Replaces the original hover-reveal of two floating circle buttons (wishlist
- * + quick-add) with a single elegant "spec drawer" that slides up on hover and
- * shows what actually matters for a research-peptide purchase: purity, lot,
- * stock. The quick-add button lives inside the drawer as a full-width action.
+ * Weiße Karte mit perforierten Dashed-Linien oben/unten (wie auf einem
+ * Medikamenten-Etikett). Oben: Kategorie (gold) + Katalog-Nummer
+ * "NNN / Total". Mitte: Produktbild oder Vial-Fallback mit Lot-Label-
+ * Overlay. Name (h3). Spec-Rows (Menge, Reinheit, Lot) — Reinheit + Lot
+ * aus der neuesten COA, sonst ausgeblendet. Preis + "Ansehen →" CTA
+ * (reveal on hover).
  *
- * Purity + lot are pulled from the newest published COA (see
- * productCardSelect.certificates) so the card always reflects the most
- * recently tested batch. Falls back gracefully when no COA exists.
+ * Props-Signatur unverändert zur vorigen Version, damit Call-Sites
+ * (Homepage Bestsellers, Related Products, Wishlist, Katalog) ohne
+ * Anpassung weiterlaufen. Cart-Store-Wiring + WishlistButton bleiben
+ * erhalten; Quick-Add erscheint auf Hover als schmaler Button im CTA-
+ * Bereich (nur bei Produkten ohne Varianten — Varianten erzwingen den
+ * Weg über die Detailseite).
  */
 
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
 import { WishlistButton } from "@/components/shop/wishlist-button";
 import { formatPrice, cn } from "@/lib/utils";
 import type { ProductCardData } from "@/types";
 
-export function ProductCard({ product }: { product: ProductCardData }) {
+interface ProductCardProps {
+  product: ProductCardData;
+  /**
+   * Optionale Position der Karte im Grid (1-basiert). Wird als
+   * dezenter Index in der Kopfzeile angezeigt ("017 / 247"). Bei
+   * undefined wird der Index ausgeblendet — in Fällen wie
+   * Wishlist/Related-Products macht eine "Katalog-Position" keinen
+   * Sinn.
+   */
+  index?: number;
+  /**
+   * Gesamt-Anzahl im aktuellen Listing (für den Index-Nenner).
+   */
+  total?: number;
+}
+
+export function ProductCard({ product, index, total }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
 
@@ -42,7 +62,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     ? Math.max(...variantPrices)
     : product.priceInCents;
 
-  // Neueste COA (kann fehlen, wenn noch keine eingepflegt ist)
+  // Neueste veröffentlichte COA — wir lesen sie aus `certificates[0]`,
+  // das `productCardSelect` bereits einzeln per `orderBy testDate desc,
+  // take 1` zieht.
   const latestCoa = product.certificates[0];
   const coaPurity = latestCoa?.purity ?? null;
   const coaLot = latestCoa?.batchNumber ?? null;
@@ -66,147 +88,229 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     toast.success(`${product.name} zum Warenkorb hinzugefügt`);
   };
 
+  const indexLabel =
+    typeof index === "number" && typeof total === "number"
+      ? `${String(index).padStart(3, "0")} / ${total}`
+      : null;
+
+  const priceDisplay =
+    hasVariants && minPrice !== maxPrice
+      ? `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`
+      : formatPrice(minPrice);
+
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group block animate-fade-in rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+      className={cn(
+        "group relative flex flex-col",
+        "bg-card border border-border rounded-sm",
+        "px-5 pt-6 pb-5",
+        "transition-all duration-300 ease-out",
+        "hover:border-foreground hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-24px_hsl(20_14%_10%/0.2)]",
+        "animate-fade-in",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      )}
     >
-      {/* Image container */}
+      {/* Perforierte Linien — typische "Prescription Label"-Optik.
+          Top liegt bei ~10px, Bottom bei ~10px — genug Abstand zum
+          Padding, damit sie als dekorative Fuge lesen, nicht als Border. */}
       <div
-        className={cn(
-          "relative aspect-[4/5] overflow-hidden rounded-xl",
-          "bg-gradient-to-b from-muted/40 to-muted",
-          "border border-border/30",
-          "transition-all duration-500 ease-out",
-          "group-hover:border-primary/30 group-hover:shadow-lg group-hover:shadow-primary/5"
-        )}
-      >
-        {image ? (
-          <Image
-            src={image.url}
-            alt={image.alt ?? product.name}
-            fill
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs font-medium">
-            Kein Bild
-          </div>
-        )}
+        aria-hidden
+        className="absolute left-0 right-0 top-2.5 h-px"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, hsl(var(--border)) 0 4px, transparent 4px 8px)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="absolute left-0 right-0 bottom-2.5 h-px"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, hsl(var(--border)) 0 4px, transparent 4px 8px)",
+        }}
+      />
 
-        {/* mg-Size chip (top-right) — always visible */}
-        {product.weight && (
-          <div className="absolute top-3 right-3 z-10">
-            <span className="inline-flex items-center rounded-full border border-border/40 bg-background/90 px-2.5 py-1 text-[11px] font-mono font-medium text-foreground backdrop-blur-sm shadow-sm">
-              {product.weight}
-            </span>
-          </div>
-        )}
-
-        {/* Wishlist heart (top-left, reveal on hover) */}
-        <div
-          className="absolute top-3 left-3 z-10 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
-          onClick={(e) => e.preventDefault()}
-        >
-          <WishlistButton
-            productId={product.id}
-            className="h-9 w-9 bg-background/90 backdrop-blur-sm hover:bg-background shadow-md"
-          />
-        </div>
-
-        {/* Subtle bottom gradient on hover */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background/70 via-background/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        />
-
-        {/* Spec drawer — bottom, revealed on hover */}
-        {!isOutOfStock && (
+      {/* Head: Kategorie + Index + Wishlist */}
+      <div className="relative mb-4 flex items-center justify-between font-mono text-[9.5px] tracking-[0.15em] uppercase text-muted-foreground">
+        <span className="text-primary font-semibold">
+          {product.category.name}
+        </span>
+        <div className="flex items-center gap-2">
+          {indexLabel && <span>{indexLabel}</span>}
           <div
-            className={cn(
-              "absolute inset-x-3 bottom-3 z-20 rounded-lg border border-border/60",
-              "bg-background/95 backdrop-blur-md shadow-lg",
-              "p-3 space-y-2",
-              "opacity-0 translate-y-2 pointer-events-none",
-              "transition-all duration-300 ease-out",
-              "group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto"
-            )}
+            className="opacity-70 transition-opacity group-hover:opacity-100"
+            onClick={(e) => e.preventDefault()}
           >
-            {/* Specs row */}
-            <div className="space-y-1.5">
-              {coaPurity != null && (
-                <div className="flex items-baseline justify-between font-mono text-[10.5px]">
-                  <span className="text-muted-foreground tracking-wide">
-                    Reinheit
-                  </span>
-                  <span className="text-primary font-semibold">
-                    {coaPurity.toFixed(2)}%
-                  </span>
-                </div>
-              )}
-              {coaLot && (
-                <div className="flex items-baseline justify-between font-mono text-[10.5px]">
-                  <span className="text-muted-foreground tracking-wide">
-                    Lot
-                  </span>
-                  <span className="text-foreground">{coaLot}</span>
-                </div>
-              )}
-              <div className="flex items-baseline justify-between font-mono text-[10.5px]">
-                <span className="text-muted-foreground tracking-wide">
-                  Auf Lager
-                </span>
-                <span className="text-foreground">{product.stock} Stk.</span>
-              </div>
-            </div>
+            <WishlistButton
+              productId={product.id}
+              className="h-7 w-7 bg-transparent hover:bg-muted"
+            />
+          </div>
+        </div>
+      </div>
 
-            {/* Quick add (nur bei Produkten ohne Varianten — Varianten
-                müssen auf der Detailseite gewählt werden) */}
-            {!hasVariants && (
-              <Button
-                size="sm"
-                className="w-full h-8 text-xs gap-1.5"
-                onClick={handleAddToCart}
-                aria-label={`${product.name} in den Warenkorb`}
-              >
-                <ShoppingCart className="h-3.5 w-3.5" />
-                In den Warenkorb
-              </Button>
+      {/* Media — Produktbild oder Vial-Fallback mit Lot-Label */}
+      <div className="relative mx-auto mb-4 h-[140px] w-full max-w-[180px]">
+        {image ? (
+          <div className="relative h-full w-full rounded-[6px_6px_3px_3px] overflow-hidden bg-gradient-to-b from-muted/30 to-muted">
+            <Image
+              src={image.url}
+              alt={image.alt ?? product.name}
+              fill
+              className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+              sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
+            />
+            {/* Label-Band mit Name + Menge */}
+            {(coaLot || product.weight) && (
+              <div className="absolute inset-x-2 bottom-3 rounded-sm bg-background/95 backdrop-blur-sm border-y border-[hsl(45_30%_70%)] py-1.5 px-2 text-center">
+                {coaLot && (
+                  <p className="font-mono text-[9px] font-semibold tracking-wide text-foreground leading-tight truncate">
+                    {coaLot}
+                  </p>
+                )}
+                {product.weight && (
+                  <p className="font-mono text-[8px] text-primary leading-tight mt-0.5">
+                    {product.weight}
+                  </p>
+                )}
+              </div>
             )}
+          </div>
+        ) : (
+          // Vial-Fallback als CSS-Gradient — nur wenn kein Produktbild da
+          // ist. Keeps the "catalog card" coherent statt "Kein Bild"-Text.
+          <VialFallback name={product.name} weight={product.weight} lot={coaLot} />
+        )}
+
+        {/* "Ausverkauft"-Overlay */}
+        {isOutOfStock && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/85 backdrop-blur-[2px] rounded-[6px_6px_3px_3px]">
+            <span className="font-mono text-[10px] tracking-[0.2em] uppercase font-semibold text-destructive">
+              Ausverkauft
+            </span>
           </div>
         )}
       </div>
 
-      {/* Content (outside the image card, editorial style) */}
-      <div className="mt-4 space-y-1.5 px-0.5">
-        {/* Category — uppercase tracking */}
-        <p className="text-xs uppercase tracking-[0.15em] font-semibold text-muted-foreground">
-          {product.category.name}
-        </p>
+      {/* Name */}
+      <h3 className="relative text-lg font-semibold tracking-tight leading-tight line-clamp-1 group-hover:text-primary transition-colors duration-300">
+        {product.name}
+      </h3>
 
-        {/* Product name */}
-        <h3 className="text-base font-semibold tracking-tight line-clamp-1 group-hover:text-primary transition-colors duration-300">
-          {product.name}
-        </h3>
+      {/* Spec-Rows — nur gerenderte Zeilen, die auch Daten haben */}
+      <dl className="relative mt-2 space-y-1">
+        {product.weight && (
+          <SpecRow k="Menge" v={product.weight} />
+        )}
+        {coaPurity != null && (
+          <SpecRow k="Reinheit" v={`${coaPurity.toFixed(2)}%`} gold />
+        )}
+        {coaLot && <SpecRow k="Lot" v={coaLot} />}
+      </dl>
 
-        {/* Price row */}
-        <div className="flex items-baseline gap-2 pt-1">
-          <span className="text-[17px] font-bold tabular-nums">
-            {hasVariants && minPrice !== maxPrice
-              ? `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`
-              : formatPrice(minPrice)}
+      {/* Price + CTA */}
+      <div className="relative mt-auto pt-3.5 border-t border-border flex items-baseline justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className="text-xl font-bold tracking-tight tabular-nums leading-none">
+            {priceDisplay}
           </span>
           {!hasVariants && hasDiscount && (
             <span className="text-xs text-muted-foreground line-through tabular-nums">
               {formatPrice(product.compareAtPriceInCents!)}
             </span>
           )}
-          <span className="ml-auto text-[10px] text-muted-foreground/70">
-            inkl. MwSt.
-          </span>
         </div>
+
+        {/* Quick-Add nur bei Variant-freien, verfügbaren Produkten.
+            Slides in on hover, replaces the text-CTA to keep row layout
+            stable. */}
+        {!isOutOfStock && !hasVariants ? (
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            aria-label={`${product.name} in den Warenkorb`}
+            className={cn(
+              "inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary",
+              "opacity-0 translate-x-2 transition-all duration-250",
+              "group-hover:opacity-100 group-hover:translate-x-0",
+              "hover:text-primary/80"
+            )}
+          >
+            <ShoppingCart className="h-3 w-3" />
+            Add
+          </button>
+        ) : (
+          <span
+            className={cn(
+              "font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary",
+              "opacity-0 translate-x-2 transition-all duration-250",
+              "group-hover:opacity-100 group-hover:translate-x-0"
+            )}
+          >
+            Ansehen →
+          </span>
+        )}
       </div>
     </Link>
+  );
+}
+
+function SpecRow({ k, v, gold }: { k: string; v: string; gold?: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between font-mono text-[10.5px]">
+      <span className="text-muted-foreground">{k}</span>
+      <span
+        className={cn(
+          "truncate max-w-[60%] text-right",
+          gold ? "text-primary font-semibold" : "text-foreground"
+        )}
+      >
+        {v}
+      </span>
+    </div>
+  );
+}
+
+function VialFallback({
+  name,
+  weight,
+  lot,
+}: {
+  name: string;
+  weight: string | null;
+  lot: string | null;
+}) {
+  // CSS-Gradient-Vial als ruhiger Fallback. Das echte Produktbild hat
+  // Vorrang (Image-Branch oben) — dieser Branch greift nur wenn im
+  // Katalog noch kein Bild hinterlegt ist.
+  return (
+    <div
+      className="relative mx-auto h-full w-16 rounded-[6px_6px_3px_3px] transition-transform duration-500 ease-out group-hover:-rotate-3 group-hover:-translate-y-0.5"
+      style={{
+        background:
+          "linear-gradient(to right, hsl(45 40% 50% / 0.25) 0%, hsl(45 78% 78%) 30%, hsl(45 88% 90%) 50%, hsl(45 78% 78%) 70%, hsl(45 40% 50% / 0.25) 100%)",
+        boxShadow:
+          "inset 0 0 16px hsl(45 60% 40% / 0.2), 0 6px 18px hsl(45 70% 40% / 0.12)",
+      }}
+      aria-hidden
+    >
+      {/* Gummikappe */}
+      <span
+        className="absolute -top-2 left-1/2 -translate-x-1/2 h-3 w-6 rounded-sm"
+        style={{ background: "hsl(20 15% 20%)" }}
+      />
+      {/* Label */}
+      <div className="absolute inset-x-0 top-[36%] bottom-[18%] bg-background/95 border-y border-[hsl(45_30%_70%)] px-1.5 flex flex-col justify-center">
+        <p className="font-mono text-[7px] font-semibold text-center text-foreground leading-tight truncate">
+          {lot ?? name}
+        </p>
+        {weight && (
+          <p className="font-mono text-[6px] text-primary text-center leading-tight mt-0.5">
+            {weight}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

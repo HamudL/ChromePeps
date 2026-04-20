@@ -1,26 +1,20 @@
 import Link from "next/link";
-import {
-  ArrowLeft,
-  ArrowRight,
-  FlaskConical,
-  PackageSearch,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, PackageSearch } from "lucide-react";
 import { db } from "@/lib/db";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { ProductCard } from "@/components/shop/product-card";
-import { SearchBar } from "@/components/shop/search-bar";
-import { CategoryPills, SortSelect } from "@/components/shop/product-filters";
+import { ApothekeShopHero } from "@/components/shop/apotheke-shop-hero";
+import { ShopFilterBar } from "@/components/shop/shop-filter-bar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   productCardSelect,
   getBestsellerProductIds,
 } from "@/lib/products/card";
+import { getFeaturedProduct } from "@/lib/products/featured";
+import { getShopStats } from "@/lib/shop/stats";
 import type { ProductCardData } from "@/types";
 import type { Prisma } from "@prisma/client";
 import type { Metadata } from "next";
-import { PeptideNetwork } from "@/components/shop/peptide-network";
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -28,6 +22,8 @@ interface ProductsPageProps {
     category?: string;
     sort?: string;
     page?: string;
+    inStock?: string;
+    minPurity?: string;
   }>;
 }
 
@@ -53,7 +49,9 @@ export async function generateMetadata({
       description =
         category.description ??
         `Entdecken Sie unsere Auswahl an ${category.name} für wissenschaftliche Forschung.`;
-      canonical = `/products?category=${categorySlug}`;
+      // Kanonisch ist die neue Category-Landing-Route; die
+       // Query-Variante bleibt als funktionaler Alias erhalten.
+       canonical = `/products/category/${categorySlug}`;
     }
   } else if (search) {
     title = `Suche: ${search}`;
@@ -91,13 +89,24 @@ async function getCategories() {
   });
 }
 
-async function getProducts(params: {
+interface GetProductsParams {
   search?: string;
   categorySlug?: string;
   sort?: string;
   page: number;
-}) {
-  const { search, categorySlug, sort = "newest", page } = params;
+  inStock: boolean;
+  minPurity: number | null;
+}
+
+async function getProducts(params: GetProductsParams) {
+  const {
+    search,
+    categorySlug,
+    sort = "newest",
+    page,
+    inStock,
+    minPurity,
+  } = params;
   const pageSize = ITEMS_PER_PAGE;
 
   const where: Prisma.ProductWhereInput = {
@@ -116,6 +125,24 @@ async function getProducts(params: {
 
   if (categorySlug) {
     where.category = { slug: categorySlug };
+  }
+
+  if (inStock) {
+    where.stock = { gt: 0 };
+  }
+
+  if (minPurity != null) {
+    // "Ab X% Reinheit" — matcht Produkte mit mindestens einer
+    // veröffentlichten COA >= minPurity. Semantik: "es gibt (mindestens)
+    // eine Charge, die den Schwellenwert erreicht". Das reicht für den
+    // Kunden-Filter; wer die aktuelle Charge prüfen will, öffnet die
+    // Produktdetailseite.
+    where.certificates = {
+      some: {
+        isPublished: true,
+        purity: { gte: minPurity },
+      },
+    };
   }
 
   const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
@@ -164,11 +191,19 @@ function buildPageUrl(
   page: number
 ) {
   const params = new URLSearchParams();
-  if (currentParams.search) params.set("search", currentParams.search);
-  if (currentParams.category) params.set("category", currentParams.category);
-  if (currentParams.sort) params.set("sort", currentParams.sort);
+  for (const [k, v] of Object.entries(currentParams)) {
+    if (v != null && v !== "") params.set(k, v);
+  }
   params.set("page", String(page));
   return `/products?${params.toString()}`;
+}
+
+function formatStatsDate(): string {
+  return new Date().toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
@@ -177,127 +212,136 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const category = resolvedParams.category ?? undefined;
   const sort = resolvedParams.sort ?? "newest";
   const page = Math.max(1, parseInt(resolvedParams.page ?? "1", 10) || 1);
+  const inStock = resolvedParams.inStock === "true";
+  const minPurityRaw = resolvedParams.minPurity
+    ? Number.parseFloat(resolvedParams.minPurity)
+    : NaN;
+  const minPurity = Number.isFinite(minPurityRaw) ? minPurityRaw : null;
 
-  const [{ products, total, totalPages }, categories] = await Promise.all([
-    getProducts({ search, categorySlug: category, sort, page }),
-    getCategories(),
-  ]);
+  const [{ products, total, totalPages }, categories, stats, featured] =
+    await Promise.all([
+      getProducts({
+        search,
+        categorySlug: category,
+        sort,
+        page,
+        inStock,
+        minPurity,
+      }),
+      getCategories(),
+      getShopStats(),
+      // Featured nur auf der Haupt-Listing-Seite (ohne Kategorie-Filter
+      // und ohne Suche) — sonst wäre "ein Bestseller" als Eyecatcher
+      // neben einer Suche/Filterung semantisch falsch.
+      !category && !search ? getFeaturedProduct() : Promise.resolve(null),
+    ]);
 
-  const hasActiveFilters = !!(search || category || sort !== "newest");
+  const hasActiveFilters = !!(
+    search ||
+    category ||
+    sort !== "newest" ||
+    inStock ||
+    minPurity != null
+  );
 
   const currentCategoryName = category
     ? categories.find((c) => c.slug === category)?.name
     : undefined;
 
   const pageTitle = search
-    ? `Suchergebnisse`
+    ? "Suchergebnisse"
     : currentCategoryName ?? "Alle Produkte";
 
-  const heroSubtitle = search
-    ? `${total} ${total === 1 ? "Treffer" : "Treffer"} für „${search}"`
-    : `${total} hochreine Forschungspeptide — jede Charge unabhängig durch Janoshik drittlabor-verifiziert.`;
+  const heroStats: { value: string; label: string; suffix?: string }[] = [];
+  if (stats.batchCount > 0) {
+    heroStats.push({
+      value: stats.batchCount.toLocaleString("de-DE"),
+      label: "Chargen getestet",
+    });
+  }
+  if (stats.avgPurity12m != null) {
+    heroStats.push({
+      value: stats.avgPurity12m.toFixed(2).replace(".", ","),
+      suffix: "%",
+      label: "\u00D8 Reinheit",
+    });
+  }
+
+  const year = new Date().getFullYear();
+  const heroTitle = search ? (
+    <>
+      Suche. <em className="font-serif italic font-normal text-primary">Gefiltert.</em>{" "}
+      Versand aus Berlin.
+    </>
+  ) : (
+    <>
+      Rein. <em className="font-serif italic font-normal text-primary">Verifiziert.</em>{" "}
+      Versand aus Berlin.
+    </>
+  );
+
+  const heroSubline = search
+    ? `${total} ${total === 1 ? "Treffer" : "Treffer"} für „${search}".`
+    : "Jede Charge HPLC‑geprüft bei Janoshik Labs. CoA‑PDF und Lot‑Nummer zu jeder Bestellung per E‑Mail.";
 
   return (
     <div className="flex flex-col">
-      {/* ── Hero ── */}
-      <section className="relative hero-ambient border-b border-border/60 overflow-hidden">
-        <div className="absolute inset-0 subtle-grid opacity-30" />
-        <PeptideNetwork />
-        {/* Vignette keeps the headline readable over the particles */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden md:block"
-          style={{
-            background:
-              "radial-gradient(720px 360px at 30% 50%, hsl(var(--background) / 0.8), transparent 70%)",
-          }}
-        />
-        <div className="container relative py-16 md:py-20 lg:py-24">
-          <div className="max-w-3xl space-y-5">
-            <Badge
-              variant="outline"
-              className="border-primary/30 bg-primary/5 px-3 py-1 text-xs"
-            >
-              <FlaskConical className="mr-1.5 h-3 w-3 text-primary" />
-              Forschungskatalog
-            </Badge>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-              {pageTitle}
-            </h1>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
-              {heroSubtitle}
-            </p>
+      <ApothekeShopHero
+        crumb={["ChromePeps", "Research Peptides", `Katalog ${year}`]}
+        title={heroTitle}
+        subline={heroSubline}
+        stats={heroStats}
+        featured={featured}
+      />
 
-            {/* Trust indicators inline */}
-            <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                <span>Janoshik HPLC-verifiziert</span>
-              </div>
-              <span className="text-muted-foreground/40">·</span>
-              <div className="flex items-center gap-1.5">
-                <span>Versand innerhalb 24h</span>
-              </div>
-              <span className="text-muted-foreground/40">·</span>
-              <div className="flex items-center gap-1.5">
-                <span>Gratis ab 100&nbsp;€</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ShopFilterBar
+        categories={categories}
+        currentCategory={category}
+        totalCount={categories.reduce((sum, c) => sum + c._count.products, 0)}
+        basePath="/products"
+      />
 
-      {/* ── Sticky Filter Bar ── */}
-      <div className="sticky top-16 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
-        <div className="container py-3.5">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            {/* Category pills — scrollable on mobile */}
-            <div className="flex-1 min-w-0 -mx-4 px-4 md:mx-0 md:px-0">
-              <CategoryPills
-                categories={categories}
-                currentCategory={category}
-              />
-            </div>
-
-            {/* Search + Sort */}
-            <div className="flex items-center gap-3 shrink-0">
-              <SearchBar />
-              <SortSelect />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Product Grid ── */}
       <section className="container py-10 md:py-14">
         {products.length > 0 ? (
           <>
-            {/* Result count (editorial) */}
-            <div className="mb-8 flex items-baseline justify-between">
-              <p className="text-xs uppercase tracking-[0.15em] font-semibold text-muted-foreground">
-                {total} {total === 1 ? "Produkt" : "Produkte"}
-                {hasActiveFilters && " · gefiltert"}
-              </p>
-              {hasActiveFilters && (
-                <Link
-                  href="/products"
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-4 decoration-dotted"
-                >
-                  Filter zurücksetzen
-                </Link>
-              )}
+            {/* Meta-Row: Titel + Gesamt-Count */}
+            <div className="mb-8 flex items-baseline justify-between gap-6 border-b border-border pb-5">
+              <h2 className="font-serif text-[28px] md:text-[32px] font-medium tracking-[-0.02em] leading-none">
+                {pageTitle}
+              </h2>
+              <div className="flex items-center gap-4">
+                <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground">
+                  {total} {total === 1 ? "Produkt" : "Produkte"}
+                  {" \u00B7 Stand "}
+                  {formatStatsDate()}
+                </p>
+                {hasActiveFilters && (
+                  <Link
+                    href="/products"
+                    className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground hover:text-primary underline underline-offset-4 decoration-dotted"
+                  >
+                    Reset
+                  </Link>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 md:gap-x-8 md:gap-y-16">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+            {/* Rx-Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {products.map((product, idx) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  index={(page - 1) * ITEMS_PER_PAGE + idx + 1}
+                  total={total}
+                />
               ))}
             </div>
 
-            {/* Editorial Pagination */}
+            {/* Pagination */}
             {totalPages > 1 && (
               <nav
-                className="mt-16 flex items-center justify-center gap-6 border-t border-border/60 pt-10"
+                className="mt-14 flex items-center justify-center gap-6 border-t border-border pt-8"
                 aria-label="Pagination"
               >
                 {page > 1 ? (
@@ -308,7 +352,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                     className="gap-2 text-muted-foreground hover:text-foreground"
                   >
                     <Link
-                      href={buildPageUrl({ search, category, sort }, page - 1)}
+                      href={buildPageUrl(
+                        {
+                          search,
+                          category,
+                          sort: sort === "newest" ? undefined : sort,
+                          inStock: inStock ? "true" : undefined,
+                          minPurity: minPurity != null ? String(minPurity) : undefined,
+                        },
+                        page - 1
+                      )}
                     >
                       <ArrowLeft className="h-3.5 w-3.5" />
                       Zurück
@@ -326,7 +379,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   </Button>
                 )}
 
-                <span className="text-xs uppercase tracking-[0.15em] font-semibold text-muted-foreground tabular-nums">
+                <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground tabular-nums">
                   Seite {page}
                   <span className="mx-2 text-muted-foreground/40">/</span>
                   {totalPages}
@@ -340,7 +393,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                     className="gap-2 text-muted-foreground hover:text-foreground"
                   >
                     <Link
-                      href={buildPageUrl({ search, category, sort }, page + 1)}
+                      href={buildPageUrl(
+                        {
+                          search,
+                          category,
+                          sort: sort === "newest" ? undefined : sort,
+                          inStock: inStock ? "true" : undefined,
+                          minPurity: minPurity != null ? String(minPurity) : undefined,
+                        },
+                        page + 1
+                      )}
                     >
                       Weiter
                       <ArrowRight className="h-3.5 w-3.5" />
