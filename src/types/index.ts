@@ -42,6 +42,12 @@ export type ProductCardData = Pick<
   category: Pick<Category, "name" | "slug">;
   variants: Pick<ProductVariant, "priceInCents">[];
   /**
+   * Neueste veröffentlichte Charge (COA). Wird vom Spec-Drawer der
+   * ProductCard angezeigt (Reinheit als Float + Lot). Leeres Array wenn
+   * für das Produkt noch kein CoA eingepflegt ist.
+   */
+  certificates: { batchNumber: string; purity: number | null }[];
+  /**
    * Optional flag set by catalog/related-product queries when the product
    * is currently a bestseller. Undefined = not computed (no badge).
    */

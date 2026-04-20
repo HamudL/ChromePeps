@@ -33,6 +33,21 @@ export const productCardSelect = {
     select: { priceInCents: true },
     orderBy: { priceInCents: "asc" as const },
   },
+  // Neueste veröffentlichte COA pro Produkt — füttert den Spec-Drawer der
+  // ProductCard (Reinheit als Float, Lot = Chargennummer). Prisma macht
+  // hier ein Sub-Select pro Produkt (N+1), aber bei 12–20 Karten pro Seite
+  // und einem Index auf (productId) ist das unkritisch. Keeping `purity`
+  // (String) oben drauf für Abwärtskompatibilität mit bestehender Spec-
+  // Liste auf der Detailseite.
+  certificates: {
+    where: { isPublished: true },
+    orderBy: { testDate: "desc" as const },
+    take: 1,
+    select: {
+      batchNumber: true,
+      purity: true,
+    },
+  },
 } satisfies Prisma.ProductSelect;
 
 /**

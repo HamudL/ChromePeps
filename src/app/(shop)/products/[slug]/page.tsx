@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReviewSection } from "@/components/shop/review-section";
 import { ProductCard } from "@/components/shop/product-card";
+import { CertificateCard } from "@/components/shop/certificate-card";
 import { getRelatedProducts } from "@/lib/products/related";
 import { getBestsellerProductIds } from "@/lib/products/card";
 import type { Metadata } from "next";
@@ -60,6 +61,27 @@ async function getProduct(slug: string): Promise<ProductWithDetails | null> {
   });
 
   return product as ProductWithDetails | null;
+}
+
+/**
+ * Neueste veröffentlichte COA für das Produkt — wird separat geladen, damit
+ * der ProductWithDetails-Typ nicht unnötig aufgebläht wird und der Query
+ * schlank bleibt. Liefert null, wenn (noch) keine COA eingepflegt ist.
+ */
+async function getLatestCertificate(productId: string) {
+  return db.certificateOfAnalysis.findFirst({
+    where: { productId, isPublished: true },
+    orderBy: { testDate: "desc" },
+    select: {
+      batchNumber: true,
+      purity: true,
+      testDate: true,
+      testMethod: true,
+      laboratory: true,
+      pdfUrl: true,
+      reportUrl: true,
+    },
+  });
 }
 
 export async function generateMetadata({
@@ -144,13 +166,14 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     product.compareAtPriceInCents &&
     product.compareAtPriceInCents > product.priceInCents;
 
-  // Related products + bestseller flags run in parallel.
-  const [relatedRaw, bestsellerIds] = await Promise.all([
+  // Related products + bestseller flags + latest COA run in parallel.
+  const [relatedRaw, bestsellerIds, latestCoa] = await Promise.all([
     getRelatedProducts(
       { id: product.id, categoryId: product.categoryId },
       4
     ),
     getBestsellerProductIds(),
+    getLatestCertificate(product.id),
   ]);
   const relatedProducts = relatedRaw.map((p) => ({
     ...p,
@@ -452,8 +475,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         </div>
       </section>
 
-      {/* ── Specs + Sequence (light) ── */}
-      {(specs.length > 0 || product.sequence) && (
+      {/* ── Specs + CoA + Sequence (light) ── */}
+      {(specs.length > 0 || product.sequence || latestCoa) && (
         <section className="container py-12 md:py-16">
           {specs.length > 0 && (
             <>
@@ -496,6 +519,43 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 </div>
               </FadeUp>
             </>
+          )}
+
+          {/* Certificate-Card — zeigt die neueste COA als flippbare
+              "Vault"-Karte. Nur rendern, wenn wir tatsächlich COA-Daten
+              haben; sonst bleibt der CoA-Kallout im Buy-Panel oben der
+              einzige Hinweis. */}
+          {latestCoa && (
+            <FadeUp delay={0.08}>
+              <div className="mt-10 flex flex-col items-center gap-4 text-center md:text-left md:flex-row md:items-stretch md:justify-start md:gap-8">
+                <div className="max-w-sm w-full shrink-0">
+                  <CertificateCard
+                    lot={latestCoa.batchNumber}
+                    purity={latestCoa.purity ?? undefined}
+                    testedAt={new Date(latestCoa.testDate).toLocaleDateString(
+                      "de-DE",
+                      { day: "2-digit", month: "short", year: "numeric" }
+                    )}
+                    method={`${latestCoa.testMethod} · UV 220 nm`}
+                    lab={latestCoa.laboratory}
+                    pdfUrl={latestCoa.pdfUrl ?? latestCoa.reportUrl ?? undefined}
+                  />
+                </div>
+                <div className="max-w-md space-y-2 md:pt-6">
+                  <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary">
+                    Zertifikat dieser Charge
+                  </p>
+                  <h3 className="text-xl font-bold tracking-tight">
+                    Unabhängig geprüft. Klick zum Umdrehen.
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Die Rückseite zeigt einen beispielhaften HPLC-Peak und
+                    verlinkt auf das vollständige PDF. Der eigentliche Report
+                    wird bei jeder Bestellung automatisch mit versandt.
+                  </p>
+                </div>
+              </div>
+            </FadeUp>
           )}
 
           {product.sequence && (

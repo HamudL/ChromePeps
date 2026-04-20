@@ -23,14 +23,15 @@
 
 // 19 % German VAT. Kept as a constant so the tax-extraction formula and
 // any future tax-rate tests reference the exact same number.
-const TAX_MULTIPLIER = 1.19;
+export const TAX_MULTIPLIER = 1.19;
+export const TAX_RATE = 0.19;
 
 // Free-shipping threshold, in cents. Tied to the hero marketing copy
 // ("Gratis Versand ab 100 €").
-const FREE_SHIPPING_THRESHOLD_CENTS = 10_000;
+export const FREE_SHIPPING_THRESHOLD_CENTS = 10_000;
 
 // Flat shipping fee under the free-shipping threshold, in cents.
-const STANDARD_SHIPPING_CENTS = 599;
+export const STANDARD_SHIPPING_CENTS = 599;
 
 export interface OrderTotalsInput {
   /** Sum of line-item prices × quantities, before any discount. */

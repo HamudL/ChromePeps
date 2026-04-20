@@ -6,14 +6,11 @@ import {
   ArrowRight,
   FlaskConical,
   ShieldCheck,
-  Truck,
   CreditCard,
   Eye,
   Mail,
   Microscope,
   Package,
-  BadgeCheck,
-  Zap,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { RESEARCH_DISCLAIMER } from "@/lib/constants";
@@ -29,6 +26,8 @@ import type { ProductCardData } from "@/types";
 import { FadeUp } from "./home-animations";
 import { HeroLogo } from "./hero-logo";
 import { PeptideNetwork } from "@/components/shop/peptide-network";
+import { TrustBar } from "@/components/shop/trust-bar";
+import { LiveMetrics } from "@/components/shop/live-metrics";
 
 async function getBestsellers(): Promise<ProductCardData[]> {
   const [products, bestsellerIds] = await Promise.all([
@@ -60,11 +59,84 @@ async function getCategories() {
   });
 }
 
+/**
+ * Zahlen für den LiveMetrics-Block: getestete Chargen (alle veröffentlichten
+ * COAs), Ø Reinheit der letzten 12 Monate (nur COAs mit purity-Wert),
+ * ausgelieferte echte Bestellungen (Testbestellungen ausgenommen). Wird
+ * direkt als Props an <LiveMetrics> durchgereicht; Defaults aus der
+ * Komponente werden so nie angezeigt.
+ */
+async function getLiveMetrics() {
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+  const [batchCount, avgPurity, deliveredCount] = await Promise.all([
+    db.certificateOfAnalysis.count({ where: { isPublished: true } }),
+    db.certificateOfAnalysis.aggregate({
+      where: {
+        isPublished: true,
+        purity: { not: null },
+        testDate: { gte: twelveMonthsAgo },
+      },
+      _avg: { purity: true },
+    }),
+    db.order.count({
+      where: { status: "DELIVERED", isTestOrder: false },
+    }),
+  ]);
+
+  return {
+    batchCount,
+    avgPurity: avgPurity._avg.purity ?? null,
+    deliveredCount,
+  };
+}
+
 export default async function HomePage() {
-  const [bestsellers, categories] = await Promise.all([
+  const [bestsellers, categories, liveMetrics] = await Promise.all([
     getBestsellers(),
     getCategories(),
+    getLiveMetrics(),
   ]);
+
+  // Metrics-Kacheln mit echten Zahlen befüllen. Zahlen <= 0 bzw. null
+  // (z.B. noch keine COA eingepflegt) werden nicht als "0 Chargen getestet"
+  // angezeigt — wir blenden die jeweilige Kachel dann aus und lassen nur
+  // die sinnvollen Werte stehen.
+  const metricsYear = new Date().toLocaleDateString("de-DE", {
+    year: "numeric",
+    month: "long",
+  });
+  const liveMetricsTiles: Array<{
+    target: number;
+    suffix?: string;
+    decimals?: number;
+    label: string;
+    sub?: string;
+  }> = [];
+  if (liveMetrics.batchCount > 0) {
+    liveMetricsTiles.push({
+      target: liveMetrics.batchCount,
+      label: "Chargen · getestet",
+      sub: `Stand ${metricsYear}`,
+    });
+  }
+  if (liveMetrics.avgPurity != null) {
+    liveMetricsTiles.push({
+      target: Number(liveMetrics.avgPurity.toFixed(2)),
+      suffix: "%",
+      decimals: 2,
+      label: "Ø Reinheit · 12 Monate",
+      sub: "HPLC · Janoshik Labs",
+    });
+  }
+  if (liveMetrics.deliveredCount > 0) {
+    liveMetricsTiles.push({
+      target: liveMetrics.deliveredCount,
+      label: "Ausgelieferte Bestellungen",
+      sub: "seit Launch",
+    });
+  }
 
   return (
     <div className="flex flex-col">
@@ -106,24 +178,15 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Trust Bar (dark) ── */}
-      <section className="section-dark">
-        <div className="container py-5">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {[
-              { icon: BadgeCheck, label: "Laborgeprüft" },
-              { icon: Truck, label: "Gratis Versand ab 100\u00A0\u20AC" },
-              { icon: ShieldCheck, label: "Sichere Zahlung" },
-              { icon: Zap, label: "Schnelle Lieferung" },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-3 justify-center py-2">
-                <item.icon className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-sm font-medium">{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── Trust Bar (dark) — interaktive Pills mit Evidence-Tooltips ── */}
+      <TrustBar />
+
+      {/* ── Live Metrics (light) — echte Zahlen aus DB. Wenn noch keine
+          COAs/Orders vorhanden sind, wird die Section ausgeblendet statt
+          mit 0-Werten zu werben. ── */}
+      {liveMetricsTiles.length > 0 && (
+        <LiveMetrics metrics={liveMetricsTiles} />
+      )}
 
       {/* ── Warum ChromePeps? (dark) ── */}
       <section className="section-dark border-t border-white/5">

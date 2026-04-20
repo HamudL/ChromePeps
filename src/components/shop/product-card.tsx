@@ -1,5 +1,18 @@
 "use client";
 
+/**
+ * Idea 03 — Product Card with Spec Drawer
+ *
+ * Replaces the original hover-reveal of two floating circle buttons (wishlist
+ * + quick-add) with a single elegant "spec drawer" that slides up on hover and
+ * shows what actually matters for a research-peptide purchase: purity, lot,
+ * stock. The quick-add button lives inside the drawer as a full-width action.
+ *
+ * Purity + lot are pulled from the newest published COA (see
+ * productCardSelect.certificates) so the card always reflects the most
+ * recently tested batch. Falls back gracefully when no COA exists.
+ */
+
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
@@ -22,8 +35,17 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
   const variantPrices = product.variants.map((v) => v.priceInCents);
   const hasVariants = variantPrices.length > 0;
-  const minPrice = hasVariants ? Math.min(...variantPrices) : product.priceInCents;
-  const maxPrice = hasVariants ? Math.max(...variantPrices) : product.priceInCents;
+  const minPrice = hasVariants
+    ? Math.min(...variantPrices)
+    : product.priceInCents;
+  const maxPrice = hasVariants
+    ? Math.max(...variantPrices)
+    : product.priceInCents;
+
+  // Neueste COA (kann fehlen, wenn noch keine eingepflegt ist)
+  const latestCoa = product.certificates[0];
+  const coaPurity = latestCoa?.purity ?? null;
+  const coaLot = latestCoa?.batchNumber ?? null;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -75,38 +97,83 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
         {/* mg-Size chip (top-right) — always visible */}
         {product.weight && (
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 z-10">
             <span className="inline-flex items-center rounded-full border border-border/40 bg-background/90 px-2.5 py-1 text-[11px] font-mono font-medium text-foreground backdrop-blur-sm shadow-sm">
               {product.weight}
             </span>
           </div>
         )}
 
-        {/* Subtle bottom gradient on hover */}
+        {/* Wishlist heart (top-left, reveal on hover) */}
         <div
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background/70 via-background/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        />
-
-        {/* Wishlist heart (bottom-left, reveal on hover) */}
-        <div className="absolute bottom-3 left-3 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+          className="absolute top-3 left-3 z-10 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
+          onClick={(e) => e.preventDefault()}
+        >
           <WishlistButton
             productId={product.id}
             className="h-9 w-9 bg-background/90 backdrop-blur-sm hover:bg-background shadow-md"
           />
         </div>
 
-        {/* Quick add (bottom-right, reveal on hover) */}
-        {!isOutOfStock && !hasVariants && (
-          <div className="absolute bottom-3 right-3 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-            <Button
-              size="icon"
-              className="h-9 w-9 shadow-md"
-              onClick={handleAddToCart}
-              aria-label={`${product.name} in den Warenkorb`}
-            >
-              <ShoppingCart className="h-4 w-4" />
-            </Button>
+        {/* Subtle bottom gradient on hover */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background/70 via-background/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        />
+
+        {/* Spec drawer — bottom, revealed on hover */}
+        {!isOutOfStock && (
+          <div
+            className={cn(
+              "absolute inset-x-3 bottom-3 z-20 rounded-lg border border-border/60",
+              "bg-background/95 backdrop-blur-md shadow-lg",
+              "p-3 space-y-2",
+              "opacity-0 translate-y-2 pointer-events-none",
+              "transition-all duration-300 ease-out",
+              "group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto"
+            )}
+          >
+            {/* Specs row */}
+            <div className="space-y-1.5">
+              {coaPurity != null && (
+                <div className="flex items-baseline justify-between font-mono text-[10.5px]">
+                  <span className="text-muted-foreground tracking-wide">
+                    Reinheit
+                  </span>
+                  <span className="text-primary font-semibold">
+                    {coaPurity.toFixed(2)}%
+                  </span>
+                </div>
+              )}
+              {coaLot && (
+                <div className="flex items-baseline justify-between font-mono text-[10.5px]">
+                  <span className="text-muted-foreground tracking-wide">
+                    Lot
+                  </span>
+                  <span className="text-foreground">{coaLot}</span>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between font-mono text-[10.5px]">
+                <span className="text-muted-foreground tracking-wide">
+                  Auf Lager
+                </span>
+                <span className="text-foreground">{product.stock} Stk.</span>
+              </div>
+            </div>
+
+            {/* Quick add (nur bei Produkten ohne Varianten — Varianten
+                müssen auf der Detailseite gewählt werden) */}
+            {!hasVariants && (
+              <Button
+                size="sm"
+                className="w-full h-8 text-xs gap-1.5"
+                onClick={handleAddToCart}
+                aria-label={`${product.name} in den Warenkorb`}
+              >
+                <ShoppingCart className="h-3.5 w-3.5" />
+                In den Warenkorb
+              </Button>
+            )}
           </div>
         )}
       </div>

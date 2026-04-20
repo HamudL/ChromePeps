@@ -1,12 +1,17 @@
+import Link from "next/link";
 import {
   ShieldCheck,
   Microscope,
   Package,
   Eye,
   Mail,
+  ArrowRight,
+  FlaskConical,
 } from "lucide-react";
 import type { Metadata } from "next";
-import { PeptideNetwork } from "@/components/shop/peptide-network";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { HplcSpectrum } from "@/components/shop/hplc-spectrum";
 
 export const metadata: Metadata = {
   title: "Qualitätskontrolle | ChromePeps",
@@ -44,26 +49,61 @@ const steps = [
 export default function QualitaetskontrollePage() {
   return (
     <div className="flex flex-col">
-      {/* Hero (dark) */}
-      <section className="section-dark relative overflow-hidden">
-        <PeptideNetwork dark count={60} />
-        {/* Vignette for text legibility on particle backdrop */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden md:block"
-          style={{
-            background:
-              "radial-gradient(520px 280px at 50% 55%, hsl(20 14% 7% / 0.7), transparent 70%)",
-          }}
-        />
-        <div className="container relative py-16 md:py-20 text-center">
-          <ShieldCheck className="mx-auto h-10 w-10 text-primary mb-4" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-            Qualitätskontrolle
-          </h1>
-          <p className="text-white/60 max-w-xl mx-auto text-lg">
-            Jede Charge wird durch das unabhängige Analyselabor Janoshik getestet — ohne Ausnahme.
-          </p>
+      {/* Hero (light) — 2-col: links Headline + Evidence, rechts HPLC-Panel
+          als dunkler Einschub. Das Panel bricht die helle Section als
+          Akzent (entspricht dem Light/Dark-Rhythmus des Designs) und zieht
+          den Blick sofort auf das Kernversprechen der Seite: echte
+          Chromatogramm-Daten statt Marketing-Floskeln. */}
+      <section className="relative border-b border-border/60">
+        <div className="container relative py-14 md:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+            <div className="space-y-5">
+              <Badge
+                variant="outline"
+                className="border-primary/30 bg-primary/5 px-3 py-1 text-xs"
+              >
+                <FlaskConical className="mr-1.5 h-3 w-3 text-primary" />
+                Qualitätskontrolle
+              </Badge>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+                Jede Charge. Unabhängig geprüft.
+              </h1>
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl">
+                Wir schicken jede neue Charge zu Janoshik Labs. Erst nach
+                HPLC-Freigabe geht sie in den Versand — ohne Ausnahme, ohne
+                Sonderrollen.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Button asChild size="lg" className="gap-2 h-11">
+                  <Link href="/analysezertifikate">
+                    CoA-Sammlung ansehen
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="h-11">
+                  <Link href="/products">Produkte entdecken</Link>
+                </Button>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                  <span>Janoshik HPLC</span>
+                </div>
+                <span className="text-muted-foreground/40">·</span>
+                <div className="flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5 text-primary" />
+                  <span>Öffentlich verifizierbar</span>
+                </div>
+                <span className="text-muted-foreground/40">·</span>
+                <div className="flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-primary" />
+                  <span>CoA per E-Mail</span>
+                </div>
+              </div>
+            </div>
+
+            <HplcSpectrum className="w-full" height={360} />
+          </div>
         </div>
       </section>
 
