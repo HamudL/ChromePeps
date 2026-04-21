@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { APP_NAME } from "@/lib/constants";
 import { DashboardNav } from "./dashboard-nav";
 import { EmailVerifyBanner } from "@/components/dashboard/email-verify-banner";
+import { ResearchBanner } from "@/components/layout/research-banner";
 
 export const metadata = {
   title: `My Account | ${APP_NAME}`,
@@ -38,6 +39,8 @@ export default async function DashboardLayout({
           </div>
         </div>
       </header>
+
+      <ResearchBanner />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-8 lg:flex-row">

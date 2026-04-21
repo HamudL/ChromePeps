@@ -154,12 +154,14 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
 
       {/* Media — Produktbild oder Vial-Fallback.
           Kein Lot-Label-Overlay mehr (die Lot-Nummer steht weiter unten
-          in der Spec-Row; das Label im Bild war redundant und der User
-          hat es explizit ausgetragen). object-contain, damit vom User
-          geplante freigestellte Vial-Bilder nicht beschnitten werden. */}
+          in der Spec-Row). object-contain, damit vom User geplante
+          freigestellte Vial-Bilder nicht beschnitten werden. Hintergrund
+          bewusst reines bg-card (wei\u00df auf hellem Thema) ohne Gradient,
+          damit eine transparente Vial optisch ohne grauen Rahmen "floated"
+          und nicht mehr in einer Box sitzt. */}
       <div className="relative mx-auto mb-5 h-[168px] w-full max-w-[210px]">
         {image ? (
-          <div className="relative h-full w-full rounded-[6px_6px_3px_3px] overflow-hidden bg-gradient-to-b from-muted/30 to-muted">
+          <div className="relative h-full w-full bg-card">
             <Image
               src={image.url}
               alt={image.alt ?? product.name}
@@ -176,7 +178,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
 
         {/* "Ausverkauft"-Overlay */}
         {isOutOfStock && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/85 backdrop-blur-[2px] rounded-[6px_6px_3px_3px]">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/85 backdrop-blur-[2px]">
             <span className="font-mono text-[10px] tracking-[0.2em] uppercase font-semibold text-destructive">
               Ausverkauft
             </span>

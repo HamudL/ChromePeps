@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/footer";
 import { CartSheet } from "@/components/shop/cart-sheet";
 import { CookieBanner } from "@/components/shop/cookie-banner";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { ResearchBanner } from "@/components/layout/research-banner";
 import { WishlistInitializer } from "@/components/shop/wishlist-initializer";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { Toaster } from "sonner";
@@ -22,6 +23,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       <MouseSpotlight />
       <AnnouncementBar />
       <Header />
+      <ResearchBanner />
       <CartSheet />
       <main id="main-content" className="min-h-[calc(100vh-4rem)]">{children}</main>
       <Footer />
