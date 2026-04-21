@@ -19,9 +19,27 @@ interface GalleryImage {
 
 export function ImageGallery({
   images,
+  fit = "cover",
+  frameless = false,
 }: {
   images: GalleryImage[];
   productName?: string;
+  /**
+   * Wie das Bild in seinen Aspect-Square-Slot passt.
+   * - "cover" (default, für lifestyle/product-shots mit Hintergrund)
+   * - "contain" (für freigestellte Vial-Bilder ohne Hintergrund —
+   *   verhindert Beschnitt und lässt ggf. einen Frame-Hintergrund
+   *   drum herum sichtbar)
+   */
+  fit?: "cover" | "contain";
+  /**
+   * Entfernt den eigenen Gallery-Frame (Border + Background). Der
+   * umgebende Container liefert dann den visuellen Rahmen — nützlich,
+   * wenn die Gallery z.B. innerhalb eines Apotheke-Media-Frames mit
+   * Grid-Pattern sitzen soll, damit der Pattern bis unter die
+   * freigestellte Vial durchscheint.
+   */
+  frameless?: boolean;
 }) {
   const [selected, setSelected] = useState(0);
 
@@ -33,15 +51,20 @@ export function ImageGallery({
     );
   }
 
+  const fitClass = fit === "contain" ? "object-contain" : "object-cover";
+  const mainFrame = frameless
+    ? "relative aspect-square overflow-hidden"
+    : "relative aspect-square rounded-lg border bg-muted overflow-hidden";
+
   return (
     <div className="space-y-3">
       {/* Main image */}
-      <div className="relative aspect-square rounded-lg border bg-muted overflow-hidden">
+      <div className={mainFrame}>
         <Image
           src={images[selected].url}
           alt={images[selected].alt}
           fill
-          className="object-cover"
+          className={fitClass}
           sizes="(max-width: 1024px) 100vw, 50vw"
           priority
         />
@@ -56,7 +79,7 @@ export function ImageGallery({
               onClick={() => setSelected(i)}
               aria-label={`Bild ${i + 1} anzeigen`}
               className={cn(
-                "relative h-16 w-16 shrink-0 rounded-md border overflow-hidden transition-all",
+                "relative h-16 w-16 shrink-0 rounded-md border overflow-hidden bg-muted transition-all",
                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                 i === selected
                   ? "ring-2 ring-primary border-primary"
@@ -67,7 +90,7 @@ export function ImageGallery({
                 src={img.url}
                 alt={img.alt}
                 fill
-                className="object-cover"
+                className={fitClass}
                 sizes="64px"
               />
             </button>

@@ -104,7 +104,9 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
       className={cn(
         "group relative flex flex-col",
         "bg-card border border-border rounded-sm",
-        "px-5 pt-6 pb-5",
+        // ca. +15 % skaliert ggü. vorher (px-5/pt-6/pb-5) — gibt der
+        // Karte mehr Luft, ohne die Grid-Dichte zu verändern.
+        "px-6 pt-7 pb-6",
         "transition-all duration-300 ease-out",
         "hover:border-foreground hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-24px_hsl(20_14%_10%/0.2)]",
         "animate-fade-in",
@@ -132,7 +134,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
       />
 
       {/* Head: Kategorie + Index + Wishlist */}
-      <div className="relative mb-4 flex items-center justify-between font-mono text-[9.5px] tracking-[0.15em] uppercase text-muted-foreground">
+      <div className="relative mb-5 flex items-center justify-between font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
         <span className="text-primary font-semibold">
           {product.category.name}
         </span>
@@ -144,38 +146,27 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
           >
             <WishlistButton
               productId={product.id}
-              className="h-7 w-7 bg-transparent hover:bg-muted"
+              className="h-8 w-8 bg-transparent hover:bg-muted"
             />
           </div>
         </div>
       </div>
 
-      {/* Media — Produktbild oder Vial-Fallback mit Lot-Label */}
-      <div className="relative mx-auto mb-4 h-[140px] w-full max-w-[180px]">
+      {/* Media — Produktbild oder Vial-Fallback.
+          Kein Lot-Label-Overlay mehr (die Lot-Nummer steht weiter unten
+          in der Spec-Row; das Label im Bild war redundant und der User
+          hat es explizit ausgetragen). object-contain, damit vom User
+          geplante freigestellte Vial-Bilder nicht beschnitten werden. */}
+      <div className="relative mx-auto mb-5 h-[168px] w-full max-w-[210px]">
         {image ? (
           <div className="relative h-full w-full rounded-[6px_6px_3px_3px] overflow-hidden bg-gradient-to-b from-muted/30 to-muted">
             <Image
               src={image.url}
               alt={image.alt ?? product.name}
               fill
-              className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+              className="object-contain transition-transform duration-500 ease-out group-hover:scale-[1.04]"
               sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
             />
-            {/* Label-Band mit Name + Menge */}
-            {(coaLot || product.weight) && (
-              <div className="absolute inset-x-2 bottom-3 rounded-sm bg-background/95 backdrop-blur-sm border-y border-[hsl(45_30%_70%)] py-1.5 px-2 text-center">
-                {coaLot && (
-                  <p className="font-mono text-[9px] font-semibold tracking-wide text-foreground leading-tight truncate">
-                    {coaLot}
-                  </p>
-                )}
-                {product.weight && (
-                  <p className="font-mono text-[8px] text-primary leading-tight mt-0.5">
-                    {product.weight}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
         ) : (
           // Vial-Fallback als CSS-Gradient — nur wenn kein Produktbild da
@@ -194,12 +185,12 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
       </div>
 
       {/* Name */}
-      <h3 className="relative text-lg font-semibold tracking-tight leading-tight line-clamp-1 group-hover:text-primary transition-colors duration-300">
+      <h3 className="relative text-xl font-semibold tracking-tight leading-tight line-clamp-1 group-hover:text-primary transition-colors duration-300">
         {product.name}
       </h3>
 
       {/* Spec-Rows — nur gerenderte Zeilen, die auch Daten haben */}
-      <dl className="relative mt-2 space-y-1">
+      <dl className="relative mt-2.5 space-y-1.5">
         {product.weight && (
           <SpecRow k="Menge" v={product.weight} />
         )}
@@ -210,9 +201,9 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
       </dl>
 
       {/* Price + CTA */}
-      <div className="relative mt-auto pt-3.5 border-t border-border flex items-baseline justify-between gap-3">
+      <div className="relative mt-auto pt-4 border-t border-border flex items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-2">
-          <span className="text-xl font-bold tracking-tight tabular-nums leading-none">
+          <span className="text-2xl font-bold tracking-tight tabular-nums leading-none">
             {priceDisplay}
           </span>
           {!hasVariants && hasDiscount && (
@@ -258,7 +249,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
 
 function SpecRow({ k, v, gold }: { k: string; v: string; gold?: boolean }) {
   return (
-    <div className="flex items-baseline justify-between font-mono text-[10.5px]">
+    <div className="flex items-baseline justify-between font-mono text-[11.5px]">
       <span className="text-muted-foreground">{k}</span>
       <span
         className={cn(
@@ -286,7 +277,7 @@ function VialFallback({
   // Katalog noch kein Bild hinterlegt ist.
   return (
     <div
-      className="relative mx-auto h-full w-16 rounded-[6px_6px_3px_3px] transition-transform duration-500 ease-out group-hover:-rotate-3 group-hover:-translate-y-0.5"
+      className="relative mx-auto h-full w-20 rounded-[6px_6px_3px_3px] transition-transform duration-500 ease-out group-hover:-rotate-3 group-hover:-translate-y-0.5"
       style={{
         background:
           "linear-gradient(to right, hsl(45 40% 50% / 0.25) 0%, hsl(45 78% 78%) 30%, hsl(45 88% 90%) 50%, hsl(45 78% 78%) 70%, hsl(45 40% 50% / 0.25) 100%)",
@@ -297,16 +288,16 @@ function VialFallback({
     >
       {/* Gummikappe */}
       <span
-        className="absolute -top-2 left-1/2 -translate-x-1/2 h-3 w-6 rounded-sm"
+        className="absolute -top-2.5 left-1/2 -translate-x-1/2 h-3.5 w-7 rounded-sm"
         style={{ background: "hsl(20 15% 20%)" }}
       />
       {/* Label */}
       <div className="absolute inset-x-0 top-[36%] bottom-[18%] bg-background/95 border-y border-[hsl(45_30%_70%)] px-1.5 flex flex-col justify-center">
-        <p className="font-mono text-[7px] font-semibold text-center text-foreground leading-tight truncate">
+        <p className="font-mono text-[8px] font-semibold text-center text-foreground leading-tight truncate">
           {lot ?? name}
         </p>
         {weight && (
-          <p className="font-mono text-[6px] text-primary text-center leading-tight mt-0.5">
+          <p className="font-mono text-[7px] text-primary text-center leading-tight mt-0.5">
             {weight}
           </p>
         )}

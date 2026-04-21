@@ -282,23 +282,31 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </nav>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-start">
-            {/* ── Media (left) ── Helle, gerahmte Box mit Feinem Grid
-                im Hintergrund; die existierende ImageGallery sitzt darin
-                mittig. Sticky auf lg+. */}
+            {/* ── Media (left) ── Helle, gerahmte Box mit feinem Grid
+                im Hintergrund. Die ImageGallery rendert frameless mit
+                object-contain, damit freigestellte Vial-Bilder vom User
+                nicht beschnitten werden und das Grid-Pattern bis unter
+                die Vial durchscheint. Sticky auf lg+. */}
             <FadeUp>
               <div className="lg:sticky lg:top-24">
-                <div className="relative rounded-sm border border-border bg-card aspect-square overflow-hidden">
+                <div className="relative rounded-sm border border-border bg-card overflow-hidden">
                   <div
                     aria-hidden
                     className="absolute inset-0 apo-grid-light pointer-events-none"
                   />
-                  <div className="relative z-10 h-full w-full flex items-center justify-center p-6 md:p-8">
+                  {/* Nur minimaler Innen-Rand, damit die Vial den Frame
+                      praktisch ausfüllt. Die Thumbnail-Reihe darunter
+                      bekommt durch die space-y-3 der Gallery ihren
+                      eigenen Abstand. */}
+                  <div className="relative z-10 p-2 md:p-3">
                     <ImageGallery
                       images={product.images.map((img) => ({
                         url: img.url,
                         alt: img.alt ?? product.name,
                       }))}
                       productName={product.name}
+                      fit="contain"
+                      frameless
                     />
                   </div>
                 </div>
