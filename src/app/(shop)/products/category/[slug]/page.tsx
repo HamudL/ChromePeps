@@ -272,7 +272,10 @@ export default async function CategoryLandingPage({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {/* Grid: 1 Karte auf Mobile (< 640 px), dann 2/3/4 ab sm/md/lg.
+                Spiegelt das Verhalten von /products und verhindert das
+                Abschneiden der Spec-Rows auf Smartphones. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {productsWithBadges.map((product, idx) => (
                 <ProductCard
                   key={product.id}

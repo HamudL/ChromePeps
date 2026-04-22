@@ -327,7 +327,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </div>
 
             {/* Rx-Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {/* Grid: auf Mobile (< 640 px) 1 Karte pro Zeile, damit die
+                Rx-Spec-Rows und der Name nicht mehr abgeschnitten werden.
+                Ab sm: (640 px) darf die 2-Spalten-Ansicht zur\u00fcckkommen,
+                weil dort die Karten-Breite wieder reicht. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {products.map((product, idx) => (
                 <ProductCard
                   key={product.id}

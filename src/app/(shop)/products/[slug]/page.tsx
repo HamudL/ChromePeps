@@ -747,7 +747,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </div>
             </FadeUp>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10 md:gap-x-6 md:gap-y-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10 md:gap-x-6 md:gap-y-12">
               {relatedProducts.map((related, i) => (
                 <FadeUp key={related.id} delay={i * 0.08}>
                   <ProductCard product={related} />
