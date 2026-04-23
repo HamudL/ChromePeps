@@ -31,6 +31,12 @@ yarn-error.log*
 .env
 .env*.local
 
+# Claude Code per-machine permissions — MUST stay local.
+# This file accumulates Bash/Tool allow-list entries that can include
+# literal secrets (tokens, passwords) from approved commands. It was
+# previously tracked by mistake; see the security remediation commit.
+.claude/settings.local.json
+
 # vercel
 .vercel
 
