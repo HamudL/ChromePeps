@@ -103,9 +103,17 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # Build-time env wiring. SENTRY_AUTH_TOKEN/ORG/PROJECT werden von
+          # withSentryConfig (next.config.ts) genutzt, um Source-Maps
+          # hochzuladen — sie landen NICHT im fertigen Image, sondern
+          # werden nur während `next build` gebraucht. DSN ist bewusst
+          # ein NEXT_PUBLIC_* und wird in den Client-Bundle inlined.
           build-args: |
             NEXT_PUBLIC_APP_URL=https://chromepeps.com
-            NEXT_PUBLIC_SENTRY_DSN=
+            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_ORG=${{ secrets.SENTRY_ORG }}
+            SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
 
   # ──────────────────────────────────────────────
   # 4. Deploy to VPS (only on push to main)
