@@ -6,8 +6,19 @@ import { createCategorySchema } from "@/validators/product";
 import { slugify } from "@/lib/utils";
 import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
 
-// GET /api/admin/categories — public list
+// GET /api/admin/categories — admin only (trotz des Cache-Keys ist
+// das ein Admin-Endpunkt: aufgerufen nur von Pages unter /admin/**).
+// Die öffentliche Kategorie-Liste wird in shop-pages server-side direkt
+// aus der DB gelesen, nicht von hier.
 export async function GET() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 403 }
+    );
+  }
+
   const cached = await cacheGet(CACHE_KEYS.CATEGORIES);
   if (cached) {
     return NextResponse.json({ success: true, data: cached });

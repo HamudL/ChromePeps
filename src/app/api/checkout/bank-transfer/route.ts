@@ -162,17 +162,35 @@ export async function POST(req: NextRequest) {
           .filter((s) => s)
       )
     );
+    // Stock wird hier MITGELADEN und pre-validated — früher fehlte das,
+    // die Transaction hat stock-Fehler erst später per updateMany-gte
+    // gefangen, was zu 500ern und zu einer zuvor angelegten Orphan-
+    // Address-Zeile führte. Außerdem: silent-continue bei
+    // nicht-gefundenen Produkten / Varianten durch explizite 400er
+    // ersetzt, damit der Kunde eine sinnvolle Meldung bekommt.
     const [products, variants] = await Promise.all([
       productIds.length
         ? db.product.findMany({
             where: { id: { in: productIds }, isActive: true },
-            select: { id: true, name: true, sku: true, priceInCents: true },
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              priceInCents: true,
+              stock: true,
+            },
           })
         : Promise.resolve([]),
       variantIds.length
         ? db.productVariant.findMany({
             where: { id: { in: variantIds }, isActive: true },
-            select: { id: true, name: true, sku: true, priceInCents: true },
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              priceInCents: true,
+              stock: true,
+            },
           })
         : Promise.resolve([]),
     ]);
@@ -190,9 +208,38 @@ export async function POST(req: NextRequest) {
           : 0;
       if (!pid || qty <= 0) continue;
       const product = productMap.get(pid);
-      if (!product) continue;
+      if (!product) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Mindestens ein Produkt im Warenkorb ist nicht mehr verfügbar.",
+          },
+          { status: 400 }
+        );
+      }
       const variant = vid ? variantMap.get(vid) ?? null : null;
-      if (vid && !variant) continue;
+      if (vid && !variant) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Die gewählte Variante ist nicht mehr verfügbar.",
+          },
+          { status: 400 }
+        );
+      }
+      const availableStock = variant?.stock ?? product.stock;
+      if (availableStock < qty) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Nicht genug Lagerbestand für "${product.name}${
+              variant ? ` (${variant.name})` : ""
+            }".`,
+          },
+          { status: 400 }
+        );
+      }
       const price = variant?.priceInCents ?? product.priceInCents;
       const sku = variant?.sku ?? product.sku;
       subtotalInCents += price * qty;

@@ -317,6 +317,10 @@ export async function POST(req: NextRequest) {
     }
     shippingAddressId = address.id;
 
+    // Cart-Include erweitert um `isActive`, damit die Validierungs-
+    // Schleife unten NICHT noch einmal pro Item einen Roundtrip zu
+    // Postgres machen muss (früher: 2 findUnique pro cart-item = bis zu
+    // 20 zusätzliche Queries im Checkout-Hot-Path bei 10 Items).
     const cart = await db.cart.findUnique({
       where: { userId },
       include: {
@@ -327,11 +331,17 @@ export async function POST(req: NextRequest) {
                 name: true,
                 priceInCents: true,
                 stock: true,
+                isActive: true,
                 images: { select: { url: true }, take: 1 },
               },
             },
             variant: {
-              select: { name: true, priceInCents: true, stock: true },
+              select: {
+                name: true,
+                priceInCents: true,
+                stock: true,
+                isActive: true,
+              },
             },
           },
         },
@@ -345,46 +355,43 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validation läuft jetzt in-memory gegen die bereits-geladenen
+    // Product/Variant-Felder — kein N+1 mehr.
     for (const item of cart.items) {
-      const product = await db.product.findUnique({
-        where: { id: item.productId },
-        select: { isActive: true, name: true, stock: true },
-      });
-      if (!product || !product.isActive) {
+      if (!item.product.isActive) {
         return NextResponse.json(
           {
             success: false,
-            error: `"${product?.name ?? "Unknown product"}" is no longer available`,
+            error: `"${item.product.name}" is no longer available`,
           },
           { status: 400 }
         );
       }
       if (item.variantId) {
-        const variant = await db.productVariant.findUnique({
-          where: { id: item.variantId },
-          select: { isActive: true, name: true, stock: true },
-        });
-        if (!variant || !variant.isActive) {
+        if (!item.variant || !item.variant.isActive) {
           return NextResponse.json(
             {
               success: false,
-              error: `Variant "${variant?.name ?? "unknown"}" is no longer available`,
+              error: `Variant "${item.variant?.name ?? "unknown"}" is no longer available`,
             },
             { status: 400 }
           );
         }
-        if (variant.stock < item.quantity) {
+        if (item.variant.stock < item.quantity) {
           return NextResponse.json(
             {
               success: false,
-              error: `Insufficient stock for "${product.name} (${variant.name})"`,
+              error: `Insufficient stock for "${item.product.name} (${item.variant.name})"`,
             },
             { status: 400 }
           );
         }
-      } else if (product.stock < item.quantity) {
+      } else if (item.product.stock < item.quantity) {
         return NextResponse.json(
-          { success: false, error: `Insufficient stock for "${product.name}"` },
+          {
+            success: false,
+            error: `Insufficient stock for "${item.product.name}"`,
+          },
           { status: 400 }
         );
       }

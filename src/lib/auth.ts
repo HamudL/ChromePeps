@@ -135,9 +135,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await cacheSet(cacheKey, cached, SESSION_USER_TTL_SECONDS);
         }
         if (!cached.row) {
-          // Force sign-out by returning an empty session
+          // User wurde in der DB gelöscht (oder DB wurde gewiped).
+          // Wir markieren die Session mit `id=""` UND setzen expires
+          // in die Vergangenheit, damit NextAuth den Session-Cookie
+          // verwirft und das Frontend automatisch auf unauthenticated
+          // schaltet. `requireAuth()` / `auth()` call-sites sehen
+          // entweder kein user-Objekt mehr (über den expires-check
+          // von NextAuth) oder einen leeren `id`, den die Helpers
+          // zusätzlich abfangen.
           session.user.id = "";
           session.user.role = "USER" as Role;
+          session.expires = new Date(0).toISOString() as typeof session.expires;
           return session;
         }
         session.user.id = cached.row.id;

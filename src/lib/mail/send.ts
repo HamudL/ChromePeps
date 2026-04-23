@@ -134,11 +134,30 @@ async function loadCoaAttachments(
 
     const attachments: import("./client").SendMailAttachment[] = [];
 
+    // Defense-in-depth: `pdfUrl` kommt aus der DB und wird von Admins
+    // gesetzt. Ein kompromittierter Admin-Account (oder ein Bug, der
+    // non-admin input in das Feld bringt) könnte `../../server.js`
+    // hinterlegen → `join()` resolved zu einem Pfad außerhalb von
+    // public/uploads/certificates und ein sensibler File wäre als
+    // Mail-Anhang leakbar. Wir pinnen den erlaubten Prefix hart,
+    // bevor readFile läuft — wenn der Path nicht darunter liegt,
+    // überspringen wir still.
+    const allowedRoot = join(
+      process.cwd(),
+      "public",
+      "uploads",
+      "certificates"
+    );
     for (const coa of coas) {
       if (!coa.pdfUrl) continue;
       try {
-        // pdfUrl is like "/uploads/certificates/xxx.pdf"
         const filePath = join(process.cwd(), "public", coa.pdfUrl);
+        if (!filePath.startsWith(allowedRoot)) {
+          console.warn(
+            `[mail] COA pdfUrl outside allowed root, skipping: ${coa.pdfUrl}`
+          );
+          continue;
+        }
         const content = await readFile(filePath);
         const safeName = coa.product.name.replace(/[^a-zA-Z0-9-]/g, "_");
         attachments.push({

@@ -17,7 +17,12 @@ export async function GET(req: NextRequest) {
   const skip = (page - 1) * pageSize;
 
   const isAdmin = session.user.role === "ADMIN";
-  const where = isAdmin ? {} : { userId: session.user.id };
+  // Admin sieht alle nicht-Test-Orders; normaler User nur seine eigenen.
+  // Test-Orders werden konsistent mit /admin/orders und der Dashboard-
+  // Statistik aus allen Aggregationen ausgeblendet.
+  const where = isAdmin
+    ? { isTestOrder: false }
+    : { userId: session.user.id };
 
   const [orders, total] = await Promise.all([
     db.order.findMany({

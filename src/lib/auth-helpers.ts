@@ -4,7 +4,11 @@ import type { Role } from "@prisma/client";
 
 export async function requireAuth() {
   const session = await auth();
-  if (!session?.user) {
+  // `session.user.id === ""` tritt auf, wenn der session-Callback in
+  // auth.ts erkannt hat, dass der User in der DB nicht mehr existiert
+  // (gelöscht / DB-Wipe). Das ist der Fallback-Signalweg, falls der
+  // expires=0 im Callback vom Caller noch nicht ausgewertet wurde.
+  if (!session?.user || !session.user.id) {
     redirect("/login");
   }
   return session;
