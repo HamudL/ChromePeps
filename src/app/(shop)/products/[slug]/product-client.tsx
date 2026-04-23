@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { ShoppingCart, Minus, Plus, Check, Copy, Dna } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -102,7 +102,21 @@ export function ImageGallery({
 }
 
 /* ----------------------------------------------------------------
- * Variant Selector
+ * Variant Buy Panel
+ * ----------------------------------------------------------------
+ *
+ * Früher waren `VariantSelector` und `AddToCartButton` zwei
+ * voneinander unabhängige Components, die per `window.dispatchEvent`
+ * kommunizierten. Das war fragil:
+ *   - Zwei PDP-Tabs offen → Variant-Auswahl in Tab A setzte den
+ *     Preis in Tab B mit, weil beide auf denselben globalen Event
+ *     hörten.
+ *   - Unter React 19 Strict Mode (dev) wurde `useEffect` doppelt
+ *     invoked → zwei Listener, State-Update feuerte zweimal, Button
+ *     flickerte.
+ *
+ * Jetzt: ein kombinierter Panel-Component der den `selectedVariant`-
+ * State lokal hält. Keine globalen Events mehr.
  * ----------------------------------------------------------------*/
 
 interface VariantOption {
@@ -112,108 +126,39 @@ interface VariantOption {
   stock: number;
 }
 
-export function VariantSelector({ variants }: { variants: VariantOption[] }) {
-  // This component just renders the variant buttons.
-  // Selection state is managed by AddToCartButton through a shared event approach,
-  // but for simplicity we use the URL-independent approach with a data attribute.
-  // The AddToCartButton reads the selected variant from a hidden input.
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium">Variante wählen</label>
-      <div className="flex flex-wrap gap-2" data-variant-selector>
-        {variants.map((variant) => {
-          const outOfStock = variant.stock <= 0;
-          return (
-            <button
-              key={variant.id}
-              type="button"
-              data-variant-id={variant.id}
-              data-variant-name={variant.name}
-              data-variant-price={variant.priceInCents}
-              data-variant-stock={variant.stock}
-              disabled={outOfStock}
-              className={cn(
-                "variant-btn rounded-md border px-4 py-2 text-sm font-medium transition-all",
-                "hover:border-primary hover:text-primary",
-                "disabled:opacity-40 disabled:cursor-not-allowed",
-                "data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground data-[selected=true]:border-primary"
-              )}
-              onClick={(e) => {
-                // Mark as selected, deselect siblings
-                const parent = e.currentTarget.closest("[data-variant-selector]");
-                if (parent) {
-                  parent.querySelectorAll(".variant-btn").forEach((btn) => {
-                    btn.setAttribute("data-selected", "false");
-                  });
-                }
-                e.currentTarget.setAttribute("data-selected", "true");
-                // Dispatch custom event for AddToCartButton
-                window.dispatchEvent(
-                  new CustomEvent("variant-selected", {
-                    detail: {
-                      id: variant.id,
-                      name: variant.name,
-                      priceInCents: variant.priceInCents,
-                      stock: variant.stock,
-                    },
-                  })
-                );
-              }}
-            >
-              {variant.name}
-              <span className="ml-1.5 text-xs text-muted-foreground">
-                {formatPrice(variant.priceInCents)} inkl. MwSt.
-              </span>
-              {outOfStock && (
-                <span className="ml-1 text-xs">(Sold Out)</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ----------------------------------------------------------------
- * Add to Cart Button
- * ----------------------------------------------------------------*/
-
-interface AddToCartProduct {
+interface VariantBuyPanelProduct {
   id: string;
   name: string;
   slug: string;
   priceInCents: number;
   stock: number;
   image: string | null;
+  compareAtPriceInCents: number | null;
 }
 
-export function AddToCartButton({
+export function VariantBuyPanel({
   product,
   variants,
+  priceDisplay,
 }: {
-  product: AddToCartProduct;
+  product: VariantBuyPanelProduct;
   variants: VariantOption[];
+  /**
+   * Der server-berechnete Anzeige-Preis für das Preisband zwischen
+   * Variants und CTA. Kann eine Range sein ("9,99 € – 19,99 €"), ein
+   * Einzelpreis oder etwas anderes. Wird hier nur gerendert, nicht
+   * interpretiert.
+   */
+  priceDisplay: string;
 }) {
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
 
-  const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<VariantOption | null>(
     null
   );
+  const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
-
-  // Listen for variant selection events
-  useEffect(() => {
-    const handler = ((e: CustomEvent<VariantOption>) => {
-      setSelectedVariant(e.detail);
-      setAdded(false);
-    }) as EventListener;
-
-    window.addEventListener("variant-selected", handler);
-    return () => window.removeEventListener("variant-selected", handler);
-  }, []);
 
   const effectiveStock = selectedVariant ? selectedVariant.stock : product.stock;
   const effectivePrice = selectedVariant
@@ -221,10 +166,21 @@ export function AddToCartButton({
     : product.priceInCents;
   const isOutOfStock = effectiveStock <= 0;
   const needsVariant = variants.length > 0 && !selectedVariant;
+  const hasSale =
+    product.compareAtPriceInCents !== null &&
+    product.compareAtPriceInCents > product.priceInCents;
 
-  const handleAdd = () => {
+  function handleSelectVariant(v: VariantOption) {
+    if (v.stock <= 0) return;
+    setSelectedVariant(v);
+    // reset quantity falls die vorherige Auswahl eine höhere Zahl
+    // erlaubt hatte, die neue Variante aber weniger Stock hat
+    setQuantity((q) => Math.min(q, v.stock, 99));
+    setAdded(false);
+  }
+
+  function handleAdd() {
     if (isOutOfStock || needsVariant) return;
-
     addItem({
       productId: product.id,
       variantId: selectedVariant?.id ?? null,
@@ -236,15 +192,79 @@ export function AddToCartButton({
       slug: product.slug,
       stock: effectiveStock,
     });
-
     setAdded(true);
     openCart();
     setTimeout(() => setAdded(false), 2000);
-  };
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Quantity Selector */}
+    <div className="space-y-5">
+      {/* Variant-Buttons */}
+      {variants.length > 0 && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Variante wählen</label>
+          <div className="flex flex-wrap gap-2">
+            {variants.map((variant) => {
+              const outOfStock = variant.stock <= 0;
+              const isSelected = selectedVariant?.id === variant.id;
+              return (
+                <button
+                  key={variant.id}
+                  type="button"
+                  disabled={outOfStock}
+                  aria-pressed={isSelected}
+                  onClick={() => handleSelectVariant(variant)}
+                  className={cn(
+                    "rounded-md border px-4 py-2 text-sm font-medium transition-all",
+                    "hover:border-primary hover:text-primary",
+                    "disabled:opacity-40 disabled:cursor-not-allowed",
+                    isSelected &&
+                      "bg-primary text-primary-foreground border-primary hover:text-primary-foreground"
+                  )}
+                >
+                  {variant.name}
+                  <span
+                    className={cn(
+                      "ml-1.5 text-xs",
+                      isSelected
+                        ? "text-primary-foreground/80"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {formatPrice(variant.priceInCents)} inkl. MwSt.
+                  </span>
+                  {outOfStock && (
+                    <span className="ml-1 text-xs">(Ausverkauft)</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Preis-Band (Apotheke-Stil) */}
+      <div className="flex items-baseline justify-between gap-4 py-5 border-y border-border">
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <span className="text-[32px] font-bold tracking-[-0.02em] tabular-nums leading-none">
+            {selectedVariant
+              ? formatPrice(selectedVariant.priceInCents)
+              : priceDisplay}
+          </span>
+          {variants.length === 0 && hasSale && product.compareAtPriceInCents && (
+            <span className="text-base text-muted-foreground line-through tabular-nums">
+              {formatPrice(product.compareAtPriceInCents)}
+            </span>
+          )}
+        </div>
+        <p className="font-mono text-[10px] tracking-[0.1em] uppercase text-muted-foreground text-right max-w-[180px] leading-relaxed">
+          Inkl. 19 % MwSt.
+          <br />
+          Gratis Versand ab 100 €
+        </p>
+      </div>
+
+      {/* Mengen-Wähler */}
       <div className="flex items-center gap-3">
         <label className="text-sm font-medium">Menge</label>
         <div className="flex items-center border rounded-md">
@@ -254,6 +274,7 @@ export function AddToCartButton({
             className="h-9 w-9 rounded-r-none"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             disabled={quantity <= 1}
+            aria-label="Menge verringern"
           >
             <Minus className="h-3 w-3" />
           </Button>
@@ -268,6 +289,7 @@ export function AddToCartButton({
               setQuantity((q) => Math.min(q + 1, effectiveStock, 99))
             }
             disabled={quantity >= Math.min(effectiveStock, 99)}
+            aria-label="Menge erhöhen"
           >
             <Plus className="h-3 w-3" />
           </Button>
@@ -279,7 +301,7 @@ export function AddToCartButton({
         )}
       </div>
 
-      {/* Add to Cart */}
+      {/* In den Warenkorb */}
       <Button
         size="lg"
         className="w-full gap-2"

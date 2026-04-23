@@ -31,8 +31,7 @@ import type { Metadata } from "next";
 import type { ProductWithDetails } from "@/types";
 
 import {
-  AddToCartButton,
-  VariantSelector,
+  VariantBuyPanel,
   ImageGallery,
   SequenceCopyBlock,
 } from "./product-client";
@@ -161,9 +160,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   const avgRating = averageRating(product.reviews);
   const isOutOfStock = product.stock <= 0;
-  const hasSale =
-    product.compareAtPriceInCents &&
-    product.compareAtPriceInCents > product.priceInCents;
+  // hasSale-Logik wanderte in VariantBuyPanel — wird dort anhand der
+  // gleichen Felder (compareAtPriceInCents, priceInCents) berechnet.
 
   // Related products + bestseller flags + latest COA run in parallel.
   const [relatedRaw, bestsellerIds, latestCoa] = await Promise.all([
@@ -409,55 +407,32 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   />
                 </dl>
 
-                {/* Varianten + Menge + CTA */}
-                <div className="space-y-5">
-                  {product.variants.length > 0 && (
-                    <VariantSelector
-                      variants={product.variants.map((v) => ({
-                        id: v.id,
-                        name: v.name,
-                        priceInCents: v.priceInCents,
-                        stock: v.stock,
-                      }))}
-                    />
-                  )}
-
-                  {/* Price-Row mit Borders oben+unten, Apotheke-Stil */}
-                  <div className="flex items-baseline justify-between gap-4 py-5 border-y border-border">
-                    <div className="flex items-baseline gap-3 flex-wrap">
-                      <span className="text-[32px] font-bold tracking-[-0.02em] tabular-nums leading-none">
-                        {priceDisplay}
-                      </span>
-                      {product.variants.length === 0 && hasSale && (
-                        <span className="text-base text-muted-foreground line-through tabular-nums">
-                          {formatPrice(product.compareAtPriceInCents!)}
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-mono text-[10px] tracking-[0.1em] uppercase text-muted-foreground text-right max-w-[180px] leading-relaxed">
-                      Inkl. 19 % MwSt.
-                      <br />
-                      Gratis Versand ab 100 €
-                    </p>
-                  </div>
-
-                  <AddToCartButton
-                    product={{
-                      id: product.id,
-                      name: product.name,
-                      slug: product.slug,
-                      priceInCents: product.priceInCents,
-                      stock: product.stock,
-                      image: product.images[0]?.url ?? null,
-                    }}
-                    variants={product.variants.map((v) => ({
-                      id: v.id,
-                      name: v.name,
-                      priceInCents: v.priceInCents,
-                      stock: v.stock,
-                    }))}
-                  />
-                </div>
+                {/* Varianten + Preis + Menge + CTA — in einem Panel
+                    das den selectedVariant-State lokal hält. Früher:
+                    VariantSelector und AddToCartButton waren zwei
+                    unabhängige Client-Components, die per
+                    `window.dispatchEvent` kommunizierten — das hat
+                    Strict-Mode-Doppeltes-Register + Cross-Tab-Leak
+                    erzeugt. Jetzt: ein Component, lokaler State. */}
+                <VariantBuyPanel
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    priceInCents: product.priceInCents,
+                    stock: product.stock,
+                    image: product.images[0]?.url ?? null,
+                    compareAtPriceInCents:
+                      product.compareAtPriceInCents ?? null,
+                  }}
+                  variants={product.variants.map((v) => ({
+                    id: v.id,
+                    name: v.name,
+                    priceInCents: v.priceInCents,
+                    stock: v.stock,
+                  }))}
+                  priceDisplay={priceDisplay}
+                />
 
                 {/* Research-Only Callout (muted BG, gold left-border) */}
                 <div className="border-l-[3px] border-primary bg-muted/50 p-4 text-[13px] leading-relaxed text-muted-foreground">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,20 @@ import { Loader2 } from "lucide-react";
 export default function ProfilePage() {
   const { data: session, update: updateSession } = useSession();
 
+  // useState-Initializer läuft nur beim ersten Render — wenn die
+  // Session initial `undefined` ist (SSR → hydration → client lookup)
+  // und erst danach befüllt wird, bleiben die Inputs leer. Daher
+  // unten ein useEffect der Name/Email mit dem Session-User syncht,
+  // sobald sie ankommen bzw. sich ändern.
   const [name, setName] = useState(session?.user?.name ?? "");
   const [email, setEmail] = useState(session?.user?.email ?? "");
+
+  useEffect(() => {
+    if (session?.user?.name) setName(session.user.name);
+  }, [session?.user?.name]);
+  useEffect(() => {
+    if (session?.user?.email) setEmail(session.user.email);
+  }, [session?.user?.email]);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMessage, setProfileMessage] = useState<{
     type: "success" | "error";
