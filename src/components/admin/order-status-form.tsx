@@ -176,12 +176,17 @@ export function OrderStatusForm({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && saving && (
+            {/* Banner zeigen NACH dem Submit — also wenn gerade NICHT
+                mehr gespeichert wird. Vorher war die Condition
+                `&& saving`, was dazu führte dass `error`/`success`
+                erst nach dem Request gesetzt wurden (saving=false)
+                und der Banner nie sichtbar war. */}
+            {error && !saving && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
                 {error}
               </div>
             )}
-            {success && saving && (
+            {success && !saving && (
               <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">
                 {success}
               </div>
@@ -224,9 +229,20 @@ export function OrderStatusForm({
               />
             </div>
 
+            {/* Button enabled sobald IRGENDEIN Feld gegenüber dem
+                aktuellen Order-Zustand geändert wurde. Vorher war nur
+                Status-Change erlaubt, was Admins zwang, bei reinem
+                Tracking-Nachtrag den Status erst auf etwas anderes zu
+                flippen und zurück — das erzeugt spurious OrderEvent-
+                Einträge im Audit-Log. */}
             <Button
               type="submit"
-              disabled={saving || status === currentStatus}
+              disabled={
+                saving ||
+                (status === currentStatus &&
+                  trackingNumber.trim() === (currentTracking ?? "") &&
+                  note.trim() === "")
+              }
               className="w-full"
             >
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
