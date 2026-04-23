@@ -133,12 +133,12 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
               )}
             </div>
             <CardTitle className="text-2xl">
-              {isBankTransfer ? "Order Placed!" : "Order Confirmed!"}
+              {isBankTransfer ? "Bestellung eingegangen!" : "Bestellung bestätigt!"}
             </CardTitle>
             <CardDescription className="text-base">
               {isBankTransfer
-                ? "Your order has been placed. Please complete the bank transfer to process your order."
-                : "Thank you for your order. Your payment has been processed successfully."}
+                ? "Ihre Bestellung ist eingegangen. Bitte überweisen Sie den Betrag, damit wir die Bestellung bearbeiten können."
+                : "Vielen Dank für Ihre Bestellung. Ihre Zahlung wurde erfolgreich verarbeitet."}
             </CardDescription>
           </CardHeader>
 
@@ -152,19 +152,19 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
                   <div className="flex items-start gap-3">
                     <Building2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium">Bank Transfer Details</p>
+                      <p className="font-medium">Überweisungsdaten</p>
                       <p className="text-sm text-muted-foreground">
-                        Please transfer the amount below using the order number
-                        as payment reference.
+                        Bitte überweisen Sie den unten angegebenen Betrag mit
+                        der Bestellnummer als Verwendungszweck.
                       </p>
                     </div>
                   </div>
 
                   <div className="rounded-md border bg-muted/50 p-4 space-y-3">
-                    {/* Amount */}
+                    {/* Betrag */}
                     {totalCents > 0 && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Amount</span>
+                        <span className="text-sm text-muted-foreground">Betrag</span>
                         <span className="text-lg font-bold text-primary">
                           {formatPrice(totalCents)}
                         </span>
@@ -175,7 +175,7 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
 
                     {/* Bank info rows */}
                     <BankDetailRow
-                      label="Account Holder"
+                      label="Kontoinhaber"
                       value={BANK_DETAILS.accountHolder}
                       onCopy={() => copyToClipboard(BANK_DETAILS.accountHolder, "holder")}
                       copied={copiedField === "holder"}
@@ -203,11 +203,11 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
 
                     <Separator />
 
-                    {/* Payment Reference */}
+                    {/* Verwendungszweck */}
                     {orderNumber && (
                       <div>
                         <span className="text-xs text-muted-foreground block mb-1">
-                          Payment Reference (Verwendungszweck)
+                          Verwendungszweck
                         </span>
                         <div className="flex items-center justify-between bg-background rounded-md border p-2">
                           <span className="font-mono font-bold text-sm">
@@ -231,11 +231,12 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
                   </div>
 
                   <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-                    <p className="font-medium">Important</p>
+                    <p className="font-medium">Wichtig</p>
                     <p className="mt-1">
-                      Please use your order number as the payment reference so we
-                      can match your transfer to your order. Your order will be
-                      processed once payment is confirmed.
+                      Bitte verwenden Sie Ihre Bestellnummer als
+                      Verwendungszweck, damit wir Ihre Überweisung der
+                      Bestellung zuordnen können. Die Bearbeitung startet,
+                      sobald der Zahlungseingang bestätigt ist.
                     </p>
                   </div>
                 </div>
@@ -245,11 +246,11 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
                 <div className="flex items-start gap-3">
                   <Package className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium">What happens next?</p>
+                    <p className="font-medium">Wie geht es weiter?</p>
                     <p className="text-muted-foreground">
-                      We are preparing your order for shipment. You will receive
-                      an email confirmation with tracking information once your
-                      order has been shipped.
+                      Wir bereiten Ihre Bestellung für den Versand vor. Sie
+                      erhalten eine Versandbestätigung mit Tracking-Nummer
+                      per E-Mail, sobald die Sendung unterwegs ist.
                     </p>
                   </div>
                 </div>
@@ -257,20 +258,20 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
                 {verifying ? (
                   <div className="rounded-md border bg-muted/50 p-3 flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Confirming your order...</p>
+                    <p className="text-sm text-muted-foreground">
+                      Bestellung wird bestätigt…
+                    </p>
                   </div>
                 ) : stripeOrder ? (
                   <div className="rounded-md border bg-muted/50 p-3">
-                    <p className="text-xs text-muted-foreground">Order Number</p>
+                    <p className="text-xs text-muted-foreground">Bestellnummer</p>
                     <p className="font-mono font-bold text-sm mt-1">
                       {stripeOrder.orderNumber}
                     </p>
                   </div>
                 ) : sessionId ? (
                   <div className="rounded-md border bg-muted/50 p-3">
-                    <p className="text-xs text-muted-foreground">
-                      Payment Reference
-                    </p>
+                    <p className="text-xs text-muted-foreground">Zahlungsreferenz</p>
                     <p className="font-mono text-xs mt-1 break-all">
                       {sessionId}
                     </p>
@@ -291,22 +292,23 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
                 ) : (
                   <Link href="/dashboard">
                     <Package className="mr-2 h-4 w-4" />
-                    View My Orders
+                    Meine Bestellungen
                   </Link>
                 )}
               </Button>
               <Button variant="outline" className="w-full" size="lg" asChild>
                 <Link href="/products">
                   <ShoppingBag className="mr-2 h-4 w-4" />
-                  Continue Shopping
+                  Weiter einkaufen
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              If you have any questions about your order, please contact our
-              support team. Thank you for choosing {APP_NAME}.
+              Bei Fragen zu Ihrer Bestellung wenden Sie sich bitte an unseren
+              Support. Vielen Dank, dass Sie sich für {APP_NAME} entschieden
+              haben.
             </p>
           </CardContent>
         </Card>

@@ -9,10 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
-
-const SHIPPING_THRESHOLD_CENTS = 10000; // 100 EUR
-const SHIPPING_COST_CENTS = 599; // 5.99 EUR
-const TAX_RATE = 0.19; // 19%
+import {
+  FREE_SHIPPING_THRESHOLD_CENTS,
+  STANDARD_SHIPPING_CENTS,
+} from "@/lib/order/calculate-totals";
 
 export default function CartPage() {
   const [mounted, setMounted] = useState(false);
@@ -45,9 +45,13 @@ export default function CartPage() {
     (sum, item) => sum + item.priceInCents * item.quantity,
     0
   );
-  const shipping = subtotal >= SHIPPING_THRESHOLD_CENTS ? 0 : SHIPPING_COST_CENTS;
+  // Versand-Logik konsistent mit lib/order/calculate-totals. Cart zeigt
+  // keinen Promo-Discount an (der kommt erst beim Checkout) — daher
+  // basiert der Preview auf der rohen Zwischensumme. Beim Checkout-
+  // Übergang kann sich der Wert durch einen Promo-Code noch ändern.
+  const shipping =
+    subtotal >= FREE_SHIPPING_THRESHOLD_CENTS ? 0 : STANDARD_SHIPPING_CENTS;
   const total = subtotal + shipping;
-  const estimatedTax = Math.round(total - total / (1 + TAX_RATE));
 
   if (items.length === 0) {
     return (
@@ -176,7 +180,7 @@ export default function CartPage() {
                           </Button>
                           {item.quantity >= item.stock && (
                             <span className="text-xs text-amber-600 ml-1">
-                              Max stock
+                              Max. Bestand
                             </span>
                           )}
                         </div>
@@ -235,7 +239,8 @@ export default function CartPage() {
 
               {shipping > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Kostenloser Versand ab {formatPrice(SHIPPING_THRESHOLD_CENTS)}
+                  Kostenloser Versand ab{" "}
+                  {formatPrice(FREE_SHIPPING_THRESHOLD_CENTS)}
                 </p>
               )}
 

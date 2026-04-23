@@ -50,6 +50,10 @@ import {
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
 import { BANK_DETAILS } from "@/lib/constants";
+import {
+  FREE_SHIPPING_THRESHOLD_CENTS,
+  STANDARD_SHIPPING_CENTS,
+} from "@/lib/order/calculate-totals";
 
 type PaymentMethod = "STRIPE" | "BANK_TRANSFER";
 
@@ -69,9 +73,9 @@ interface Address {
   isDefault: boolean;
 }
 
-const SHIPPING_THRESHOLD_CENTS = 10000;
-const SHIPPING_COST_CENTS = 599;
-const TAX_RATE = 0.19;
+// Shipping + Tax-Konstanten werden zentral aus
+// `lib/order/calculate-totals` importiert, damit UI-Preview und
+// serverseitige Order-Berechnung nicht mehr auseinanderlaufen können.
 
 const INITIAL_ADDRESS_FORM = {
   firstName: "",
@@ -448,12 +452,12 @@ export default function CheckoutPage() {
           <div className="mx-auto h-24 w-24 rounded-full bg-muted flex items-center justify-center">
             <ShoppingBag className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h1 className="text-3xl font-bold">Your cart is empty</h1>
+          <h1 className="text-3xl font-bold">Ihr Warenkorb ist leer</h1>
           <p className="text-muted-foreground">
-            Add some products before checking out.
+            Legen Sie Produkte in den Warenkorb, bevor Sie zur Kasse gehen.
           </p>
           <Button size="lg" asChild>
-            <Link href="/products">Browse Products</Link>
+            <Link href="/products">Produkte entdecken</Link>
           </Button>
         </div>
       </div>
@@ -464,9 +468,10 @@ export default function CheckoutPage() {
   const discount = appliedPromo?.discountAmount ?? 0;
   const subtotalAfterDiscount = Math.max(0, subtotal - discount);
   const shipping =
-    subtotalAfterDiscount >= SHIPPING_THRESHOLD_CENTS ? 0 : SHIPPING_COST_CENTS;
+    subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD_CENTS
+      ? 0
+      : STANDARD_SHIPPING_CENTS;
   const total = subtotalAfterDiscount + shipping;
-  const estimatedTax = Math.round(total - total / (1 + TAX_RATE));
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
