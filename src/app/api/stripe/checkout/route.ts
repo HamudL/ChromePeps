@@ -164,6 +164,18 @@ export async function POST(req: NextRequest) {
     const productMap = new Map(products.map((p) => [p.id, p]));
     const variantMap = new Map(variants.map((v) => [v.id, v]));
 
+    // Meta-items für Stripe session_metadata werden während des Loops
+    // in sync mit lineItems aufgebaut. Früher wurde nach dem Loop per
+    // lineItems[idx] → body.items[idx] gemappt, das brach sobald auch
+    // nur ein raw item per `continue` (invalid pid/qty) übersprungen
+    // wurde — dann liefen lineItems und body.items auseinander und
+    // die Webhook sah falsche productIds für den Gast.
+    const metaItems: Array<{
+      p: string;
+      v: string | null;
+      q: number;
+    }> = [];
+
     for (const rawItem of guestItems) {
       const pid =
         typeof rawItem.productId === "string" ? rawItem.productId : "";
@@ -224,6 +236,9 @@ export async function POST(req: NextRequest) {
         },
         quantity: qty,
       });
+      // Meta-Zeile im selben Schritt pushen → index-Parität
+      // garantiert, egal wie viele rawItems per `continue` fallen.
+      metaItems.push({ p: pid, v: vid, q: qty });
     }
 
     if (lineItems.length === 0) {
@@ -241,22 +256,7 @@ export async function POST(req: NextRequest) {
     // session. Stripe's per-value limit is 500 chars. A reasonable
     // shop cart (≤10 items, cuid ids ~25 chars each) fits
     // comfortably; we cap at a safe upper bound below.
-    guestItemsMeta = JSON.stringify(
-      lineItems.map((_li, idx) => {
-        // Recover the productId/variantId/quantity from the
-        // original request body — lineItems itself only carries
-        // display info.
-        const raw = body.items[idx];
-        return {
-          p: typeof raw?.productId === "string" ? raw.productId : "",
-          v: typeof raw?.variantId === "string" ? raw.variantId : null,
-          q:
-            typeof raw?.quantity === "number" && raw.quantity > 0
-              ? Math.floor(raw.quantity)
-              : 1,
-        };
-      })
-    );
+    guestItemsMeta = JSON.stringify(metaItems);
     if (guestItemsMeta.length > 490) {
       return NextResponse.json(
         {

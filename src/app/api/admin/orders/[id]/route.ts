@@ -198,8 +198,26 @@ export async function PATCH(
       },
     });
 
-    // Restore stock on cancellation (skip if product/variant was hard-deleted)
-    if (parsed.data.status === "CANCELLED" && existing.status !== "CANCELLED") {
+    // Restore stock on cancellation — nur unter strengen Bedingungen:
+    //  1) Test-Orders haben nie Stock dekrementiert (siehe
+    //     /api/admin/orders/test) → dürfen auch nichts re-incrementen
+    //     (sonst phantom inventory pro gecancelter Test-Order).
+    //  2) Stock wurde nur bei echten Kauf-Status-Übergängen
+    //     (PROCESSING / SHIPPED) dekrementiert. Transitions wie
+    //     ARCHIVED → CANCELLED oder DELIVERED → CANCELLED würden
+    //     ohne diesen Guard doppelt oder fälschlich re-incrementen
+    //     (ARCHIVED hatte meist schon einen restore hinter sich,
+    //     DELIVERED ist die Ware bereits beim Kunden).
+    //  3) `.catch(() => {})` bleibt, falls product/variant
+    //     hard-deleted wurde.
+    const stockWasDecremented = (
+      ["PROCESSING", "SHIPPED"] as const
+    ).includes(existing.status as "PROCESSING" | "SHIPPED");
+    if (
+      parsed.data.status === "CANCELLED" &&
+      stockWasDecremented &&
+      !existing.isTestOrder
+    ) {
       for (const item of updated.items) {
         if (item.variantId) {
           await tx.productVariant

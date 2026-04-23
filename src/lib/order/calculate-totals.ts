@@ -76,12 +76,12 @@ export function calculateOrderTotals(input: OrderTotalsInput): OrderTotals {
 
   return {
     subtotalInCents: input.subtotalInCents,
-    // Discount is returned verbatim — we don't clamp it here to preserve
-    // the existing stored-order shape (an upstream bug that passed
-    // discount > subtotal would still have total=0 because of the Math.max
-    // on subtotalAfterDiscount above, so the customer is never charged
-    // a negative amount).
-    discountInCents: input.discountInCents,
+    // Discount auf subtotal clampen — totalInCents war immer schon
+    // korrekt (Math.max(0, ...) oben), aber das stored discount-Feld
+    // sollte niemals größer als subtotal sein, sonst zeigt die
+    // Rechnung "Rabatt: 100€ / Zwischensumme: 50€" und die
+    // Buchhaltungs-Exports summieren inkonsistente Zahlen.
+    discountInCents: Math.min(input.discountInCents, input.subtotalInCents),
     shippingInCents,
     totalInCents,
     taxInCents,

@@ -142,15 +142,20 @@ describe("calculateOrderTotals()", () => {
       expect(t.totalInCents).toBe(599);
     });
 
-    it("returns the raw discount value unchanged in the result", () => {
-      // We intentionally preserve the caller-supplied discount (even if
-      // larger than subtotal) so the stored order row matches the previous
-      // behavior across all three checkout paths.
+    it("clamps the stored discount value to the subtotal so stored fields stay internally consistent", () => {
+      // Vorheriges Verhalten speicherte den Roh-Rabatt verbatim, auch
+      // wenn er größer als subtotal war. Das führte zu Rechnungen mit
+      // "Rabatt 90€ auf Zwischensumme 50€" — legal verwirrend und
+      // buchhalterisch inkonsistent (totalInCents war via Math.max(0)
+      // zwar schon immer korrekt, aber die Einzelfelder nicht). Jetzt
+      // wird der stored discount auf min(discount, subtotal) geclampt.
       const t = calculateOrderTotals({
         subtotalInCents: 5_000,
         discountInCents: 9_000,
       });
-      expect(t.discountInCents).toBe(9_000);
+      expect(t.discountInCents).toBe(5_000);
+      // totalInCents-Verhalten bleibt unverändert (0 + shipping):
+      expect(t.totalInCents).toBe(599);
     });
 
     it("handles a zero discount (no promo applied)", () => {
