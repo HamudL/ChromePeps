@@ -7,7 +7,7 @@ import { EmailVerifyBanner } from "@/components/dashboard/email-verify-banner";
 import { ResearchBanner } from "@/components/layout/research-banner";
 
 export const metadata = {
-  title: `My Account | ${APP_NAME}`,
+  title: `Mein Konto | ${APP_NAME}`,
 };
 
 export default async function DashboardLayout({
@@ -33,7 +33,7 @@ export default async function DashboardLayout({
           <Link href="/" className="mr-6 text-lg font-bold tracking-tight">
             {APP_NAME}
           </Link>
-          <span className="text-sm text-muted-foreground">My Account</span>
+          <span className="text-sm text-muted-foreground">Mein Konto</span>
           <div className="ml-auto text-sm text-muted-foreground">
             {session.user.email}
           </div>

@@ -55,7 +55,7 @@ export default function RegisterPage() {
       // Create account via server action (handles rate limiting + DB)
       const result = await registerAction(formData);
       if (!result.success) {
-        setError(result.error ?? "Something went wrong. Please try again.");
+        setError(result.error ?? "Etwas ist schiefgegangen. Bitte erneut versuchen.");
         return;
       }
 
@@ -83,7 +83,7 @@ export default function RegisterPage() {
         window.location.href = "/login";
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Etwas ist schiefgegangen. Bitte erneut versuchen.");
     } finally {
       setIsPending(false);
     }
@@ -91,11 +91,11 @@ export default function RegisterPage() {
 
   return (
     <Card className="w-full max-w-md shadow-lg">
-      <h1 className="sr-only">Create a {APP_NAME} account</h1>
+      <h1 className="sr-only">{APP_NAME}-Konto erstellen</h1>
       <CardHeader className="text-center space-y-1">
-        <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+        <CardTitle className="text-2xl font-bold">Konto erstellen</CardTitle>
         <CardDescription>
-          Join {APP_NAME} to order research peptides
+          Registrieren Sie sich bei {APP_NAME}, um Forschungspeptide zu bestellen.
         </CardDescription>
       </CardHeader>
 
@@ -112,12 +112,12 @@ export default function RegisterPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Vollständiger Name</Label>
             <Input
               id="name"
               name="name"
               type="text"
-              placeholder="Dr. Jane Smith"
+              placeholder="Dr. Jane Schmidt"
               required
               autoComplete="name"
               disabled={isPending}
@@ -132,12 +132,12 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">E-Mail</Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="researcher@lab.com"
+              placeholder="forschung@labor.de"
               required
               autoComplete="email"
               disabled={isPending}
@@ -152,12 +152,12 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Passwort</Label>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="Min. 8 characters"
+              placeholder="Mind. 8 Zeichen"
               required
               autoComplete="new-password"
               disabled={isPending}
@@ -172,17 +172,17 @@ export default function RegisterPage() {
               </p>
             )}
             <p id="password-hint" className="text-xs text-muted-foreground">
-              Must contain uppercase, lowercase, and a number.
+              Muss Großbuchstaben, Kleinbuchstaben und eine Zahl enthalten.
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              placeholder="Re-enter your password"
+              placeholder="Passwort erneut eingeben"
               required
               autoComplete="new-password"
               disabled={isPending}
@@ -208,23 +208,23 @@ export default function RegisterPage() {
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Creating account...
+                Konto wird erstellt …
               </>
             ) : (
               <>
                 <UserPlus className="h-4 w-4" />
-                Create Account
+                Konto erstellen
               </>
             )}
           </Button>
 
           <p className="text-sm text-muted-foreground text-center">
-            Already have an account?{" "}
+            Bereits ein Konto?{" "}
             <Link
               href="/login"
               className="text-primary font-medium hover:underline"
             >
-              Sign in
+              Anmelden
             </Link>
           </p>
         </CardFooter>

@@ -61,12 +61,12 @@ export default async function DashboardOrdersPage(props: {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-16">
           <Package className="mb-4 h-12 w-12 text-muted-foreground" />
-          <h2 className="mb-2 text-lg font-semibold">No orders yet</h2>
+          <h2 className="mb-2 text-lg font-semibold">Noch keine Bestellungen</h2>
           <p className="mb-6 text-sm text-muted-foreground">
-            Once you place an order, it will appear here.
+            Sobald Sie eine Bestellung aufgeben, erscheint sie hier.
           </p>
           <Button asChild>
-            <Link href="/products">Browse Products</Link>
+            <Link href="/products">Produkte entdecken</Link>
           </Button>
         </CardContent>
       </Card>
@@ -77,9 +77,9 @@ export default async function DashboardOrdersPage(props: {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>My Orders</CardTitle>
+          <CardTitle>Meine Bestellungen</CardTitle>
           <CardDescription>
-            {total} order{total !== 1 ? "s" : ""} total
+            {total === 1 ? "1 Bestellung" : `${total} Bestellungen`} insgesamt
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -87,11 +87,11 @@ export default async function DashboardOrdersPage(props: {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order #</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Bestellnr.</TableHead>
+                  <TableHead>Datum</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead>Positionen</TableHead>
+                  <TableHead className="text-right">Gesamt</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -106,7 +106,7 @@ export default async function DashboardOrdersPage(props: {
                       </Link>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {format(new Date(order.createdAt), "MMM d, yyyy")}
+                      {format(new Date(order.createdAt), "dd.MM.yyyy")}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -119,7 +119,7 @@ export default async function DashboardOrdersPage(props: {
                     <TableCell className="text-muted-foreground">
                       {order.items.length === 1
                         ? order.items[0].productName
-                        : `${order.items.length} items`}
+                        : `${order.items.length} Positionen`}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatPrice(order.totalInCents)}
@@ -133,20 +133,20 @@ export default async function DashboardOrdersPage(props: {
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
+                Seite {currentPage} von {totalPages}
               </p>
               <div className="flex gap-2">
                 {currentPage > 1 && (
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard?page=${currentPage - 1}`}>
-                      Previous
+                      Zurück
                     </Link>
                   </Button>
                 )}
                 {currentPage < totalPages && (
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard?page=${currentPage + 1}`}>
-                      Next
+                      Weiter
                     </Link>
                   </Button>
                 )}

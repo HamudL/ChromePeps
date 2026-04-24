@@ -93,7 +93,7 @@ export default function LoginPage() {
       // Server-side rate limit check
       const rateCheck = await checkLoginRateLimit(email);
       if (!rateCheck.success) {
-        setError(rateCheck.error ?? "Too many attempts.");
+        setError(rateCheck.error ?? "Zu viele Anmeldeversuche.");
         return;
       }
 
@@ -115,11 +115,11 @@ export default function LoginPage() {
 
   return (
     <Card className="w-full max-w-md shadow-lg">
-      <h1 className="sr-only">Sign in to {APP_NAME}</h1>
+      <h1 className="sr-only">Bei {APP_NAME} anmelden</h1>
       <CardHeader className="text-center space-y-1">
-        <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+        <CardTitle className="text-2xl font-bold">Willkommen zurück</CardTitle>
         <CardDescription>
-          Sign in to your {APP_NAME} account
+          Melden Sie sich bei Ihrem {APP_NAME}-Konto an
         </CardDescription>
       </CardHeader>
 
@@ -136,12 +136,12 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">E-Mail</Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="researcher@lab.com"
+              placeholder="forschung@labor.de"
               required
               autoComplete="email"
               disabled={isPending}
@@ -150,7 +150,7 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Passwort</Label>
               <Link
                 href="/forgot-password"
                 className="text-xs text-muted-foreground hover:text-foreground hover:underline"
@@ -162,7 +162,7 @@ export default function LoginPage() {
               id="password"
               name="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="Passwort eingeben"
               required
               autoComplete="current-password"
               disabled={isPending}
@@ -175,23 +175,23 @@ export default function LoginPage() {
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Signing in...
+                Anmelden …
               </>
             ) : (
               <>
                 <LogIn className="h-4 w-4" />
-                Sign In
+                Anmelden
               </>
             )}
           </Button>
 
           <p className="text-sm text-muted-foreground text-center">
-            Don&apos;t have an account?{" "}
+            Noch kein Konto?{" "}
             <Link
               href="/register"
               className="text-primary font-medium hover:underline"
             >
-              Create one
+              Jetzt registrieren
             </Link>
           </p>
         </CardFooter>

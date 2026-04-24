@@ -134,11 +134,25 @@ export default function AddressesPage() {
     setSubmitting(true);
     setError(null);
 
+    // Required-Felder mit deutschen Labels — wird nur angezeigt, wenn der
+    // HTML5 `required`-Check (oben in den Inputs) aus irgendeinem Grund
+    // nicht greift. Eine map ist einfacher und stabiler als
+    // dynamisches Stringbasteln, das eh nur englische Camel-Case-Wörter
+    // produziert.
+    const requiredLabels: Record<string, string> = {
+      firstName: "Vorname",
+      lastName: "Nachname",
+      street: "Straße",
+      city: "Stadt",
+      postalCode: "PLZ",
+      country: "Ländercode",
+    };
+
     const payload: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(form)) {
       if (typeof value === "string" && value.trim() === "") {
-        if (["firstName", "lastName", "street", "city", "postalCode", "country"].includes(key)) {
-          setError(`${key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())} is required.`);
+        if (key in requiredLabels) {
+          setError(`${requiredLabels[key]} ist ein Pflichtfeld.`);
           setSubmitting(false);
           return;
         }
@@ -160,14 +174,14 @@ export default function AddressesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Failed to save address.");
+        setError(data.error ?? "Adresse konnte nicht gespeichert werden.");
         return;
       }
 
       setDialogOpen(false);
       await fetchAddresses();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Etwas ist schiefgegangen. Bitte erneut versuchen.");
     } finally {
       setSubmitting(false);
     }
@@ -223,14 +237,14 @@ export default function AddressesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">My Addresses</h2>
+          <h2 className="text-lg font-semibold">Meine Adressen</h2>
           <p className="text-sm text-muted-foreground">
-            Manage your shipping and billing addresses.
+            Verwalten Sie Ihre Liefer- und Rechnungsadressen.
           </p>
         </div>
         <Button onClick={openAddDialog} size="sm">
           <Plus className="mr-2 h-4 w-4" />
-          Add Address
+          Adresse hinzufügen
         </Button>
       </div>
 
@@ -238,13 +252,13 @@ export default function AddressesPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <MapPin className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">No addresses yet</h3>
+            <h3 className="mb-2 text-lg font-semibold">Noch keine Adressen</h3>
             <p className="mb-6 text-sm text-muted-foreground">
-              Add an address to get started.
+              Fügen Sie eine Adresse hinzu, um loszulegen.
             </p>
             <Button onClick={openAddDialog}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Address
+              Adresse hinzufügen
             </Button>
           </CardContent>
         </Card>
@@ -259,7 +273,7 @@ export default function AddressesPage() {
                   </CardTitle>
                   {address.isDefault && (
                     <Badge variant="secondary" className="bg-primary/10 text-primary">
-                      Default
+                      Standard
                     </Badge>
                   )}
                 </div>
@@ -289,7 +303,7 @@ export default function AddressesPage() {
                     onClick={() => openEditDialog(address)}
                   >
                     <Pencil className="mr-1.5 h-3 w-3" />
-                    Edit
+                    Bearbeiten
                   </Button>
                   {!address.isDefault && (
                     <Button
@@ -298,7 +312,7 @@ export default function AddressesPage() {
                       onClick={() => handleSetDefault(address.id)}
                     >
                       <Star className="mr-1.5 h-3 w-3" />
-                      Set Default
+                      Als Standard
                     </Button>
                   )}
                   <Button
@@ -308,7 +322,7 @@ export default function AddressesPage() {
                     onClick={() => setDeleteConfirmId(address.id)}
                   >
                     <Trash2 className="mr-1.5 h-3 w-3" />
-                    Delete
+                    Löschen
                   </Button>
                 </div>
               </CardContent>
@@ -322,29 +336,29 @@ export default function AddressesPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? "Edit Address" : "Add New Address"}
+              {editingId ? "Adresse bearbeiten" : "Neue Adresse hinzufügen"}
             </DialogTitle>
             <DialogDescription>
               {editingId
-                ? "Update the address details below."
-                : "Fill in the address details below."}
+                ? "Aktualisieren Sie unten die Adressdaten."
+                : "Füllen Sie unten die Adressdaten aus."}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="addr-label">Label (optional)</Label>
+              <Label htmlFor="addr-label">Bezeichnung (optional)</Label>
               <Input
                 id="addr-label"
                 value={form.label}
                 onChange={(e) => updateField("label", e.target.value)}
-                placeholder="e.g. Home, Office"
+                placeholder="z.B. Zuhause, Büro"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="addr-firstName">First Name</Label>
+                <Label htmlFor="addr-firstName">Vorname</Label>
                 <Input
                   id="addr-firstName"
                   value={form.firstName}
@@ -353,7 +367,7 @@ export default function AddressesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="addr-lastName">Last Name</Label>
+                <Label htmlFor="addr-lastName">Nachname</Label>
                 <Input
                   id="addr-lastName"
                   value={form.lastName}
@@ -364,7 +378,7 @@ export default function AddressesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="addr-company">Company (optional)</Label>
+              <Label htmlFor="addr-company">Firma (optional)</Label>
               <Input
                 id="addr-company"
                 value={form.company}
@@ -373,7 +387,7 @@ export default function AddressesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="addr-street">Street</Label>
+              <Label htmlFor="addr-street">Straße</Label>
               <Input
                 id="addr-street"
                 value={form.street}
@@ -383,7 +397,7 @@ export default function AddressesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="addr-street2">Street 2 (optional)</Label>
+              <Label htmlFor="addr-street2">Adresszusatz (optional)</Label>
               <Input
                 id="addr-street2"
                 value={form.street2}
@@ -393,7 +407,7 @@ export default function AddressesPage() {
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="addr-postalCode">Postal Code</Label>
+                <Label htmlFor="addr-postalCode">PLZ</Label>
                 <Input
                   id="addr-postalCode"
                   value={form.postalCode}
@@ -402,7 +416,7 @@ export default function AddressesPage() {
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="addr-city">City</Label>
+                <Label htmlFor="addr-city">Stadt</Label>
                 <Input
                   id="addr-city"
                   value={form.city}
@@ -414,7 +428,7 @@ export default function AddressesPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="addr-state">State / Province (optional)</Label>
+                <Label htmlFor="addr-state">Bundesland (optional)</Label>
                 <Input
                   id="addr-state"
                   value={form.state}
@@ -422,7 +436,7 @@ export default function AddressesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="addr-country">Country Code</Label>
+                <Label htmlFor="addr-country">Ländercode</Label>
                 <Input
                   id="addr-country"
                   value={form.country}
@@ -435,7 +449,7 @@ export default function AddressesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="addr-phone">Phone (optional)</Label>
+              <Label htmlFor="addr-phone">Telefon (optional)</Label>
               <Input
                 id="addr-phone"
                 type="tel"
@@ -453,7 +467,7 @@ export default function AddressesPage() {
                 className="h-4 w-4 rounded border-input"
               />
               <Label htmlFor="addr-isDefault" className="text-sm font-normal">
-                Set as default address
+                Als Standardadresse festlegen
               </Label>
             </div>
 
@@ -465,13 +479,13 @@ export default function AddressesPage() {
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
               >
-                Cancel
+                Abbrechen
               </Button>
               <Button type="submit" disabled={submitting}>
                 {submitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {editingId ? "Save Changes" : "Add Address"}
+                {editingId ? "Änderungen speichern" : "Adresse hinzufügen"}
               </Button>
             </DialogFooter>
           </form>
@@ -487,10 +501,10 @@ export default function AddressesPage() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete Address</DialogTitle>
+            <DialogTitle>Adresse löschen</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this address? This action cannot be
-              undone.
+              Möchten Sie diese Adresse wirklich löschen? Diese Aktion kann nicht
+              rückgängig gemacht werden.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -499,7 +513,7 @@ export default function AddressesPage() {
               onClick={() => setDeleteConfirmId(null)}
               disabled={deleting}
             >
-              Cancel
+              Abbrechen
             </Button>
             <Button
               variant="destructive"
@@ -507,7 +521,7 @@ export default function AddressesPage() {
               disabled={deleting}
             >
               {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              Löschen
             </Button>
           </DialogFooter>
         </DialogContent>

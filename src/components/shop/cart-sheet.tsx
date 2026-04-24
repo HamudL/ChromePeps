@@ -67,7 +67,7 @@ export function CartSheet() {
             Warenkorb
             {itemCount > 0 && (
               <span className="font-mono text-xs text-muted-foreground ml-1">
-                · {itemCount} {itemCount === 1 ? "Artikel" : "Artikel"}
+                · {itemCount} Artikel
               </span>
             )}
           </SheetTitle>

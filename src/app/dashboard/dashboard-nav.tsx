@@ -7,17 +7,17 @@ import { Package, User, MapPin, Heart } from "lucide-react";
 
 const navItems = [
   {
-    label: "Orders",
+    label: "Bestellungen",
     href: "/dashboard",
     icon: Package,
   },
   {
-    label: "Profile",
+    label: "Profil",
     href: "/dashboard/profile",
     icon: User,
   },
   {
-    label: "Addresses",
+    label: "Adressen",
     href: "/dashboard/addresses",
     icon: MapPin,
   },

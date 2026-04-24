@@ -52,7 +52,7 @@ export default async function OrderDetailPage(props: {
       <Button variant="ghost" size="sm" asChild className="-ml-2">
         <Link href="/dashboard">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Orders
+          Zurück zu Bestellungen
         </Link>
       </Button>
 
@@ -60,10 +60,10 @@ export default async function OrderDetailPage(props: {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Order {order.orderNumber}
+            Bestellung {order.orderNumber}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Placed on {format(new Date(order.createdAt), "MMMM d, yyyy 'at' h:mm a")}
+            Aufgegeben am {format(new Date(order.createdAt), "dd.MM.yyyy 'um' HH:mm")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -93,7 +93,7 @@ export default async function OrderDetailPage(props: {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Receipt className="h-4 w-4" />
-            Order Items
+            Bestellpositionen
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -101,11 +101,11 @@ export default async function OrderDetailPage(props: {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
+                  <TableHead>Produkt</TableHead>
                   <TableHead>SKU</TableHead>
-                  <TableHead className="text-center">Qty</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-right">Subtotal</TableHead>
+                  <TableHead className="text-center">Menge</TableHead>
+                  <TableHead className="text-right">Preis</TableHead>
+                  <TableHead className="text-right">Zwischensumme</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -140,24 +140,24 @@ export default async function OrderDetailPage(props: {
           {/* Pricing summary */}
           <div className="ml-auto w-full max-w-xs space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
+              <span className="text-muted-foreground">Zwischensumme</span>
               <span>{formatPrice(order.subtotalInCents)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Shipping</span>
+              <span className="text-muted-foreground">Versand</span>
               <span>
                 {order.shippingInCents === 0
-                  ? "Free"
+                  ? "Kostenlos"
                   : formatPrice(order.shippingInCents)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Tax</span>
+              <span className="text-muted-foreground">MwSt.</span>
               <span>{formatPrice(order.taxInCents)}</span>
             </div>
             <Separator />
             <div className="flex justify-between font-semibold">
-              <span>Total</span>
+              <span>Gesamt</span>
               <span>{formatPrice(order.totalInCents)}</span>
             </div>
           </div>
@@ -171,7 +171,7 @@ export default async function OrderDetailPage(props: {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <MapPin className="h-4 w-4" />
-                Shipping Address
+                Lieferadresse
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm leading-relaxed">
@@ -212,12 +212,12 @@ export default async function OrderDetailPage(props: {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Clock className="h-4 w-4" />
-              Order Timeline
+              Bestellverlauf
             </CardTitle>
           </CardHeader>
           <CardContent>
             {order.events.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No events recorded.</p>
+              <p className="text-sm text-muted-foreground">Keine Ereignisse erfasst.</p>
             ) : (
               <ol className="relative border-l border-border ml-2">
                 {order.events.map((event, index) => (
@@ -248,7 +248,7 @@ export default async function OrderDetailPage(props: {
                       <time className="text-xs text-muted-foreground">
                         {format(
                           new Date(event.createdAt),
-                          "MMM d, yyyy 'at' h:mm a"
+                          "dd.MM.yyyy 'um' HH:mm"
                         )}
                       </time>
                     </div>
@@ -265,7 +265,7 @@ export default async function OrderDetailPage(props: {
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
             <div>
-              <p className="text-sm font-medium">Tracking Number</p>
+              <p className="text-sm font-medium">Sendungsnummer</p>
               <p className="font-mono text-sm text-muted-foreground">
                 {order.trackingNumber}
               </p>

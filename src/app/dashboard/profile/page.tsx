@@ -64,17 +64,20 @@ export default function ProfilePage() {
       if (!res.ok) {
         setProfileMessage({
           type: "error",
-          text: data.error ?? "Failed to update profile.",
+          text: data.error ?? "Profil konnte nicht aktualisiert werden.",
         });
         return;
       }
 
-      setProfileMessage({ type: "success", text: "Profile updated successfully." });
+      setProfileMessage({
+        type: "success",
+        text: "Profil erfolgreich aktualisiert.",
+      });
       await updateSession({ name: data.data.name, email: data.data.email });
     } catch {
       setProfileMessage({
         type: "error",
-        text: "Something went wrong. Please try again.",
+        text: "Etwas ist schiefgegangen. Bitte erneut versuchen.",
       });
     } finally {
       setProfileLoading(false);
@@ -87,7 +90,10 @@ export default function ProfilePage() {
     setPasswordMessage(null);
 
     if (newPassword !== confirmPassword) {
-      setPasswordMessage({ type: "error", text: "Passwords do not match." });
+      setPasswordMessage({
+        type: "error",
+        text: "Passwörter stimmen nicht überein.",
+      });
       setPasswordLoading(false);
       return;
     }
@@ -95,7 +101,7 @@ export default function ProfilePage() {
     if (newPassword.length < 8) {
       setPasswordMessage({
         type: "error",
-        text: "New password must be at least 8 characters.",
+        text: "Das neue Passwort muss mindestens 8 Zeichen haben.",
       });
       setPasswordLoading(false);
       return;
@@ -113,14 +119,14 @@ export default function ProfilePage() {
       if (!res.ok) {
         setPasswordMessage({
           type: "error",
-          text: data.error ?? "Failed to change password.",
+          text: data.error ?? "Passwort konnte nicht geändert werden.",
         });
         return;
       }
 
       setPasswordMessage({
         type: "success",
-        text: "Password changed successfully.",
+        text: "Passwort erfolgreich geändert.",
       });
       setCurrentPassword("");
       setNewPassword("");
@@ -128,7 +134,7 @@ export default function ProfilePage() {
     } catch {
       setPasswordMessage({
         type: "error",
-        text: "Something went wrong. Please try again.",
+        text: "Etwas ist schiefgegangen. Bitte erneut versuchen.",
       });
     } finally {
       setPasswordLoading(false);
@@ -137,12 +143,12 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      {/* Profile information */}
+      {/* Profil-Informationen */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
+          <CardTitle>Profil-Informationen</CardTitle>
           <CardDescription>
-            Update your name and email address.
+            Aktualisieren Sie Ihren Namen und Ihre E-Mail-Adresse.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -154,17 +160,17 @@ export default function ProfilePage() {
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
+                  placeholder="Ihr Name"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">E-Mail</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder="ihre@e-mail.de"
                   required
                 />
               </div>
@@ -186,7 +192,7 @@ export default function ProfilePage() {
               {profileLoading && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Save Changes
+              Änderungen speichern
             </Button>
           </form>
         </CardContent>
@@ -194,18 +200,18 @@ export default function ProfilePage() {
 
       <Separator />
 
-      {/* Change password */}
+      {/* Passwort ändern */}
       <Card>
         <CardHeader>
-          <CardTitle>Change Password</CardTitle>
+          <CardTitle>Passwort ändern</CardTitle>
           <CardDescription>
-            Update your password to keep your account secure.
+            Halten Sie Ihr Konto sicher mit einem starken Passwort.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="currentPassword">Current Password</Label>
+              <Label htmlFor="currentPassword">Aktuelles Passwort</Label>
               <Input
                 id="currentPassword"
                 type="password"
@@ -216,18 +222,18 @@ export default function ProfilePage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword">Neues Passwort</Label>
                 <Input
                   id="newPassword"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Min 8 characters"
+                  placeholder="Mind. 8 Zeichen"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Label htmlFor="confirmPassword">Neues Passwort bestätigen</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -254,7 +260,7 @@ export default function ProfilePage() {
               {passwordLoading && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Change Password
+              Passwort ändern
             </Button>
           </form>
         </CardContent>

@@ -213,7 +213,7 @@ export default function CheckoutPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setAddressError(json.error || "Failed to create address");
+        setAddressError(json.error || "Adresse konnte nicht erstellt werden.");
         return;
       }
       // Add to list and select
@@ -222,7 +222,7 @@ export default function CheckoutPage() {
       setDialogOpen(false);
       setAddressForm(INITIAL_ADDRESS_FORM);
     } catch {
-      setAddressError("Network error. Please try again.");
+      setAddressError("Netzwerkfehler. Bitte erneut versuchen.");
     } finally {
       setAddressSaving(false);
     }
@@ -256,13 +256,13 @@ export default function CheckoutPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setPromoError(json.error || "Invalid promo code");
+        setPromoError(json.error || "Ungültiger Gutscheincode.");
         return;
       }
       setAppliedPromo(json.data);
       setPromoError(null);
     } catch {
-      setPromoError("Network error. Please try again.");
+      setPromoError("Netzwerkfehler. Bitte erneut versuchen.");
     } finally {
       setPromoLoading(false);
     }
@@ -292,12 +292,15 @@ export default function CheckoutPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setCheckoutError(json.error || "Failed to sync cart. Please try again.");
+        setCheckoutError(
+          json.error ||
+            "Warenkorb konnte nicht synchronisiert werden. Bitte erneut versuchen.",
+        );
         return false;
       }
       return true;
     } catch {
-      setCheckoutError("Network error. Please try again.");
+      setCheckoutError("Netzwerkfehler. Bitte erneut versuchen.");
       return false;
     }
   };
@@ -365,7 +368,7 @@ export default function CheckoutPage() {
       payload = { ...guestPayload, promoCode: appliedPromo?.code ?? null };
     } else {
       if (!selectedAddressId) {
-        setCheckoutError("Please select a shipping address.");
+        setCheckoutError("Bitte wählen Sie eine Lieferadresse.");
         setCheckoutLoading(false);
         return;
       }
@@ -398,14 +401,16 @@ export default function CheckoutPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setCheckoutError(json.error || "Checkout failed. Please try again.");
+        setCheckoutError(
+          json.error || "Bezahlvorgang fehlgeschlagen. Bitte erneut versuchen.",
+        );
         return;
       }
       if (json.data?.url) {
         window.location.href = json.data.url;
       }
     } catch {
-      setCheckoutError("Network error. Please try again.");
+      setCheckoutError("Netzwerkfehler. Bitte erneut versuchen.");
     } finally {
       setCheckoutLoading(false);
     }
@@ -422,14 +427,16 @@ export default function CheckoutPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setCheckoutError(json.error || "Checkout failed. Please try again.");
+        setCheckoutError(
+          json.error || "Bezahlvorgang fehlgeschlagen. Bitte erneut versuchen.",
+        );
         return;
       }
       router.push(
         `/checkout/success?method=bank-transfer&orderId=${json.data.orderId}&orderNumber=${json.data.orderNumber}&total=${json.data.totalInCents}`
       );
     } catch {
-      setCheckoutError("Network error. Please try again.");
+      setCheckoutError("Netzwerkfehler. Bitte erneut versuchen.");
     } finally {
       setCheckoutLoading(false);
     }
@@ -481,7 +488,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+      <h1 className="text-3xl font-bold mb-8">Kasse</h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column - Address & Payment */}
@@ -577,12 +584,12 @@ export default function CheckoutPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                {isGuest ? "Lieferadresse" : "Shipping Address"}
+                Lieferadresse
               </CardTitle>
               <CardDescription>
                 {isGuest
                   ? "Wohin soll die Bestellung geliefert werden?"
-                  : "Select where to ship your order"}
+                  : "Wählen Sie eine Lieferadresse für Ihre Bestellung."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -709,7 +716,7 @@ export default function CheckoutPage() {
                 <div className="text-center py-6 space-y-3">
                   <MapPin className="h-10 w-10 mx-auto text-muted-foreground" />
                   <p className="text-muted-foreground">
-                    No addresses found. Add a shipping address to continue.
+                    Keine Adressen gefunden. Fügen Sie eine Lieferadresse hinzu, um fortzufahren.
                   </p>
                 </div>
               ) : (
@@ -719,7 +726,7 @@ export default function CheckoutPage() {
                     onValueChange={setSelectedAddressId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select an address" />
+                      <SelectValue placeholder="Adresse auswählen" />
                     </SelectTrigger>
                     <SelectContent>
                       {addresses.map((addr) => (
@@ -729,7 +736,7 @@ export default function CheckoutPage() {
                             : ""}
                           {addr.firstName} {addr.lastName}, {addr.street},{" "}
                           {addr.city}
-                          {addr.isDefault ? " (Default)" : ""}
+                          {addr.isDefault ? " (Standard)" : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -782,24 +789,24 @@ export default function CheckoutPage() {
                   <DialogTrigger asChild>
                     <Button variant="outline" className="w-full">
                       <Plus className="mr-2 h-4 w-4" />
-                      Add New Address
+                      Neue Adresse hinzufügen
                     </Button>
                   </DialogTrigger>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
                   <DialogHeader>
-                    <DialogTitle>Add New Address</DialogTitle>
+                    <DialogTitle>Neue Adresse hinzufügen</DialogTitle>
                     <DialogDescription>
-                      Enter the shipping address details below.
+                      Geben Sie unten die Lieferadressdaten ein.
                     </DialogDescription>
                   </DialogHeader>
 
                   <div className="grid gap-4 py-4">
                     {/* Label */}
                     <div className="grid gap-2">
-                      <Label htmlFor="label">Label (optional)</Label>
+                      <Label htmlFor="label">Bezeichnung (optional)</Label>
                       <Input
                         id="label"
-                        placeholder="e.g. Home, Office, Lab"
+                        placeholder="z.B. Zuhause, Büro, Labor"
                         value={addressForm.label}
                         onChange={(e) =>
                           updateFormField("label", e.target.value)
@@ -810,7 +817,7 @@ export default function CheckoutPage() {
                     {/* Name Row */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="firstName">First Name *</Label>
+                        <Label htmlFor="firstName">Vorname *</Label>
                         <Input
                           id="firstName"
                           value={addressForm.firstName}
@@ -821,7 +828,7 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="lastName">Last Name *</Label>
+                        <Label htmlFor="lastName">Nachname *</Label>
                         <Input
                           id="lastName"
                           value={addressForm.lastName}
@@ -835,7 +842,7 @@ export default function CheckoutPage() {
 
                     {/* Company */}
                     <div className="grid gap-2">
-                      <Label htmlFor="company">Company (optional)</Label>
+                      <Label htmlFor="company">Firma (optional)</Label>
                       <Input
                         id="company"
                         value={addressForm.company}
@@ -847,7 +854,7 @@ export default function CheckoutPage() {
 
                     {/* Street */}
                     <div className="grid gap-2">
-                      <Label htmlFor="street">Street Address *</Label>
+                      <Label htmlFor="street">Straße und Hausnummer *</Label>
                       <Input
                         id="street"
                         value={addressForm.street}
@@ -861,7 +868,7 @@ export default function CheckoutPage() {
                     {/* Street 2 */}
                     <div className="grid gap-2">
                       <Label htmlFor="street2">
-                        Apartment, suite, etc. (optional)
+                        Adresszusatz (optional)
                       </Label>
                       <Input
                         id="street2"
@@ -875,7 +882,7 @@ export default function CheckoutPage() {
                     {/* City + Postal */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="city">City *</Label>
+                        <Label htmlFor="city">Stadt *</Label>
                         <Input
                           id="city"
                           value={addressForm.city}
@@ -886,7 +893,7 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="postalCode">Postal Code *</Label>
+                        <Label htmlFor="postalCode">PLZ *</Label>
                         <Input
                           id="postalCode"
                           value={addressForm.postalCode}
@@ -901,7 +908,7 @@ export default function CheckoutPage() {
                     {/* State + Country */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="state">State / Province</Label>
+                        <Label htmlFor="state">Bundesland (optional)</Label>
                         <Input
                           id="state"
                           value={addressForm.state}
@@ -911,7 +918,7 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="country">Country Code *</Label>
+                        <Label htmlFor="country">Ländercode *</Label>
                         <Input
                           id="country"
                           placeholder="DE"
@@ -930,7 +937,7 @@ export default function CheckoutPage() {
 
                     {/* Phone */}
                     <div className="grid gap-2">
-                      <Label htmlFor="phone">Phone (optional)</Label>
+                      <Label htmlFor="phone">Telefon (optional)</Label>
                       <Input
                         id="phone"
                         type="tel"
@@ -953,7 +960,7 @@ export default function CheckoutPage() {
                         }
                       />
                       <Label htmlFor="isDefault" className="cursor-pointer">
-                        Set as default address
+                        Als Standardadresse festlegen
                       </Label>
                     </div>
 
@@ -971,7 +978,7 @@ export default function CheckoutPage() {
                       onClick={() => setDialogOpen(false)}
                       disabled={addressSaving}
                     >
-                      Cancel
+                      Abbrechen
                     </Button>
                     <Button
                       onClick={handleAddressSubmit}
@@ -988,7 +995,7 @@ export default function CheckoutPage() {
                       {addressSaving && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
-                      Save Address
+                      Adresse speichern
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -1002,10 +1009,10 @@ export default function CheckoutPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Tag className="h-5 w-5" />
-                Promo Code
+                Gutscheincode
               </CardTitle>
               <CardDescription>
-                Have a discount code? Apply it here.
+                Sie haben einen Rabattcode? Hier einlösen.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -1032,7 +1039,7 @@ export default function CheckoutPage() {
               ) : (
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter code"
+                    placeholder="Code eingeben"
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
                     onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
@@ -1047,7 +1054,7 @@ export default function CheckoutPage() {
                     {promoLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      "Apply"
+                      "Einlösen"
                     )}
                   </Button>
                 </div>
@@ -1063,10 +1070,10 @@ export default function CheckoutPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Payment Method
+                Zahlungsart
               </CardTitle>
               <CardDescription>
-                Choose how you&apos;d like to pay
+                Wählen Sie Ihre bevorzugte Zahlungsart.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1083,7 +1090,7 @@ export default function CheckoutPage() {
                 >
                   <CreditCard className={`h-6 w-6 ${paymentMethod === "STRIPE" ? "text-primary" : "text-muted-foreground"}`} />
                   <span className={`text-sm font-medium ${paymentMethod === "STRIPE" ? "text-primary" : ""}`}>
-                    Credit / Debit Card
+                    Kredit-/Debitkarte
                   </span>
                   <span className="text-xs text-muted-foreground">via Stripe</span>
                 </button>
@@ -1098,7 +1105,7 @@ export default function CheckoutPage() {
                 >
                   <Building2 className={`h-6 w-6 ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : "text-muted-foreground"}`} />
                   <span className={`text-sm font-medium ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : ""}`}>
-                    Bank Transfer
+                    Banküberweisung
                   </span>
                   <span className="text-xs text-muted-foreground">Vorkasse</span>
                 </button>
@@ -1106,23 +1113,23 @@ export default function CheckoutPage() {
 
               {paymentMethod === "STRIPE" ? (
                 <p className="text-sm text-muted-foreground">
-                  You will be redirected to Stripe&apos;s secure checkout to
-                  complete your payment. We accept all major credit and debit
-                  cards.
+                  Sie werden zur sicheren Bezahlseite von Stripe weitergeleitet,
+                  um Ihre Zahlung abzuschließen. Wir akzeptieren alle gängigen
+                  Kredit- und Debitkarten.
                 </p>
               ) : (
                 <div className="rounded-md border bg-muted/50 p-3 text-sm space-y-2">
-                  <p className="font-medium">Bank Transfer (Vorkasse)</p>
+                  <p className="font-medium">Banküberweisung (Vorkasse)</p>
                   <p className="text-muted-foreground">
-                    After placing your order, you will receive our bank details.
-                    Please transfer the total amount using your order number as
-                    the payment reference. Your order will be processed once
-                    payment is received.
+                    Nach Aufgabe der Bestellung erhalten Sie unsere Bankdaten.
+                    Bitte überweisen Sie den Gesamtbetrag mit Ihrer
+                    Bestellnummer als Verwendungszweck. Ihre Bestellung wird
+                    nach Zahlungseingang bearbeitet.
                   </p>
                   <div className="grid grid-cols-2 gap-1 text-xs mt-2">
                     <span className="text-muted-foreground">Bank:</span>
                     <span>{BANK_DETAILS.bankName}</span>
-                    <span className="text-muted-foreground">Account Holder:</span>
+                    <span className="text-muted-foreground">Kontoinhaber:</span>
                     <span>{BANK_DETAILS.accountHolder}</span>
                   </div>
                 </div>
@@ -1156,7 +1163,7 @@ export default function CheckoutPage() {
                 ) : (
                   <Building2 className="mr-2 h-4 w-4" />
                 )}
-                {paymentMethod === "STRIPE" ? "Pay with Stripe" : "Place Order (Bank Transfer)"}
+                {paymentMethod === "STRIPE" ? "Mit Stripe bezahlen" : "Bestellung aufgeben (Vorkasse)"}
               </Button>
             </CardContent>
           </Card>
@@ -1166,7 +1173,7 @@ export default function CheckoutPage() {
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
+              <CardTitle>Bestellübersicht</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Items List */}
@@ -1187,7 +1194,7 @@ export default function CheckoutPage() {
                         />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-[10px] text-muted-foreground">
-                          No img
+                          Kein Bild
                         </div>
                       )}
                     </div>
@@ -1201,7 +1208,7 @@ export default function CheckoutPage() {
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        Qty: {item.quantity}
+                        Menge: {item.quantity}
                       </p>
                     </div>
                     <p className="text-sm font-medium whitespace-nowrap">

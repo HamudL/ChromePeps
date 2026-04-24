@@ -53,7 +53,7 @@ const faqs: { question: string; answer: string }[] = [
   {
     question: "Wie erstelle ich ein Kundenkonto?",
     answer:
-      "Klicken Sie oben rechts auf \u201ESign In\u201C und dann auf \u201EKonto erstellen\u201C. Nach der Registrierung erhalten Sie eine Best\u00E4tigungs-E-Mail. Mit Ihrem Konto k\u00F6nnen Sie Bestellungen verfolgen und Bewertungen abgeben.",
+      "Klicken Sie oben rechts auf \u201EAnmelden\u201C und dann auf \u201EKonto erstellen\u201C. Nach der Registrierung erhalten Sie eine Best\u00E4tigungs-E-Mail. Mit Ihrem Konto k\u00F6nnen Sie Bestellungen verfolgen und Bewertungen abgeben.",
   },
   {
     question: "Bieten Sie internationalen Versand an?",

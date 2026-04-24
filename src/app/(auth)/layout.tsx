@@ -41,7 +41,7 @@ export default function AuthLayout({
               href="/"
               className="hover:text-foreground transition-colors hover:underline"
             >
-              &larr; Back to store
+              &larr; Zurück zum Shop
             </Link>
           </p>
         </div>

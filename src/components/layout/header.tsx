@@ -119,16 +119,16 @@ export function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard"><Package className="mr-2 h-4 w-4" />Orders</Link>
+                  <Link href="/dashboard"><Package className="mr-2 h-4 w-4" />Bestellungen</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/profile"><Settings className="mr-2 h-4 w-4" />Profile</Link>
+                  <Link href="/dashboard/profile"><Settings className="mr-2 h-4 w-4" />Profil</Link>
                 </DropdownMenuItem>
                 {session.user.role === "ADMIN" && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/admin"><Shield className="mr-2 h-4 w-4" />Admin Panel</Link>
+                      <Link href="/admin"><Shield className="mr-2 h-4 w-4" />Admin-Bereich</Link>
                     </DropdownMenuItem>
                   </>
                 )}
@@ -147,13 +147,13 @@ export function Header() {
                   // /login?callbackUrl=… instead of on the home page.
                   signOut({ callbackUrl: "/", redirect: true });
                 }}>
-                  <LogOut className="mr-2 h-4 w-4" />Log out
+                  <LogOut className="mr-2 h-4 w-4" />Abmelden
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button asChild variant="outline" size="sm">
-              <Link href="/login">Sign In</Link>
+              <Link href="/login">Anmelden</Link>
             </Button>
           )}
         </div>

@@ -281,7 +281,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   );
 
   const heroSubline = search
-    ? `${total} ${total === 1 ? "Treffer" : "Treffer"} für „${search}".`
+    ? `${total} Treffer für „${search}".`
     : "Jede Charge HPLC‑geprüft bei Janoshik Labs. CoA‑PDF und Lot‑Nummer zu jeder Bestellung per E‑Mail.";
 
   return (
