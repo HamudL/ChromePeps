@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 # =============================================================================
-# ChromePeps Deploy Script
+# ChromePeps Deploy Script (LEGACY — local-build path)
 #
-# Usage (on the VPS):
+# ⚠️  DEPRECATED: das Live-Deploy-Skript ist `docker/deploy.sh`. Dieses
+# hier baut das Image AUF dem VPS und OOM-killt zuverlässig auf der
+# 1.8 GB-Maschine. Es bleibt nur als Fallback erhalten, falls GHCR
+# komplett unerreichbar ist und du das Image lokal auf dem VPS bauen
+# musst (Notfall, nicht regulär).
+#
+# Reguläres Deploy: `cd /opt/chromepeps/docker && ./deploy.sh` — das
+# Skript zieht das von GitHub-Actions vorgebaute Image aus GHCR,
+# macht ein DB-Backup, fährt `prisma db push` und tauscht den
+# Container atomar aus. ~30 s statt ~4 min, kein OOM.
+#
+# Usage (Notfall-Pfad):
 #   cd /opt/chromepeps && ./scripts/deploy.sh
 # =============================================================================
 

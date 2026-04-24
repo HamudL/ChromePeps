@@ -105,7 +105,7 @@ export function CartSheet() {
                         />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
-                          No img
+                          Kein Bild
                         </div>
                       )}
                     </div>
@@ -130,6 +130,7 @@ export function CartSheet() {
                           variant="outline"
                           size="icon"
                           className="h-7 w-7"
+                          aria-label={`Menge von ${item.name} verringern`}
                           onClick={() =>
                             updateQuantity(
                               item.productId,
@@ -138,15 +139,19 @@ export function CartSheet() {
                             )
                           }
                         >
-                          <Minus className="h-3 w-3" />
+                          <Minus className="h-3 w-3" aria-hidden="true" />
                         </Button>
-                        <span className="text-sm w-6 text-center font-mono">
+                        <span
+                          className="text-sm w-6 text-center font-mono"
+                          aria-label={`Menge: ${item.quantity}`}
+                        >
                           {item.quantity}
                         </span>
                         <Button
                           variant="outline"
                           size="icon"
                           className="h-7 w-7"
+                          aria-label={`Menge von ${item.name} erhöhen`}
                           onClick={() =>
                             updateQuantity(
                               item.productId,
@@ -155,17 +160,18 @@ export function CartSheet() {
                             )
                           }
                         >
-                          <Plus className="h-3 w-3" />
+                          <Plus className="h-3 w-3" aria-hidden="true" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 ml-auto text-destructive"
+                          aria-label={`${item.name} aus Warenkorb entfernen`}
                           onClick={() =>
                             removeItem(item.productId, item.variantId)
                           }
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-3 w-3" aria-hidden="true" />
                         </Button>
                       </div>
                     </div>

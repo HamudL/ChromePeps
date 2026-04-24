@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 
-const SHEET_CSV_URL =
+// Google-Sheet-Quelle für die Charge/COA-Daten. URL via env, weil das
+// Sheet beim Wechsel auf einen Drittanbieter (oder Staging-Setup) ohne
+// Code-Änderung umgeschaltet werden soll. Fallback bleibt der aktuelle
+// Prod-Sheet-Link, damit bestehende Deployments ohne `.env`-Update
+// weiterlaufen.
+const DEFAULT_SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/1XQOs4U2ZGHzK9YOiZW_Gv5p1Xx-E7UObANLTVG9HZY0/export?format=csv&gid=0";
+const SHEET_CSV_URL = process.env.COA_SHEET_CSV_URL ?? DEFAULT_SHEET_CSV_URL;
 
 // Map spreadsheet product names (lowercase, without mg) → ChromePeps slug
 const PRODUCT_MAP: Record<string, string> = {
