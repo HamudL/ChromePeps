@@ -97,6 +97,21 @@ export const MAIL_REPLY_TO =
   process.env.MAIL_REPLY_TO ?? "support@chromepeps.com";
 export const MAIL_SUPPORT_ADDRESS = "support@chromepeps.com";
 
+// Public-facing site URL — used in transactional E-Mails (für Footer-Link
+// und Logo-Pfad). Bewusst KEIN localhost-Fallback wie in den anderen
+// Callern, weil eine Mail mit einem `http://localhost:3000`-Logo bei
+// jedem realen Empfänger kaputt aussieht. Dev-Mails laden das Logo
+// daher per Default aus Prod — wenn man wirklich lokale Assets testen
+// will, NEXT_PUBLIC_APP_URL setzen und einen Public-Tunnel nutzen.
+export const WEBSITE_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://chromepeps.com";
+
+// Logo für die transactional Mails. Mail-Clients laden nur absolute
+// http(s)-URLs — daher zwingend aus WEBSITE_URL zusammensetzen, niemals
+// als relativer Pfad referenzieren. Datei liegt in `public/email-logo.png`
+// und wird vom Next-Static-Handler direkt ausgeliefert.
+export const LOGO_URL = `${WEBSITE_URL}/email-logo.png`;
+
 // Password reset tokens expire after 1 hour.
 export const PASSWORD_RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 

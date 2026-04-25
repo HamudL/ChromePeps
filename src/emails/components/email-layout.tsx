@@ -4,6 +4,7 @@ import {
   Head,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -11,7 +12,12 @@ import {
   Text,
 } from "@react-email/components";
 import * as React from "react";
-import { APP_NAME, MAIL_SUPPORT_ADDRESS } from "@/lib/constants";
+import {
+  APP_NAME,
+  LOGO_URL,
+  MAIL_SUPPORT_ADDRESS,
+  WEBSITE_URL,
+} from "@/lib/constants";
 
 interface EmailLayoutProps {
   preview: string;
@@ -21,31 +27,41 @@ interface EmailLayoutProps {
 /**
  * Shared brand layout for every transactional email.
  *
- * Features a branded accent bar, improved header, and consistent footer
- * with clean typography optimized for all email clients and devices.
+ * Premium dark header with logo, generous white content area,
+ * and a structured footer. Optimized for all major email clients
+ * (Gmail, Apple Mail, Outlook, Thunderbird) and mobile devices.
  */
 export function EmailLayout({ preview, children }: EmailLayoutProps) {
   return (
     <Html lang="de">
-      <Head />
+      <Head>
+        <meta name="color-scheme" content="light" />
+        <meta name="supported-color-schemes" content="light" />
+      </Head>
       <Preview>{preview}</Preview>
       <Tailwind>
-        <Body className="bg-neutral-100 font-sans">
-          <Container className="mx-auto my-8 max-w-xl overflow-hidden rounded-lg bg-white shadow-sm">
-            {/* Accent top bar */}
-            <Section className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 h-1" />
-
-            {/* Header */}
-            <Section className="px-8 pt-6 pb-4 border-b border-neutral-100">
-              <table width="100%">
+        <Body className="m-0 bg-neutral-100 p-0 font-sans">
+          <Container className="mx-auto my-0 w-full max-w-[600px] bg-white">
+            {/* Header — dark, branded */}
+            <Section className="bg-zinc-950 px-8 py-7">
+              <table
+                width="100%"
+                cellPadding={0}
+                cellSpacing={0}
+                role="presentation"
+              >
                 <tr>
-                  <td>
-                    <Text className="m-0 text-2xl font-bold tracking-tight text-neutral-900">
-                      {APP_NAME}
-                    </Text>
+                  <td valign="middle">
+                    <Img
+                      src={LOGO_URL}
+                      alt={APP_NAME}
+                      width="76"
+                      height="55"
+                      className="block"
+                    />
                   </td>
-                  <td align="right">
-                    <Text className="m-0 text-[10px] uppercase tracking-widest text-neutral-400 font-medium">
+                  <td valign="middle" align="right">
+                    <Text className="m-0 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                       Research Peptides
                     </Text>
                   </td>
@@ -54,26 +70,39 @@ export function EmailLayout({ preview, children }: EmailLayoutProps) {
             </Section>
 
             {/* Content */}
-            <Section className="px-8 py-6">{children}</Section>
+            <Section className="px-8 py-9">{children}</Section>
 
             {/* Footer */}
-            <Section className="bg-neutral-50 px-8 py-5 border-t border-neutral-100">
-              <Text className="m-0 text-xs text-neutral-500 leading-5">
-                Bei Fragen erreichen Sie uns unter{" "}
+            <Section className="border-t border-neutral-200 bg-neutral-50 px-8 py-7">
+              <Text className="m-0 text-xs leading-5 text-neutral-700">
+                Sie haben Fragen? Wir helfen gerne unter{" "}
                 <Link
                   href={`mailto:${MAIL_SUPPORT_ADDRESS}`}
-                  className="text-neutral-700 underline"
+                  className="font-medium text-zinc-900 underline"
                 >
                   {MAIL_SUPPORT_ADDRESS}
                 </Link>
+                .
               </Text>
-              <Text className="m-0 mt-3 text-[10px] text-neutral-400 leading-4">
+
+              <Text className="m-0 mt-2 text-xs leading-5 text-neutral-700">
+                <Link
+                  href={WEBSITE_URL}
+                  className="font-medium text-zinc-900 no-underline"
+                >
+                  {WEBSITE_URL.replace(/^https?:\/\//, "")}
+                </Link>
+              </Text>
+
+              <Hr className="my-4 border-0 border-t border-neutral-200" />
+
+              <Text className="m-0 text-[11px] leading-4 text-neutral-500">
                 Alle Produkte sind ausschlie&szlig;lich als Referenzmaterialien
                 f&uuml;r die In-vitro-Forschung und den Laborgebrauch bestimmt.
                 Nicht f&uuml;r den menschlichen oder tierischen Verzehr.
               </Text>
-              <Hr className="my-3 border-neutral-200" />
-              <Text className="m-0 text-[10px] text-neutral-400">
+
+              <Text className="m-0 mt-3 text-[11px] text-neutral-400">
                 &copy; {new Date().getFullYear()} {APP_NAME}. Alle Rechte
                 vorbehalten.
               </Text>

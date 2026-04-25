@@ -2,7 +2,6 @@ import {
   Button,
   Column,
   Heading,
-  Link,
   Row,
   Section,
   Text,
@@ -55,14 +54,16 @@ export function OrderShippedEmail({
   }).format(shippedAt);
 
   return (
-    <EmailLayout
-      preview={`Ihre Bestellung ${orderNumber} ist unterwegs`}
-    >
-      <Heading className="m-0 text-xl font-bold text-neutral-900">
+    <EmailLayout preview={`Ihre Bestellung ${orderNumber} ist unterwegs`}>
+      <Text className="m-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700">
+        &#x2713; Versendet
+      </Text>
+
+      <Heading className="m-0 mt-2 text-2xl font-bold leading-tight text-neutral-900">
         Ihre Bestellung ist unterwegs!
       </Heading>
 
-      <Text className="mt-4 text-sm leading-6 text-neutral-700">
+      <Text className="mt-5 text-sm leading-6 text-neutral-700">
         {greeting}
       </Text>
 
@@ -72,40 +73,46 @@ export function OrderShippedEmail({
         Tagen bei Ihnen eintreffen.
       </Text>
 
-      <Section className="mt-4 rounded-lg bg-neutral-50 p-4 border border-neutral-100">
+      {/* Order meta */}
+      <Section className="mt-6 rounded-md border border-neutral-200 bg-neutral-50 p-5">
         <Row>
           <Column>
-            <Text className="m-0 text-[10px] uppercase tracking-widest text-neutral-500 font-medium">
+            <Text className="m-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-500">
               Bestellnummer
             </Text>
-            <Text className="m-0 text-sm font-semibold text-neutral-900">
+            <Text className="m-0 mt-1 text-sm font-semibold text-neutral-900">
               {orderNumber}
             </Text>
           </Column>
-          <Column>
-            <Text className="m-0 text-[10px] uppercase tracking-widest text-neutral-500 font-medium">
+          <Column align="right">
+            <Text className="m-0 text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-500">
               Versendet am
             </Text>
-            <Text className="m-0 text-sm font-semibold text-neutral-900">
+            <Text className="m-0 mt-1 text-sm font-semibold text-neutral-900">
               {dateText}
             </Text>
           </Column>
         </Row>
       </Section>
 
+      {/* Tracking */}
       {trackingNumber && (
-        <Section className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <Text className="m-0 text-sm font-semibold text-blue-900">
+        <Section className="mt-5 rounded-md border border-sky-200 bg-sky-50 p-5">
+          <Text className="m-0 text-sm font-semibold text-sky-900">
             Sendungsverfolgung
           </Text>
-          <Text className="m-0 mt-1 text-xs text-blue-800">
-            Tracking-Nummer: <strong>{trackingNumber}</strong>
+          <Text className="m-0 mt-2 text-xs leading-5 text-sky-800">
+            Tracking-Nummer
           </Text>
+          <Text className="m-0 font-mono text-sm font-semibold text-sky-900">
+            {trackingNumber}
+          </Text>
+
           {trackingUrl && (
-            <Section className="mt-3">
+            <Section className="mt-4">
               <Button
                 href={trackingUrl}
-                className="rounded-lg bg-blue-700 px-6 py-3 text-xs font-semibold text-white no-underline"
+                className="rounded-md bg-sky-700 px-6 py-3 text-xs font-semibold text-white no-underline"
               >
                 Sendung verfolgen
               </Button>
@@ -114,68 +121,78 @@ export function OrderShippedEmail({
         </Section>
       )}
 
-      <Heading className="mt-6 text-base font-semibold text-neutral-900">
+      {/* Items */}
+      <Heading className="mt-8 text-base font-semibold text-neutral-900">
         Versandte Artikel
       </Heading>
 
-      <Section className="mt-2">
+      <Section className="mt-3">
         {items.map((item, idx) => (
-          <Row key={`${item.sku}-${idx}`} className="py-2 border-b border-neutral-100">
+          <Row
+            key={`${item.sku}-${idx}`}
+            className={`py-3 ${
+              idx < items.length - 1 ? "border-b border-neutral-200" : ""
+            }`}
+          >
             <Column>
-              <Text className="m-0 text-sm text-neutral-900">{item.name}</Text>
+              <Text className="m-0 text-sm font-medium text-neutral-900">
+                {item.name}
+              </Text>
               {item.variant && (
-                <Text className="m-0 text-xs text-neutral-500">
+                <Text className="m-0 mt-1 text-xs text-neutral-500">
                   {item.variant}
                 </Text>
               )}
-              <Text className="m-0 text-xs text-neutral-500">
-                SKU: {item.sku} &middot; {item.quantity}x
+              <Text className="m-0 mt-1 text-xs text-neutral-500">
+                SKU: {item.sku} &middot; {item.quantity}&times;
               </Text>
             </Column>
           </Row>
         ))}
       </Section>
 
+      {/* Shipping address */}
       {shippingAddress && (
         <>
-          <Heading className="mt-6 text-base font-semibold text-neutral-900">
+          <Heading className="mt-8 text-base font-semibold text-neutral-900">
             Lieferadresse
           </Heading>
-          <Section className="mt-2 rounded-lg bg-neutral-50 p-4 border border-neutral-100">
-            <Text className="m-0 text-sm text-neutral-700">
+          <Section className="mt-3 rounded-md border border-neutral-200 bg-neutral-50 p-5">
+            <Text className="m-0 text-sm leading-6 text-neutral-700">
               {shippingAddress.firstName} {shippingAddress.lastName}
-            </Text>
-            {shippingAddress.company && (
-              <Text className="m-0 text-sm text-neutral-700">
-                {shippingAddress.company}
-              </Text>
-            )}
-            <Text className="m-0 text-sm text-neutral-700">
+              {shippingAddress.company && (
+                <>
+                  <br />
+                  {shippingAddress.company}
+                </>
+              )}
+              <br />
               {shippingAddress.street}
-            </Text>
-            {shippingAddress.street2 && (
-              <Text className="m-0 text-sm text-neutral-700">
-                {shippingAddress.street2}
-              </Text>
-            )}
-            <Text className="m-0 text-sm text-neutral-700">
+              {shippingAddress.street2 && (
+                <>
+                  <br />
+                  {shippingAddress.street2}
+                </>
+              )}
+              <br />
               {shippingAddress.postalCode} {shippingAddress.city}
-            </Text>
-            <Text className="m-0 text-sm text-neutral-700">
+              <br />
               {shippingAddress.country}
             </Text>
           </Section>
         </>
       )}
 
+      {/* CTA */}
       {orderUrl && (
-        <Text className="mt-6 text-sm text-neutral-700">
-          Den Status Ihrer Bestellung k&ouml;nnen Sie jederzeit in Ihrem Konto
-          einsehen:{" "}
-          <Link href={orderUrl} className="text-zinc-900 underline font-medium">
-            Bestellung anzeigen
-          </Link>
-        </Text>
+        <Section className="mt-8 text-center">
+          <Button
+            href={orderUrl}
+            className="rounded-md border border-neutral-300 bg-white px-6 py-3 text-sm font-semibold text-neutral-900 no-underline"
+          >
+            Bestellung im Konto ansehen
+          </Button>
+        </Section>
       )}
     </EmailLayout>
   );
