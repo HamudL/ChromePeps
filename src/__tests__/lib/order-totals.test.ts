@@ -5,7 +5,7 @@ import { calculateOrderTotals } from "@/lib/order/calculate-totals";
  * Total-calculation tests.
  *
  * These cover the ChromePeps-specific pricing rules (gross prices
- * including 19 % MwSt., free shipping over 100 €, tax extracted from
+ * including 19 % MwSt., free shipping over 200 €, tax extracted from
  * gross). The formulas live in one place (src/lib/order/calculate-totals.ts)
  * and are called from every checkout path — Stripe checkout, verify-
  * session fallback, bank transfer. Getting any of these wrong costs
@@ -17,7 +17,7 @@ describe("calculateOrderTotals()", () => {
   // Shipping threshold
   // ---------------------------------------------------------------
   describe("shipping threshold", () => {
-    it("adds 5,99 € shipping when the subtotal-after-discount is under 100 €", () => {
+    it("adds 5,99 € shipping when the subtotal-after-discount is under 200 €", () => {
       const t = calculateOrderTotals({
         subtotalInCents: 5_000,
         discountInCents: 0,
@@ -26,24 +26,24 @@ describe("calculateOrderTotals()", () => {
       expect(t.totalInCents).toBe(5_000 + 599);
     });
 
-    it("adds shipping when subtotal is 99,99 € (just below)", () => {
+    it("adds shipping when subtotal is 199,99 € (just below)", () => {
       const t = calculateOrderTotals({
-        subtotalInCents: 9_999,
+        subtotalInCents: 19_999,
         discountInCents: 0,
       });
       expect(t.shippingInCents).toBe(599);
     });
 
-    it("is free at exactly 100 € (10 000 cents)", () => {
+    it("is free at exactly 200 € (20 000 cents)", () => {
       const t = calculateOrderTotals({
-        subtotalInCents: 10_000,
+        subtotalInCents: 20_000,
         discountInCents: 0,
       });
       expect(t.shippingInCents).toBe(0);
-      expect(t.totalInCents).toBe(10_000);
+      expect(t.totalInCents).toBe(20_000);
     });
 
-    it("is free above 100 €", () => {
+    it("is free above 200 €", () => {
       const t = calculateOrderTotals({
         subtotalInCents: 25_000,
         discountInCents: 0,
@@ -52,20 +52,20 @@ describe("calculateOrderTotals()", () => {
       expect(t.totalInCents).toBe(25_000);
     });
 
-    it("applies shipping when a discount drops a 100 €+ subtotal under the threshold", () => {
-      // 120 € subtotal - 25 € discount = 95 € → under threshold
+    it("applies shipping when a discount drops a 200 €+ subtotal under the threshold", () => {
+      // 220 € subtotal - 25 € discount = 195 € → under threshold
       const t = calculateOrderTotals({
-        subtotalInCents: 12_000,
+        subtotalInCents: 22_000,
         discountInCents: 2_500,
       });
       expect(t.shippingInCents).toBe(599);
-      expect(t.totalInCents).toBe(12_000 - 2_500 + 599);
+      expect(t.totalInCents).toBe(22_000 - 2_500 + 599);
     });
 
-    it("keeps free shipping when a discount still leaves subtotal >= 100 €", () => {
-      // 150 € subtotal - 10 € discount = 140 € → still free
+    it("keeps free shipping when a discount still leaves subtotal >= 200 €", () => {
+      // 250 € subtotal - 10 € discount = 240 € → still free
       const t = calculateOrderTotals({
-        subtotalInCents: 15_000,
+        subtotalInCents: 25_000,
         discountInCents: 1_000,
       });
       expect(t.shippingInCents).toBe(0);
@@ -76,15 +76,15 @@ describe("calculateOrderTotals()", () => {
   // Tax extraction (gross → net)
   // ---------------------------------------------------------------
   describe("tax extraction (gross 19 % MwSt.)", () => {
-    it("extracts 19 % MwSt. from a 119 € gross total exactly", () => {
-      // 119 € gross → 19 € VAT, 100 € net.
-      // But 119 € is over the shipping threshold, so total stays 119 €.
+    it("extracts 19 % MwSt. from a 238 € gross total exactly", () => {
+      // 238 € gross → 38 € VAT, 200 € net.
+      // 238 € is over the shipping threshold, so total stays 238 €.
       const t = calculateOrderTotals({
-        subtotalInCents: 11_900,
+        subtotalInCents: 23_800,
         discountInCents: 0,
       });
-      expect(t.totalInCents).toBe(11_900);
-      expect(t.taxInCents).toBe(1_900);
+      expect(t.totalInCents).toBe(23_800);
+      expect(t.taxInCents).toBe(3_800);
     });
 
     it("extracts correct MwSt. on a 29,90 € order (with shipping)", () => {
@@ -159,12 +159,13 @@ describe("calculateOrderTotals()", () => {
     });
 
     it("handles a zero discount (no promo applied)", () => {
+      // 250 € subtotal — over the 200 € threshold so no shipping is added.
       const t = calculateOrderTotals({
-        subtotalInCents: 15_000,
+        subtotalInCents: 25_000,
         discountInCents: 0,
       });
       expect(t.discountInCents).toBe(0);
-      expect(t.totalInCents).toBe(15_000);
+      expect(t.totalInCents).toBe(25_000);
     });
   });
 

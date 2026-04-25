@@ -69,9 +69,9 @@ export default function QualitaetskontrollePage() {
                 Jede Charge. Unabhängig geprüft.
               </h1>
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl">
-                Wir schicken jede neue Charge zu Janoshik Labs. Erst nach
-                HPLC-Freigabe geht sie in den Versand — ohne Ausnahme, ohne
-                Sonderrollen.
+                Wir lassen jede neue Charge zu Janoshik Labs schicken. Erst
+                nach HPLC-Freigabe geht sie in den Versand — ohne Ausnahme,
+                ohne Sonderrollen.
               </p>
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 {/* Früher gab es hier einen zweiten CTA zur öffentlichen

@@ -271,12 +271,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const heroTitle = search ? (
     <>
       Suche. <em className="font-serif italic font-normal text-primary">Gefiltert.</em>{" "}
-      Versand aus Berlin.
+      Versand aus Deutschland.
     </>
   ) : (
     <>
       Rein. <em className="font-serif italic font-normal text-primary">Verifiziert.</em>{" "}
-      Versand aus Berlin.
+      Versand aus Deutschland.
     </>
   );
 

@@ -84,7 +84,7 @@ export default function AgbPage() {
             Die auf den Produktseiten angegebenen Preise enthalten die gesetzliche
             Mehrwertsteuer und sonstige Preisbestandteile. Zusätzlich zu den
             angegebenen Preisen berechnen wir für die Lieferung Versandkosten.
-            Ab einem Bestellwert von 100 EUR liefern wir versandkostenfrei
+            Ab einem Bestellwert von 200 EUR liefern wir versandkostenfrei
             innerhalb Deutschlands; unterhalb dieses Werts fällt eine
             Versandkostenpauschale von 5,99 EUR an. Die genauen Konditionen
             finden Sie auf der{" "}

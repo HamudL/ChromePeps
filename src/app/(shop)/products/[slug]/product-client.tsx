@@ -260,7 +260,7 @@ export function VariantBuyPanel({
         <p className="font-mono text-[10px] tracking-[0.1em] uppercase text-muted-foreground text-right max-w-[180px] leading-relaxed">
           Inkl. 19 % MwSt.
           <br />
-          Gratis Versand ab 100 €
+          Gratis Versand ab 200 €
         </p>
       </div>
 

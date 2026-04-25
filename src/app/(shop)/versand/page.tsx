@@ -28,7 +28,7 @@ export default function VersandPage() {
                 5,99 EUR innerhalb Deutschlands
               </p>
               <p className="text-muted-foreground">
-                Ab 100 EUR Warenwert kostenlos
+                Ab 200 EUR Warenwert kostenlos
               </p>
             </div>
           </div>
@@ -52,7 +52,7 @@ export default function VersandPage() {
                 Neutrale, diskrete Verpackung
               </p>
               <p className="text-muted-foreground">
-                Gekühlt wo erforderlich
+                Stoßfest und versandsicher
               </p>
             </div>
           </div>
@@ -87,7 +87,7 @@ export default function VersandPage() {
           <p>
             Innerhalb Deutschlands berechnen wir eine Versandkostenpauschale von{" "}
             <strong>5,99 EUR</strong>. Ab einem Bestellwert von{" "}
-            <strong>100 EUR</strong> ist der Versand kostenlos. Die Versandkosten
+            <strong>200 EUR</strong> ist der Versand kostenlos. Die Versandkosten
             werden im Warenkorb und im Checkout transparent ausgewiesen.
           </p>
         </section>
@@ -103,12 +103,11 @@ export default function VersandPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">Lagerung und Kühlkette</h2>
+          <h2 className="text-lg font-semibold">Lagerung</h2>
           <p>
-            Temperaturempfindliche Produkte werden ausreichend gekühlt
-            verschickt. Bitte prüfen Sie den Zustand der Sendung unmittelbar
-            nach Erhalt und lagern Sie die Produkte gemäß den Angaben auf dem
-            jeweiligen Produktblatt (typischerweise bei –20 °C).
+            Bitte prüfen Sie den Zustand der Sendung unmittelbar nach Erhalt
+            und lagern Sie die Produkte gemäß den Angaben auf dem jeweiligen
+            Produktblatt (typischerweise bei –20 °C).
           </p>
         </section>
 

@@ -5,6 +5,10 @@ import { stripe } from "@/lib/stripe";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { absoluteUrl } from "@/lib/utils";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
+import {
+  FREE_SHIPPING_THRESHOLD_CENTS,
+  STANDARD_SHIPPING_CENTS,
+} from "@/lib/order/calculate-totals";
 
 /**
  * POST /api/stripe/checkout — create a Stripe Checkout Session.
@@ -456,7 +460,10 @@ export async function POST(req: NextRequest) {
   }
 
   const subtotalAfterDiscount = Math.max(0, subtotalInCents - discountAmount);
-  const shippingCost = subtotalAfterDiscount >= 10000 ? 0 : 599;
+  const shippingCost =
+    subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD_CENTS
+      ? 0
+      : STANDARD_SHIPPING_CENTS;
 
   // Get (or lazily create) the Stripe coupon for this promo. Caching the
   // ID on the PromoCode row means we only hit stripe.coupons.create once
