@@ -25,7 +25,7 @@ const values = [
     icon: Truck,
     title: "Schneller Versand",
     description:
-      "Bestellungen werden innerhalb von 24 Stunden bearbeitet und temperaturkontrolliert versendet. So kommt Ihre Ware sicher und unversehrt im Labor an.",
+      "Bestellungen werden innerhalb von 24 Stunden bearbeitet und in stabiler, neutraler Verpackung versendet. So kommt Ihre Ware sicher und unversehrt im Labor an.",
   },
   {
     icon: Award,

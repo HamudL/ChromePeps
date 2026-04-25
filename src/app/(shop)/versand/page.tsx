@@ -52,7 +52,7 @@ export default function VersandPage() {
                 Neutrale, diskrete Verpackung
               </p>
               <p className="text-muted-foreground">
-                Gekühlt wo erforderlich
+                Stoßfest und versandsicher
               </p>
             </div>
           </div>
@@ -103,12 +103,11 @@ export default function VersandPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">Lagerung und Kühlkette</h2>
+          <h2 className="text-lg font-semibold">Lagerung</h2>
           <p>
-            Temperaturempfindliche Produkte werden ausreichend gekühlt
-            verschickt. Bitte prüfen Sie den Zustand der Sendung unmittelbar
-            nach Erhalt und lagern Sie die Produkte gemäß den Angaben auf dem
-            jeweiligen Produktblatt (typischerweise bei –20 °C).
+            Bitte prüfen Sie den Zustand der Sendung unmittelbar nach Erhalt
+            und lagern Sie die Produkte gemäß den Angaben auf dem jeweiligen
+            Produktblatt (typischerweise bei –20 °C).
           </p>
         </section>
 

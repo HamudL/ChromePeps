@@ -38,7 +38,7 @@ const PILLS: Pill[] = [
     label: "Gratis Versand ab 100\u00A0€",
     tipTitle: "DHL · 24–48 h",
     tipBody:
-      "Versand aus Berlin werktags bis 15 Uhr am selben Tag. Ø Zustellzeit DE 1.3 Werktage.",
+      "Versand aus Deutschland werktags bis 15 Uhr am selben Tag. Ø Zustellzeit DE 1.3 Werktage.",
   },
   {
     icon: ShieldCheck,
@@ -50,9 +50,9 @@ const PILLS: Pill[] = [
   {
     icon: Zap,
     label: "Schnelle Lieferung",
-    tipTitle: "Ab Berlin · Kühlversand",
+    tipTitle: "DHL · Deutschland",
     tipBody:
-      "Temperaturgeführter Versand in isolierter Verpackung. CoA & Lot‑Tracking automatisch per E-Mail nach Versand.",
+      "Diskreter Versand in stabiler, neutraler Verpackung. CoA & Lot‑Tracking automatisch per E-Mail nach Versand.",
   },
 ];
 
