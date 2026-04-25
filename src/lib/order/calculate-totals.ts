@@ -11,10 +11,10 @@
  * Pricing rules, hardcoded because they're part of the ChromePeps
  * business model and rarely change:
  *   - All stored prices are gross (inkl. 19 % MwSt.).
- *   - Shipping is 5,99 € (599 cents) under 100 € (10 000 cents) gross
+ *   - Shipping is 5,99 € (599 cents) under 200 € (20 000 cents) gross
  *     order value, free above. The threshold is checked AFTER the
  *     discount has been applied, i.e. "was the customer actually
- *     charged at least 100 €?".
+ *     charged at least 200 €?".
  *   - MwSt. is extracted from the gross total, never added on top:
  *     `taxInCents = round(total - total / 1.19)`. This is the amount
  *     of tax that's already baked into the price the customer paid.
@@ -27,8 +27,8 @@ export const TAX_MULTIPLIER = 1.19;
 export const TAX_RATE = 0.19;
 
 // Free-shipping threshold, in cents. Tied to the hero marketing copy
-// ("Gratis Versand ab 100 €").
-export const FREE_SHIPPING_THRESHOLD_CENTS = 10_000;
+// ("Gratis Versand ab 200 €").
+export const FREE_SHIPPING_THRESHOLD_CENTS = 20_000;
 
 // Flat shipping fee under the free-shipping threshold, in cents.
 export const STANDARD_SHIPPING_CENTS = 599;

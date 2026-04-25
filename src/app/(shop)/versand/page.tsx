@@ -28,7 +28,7 @@ export default function VersandPage() {
                 5,99 EUR innerhalb Deutschlands
               </p>
               <p className="text-muted-foreground">
-                Ab 100 EUR Warenwert kostenlos
+                Ab 200 EUR Warenwert kostenlos
               </p>
             </div>
           </div>
@@ -87,7 +87,7 @@ export default function VersandPage() {
           <p>
             Innerhalb Deutschlands berechnen wir eine Versandkostenpauschale von{" "}
             <strong>5,99 EUR</strong>. Ab einem Bestellwert von{" "}
-            <strong>100 EUR</strong> ist der Versand kostenlos. Die Versandkosten
+            <strong>200 EUR</strong> ist der Versand kostenlos. Die Versandkosten
             werden im Warenkorb und im Checkout transparent ausgewiesen.
           </p>
         </section>
