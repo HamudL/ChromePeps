@@ -45,6 +45,7 @@ export default function NewProductPage() {
     priceEur: "",
     categoryId: "",
     stock: "0",
+    sortOrder: "0",
     isActive: true,
     purity: "",
     molecularWeight: "",
@@ -93,6 +94,7 @@ export default function NewProductPage() {
       priceInCents,
       categoryId: form.categoryId,
       stock: parseInt(form.stock) || 0,
+      sortOrder: parseInt(form.sortOrder) || 0,
       isActive: form.isActive,
       purity: form.purity || undefined,
       molecularWeight: form.molecularWeight || undefined,
@@ -246,6 +248,21 @@ export default function NewProductPage() {
                   onChange={(e) => updateField("stock", e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sortOrder">Sortierung</Label>
+                <Input
+                  id="sortOrder"
+                  type="number"
+                  min="0"
+                  value={form.sortOrder}
+                  onChange={(e) => updateField("sortOrder", e.target.value)}
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Niedriger = weiter vorn. Bequemer per Drag-and-Drop in der Liste.
+                </p>
               </div>
 
               <div className="space-y-2">

@@ -58,6 +58,7 @@ interface ProductData {
   priceInCents: number;
   categoryId: string;
   stock: number;
+  sortOrder: number;
   isActive: boolean;
   isBestseller: boolean;
   purity: string | null;
@@ -97,6 +98,7 @@ export default function EditProductPage({
     priceEur: "",
     categoryId: "",
     stock: "0",
+    sortOrder: "0",
     isActive: true,
     isBestseller: false,
     purity: "",
@@ -136,6 +138,7 @@ export default function EditProductPage({
           priceEur: (p.priceInCents / 100).toFixed(2),
           categoryId: p.categoryId,
           stock: String(p.stock),
+          sortOrder: String(p.sortOrder ?? 0),
           isActive: p.isActive,
           isBestseller: p.isBestseller ?? false,
           purity: p.purity ?? "",
@@ -198,6 +201,7 @@ export default function EditProductPage({
       priceInCents,
       categoryId: form.categoryId,
       stock: parseInt(form.stock) || 0,
+      sortOrder: parseInt(form.sortOrder) || 0,
       isActive: form.isActive,
       isBestseller: form.isBestseller,
       purity: form.purity || null,
@@ -442,6 +446,21 @@ export default function EditProductPage({
                   onChange={(e) => updateField("stock", e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sortOrder">Sortierung</Label>
+                <Input
+                  id="sortOrder"
+                  type="number"
+                  min="0"
+                  value={form.sortOrder}
+                  onChange={(e) => updateField("sortOrder", e.target.value)}
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Niedriger = weiter vorn. Bequemer per Drag-and-Drop in der Liste.
+                </p>
               </div>
 
               <div className="space-y-2">

@@ -127,6 +127,10 @@ model Product {
   stock                 Int            @default(0)
   isActive              Boolean        @default(true)
   isBestseller          Boolean        @default(false)
+  // Manuelle Sortierreihenfolge in Listings. Niedriger = weiter vorn.
+  // Wird im Admin per Drag-and-Drop gesetzt, fällt sonst auf den
+  // sekundären Sort (createdAt desc) zurück.
+  sortOrder             Int            @default(0)
   purity                String?        @db.VarChar(20)
   molecularWeight       String?        @db.VarChar(50)
   sequence              String?        @db.Text
@@ -149,6 +153,7 @@ model Product {
   @@index([slug])
   @@index([categoryId])
   @@index([isActive, categoryId])
+  @@index([sortOrder])
   @@map("products")
 }
 

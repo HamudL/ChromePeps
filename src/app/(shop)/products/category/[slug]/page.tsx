@@ -129,18 +129,20 @@ export default async function CategoryLandingPage({
     };
   }
 
-  const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
+  // Default = "newest": Admin-gepflegte sortOrder zuerst, dann jüngste
+  // zuerst als Tie-Breaker — identisch zur Hauptkatalog-Logik.
+  const orderBy: Prisma.ProductOrderByWithRelationInput[] = (() => {
     switch (sort) {
       case "price_asc":
-        return { priceInCents: "asc" as const };
+        return [{ priceInCents: "asc" }];
       case "price_desc":
-        return { priceInCents: "desc" as const };
+        return [{ priceInCents: "desc" }];
       case "name_asc":
-        return { name: "asc" as const };
+        return [{ name: "asc" }];
       case "name_desc":
-        return { name: "desc" as const };
+        return [{ name: "desc" }];
       default:
-        return { createdAt: "desc" as const };
+        return [{ sortOrder: "asc" }, { createdAt: "desc" }];
     }
   })();
 

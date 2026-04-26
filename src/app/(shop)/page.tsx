@@ -33,7 +33,8 @@ async function getBestsellers(): Promise<ProductCardData[]> {
   const [products, bestsellerIds] = await Promise.all([
     db.product.findMany({
       where: { isActive: true, isBestseller: true },
-      orderBy: { createdAt: "desc" },
+      // Admin-Sortierung respektieren, sonst neueste zuerst.
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       take: 4,
       select: productCardSelect,
     }),

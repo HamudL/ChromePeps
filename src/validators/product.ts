@@ -15,6 +15,9 @@ export const createProductSchema = z.object({
   stock: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
   isBestseller: z.boolean().default(false),
+  // Manuelle Sortier-Position. Niedriger = weiter vorn in Listings.
+  // Wird im Admin per Drag-and-Drop oder Edit-Form gesetzt.
+  sortOrder: z.number().int().min(0).default(0),
   purity: z.string().max(20).nullish(),
   molecularWeight: z.string().max(50).nullish(),
   sequence: z.string().nullish(),

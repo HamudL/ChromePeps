@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Plus, Search, Pencil, Package } from "lucide-react";
+import { Plus, Search, Pencil, Package, ArrowUpDown } from "lucide-react";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { formatPrice, cn } from "@/lib/utils";
@@ -22,18 +22,81 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  ProductSortableList,
+  type SortableProduct,
+} from "@/components/admin/product-sortable-list";
 
 interface Props {
-  searchParams: Promise<{ page?: string; search?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    mode?: string;
+  }>;
 }
+
+// Hartes Limit für den Reorder-Modus. Ohne Pagination müssen wir
+// trotzdem irgendwo cappen — sonst lädt eine 5000-Produkte-DB die
+// Seite ins Bodenlose. 200 reicht für ein Peptid-Sortiment locker.
+const REORDER_MAX = 200;
 
 export default async function AdminProductsPage({ searchParams }: Props) {
   await requireAdmin();
   const params = await searchParams;
+  const isReorderMode = params.mode === "reorder";
   const page = Math.max(1, parseInt(params.page ?? "1"));
   const search = params.search ?? "";
-  const skip = (page - 1) * ADMIN_ITEMS_PER_PAGE;
 
+  // Reorder-Mode: lade ALLE Produkte (bis REORDER_MAX), keine Search,
+  // sortiert nach der Spalte die wir gleich editieren wollen — sonst
+  // springen Drops scheinbar zufällig.
+  if (isReorderMode) {
+    const products = await db.product.findMany({
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      take: REORDER_MAX,
+      include: {
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        category: { select: { name: true } },
+      },
+    });
+    const total = await db.product.count();
+
+    const sortable: SortableProduct[] = products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      sku: p.sku,
+      priceInCents: p.priceInCents,
+      stock: p.stock,
+      isActive: p.isActive,
+      sortOrder: p.sortOrder,
+      imageUrl: p.images[0]?.url ?? null,
+      categoryName: p.category.name,
+    }));
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Sortier-Modus</h2>
+            <p className="text-sm text-muted-foreground">
+              {sortable.length} von {total} Produkten geladen
+              {total > REORDER_MAX &&
+                ` (Limit ${REORDER_MAX} — ältere werden via Edit-Form angepasst)`}
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/admin/products">Fertig</Link>
+          </Button>
+        </div>
+
+        <ProductSortableList products={sortable} />
+      </div>
+    );
+  }
+
+  // Standard-Modus: paginierte Tabelle.
+  const skip = (page - 1) * ADMIN_ITEMS_PER_PAGE;
   const where = search
     ? {
         OR: [
@@ -47,7 +110,9 @@ export default async function AdminProductsPage({ searchParams }: Props) {
   const [products, total] = await Promise.all([
     db.product.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      // Default-Reihenfolge identisch zur Shop-Liste, damit der Admin
+      // sieht, was die Kunden sehen.
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       skip,
       take: ADMIN_ITEMS_PER_PAGE,
       include: {
@@ -62,19 +127,27 @@ export default async function AdminProductsPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Products</h2>
           <p className="text-muted-foreground">
             Manage your product catalog ({total} total)
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/products/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/products?mode=reorder">
+              <ArrowUpDown className="mr-2 h-4 w-4" />
+              Sortieren
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/products/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -111,6 +184,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                 <TableHead className="w-16">Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>SKU</TableHead>
+                <TableHead className="text-right">Sort</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-right">Stock</TableHead>
                 <TableHead>Category</TableHead>
@@ -153,6 +227,9 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                       <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
                         {product.sku}
                       </code>
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs text-muted-foreground">
+                      {product.sortOrder}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatPrice(product.priceInCents)}
@@ -197,7 +274,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <p className="text-muted-foreground">
                       {search
                         ? "No products match your search."

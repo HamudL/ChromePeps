@@ -145,18 +145,22 @@ async function getProducts(params: GetProductsParams) {
     };
   }
 
-  const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
+  // Default = "newest": Admin-gepflegte sortOrder zuerst, dann jüngste
+  // zuerst als Tie-Breaker. Andere User-Sortierungen (Preis, Name)
+  // respektieren wir wörtlich — wenn der Kunde "günstigste zuerst"
+  // wählt, soll keine Admin-Reihenfolge dazwischenfunken.
+  const orderBy: Prisma.ProductOrderByWithRelationInput[] = (() => {
     switch (sort) {
       case "price_asc":
-        return { priceInCents: "asc" as const };
+        return [{ priceInCents: "asc" }];
       case "price_desc":
-        return { priceInCents: "desc" as const };
+        return [{ priceInCents: "desc" }];
       case "name_asc":
-        return { name: "asc" as const };
+        return [{ name: "asc" }];
       case "name_desc":
-        return { name: "desc" as const };
+        return [{ name: "desc" }];
       default:
-        return { createdAt: "desc" as const };
+        return [{ sortOrder: "asc" }, { createdAt: "desc" }];
     }
   })();
 
