@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, PackageSearch } from "lucide-react";
 import { db } from "@/lib/db";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { ProductCard } from "@/components/shop/product-card";
+import { ApothekeShopHero } from "@/components/shop/apotheke-shop-hero";
 import { ShopFilterBar } from "@/components/shop/shop-filter-bar";
 import { Button } from "@/components/ui/button";
 import {
@@ -179,66 +180,54 @@ export default async function CategoryLandingPage({
   const basePath = `/products/category/${slug}`;
   const hasActiveFilters = sort !== "newest" || inStock || minPurity != null;
 
+  // Hero-Stats analog zu /products: nur Werte mit echtem Inhalt zeigen,
+  // damit eine frische Kategorie ohne CoAs nicht mit "—" beworben wird.
+  const heroStats: { value: string; suffix?: string; label: string }[] = [
+    { value: String(stats.productCount), label: "Produkte" },
+  ];
+  if (stats.avgPurity != null) {
+    heroStats.push({
+      value: stats.avgPurity.toFixed(2).replace(".", ","),
+      suffix: "%",
+      label: "Ø Reinheit",
+    });
+  }
+  if (stats.minPriceInCents != null) {
+    heroStats.push({
+      value: formatPrice(stats.minPriceInCents),
+      label: "Preis ab",
+    });
+  }
+  if (stats.latestBatchNumber) {
+    heroStats.push({
+      value: stats.latestBatchNumber,
+      label: "Neuste Charge",
+    });
+  }
+
+  const heroCrumb = categoryIndex
+    ? ["ChromePeps", `Kategorie ${categoryIndex}`, category.name]
+    : ["ChromePeps", "Kategorie", category.name];
+
+  const heroSubline =
+    category.description ??
+    `${category.name} — laborgeprüfte Reinheit, lückenlose Lot-Dokumentation, CoA per E-Mail zu jeder Bestellung.`;
+
   return (
     <div className="flex flex-col">
-      {/* Intro (light) — kein dunkler Hero, sondern sachlich im Katalog-
-          Kontext. Passt zur Apotheke-Rhythmus-Idee: der Shop-Hero bleibt
-          die prominente dunkle Einführung, die Kategorie ist ein tiefer
-          liegendes Kapitel. */}
-      <section className="container pt-10 md:pt-14 pb-8 md:pb-10">
-        <Link
-          href="/products"
-          className="mb-8 inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.15em] uppercase text-muted-foreground hover:text-primary transition-colors"
-        >
-          <ArrowLeft className="h-3 w-3" />
-          Alle Kategorien
-        </Link>
-
-        <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr] items-start">
-          <div>
-            {categoryIndex && (
-              <p className="mb-3 font-mono text-[10px] tracking-[0.25em] uppercase text-primary font-semibold">
-                Kategorie {categoryIndex}
-              </p>
-            )}
-            <h1 className="font-serif text-[clamp(2.2rem,4vw,3.2rem)] font-medium tracking-[-0.025em] leading-[1.02]">
+      <ApothekeShopHero
+        crumb={heroCrumb}
+        title={
+          <>
+            <em className="font-serif italic font-normal text-primary">
               {category.name}
-            </h1>
-            {category.description && (
-              <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
-                {category.description}
-              </p>
-            )}
-          </div>
-
-          {/* Key-Stats-Box rechts */}
-          <div className="border border-border bg-card p-5 grid grid-cols-2 gap-5">
-            <StatCell label="Produkte" value={String(stats.productCount)} />
-            <StatCell
-              label="Ø Reinheit"
-              value={
-                stats.avgPurity != null
-                  ? `${stats.avgPurity.toFixed(2).replace(".", ",")}%`
-                  : "—"
-              }
-              gold
-            />
-            <StatCell
-              label="Preis ab"
-              value={
-                stats.minPriceInCents != null
-                  ? formatPrice(stats.minPriceInCents)
-                  : "—"
-              }
-            />
-            <StatCell
-              label="Neuste Charge"
-              value={stats.latestBatchNumber ?? "—"}
-              small
-            />
-          </div>
-        </div>
-      </section>
+            </em>
+          </>
+        }
+        subline={heroSubline}
+        stats={heroStats}
+        featured={null}
+      />
 
       <ShopFilterBar
         categories={allCategories}
@@ -315,33 +304,6 @@ export default async function CategoryLandingPage({
           </div>
         )}
       </section>
-    </div>
-  );
-}
-
-function StatCell({
-  label,
-  value,
-  gold,
-  small,
-}: {
-  label: string;
-  value: string;
-  gold?: boolean;
-  small?: boolean;
-}) {
-  return (
-    <div>
-      <p className="font-mono text-[9.5px] tracking-[0.15em] uppercase text-muted-foreground">
-        {label}
-      </p>
-      <p
-        className={`mt-1 font-semibold tracking-tight ${
-          small ? "text-sm font-mono font-medium mt-2" : "text-[24px]"
-        } ${gold ? "text-primary" : "text-foreground"}`}
-      >
-        {value}
-      </p>
     </div>
   );
 }
