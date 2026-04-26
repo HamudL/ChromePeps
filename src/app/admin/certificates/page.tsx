@@ -174,12 +174,19 @@ export default function AdminCertificatesPage() {
     formData.append("files", file);
 
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      // ?as=coa: Bilder werden serverseitig in eine 1-Page-PDF gewrapped,
+      // PDFs werden 1:1 unter /uploads/certificates/ abgelegt. So bleibt
+      // pdfUrl in der DB immer ein .pdf-Pfad und der Mail-Anhang-Code
+      // muss nichts wissen.
+      const res = await fetch("/api/upload?as=coa", {
+        method: "POST",
+        body: formData,
+      });
       const json = await res.json();
       if (json.success && json.data[0]) {
         setForm((prev) => ({ ...prev, pdfUrl: json.data[0] }));
       } else {
-        setError(json.error || "PDF-Upload fehlgeschlagen.");
+        setError(json.error || "Upload fehlgeschlagen.");
       }
     } catch {
       setError("Netzwerkfehler beim Upload.");
@@ -867,13 +874,15 @@ export default function AdminCertificatesPage() {
                   </Button>
                 </div>
               ) : (
-                <div>
+                <div className="space-y-1.5">
                   <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground border border-dashed rounded-lg p-3 transition-colors">
                     <Upload className="h-4 w-4" />
-                    {uploading ? "Wird hochgeladen..." : "PDF auswählen (max 10MB)"}
+                    {uploading
+                      ? "Wird hochgeladen..."
+                      : "PDF, PNG oder JPG auswählen"}
                     <input
                       type="file"
-                      accept=".pdf"
+                      accept=".pdf,.png,.jpg,.jpeg"
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
@@ -883,6 +892,11 @@ export default function AdminCertificatesPage() {
                       disabled={uploading}
                     />
                   </label>
+                  <p className="text-xs text-muted-foreground">
+                    Max. 10 MB (PDF) bzw. 5 MB (Bild). Bilder werden
+                    automatisch in eine 1-seitige PDF konvertiert, damit
+                    der Mail-Anhang sauber aussieht.
+                  </p>
                 </div>
               )}
             </div>
