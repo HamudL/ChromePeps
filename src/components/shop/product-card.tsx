@@ -104,9 +104,11 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
       className={cn(
         "group relative flex flex-col",
         "bg-card border border-border rounded-sm",
-        // ca. +15 % skaliert ggü. vorher (px-5/pt-6/pb-5) — gibt der
-        // Karte mehr Luft, ohne die Grid-Dichte zu verändern.
-        "px-6 pt-7 pb-6",
+        // ca. +20 % skaliert ggü. vorher (px-6/pt-7/pb-6) — gibt der
+        // Karte deutlich mehr Luft, Grid-Dichte bleibt erhalten weil
+        // die Spalten sich responsiv verteilen; die Karte wird also
+        // nicht breiter, sondern höher und visuell präsenter.
+        "px-7 pt-8 pb-7",
         "transition-all duration-300 ease-out",
         "hover:border-foreground hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-24px_hsl(20_14%_10%/0.2)]",
         "animate-fade-in",
@@ -134,7 +136,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
       />
 
       {/* Head: Kategorie + Index + Wishlist */}
-      <div className="relative mb-5 flex items-center justify-between font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
+      <div className="relative mb-6 flex items-center justify-between font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
         <span className="text-primary font-semibold">
           {product.category.name}
         </span>
@@ -146,7 +148,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
           >
             <WishlistButton
               productId={product.id}
-              className="h-8 w-8 bg-transparent hover:bg-muted"
+              className="h-9 w-9 bg-transparent hover:bg-muted"
             />
           </div>
         </div>
@@ -159,7 +161,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
           bewusst reines bg-card (wei\u00df auf hellem Thema) ohne Gradient,
           damit eine transparente Vial optisch ohne grauen Rahmen "floated"
           und nicht mehr in einer Box sitzt. */}
-      <div className="relative mx-auto mb-5 h-[168px] w-full max-w-[210px]">
+      <div className="relative mx-auto mb-6 h-[200px] w-full max-w-[252px]">
         {image ? (
           <div className="relative h-full w-full bg-card">
             <Image
@@ -187,12 +189,12 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
       </div>
 
       {/* Name */}
-      <h3 className="relative text-xl font-semibold tracking-tight leading-tight line-clamp-1 group-hover:text-primary transition-colors duration-300">
+      <h3 className="relative text-2xl font-semibold tracking-tight leading-tight line-clamp-1 group-hover:text-primary transition-colors duration-300">
         {product.name}
       </h3>
 
       {/* Spec-Rows — nur gerenderte Zeilen, die auch Daten haben */}
-      <dl className="relative mt-2.5 space-y-1.5">
+      <dl className="relative mt-3 space-y-2">
         {product.weight && (
           <SpecRow k="Menge" v={product.weight} />
         )}
@@ -203,13 +205,13 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
       </dl>
 
       {/* Price + CTA */}
-      <div className="relative mt-auto pt-4 border-t border-border flex items-baseline justify-between gap-3">
+      <div className="relative mt-auto pt-5 border-t border-border flex items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold tracking-tight tabular-nums leading-none">
+          <span className="text-3xl font-bold tracking-tight tabular-nums leading-none">
             {priceDisplay}
           </span>
           {!hasVariants && hasDiscount && (
-            <span className="text-xs text-muted-foreground line-through tabular-nums">
+            <span className="text-sm text-muted-foreground line-through tabular-nums">
               {formatPrice(product.compareAtPriceInCents!)}
             </span>
           )}
@@ -251,7 +253,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
 
 function SpecRow({ k, v, gold }: { k: string; v: string; gold?: boolean }) {
   return (
-    <div className="flex items-baseline justify-between font-mono text-[11.5px]">
+    <div className="flex items-baseline justify-between font-mono text-[13px]">
       <span className="text-muted-foreground">{k}</span>
       <span
         className={cn(
@@ -279,7 +281,7 @@ function VialFallback({
   // Katalog noch kein Bild hinterlegt ist.
   return (
     <div
-      className="relative mx-auto h-full w-20 rounded-[6px_6px_3px_3px] transition-transform duration-500 ease-out group-hover:-rotate-3 group-hover:-translate-y-0.5"
+      className="relative mx-auto h-full w-24 rounded-[6px_6px_3px_3px] transition-transform duration-500 ease-out group-hover:-rotate-3 group-hover:-translate-y-0.5"
       style={{
         background:
           "linear-gradient(to right, hsl(45 40% 50% / 0.25) 0%, hsl(45 78% 78%) 30%, hsl(45 88% 90%) 50%, hsl(45 78% 78%) 70%, hsl(45 40% 50% / 0.25) 100%)",
@@ -290,7 +292,7 @@ function VialFallback({
     >
       {/* Gummikappe */}
       <span
-        className="absolute -top-2.5 left-1/2 -translate-x-1/2 h-3.5 w-7 rounded-sm"
+        className="absolute -top-3 left-1/2 -translate-x-1/2 h-4 w-8 rounded-sm"
         style={{ background: "hsl(20 15% 20%)" }}
       />
       {/* Label */}
