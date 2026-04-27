@@ -38,16 +38,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { useCartStore } from "@/store/cart-store";
+import { CountrySelect } from "@/components/shop/country-select";
 import { formatPrice } from "@/lib/utils";
 import { BANK_DETAILS } from "@/lib/constants";
 import {
@@ -152,7 +144,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("STRIPE");
 
   // New address dialog
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
   const [addressForm, setAddressForm] = useState(INITIAL_ADDRESS_FORM);
   const [addressSaving, setAddressSaving] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
@@ -243,7 +235,7 @@ export default function CheckoutPage() {
       // Add to list and select
       setAddresses((prev) => [json.data, ...prev]);
       setSelectedAddressId(json.data.id);
-      setDialogOpen(false);
+      setShowAddressForm(false);
       setAddressForm(INITIAL_ADDRESS_FORM);
     } catch {
       setAddressError("Netzwerkfehler. Bitte erneut versuchen.");
@@ -708,34 +700,17 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="guestCountry">Land</Label>
-                      <Select
+                      {/* CountrySelect fetcht selbst die aktiven shipping_rates.
+                          Der parent-state `shippingRates` bleibt für den Live-
+                          Versandpreis-Preview im Order-Summary erhalten. */}
+                      <CountrySelect
+                        id="guestCountry"
                         value={guestForm.country}
-                        onValueChange={(v) =>
+                        onChange={(v) =>
                           setGuestForm((p) => ({ ...p, country: v }))
                         }
-                      >
-                        <SelectTrigger id="guestCountry">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* Liefer-Länder kommen aus shipping_rates.
-                              So bleiben Country-Auswahl und Versand-
-                              Berechnung garantiert konsistent: was nicht
-                              hier steht, wird auch nicht versendet. */}
-                          {shippingRates.length === 0 ? (
-                            <SelectItem value="DE">Deutschland</SelectItem>
-                          ) : (
-                            shippingRates.map((r) => (
-                              <SelectItem
-                                key={r.countryCode}
-                                value={r.countryCode}
-                              >
-                                {r.countryName}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                        required
+                      />
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="guestPhone">
@@ -825,29 +800,40 @@ export default function CheckoutPage() {
                 </>
               )}
 
-              {/* Add New Address Dialog — authenticated users only.
-                  Guests use the inline form above, which pushes
-                  a one-time address straight into the order
-                  record instead of persisting to their (non-
-                  existent) profile. */}
-              {!isGuest && (
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Neue Adresse hinzufügen
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle>Neue Adresse hinzufügen</DialogTitle>
-                    <DialogDescription>
-                      Geben Sie unten die Lieferadressdaten ein.
-                    </DialogDescription>
-                  </DialogHeader>
+              {/* Inline-Adressform — authenticated users only. Gäste haben
+                  oben den festen Inline-Block. Statt eines Modals klappt
+                  unter dem Address-Dropdown ein Form auf — Form-State und
+                  POST-Logik sind unverändert (handleAddressSubmit nutzt
+                  weiter /api/addresses), nur die Render-Schale ist neu. */}
+              {!isGuest && !showAddressForm && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowAddressForm(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Neue Adresse hinzufügen
+                </Button>
+              )}
 
-                  <div className="grid gap-4 py-4">
-                    {/* Label */}
+              {!isGuest && showAddressForm && (
+                <div className="space-y-4 rounded-md border bg-muted/30 p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold">
+                      Neue Lieferadresse
+                    </h3>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAddressForm(false)}
+                      disabled={addressSaving}
+                    >
+                      Abbrechen
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-3">
                     <div className="grid gap-2">
                       <Label htmlFor="label">Bezeichnung (optional)</Label>
                       <Input
@@ -860,12 +846,12 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    {/* Name Row */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="grid gap-2">
                         <Label htmlFor="firstName">Vorname *</Label>
                         <Input
                           id="firstName"
+                          autoComplete="given-name"
                           value={addressForm.firstName}
                           onChange={(e) =>
                             updateFormField("firstName", e.target.value)
@@ -877,6 +863,7 @@ export default function CheckoutPage() {
                         <Label htmlFor="lastName">Nachname *</Label>
                         <Input
                           id="lastName"
+                          autoComplete="family-name"
                           value={addressForm.lastName}
                           onChange={(e) =>
                             updateFormField("lastName", e.target.value)
@@ -886,11 +873,11 @@ export default function CheckoutPage() {
                       </div>
                     </div>
 
-                    {/* Company */}
                     <div className="grid gap-2">
                       <Label htmlFor="company">Firma (optional)</Label>
                       <Input
                         id="company"
+                        autoComplete="organization"
                         value={addressForm.company}
                         onChange={(e) =>
                           updateFormField("company", e.target.value)
@@ -898,11 +885,11 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    {/* Street */}
                     <div className="grid gap-2">
                       <Label htmlFor="street">Straße und Hausnummer *</Label>
                       <Input
                         id="street"
+                        autoComplete="street-address"
                         value={addressForm.street}
                         onChange={(e) =>
                           updateFormField("street", e.target.value)
@@ -911,11 +898,8 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    {/* Street 2 */}
                     <div className="grid gap-2">
-                      <Label htmlFor="street2">
-                        Adresszusatz (optional)
-                      </Label>
+                      <Label htmlFor="street2">Adresszusatz (optional)</Label>
                       <Input
                         id="street2"
                         value={addressForm.street2}
@@ -925,23 +909,12 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    {/* City + Postal */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="city">Stadt *</Label>
-                        <Input
-                          id="city"
-                          value={addressForm.city}
-                          onChange={(e) =>
-                            updateFormField("city", e.target.value)
-                          }
-                          required
-                        />
-                      </div>
+                    <div className="grid grid-cols-3 gap-3">
                       <div className="grid gap-2">
                         <Label htmlFor="postalCode">PLZ *</Label>
                         <Input
                           id="postalCode"
+                          autoComplete="postal-code"
                           value={addressForm.postalCode}
                           onChange={(e) =>
                             updateFormField("postalCode", e.target.value)
@@ -949,10 +922,21 @@ export default function CheckoutPage() {
                           required
                         />
                       </div>
+                      <div className="col-span-2 grid gap-2">
+                        <Label htmlFor="city">Stadt *</Label>
+                        <Input
+                          id="city"
+                          autoComplete="address-level2"
+                          value={addressForm.city}
+                          onChange={(e) =>
+                            updateFormField("city", e.target.value)
+                          }
+                          required
+                        />
+                      </div>
                     </div>
 
-                    {/* State + Country */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="grid gap-2">
                         <Label htmlFor="state">Bundesland (optional)</Label>
                         <Input
@@ -964,29 +948,22 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="country">Ländercode *</Label>
-                        <Input
+                        <Label htmlFor="country">Land *</Label>
+                        <CountrySelect
                           id="country"
-                          placeholder="DE"
-                          maxLength={2}
                           value={addressForm.country}
-                          onChange={(e) =>
-                            updateFormField(
-                              "country",
-                              e.target.value.toUpperCase()
-                            )
-                          }
+                          onChange={(v) => updateFormField("country", v)}
                           required
                         />
                       </div>
                     </div>
 
-                    {/* Phone */}
                     <div className="grid gap-2">
                       <Label htmlFor="phone">Telefon (optional)</Label>
                       <Input
                         id="phone"
                         type="tel"
+                        autoComplete="tel"
                         value={addressForm.phone}
                         onChange={(e) =>
                           updateFormField("phone", e.target.value)
@@ -994,7 +971,6 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    {/* Default checkbox */}
                     <div className="flex items-center gap-2">
                       <input
                         id="isDefault"
@@ -1005,7 +981,10 @@ export default function CheckoutPage() {
                           updateFormField("isDefault", e.target.checked)
                         }
                       />
-                      <Label htmlFor="isDefault" className="cursor-pointer">
+                      <Label
+                        htmlFor="isDefault"
+                        className="cursor-pointer text-sm font-normal"
+                      >
                         Als Standardadresse festlegen
                       </Label>
                     </div>
@@ -1018,34 +997,25 @@ export default function CheckoutPage() {
                     )}
                   </div>
 
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setDialogOpen(false)}
-                      disabled={addressSaving}
-                    >
-                      Abbrechen
-                    </Button>
-                    <Button
-                      onClick={handleAddressSubmit}
-                      disabled={
-                        addressSaving ||
-                        !addressForm.firstName ||
-                        !addressForm.lastName ||
-                        !addressForm.street ||
-                        !addressForm.city ||
-                        !addressForm.postalCode ||
-                        !addressForm.country
-                      }
-                    >
-                      {addressSaving && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      Adresse speichern
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-                </Dialog>
+                  <Button
+                    onClick={handleAddressSubmit}
+                    className="w-full"
+                    disabled={
+                      addressSaving ||
+                      !addressForm.firstName ||
+                      !addressForm.lastName ||
+                      !addressForm.street ||
+                      !addressForm.city ||
+                      !addressForm.postalCode ||
+                      !addressForm.country
+                    }
+                  >
+                    {addressSaving && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Adresse speichern
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>

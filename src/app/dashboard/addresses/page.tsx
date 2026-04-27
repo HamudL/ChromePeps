@@ -21,6 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CountrySelect } from "@/components/shop/country-select";
 import { Loader2, MapPin, Pencil, Plus, Star, Trash2 } from "lucide-react";
 
 interface Address {
@@ -145,7 +146,7 @@ export default function AddressesPage() {
       street: "Straße",
       city: "Stadt",
       postalCode: "PLZ",
-      country: "Ländercode",
+      country: "Land",
     };
 
     const payload: Record<string, unknown> = {};
@@ -436,13 +437,11 @@ export default function AddressesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="addr-country">Ländercode</Label>
-                <Input
+                <Label htmlFor="addr-country">Land</Label>
+                <CountrySelect
                   id="addr-country"
                   value={form.country}
-                  onChange={(e) => updateField("country", e.target.value)}
-                  placeholder="DE"
-                  maxLength={2}
+                  onChange={(v) => updateField("country", v)}
                   required
                 />
               </div>
