@@ -1,3 +1,7 @@
+// Bewusst force-dynamic: zur Build-Zeit gibt es keinen DATABASE_URL,
+// daher würde ISR-Pre-Rendering scheitern. Stattdessen cachen wir
+// die Daten-Helper unten mit Redis — Effekt ist derselbe (1 DB-Read
+// pro N Sekunden statt pro Request) ohne Build-Time-Abhängigkeit.
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
@@ -13,7 +17,12 @@ import {
   Package,
 } from "lucide-react";
 import { db } from "@/lib/db";
-import { RESEARCH_DISCLAIMER } from "@/lib/constants";
+import {
+  RESEARCH_DISCLAIMER,
+  HOMEPAGE_CACHE,
+  HOMEPAGE_CACHE_TTL,
+} from "@/lib/constants";
+import { cacheGet, cacheSet } from "@/lib/redis";
 import { ProductCard } from "@/components/shop/product-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +39,9 @@ import { TrustBar } from "@/components/shop/trust-bar";
 import { LiveMetrics } from "@/components/shop/live-metrics";
 
 async function getBestsellers(): Promise<ProductCardData[]> {
+  const cached = await cacheGet<ProductCardData[]>(HOMEPAGE_CACHE.BESTSELLERS);
+  if (cached) return cached;
+
   const [products, bestsellerIds] = await Promise.all([
     db.product.findMany({
       where: { isActive: true, isBestseller: true },
@@ -40,14 +52,32 @@ async function getBestsellers(): Promise<ProductCardData[]> {
     }),
     getBestsellerProductIds(),
   ]);
-  return products.map((p) => ({
+  const result = products.map((p) => ({
     ...p,
     isBestseller: bestsellerIds.has(p.id),
   }));
+  await cacheSet(
+    HOMEPAGE_CACHE.BESTSELLERS,
+    result,
+    HOMEPAGE_CACHE_TTL.BESTSELLERS,
+  );
+  return result;
 }
 
-async function getCategories() {
-  return db.category.findMany({
+type HomepageCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  _count: { products: number };
+};
+
+async function getCategories(): Promise<HomepageCategory[]> {
+  const cached = await cacheGet<HomepageCategory[]>(HOMEPAGE_CACHE.CATEGORIES);
+  if (cached) return cached;
+
+  const result = await db.category.findMany({
     orderBy: { sortOrder: "asc" },
     select: {
       id: true,
@@ -58,6 +88,12 @@ async function getCategories() {
       _count: { select: { products: { where: { isActive: true } } } },
     },
   });
+  await cacheSet(
+    HOMEPAGE_CACHE.CATEGORIES,
+    result,
+    HOMEPAGE_CACHE_TTL.CATEGORIES,
+  );
+  return result;
 }
 
 /**
@@ -66,7 +102,12 @@ async function getCategories() {
  * Die "Ausgelieferte Bestellungen"-Kachel aus dem ursprünglichen Design ist
  * bewusst weggelassen — sie gehört inhaltlich nicht auf die Startseite.
  */
-async function getLiveMetrics() {
+type LiveMetricsResult = { batchCount: number; avgPurity: number | null };
+
+async function getLiveMetrics(): Promise<LiveMetricsResult> {
+  const cached = await cacheGet<LiveMetricsResult>(HOMEPAGE_CACHE.METRICS);
+  if (cached) return cached;
+
   const twelveMonthsAgo = new Date();
   twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
@@ -82,10 +123,12 @@ async function getLiveMetrics() {
     }),
   ]);
 
-  return {
+  const result: LiveMetricsResult = {
     batchCount,
     avgPurity: avgPurity._avg.purity ?? null,
   };
+  await cacheSet(HOMEPAGE_CACHE.METRICS, result, HOMEPAGE_CACHE_TTL.METRICS);
+  return result;
 }
 
 export default async function HomePage() {

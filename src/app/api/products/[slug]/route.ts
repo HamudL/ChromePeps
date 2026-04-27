@@ -182,6 +182,7 @@ export async function PATCH(
     await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(newSlug));
   }
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
+  await cacheDelPattern("homepage:*");
   revalidatePath(`/products/${newSlug ?? slug}`);
   revalidatePath("/products");
 
@@ -218,6 +219,7 @@ export async function DELETE(
 
   await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(slug));
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
+  await cacheDelPattern("homepage:*");
   revalidatePath(`/products/${slug}`);
   revalidatePath("/products");
 

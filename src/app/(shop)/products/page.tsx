@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, PackageSearch } from "lucide-react";
 import { db } from "@/lib/db";
-import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { ITEMS_PER_PAGE, CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
+import { cacheGet, cacheSet } from "@/lib/redis";
 import { ProductCard } from "@/components/shop/product-card";
 import { ApothekeShopHero } from "@/components/shop/apotheke-shop-hero";
 import { ShopFilterBar } from "@/components/shop/shop-filter-bar";
@@ -98,7 +99,46 @@ interface GetProductsParams {
   minPurity: number | null;
 }
 
-async function getProducts(params: GetProductsParams) {
+interface ProductsListResult {
+  products: ProductCardData[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+/**
+ * Cache-Key fasst alle filter+sort-Dimensionen in einen kompakten String.
+ * Default-Werte werden auf "_" abgekürzt, damit der häufigste "leerer
+ * Filter, page=1"-Hit eine kurze, kollisionsfreie Schlüsseldarstellung
+ * hat ("products:list:_:_:newest:1:_:_").
+ */
+function buildListingCacheKey(params: GetProductsParams): string {
+  const enc = (v: string | null | undefined) =>
+    v == null || v === "" ? "_" : encodeURIComponent(v);
+  return [
+    CACHE_KEYS.PRODUCTS_LIST,
+    enc(params.search),
+    enc(params.categorySlug),
+    enc(params.sort ?? "newest"),
+    String(params.page),
+    params.inStock ? "1" : "0",
+    params.minPurity ?? "_",
+  ].join(":");
+}
+
+async function getProducts(
+  params: GetProductsParams,
+): Promise<ProductsListResult> {
+  // Cache-Hit-Pfad: identische Filter+Page liefern bis zur nächsten
+  // Invalidierung (Admin-Edit / Reorder / Stock-Change → siehe
+  // /api/admin/products writes) den fertig zusammengebauten Listen-
+  // Snapshot. Bei 100 concurrent Visits auf /products = 1 Postgres-
+  // Roundtrip alle ~60 s statt 100/s.
+  const cacheKey = buildListingCacheKey(params);
+  const cached = await cacheGet<ProductsListResult>(cacheKey);
+  if (cached) return cached;
+
   const {
     search,
     categorySlug,
@@ -181,13 +221,16 @@ async function getProducts(params: GetProductsParams) {
     isBestseller: bestsellerIds.has(p.id),
   }));
 
-  return {
+  const result: ProductsListResult = {
     products: productsWithBadges,
     total,
     page,
     pageSize,
     totalPages: Math.ceil(total / pageSize),
   };
+
+  await cacheSet(cacheKey, result, CACHE_TTL.PRODUCTS_LIST);
+  return result;
 }
 
 function buildPageUrl(

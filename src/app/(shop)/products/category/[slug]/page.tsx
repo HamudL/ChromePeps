@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, PackageSearch } from "lucide-react";
 import { db } from "@/lib/db";
-import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { ITEMS_PER_PAGE, CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
+import { cacheGet, cacheSet } from "@/lib/redis";
 import { ProductCard } from "@/components/shop/product-card";
 import { ApothekeShopHero } from "@/components/shop/apotheke-shop-hero";
 import { ShopFilterBar } from "@/components/shop/shop-filter-bar";
@@ -16,6 +17,36 @@ import { formatPrice } from "@/lib/utils";
 import type { ProductCardData } from "@/types";
 import type { Prisma } from "@prisma/client";
 import type { Metadata } from "next";
+
+/**
+ * Cached Listing-Read für eine Kategorie. Triplette aus (products,
+ * total, bestseller-IDs) ist die teuerste Phase im Page-Render — der
+ * Rest (category, allCategories, stats) ist günstig und bleibt
+ * außerhalb des Caches, damit Stats-Anzeigen wie "Neueste Charge"
+ * frischer wirken.
+ */
+interface CategoryListingCache {
+  products: ProductCardData[];
+  total: number;
+}
+
+function buildCategoryListingKey(opts: {
+  slug: string;
+  sort: string;
+  page: number;
+  inStock: boolean;
+  minPurity: number | null;
+}): string {
+  return [
+    CACHE_KEYS.PRODUCTS_LIST,
+    "cat",
+    encodeURIComponent(opts.slug),
+    opts.sort,
+    String(opts.page),
+    opts.inStock ? "1" : "0",
+    opts.minPurity ?? "_",
+  ].join(":");
+}
 
 /**
  * Kategorie-Landingpage im Apotheke-Stil — eigene Route statt nur
@@ -148,8 +179,35 @@ export default async function CategoryLandingPage({
 
   const pageSize = ITEMS_PER_PAGE;
 
-  const [products, total, allCategories, bestsellerIds, stats] =
-    await Promise.all([
+  // Cache-Hit-Pfad für die teure Listing-Triplette. Bei Cache-Miss
+  // läuft der echte Postgres-Read und wird für CACHE_TTL.PRODUCTS_LIST
+  // Sekunden gespeichert; Invalidierung übernehmen die Admin-Writes
+  // via cacheDelPattern("products:list*").
+  const listingCacheKey = buildCategoryListingKey({
+    slug,
+    sort,
+    page,
+    inStock,
+    minPurity,
+  });
+  const cachedListing = await cacheGet<CategoryListingCache>(listingCacheKey);
+
+  // Begleitende Reads (allCategories für Index-Anzeige, stats für
+  // Header-Reihe) sind günstig und werden bewusst NICHT gecacht —
+  // dadurch fühlt sich der "Neueste Charge"-Wert frischer an.
+  const [allCategories, stats] = await Promise.all([
+    getAllCategories(),
+    getCategoryStats(category.id),
+  ]);
+
+  let productsWithBadges: ProductCardData[];
+  let total: number;
+
+  if (cachedListing) {
+    productsWithBadges = cachedListing.products;
+    total = cachedListing.total;
+  } else {
+    const [products, totalCount, bestsellerIds] = await Promise.all([
       db.product.findMany({
         where,
         orderBy,
@@ -158,15 +216,19 @@ export default async function CategoryLandingPage({
         select: productCardSelect,
       }),
       db.product.count({ where }),
-      getAllCategories(),
       getBestsellerProductIds(),
-      getCategoryStats(category.id),
     ]);
-
-  const productsWithBadges: ProductCardData[] = products.map((p) => ({
-    ...p,
-    isBestseller: bestsellerIds.has(p.id),
-  }));
+    productsWithBadges = products.map((p) => ({
+      ...p,
+      isBestseller: bestsellerIds.has(p.id),
+    }));
+    total = totalCount;
+    await cacheSet<CategoryListingCache>(
+      listingCacheKey,
+      { products: productsWithBadges, total },
+      CACHE_TTL.PRODUCTS_LIST,
+    );
+  }
 
   const totalPages = Math.ceil(total / pageSize);
 

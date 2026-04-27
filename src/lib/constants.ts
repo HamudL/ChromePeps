@@ -43,6 +43,11 @@ export const CACHE_KEYS = {
   CART: (userId: string) => `cart:${userId}`,
   STATS: "admin:stats",
   PROMOS: "promos:all",
+  // Top-N Bestseller-Produkt-IDs (Set serialisiert als Array). Wird auf
+  // Homepage, Hauptkatalog, Kategorie- und Detailseite gleichermaßen
+  // gelesen — daher zentraler Key statt fünf parallel laufender groupBy-
+  // Queries pro Page-Render.
+  BESTSELLER_IDS: "products:bestseller-ids",
 } as const;
 
 export const CACHE_TTL = {
@@ -52,6 +57,31 @@ export const CACHE_TTL = {
   CART: 3600,
   STATS: 30,
   PROMOS: 60,
+  // Bestseller-Liste ändert sich basierend auf Orders. 5 min ist
+  // schnell genug damit ein neuer Hit-Article rechtzeitig auftaucht,
+  // aber lang genug dass typische Concurrency-Spikes (100+ User in
+  // einer Minute) nur EINEN groupBy-Hit auf orders auslösen.
+  BESTSELLER_IDS: 300,
+} as const;
+
+// Homepage-spezifische Cache-Keys + TTLs. Eigene Konstanten, weil die
+// Daten-Helper auf der Homepage (Bestseller-Cards, Category-Tiles, Live-
+// Metrics) eigene Aggregations-Queries fahren, die unabhängig von
+// PRODUCTS_LIST invalidiert werden.
+export const HOMEPAGE_CACHE = {
+  BESTSELLERS: "homepage:bestsellers",
+  CATEGORIES: "homepage:categories",
+  METRICS: "homepage:metrics",
+} as const;
+
+export const HOMEPAGE_CACHE_TTL = {
+  // Bestseller-Liste: hängt am isBestseller-Boolean (Admin-Toggle) — kein
+  // hochfrequenter Wechsel, 2 min reicht.
+  BESTSELLERS: 120,
+  // Categories: ändern sich extrem selten — 10 min.
+  CATEGORIES: 600,
+  // Live-Metrics (Charge-Count, Ø Reinheit): aggregiert COA-Daten — 5 min.
+  METRICS: 300,
 } as const;
 
 export const BANK_DETAILS = {

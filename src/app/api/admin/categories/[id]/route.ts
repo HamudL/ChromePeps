@@ -40,6 +40,7 @@ export async function PATCH(
 
   await cacheDel(CACHE_KEYS.CATEGORIES);
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
+  await cacheDelPattern("homepage:*");
 
   return NextResponse.json({ success: true, data: category });
 }
@@ -73,6 +74,7 @@ export async function DELETE(
   await db.category.delete({ where: { id } });
 
   await cacheDel(CACHE_KEYS.CATEGORIES);
+  await cacheDelPattern("homepage:*");
 
   return NextResponse.json({ success: true });
 }

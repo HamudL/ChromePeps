@@ -1,6 +1,8 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { cacheGet, cacheSet } from "@/lib/redis";
+import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
 import { BESTSELLER_LIMIT, BESTSELLER_WINDOW_DAYS } from "./badges";
 
 /**
@@ -57,12 +59,30 @@ export const productCardSelect = {
  *
  * Only counts items from orders that were actually paid — PENDING or
  * CANCELLED orders don't move the needle.
+ *
+ * Caching: Default-Aufrufe (ohne explizite options) gehen über Redis
+ * mit 5-min-TTL. Bei Page-Renders auf Home/Catalog/Category/Detail
+ * dadurch nur 1 Postgres-Roundtrip alle 5 Minuten statt 1 pro Visit.
+ * Aufrufe mit custom limit/windowDays gehen direkt an die DB
+ * (Cache-Key ist auf den Default-Cut gemünzt — andere Werte würden
+ * fälschlicherweise denselben Key benutzen).
  */
 export async function getBestsellerProductIds(
   options: { limit?: number; windowDays?: number } = {}
 ): Promise<Set<string>> {
   const limit = options.limit ?? BESTSELLER_LIMIT;
   const windowDays = options.windowDays ?? BESTSELLER_WINDOW_DAYS;
+  const usingDefaults =
+    options.limit === undefined && options.windowDays === undefined;
+
+  // Cache-Hit-Pfad — nur bei Default-Cut, sonst kein deterministischer Key.
+  if (usingDefaults) {
+    const cached = await cacheGet<string[]>(CACHE_KEYS.BESTSELLER_IDS);
+    if (cached) {
+      return new Set(cached);
+    }
+  }
+
   const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
 
   try {
@@ -78,11 +98,16 @@ export async function getBestsellerProductIds(
       orderBy: { _sum: { quantity: "desc" } },
       take: limit,
     });
-    return new Set(
-      rows
-        .map((r) => r.productId)
-        .filter((id): id is string => id !== null)
-    );
+    const ids = rows
+      .map((r) => r.productId)
+      .filter((id): id is string => id !== null);
+
+    if (usingDefaults) {
+      // fire-and-forget set — wenn Redis weg ist, fallen wir auf Postgres
+      // zurück, kein User merkt das.
+      await cacheSet(CACHE_KEYS.BESTSELLER_IDS, ids, CACHE_TTL.BESTSELLER_IDS);
+    }
+    return new Set(ids);
   } catch (err) {
     // A failed bestseller lookup must never break the catalog — fall back
     // to an empty set so the page still renders without bestseller badges.

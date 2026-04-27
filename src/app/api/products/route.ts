@@ -184,6 +184,11 @@ export async function POST(req: NextRequest) {
   });
 
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
+  // Homepage-Caches (Bestsellers + Categories) werden bei jeder
+  // Produkt-Änderung mit invalidiert — neuer Bestseller muss sofort
+  // auf der Startseite sichtbar sein, sonst verwirrt es den Admin
+  // bei Stichproben.
+  await cacheDelPattern("homepage:*");
   revalidatePath("/products");
 
   return NextResponse.json({ success: true, data: product }, { status: 201 });

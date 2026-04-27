@@ -65,6 +65,8 @@ export async function PATCH(req: NextRequest) {
   // Pattern-Match weil Detail-Keys den Slug im Suffix tragen.
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}*`);
   await cacheDelPattern("products:detail:*");
+  // Reorder verändert die Top-4-Bestseller-Reihenfolge auf der Homepage.
+  await cacheDelPattern("homepage:*");
 
   return NextResponse.json({
     success: true,
