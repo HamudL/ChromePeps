@@ -668,7 +668,7 @@ export default function CheckoutPage() {
                       }
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="guestPostalCode">PLZ</Label>
                       <Input
@@ -909,7 +909,7 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="grid gap-2">
                         <Label htmlFor="postalCode">PLZ *</Label>
                         <Input

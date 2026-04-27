@@ -129,7 +129,7 @@ export function CartSheet() {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-7 w-7"
+                          className="h-9 w-9"
                           aria-label={`Menge von ${item.name} verringern`}
                           onClick={() =>
                             updateQuantity(
@@ -150,7 +150,7 @@ export function CartSheet() {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-7 w-7"
+                          className="h-9 w-9"
                           aria-label={`Menge von ${item.name} erhöhen`}
                           onClick={() =>
                             updateQuantity(

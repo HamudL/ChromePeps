@@ -151,7 +151,7 @@ export default function CartPage() {
                           <Button
                             variant="outline"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-9 w-9"
                             onClick={() =>
                               updateQuantity(
                                 item.productId,
@@ -168,7 +168,7 @@ export default function CartPage() {
                           <Button
                             variant="outline"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-9 w-9"
                             disabled={item.quantity >= item.stock}
                             onClick={() =>
                               updateQuantity(
@@ -189,7 +189,7 @@ export default function CartPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          className="h-9 w-9 text-destructive hover:text-destructive"
                           onClick={() =>
                             removeItem(item.productId, item.variantId)
                           }
