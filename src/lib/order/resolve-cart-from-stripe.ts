@@ -31,7 +31,6 @@ export async function resolveCartFromStripeSession(
   stripeSession: Stripe.Checkout.Session
 ): Promise<CartForOrder | null> {
   const userId = stripeSession.metadata?.userId;
-  const guestEmail = stripeSession.metadata?.guestEmail;
 
   // ---------- Authenticated order ----------
   if (userId) {
@@ -43,31 +42,39 @@ export async function resolveCartFromStripeSession(
         },
       },
     });
-    if (!cart || cart.items.length === 0) return null;
-    return {
-      id: cart.id,
-      items: cart.items.map((item) => ({
-        productId: item.productId,
-        variantId: item.variantId,
-        quantity: item.quantity,
-        product: {
-          name: item.product.name,
-          sku: item.product.sku,
-          priceInCents: item.product.priceInCents,
-        },
-        variant: item.variant
-          ? {
-              name: item.variant.name,
-              sku: item.variant.sku,
-              priceInCents: item.variant.priceInCents,
-            }
-          : null,
-      })),
-    };
+    if (cart && cart.items.length > 0) {
+      return {
+        id: cart.id,
+        items: cart.items.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          product: {
+            name: item.product.name,
+            sku: item.product.sku,
+            priceInCents: item.product.priceInCents,
+          },
+          variant: item.variant
+            ? {
+                name: item.variant.name,
+                sku: item.variant.sku,
+                priceInCents: item.variant.priceInCents,
+              }
+            : null,
+        })),
+      };
+    }
+    // Cart fehlt — typischer Fall: User hat sein Konto nach dem
+    // Stripe-Redirect gelöscht, Cascade hat den Cart entfernt. Fall
+    // through zum metadata-Snapshot-Fallback unten, der seit Phase 9
+    // auch für Auth-User gestempelt wird.
   }
 
-  // ---------- Guest order ----------
-  if (!guestEmail) return null;
+  // ---------- Guest order / Auth-Recovery ----------
+  // Kein guestEmail-Check mehr — der Auth-Recovery-Pfad triggert
+  // diesen Block ohne guestEmail in der metadata. Identifikation
+  // läuft dann über stripeSession.customer_details/email im
+  // Order-Helper; hier rekonstruieren wir nur die Items.
   const rawItemsJson = stripeSession.metadata?.guestItems;
   if (typeof rawItemsJson !== "string" || !rawItemsJson) return null;
 

@@ -216,6 +216,33 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
+  // Block, wenn unbezahlte Vorkasse-Bestellungen offen sind. Sonst
+  // würde die Order anonymisiert während der Kunde noch zahlen will,
+  // und die Bank-Eingänge ließen sich später nicht mehr sauber
+  // zuordnen. Stripe-Bestellungen sind hier KEIN Issue (die laufen
+  // synchron im Webhook + haben jetzt einen Recovery-Pfad in
+  // createOrderFromStripeSession), und abgeschlossene Bestellungen
+  // dürfen anonymisiert werden — die bleiben für die rechtliche
+  // Aufbewahrung erhalten.
+  const pendingBankTransfer = await db.order.count({
+    where: {
+      userId,
+      paymentMethod: "BANK_TRANSFER",
+      paymentStatus: "PENDING",
+    },
+  });
+  if (pendingBankTransfer > 0) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Sie haben ${pendingBankTransfer} offene Vorkasse-${
+          pendingBankTransfer === 1 ? "Bestellung" : "Bestellungen"
+        }. Bitte schließen Sie die Zahlung erst ab oder kontaktieren Sie den Support, bevor Sie das Konto löschen.`,
+      },
+      { status: 409 },
+    );
+  }
+
   const anonEmail = `deleted-${userId}@deleted.local`;
   const anonName = "Gelöschter Nutzer";
 

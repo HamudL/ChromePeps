@@ -402,6 +402,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Items-Snapshot in Stripe-Session-metadata stempeln, auch für
+    // Auth-User. Hintergrund: zwischen Stripe-Session-Create und
+    // Webhook (1-3 s, manchmal länger) kann der User parallel sein
+    // Konto löschen — dann wird via Cascade auch sein Cart entfernt.
+    // Ohne Snapshot hätte der Webhook nichts, womit er die Order
+    // rekonstruieren könnte. Defense-in-depth-Spiegel zum Gast-Pfad.
+    const authMetaItems: Array<{ p: string; v: string | null; q: number }> = [];
+
     for (const item of cart.items) {
       const unitAmount = item.variant?.priceInCents ?? item.product.priceInCents;
       const productName = item.variant
@@ -421,8 +429,14 @@ export async function POST(req: NextRequest) {
         },
         quantity: item.quantity,
       });
+      authMetaItems.push({
+        p: item.productId,
+        v: item.variantId,
+        q: item.quantity,
+      });
     }
 
+    guestItemsMeta = JSON.stringify(authMetaItems);
     customerEmail = session?.user?.email ?? undefined;
   }
 
@@ -557,11 +571,13 @@ export async function POST(req: NextRequest) {
         ? {
             guestEmail: guestEmailForOrder,
             guestName: guestNameForOrder ?? "",
-            // Compact item list so the webhook can rebuild the
-            // order without access to a server-side cart.
-            ...(guestItemsMeta ? { guestItems: guestItemsMeta } : {}),
           }
         : {}),
+      // Items-Snapshot — für Gast UND Auth. Auth-Pfad braucht ihn als
+      // Recovery wenn der User parallel zum Bezahlen sein Konto löscht
+      // und dadurch auch der Cart cascade-deleted wird. Ohne diesen
+      // Snapshot wäre der Webhook stranded.
+      ...(guestItemsMeta ? { guestItems: guestItemsMeta } : {}),
       ...(validatedPromoId && promoCode
         ? {
             promoId: validatedPromoId,

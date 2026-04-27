@@ -91,13 +91,47 @@ export async function createOrderFromStripeSession(
 ) {
   const {
     tx,
-    userId,
-    guestEmail,
-    guestName,
     stripeSession,
     cart,
     shippingAddressId,
   } = args;
+
+  // Auth-Recovery: wenn der Caller eine userId mitgibt, der User aber
+  // nicht mehr existiert (Account zwischen Stripe-Bezahlung und
+  // diesem Aufruf gelöscht — Phase 8 Edge-Case), kippen wir den Order
+  // auf einen Gast-Recovery-Modus statt mit FK-Constraint zu crashen.
+  // Stripe-customer_details kommen direkt vom Stripe-Server nach der
+  // Bezahlung und enthalten Email + Name — exakt was wir für den
+  // Gast-Pfad brauchen.
+  let userId = args.userId;
+  let guestEmail = args.guestEmail ?? null;
+  let guestName = args.guestName ?? null;
+  let recoveryNote: string | null = null;
+
+  if (userId) {
+    const userStillExists = await tx.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!userStillExists) {
+      const stripeEmail =
+        stripeSession.customer_details?.email ??
+        stripeSession.customer_email ??
+        null;
+      const stripeName = stripeSession.customer_details?.name ?? null;
+
+      console.warn(
+        `[order] Auth-Recovery: userId=${userId} existiert nicht mehr, fallback auf guest-flow (stripeSession=${stripeSession.id})`,
+      );
+
+      userId = null;
+      guestEmail =
+        stripeEmail ?? `recovery-${stripeSession.id}@deleted.local`;
+      guestName = stripeName ?? "Konto-Recovery";
+      recoveryNote =
+        "[Auto-Recovery] Käufer-Konto wurde während der Bezahlung gelöscht — Bestellung wurde als Gast-Order angelegt.";
+    }
+  }
 
   if (!userId && !guestEmail) {
     throw new Error(
@@ -161,9 +195,14 @@ export async function createOrderFromStripeSession(
       events: {
         create: {
           status: "PROCESSING",
-          note: promoCodeStr
-            ? `Payment confirmed via Stripe (Promo: ${promoCodeStr})`
-            : "Payment confirmed via Stripe",
+          note: [
+            promoCodeStr
+              ? `Payment confirmed via Stripe (Promo: ${promoCodeStr})`
+              : "Payment confirmed via Stripe",
+            recoveryNote,
+          ]
+            .filter(Boolean)
+            .join(" — "),
         },
       },
     },
