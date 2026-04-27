@@ -62,6 +62,41 @@ describe("calculateOrderTotals()", () => {
       expect(t.totalInCents).toBe(22_000 - 2_500 + 599);
     });
 
+    // ---------------------------------------------------------------
+    // Per-country shipping (Phase 7: EU-Versand)
+    // ---------------------------------------------------------------
+    it("uses the per-country baseShippingInCents when provided", () => {
+      // AT: 9,99 € — under 200 € threshold → wird angewandt.
+      const t = calculateOrderTotals({
+        subtotalInCents: 5_000,
+        discountInCents: 0,
+        baseShippingInCents: 999,
+      });
+      expect(t.shippingInCents).toBe(999);
+      expect(t.totalInCents).toBe(5_000 + 999);
+    });
+
+    it("ignores baseShippingInCents above the free-shipping threshold (EU-wide)", () => {
+      // EU-Insel-Tarif (24,99 €) wäre normalerweise teurer als DE,
+      // aber die 200 €-Schwelle gilt EU-weit → Versand 0.
+      const t = calculateOrderTotals({
+        subtotalInCents: 25_000,
+        discountInCents: 0,
+        baseShippingInCents: 2499,
+      });
+      expect(t.shippingInCents).toBe(0);
+      expect(t.totalInCents).toBe(25_000);
+    });
+
+    it("falls back to STANDARD_SHIPPING_CENTS when baseShippingInCents is not passed", () => {
+      // Backwards-Compat-Schutz für bestehende Caller / Tests.
+      const t = calculateOrderTotals({
+        subtotalInCents: 5_000,
+        discountInCents: 0,
+      });
+      expect(t.shippingInCents).toBe(599);
+    });
+
     it("keeps free shipping when a discount still leaves subtotal >= 200 €", () => {
       // 250 € subtotal - 10 € discount = 240 € → still free
       const t = calculateOrderTotals({

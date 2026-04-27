@@ -189,7 +189,7 @@ export function CartSheet() {
                 />
                 <ReceiptRow
                   k="Versand DHL"
-                  v={shippingFree ? "Gratis" : formatPrice(shippingCents)}
+                  v={shippingFree ? "Gratis" : `ab ${formatPrice(shippingCents)}`}
                   positive={shippingFree}
                 />
                 <ReceiptRow k="MwSt. 19 %" v={formatPrice(vatShare)} />

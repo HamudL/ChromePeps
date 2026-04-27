@@ -157,6 +157,23 @@ model Product {
   @@map("products")
 }
 
+// Versandkosten pro Land. Wird pro Bestellung anhand der Lieferadresse
+// resolved. Free-Shipping-Schwelle gilt EU-weit über
+// `FREE_SHIPPING_THRESHOLD_CENTS` in lib/order/calculate-totals.
+model ShippingRate {
+  id           String   @id @default(cuid())
+  countryCode  String   @unique @db.VarChar(2)
+  countryName  String   @db.VarChar(80)
+  priceInCents Int
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("shipping_rates")
+}
+
 model ProductImage {
   id        String @id @default(cuid())
   url       String

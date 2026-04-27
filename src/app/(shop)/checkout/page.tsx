@@ -110,6 +110,14 @@ export default function CheckoutPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
+  // Versandtarife pro Land. Wird einmal pro Page-Visit geladen und
+  // dann clientseitig je nach gewähltem country resolved, damit das
+  // Order-Summary live (ohne Roundtrip) aktualisiert wenn der Kunde
+  // das Land wechselt. Fallback bleibt STANDARD_SHIPPING_CENTS für DE.
+  const [shippingRates, setShippingRates] = useState<
+    Array<{ countryCode: string; countryName: string; priceInCents: number }>
+  >([]);
+
   // Guest-mode state. These fields only populate when the shopper
   // proceeds without an account. The server API accepts either a
   // `shippingAddressId` (auth) OR a full `shippingAddress` object
@@ -151,6 +159,22 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Versandtarife einmal beim Mount fetchen — ändern sich nur wenn
+  // der Admin sie editiert, also kein Live-Refresh nötig.
+  useEffect(() => {
+    fetch("/api/shipping/rates")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          setShippingRates(json.data);
+        }
+      })
+      .catch(() => {
+        // Silent fail — Order-Summary fällt dann auf STANDARD_SHIPPING_CENTS
+        // zurück, der Server-side-Calc beim Submit ist die finale Quelle.
+      });
   }, []);
 
   // Guest checkout is allowed now — we do NOT auto-redirect
@@ -474,13 +498,27 @@ export default function CheckoutPage() {
   const subtotal = items.reduce((sum, item) => sum + item.priceInCents * item.quantity, 0);
   const discount = appliedPromo?.discountAmount ?? 0;
   const subtotalAfterDiscount = Math.max(0, subtotal - discount);
+
+  const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
+
+  // Live-Versandkosten basierend auf gewähltem Land. Resolved gegen die
+  // gefetcheten Rates. Fallback auf STANDARD_SHIPPING_CENTS (DE) wenn:
+  //  - Rates noch nicht geladen sind (initial render),
+  //  - oder das Land nicht in der Tabelle ist (Server-side wird der
+  //    Submit dann mit klarem Fehler abgelehnt).
+  const currentCountry = isGuest
+    ? guestForm.country
+    : (selectedAddress?.country ?? "DE");
+  const currentRate = shippingRates.find(
+    (r) => r.countryCode === currentCountry,
+  );
+  const baseShippingPreview =
+    currentRate?.priceInCents ?? STANDARD_SHIPPING_CENTS;
   const shipping =
     subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD_CENTS
       ? 0
-      : STANDARD_SHIPPING_CENTS;
+      : baseShippingPreview;
   const total = subtotalAfterDiscount + shipping;
-
-  const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
   const updateFormField = (field: string, value: string | boolean) => {
     setAddressForm((prev) => ({ ...prev, [field]: value }));
@@ -680,14 +718,22 @@ export default function CheckoutPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="DE">Deutschland</SelectItem>
-                          <SelectItem value="AT">Österreich</SelectItem>
-                          <SelectItem value="CH">Schweiz</SelectItem>
-                          <SelectItem value="NL">Niederlande</SelectItem>
-                          <SelectItem value="BE">Belgien</SelectItem>
-                          <SelectItem value="FR">Frankreich</SelectItem>
-                          <SelectItem value="IT">Italien</SelectItem>
-                          <SelectItem value="ES">Spanien</SelectItem>
+                          {/* Liefer-Länder kommen aus shipping_rates.
+                              So bleiben Country-Auswahl und Versand-
+                              Berechnung garantiert konsistent: was nicht
+                              hier steht, wird auch nicht versendet. */}
+                          {shippingRates.length === 0 ? (
+                            <SelectItem value="DE">Deutschland</SelectItem>
+                          ) : (
+                            shippingRates.map((r) => (
+                              <SelectItem
+                                key={r.countryCode}
+                                value={r.countryCode}
+                              >
+                                {r.countryName}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>

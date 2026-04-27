@@ -46,11 +46,13 @@ export default function CartPage() {
     0
   );
   // Versand-Logik konsistent mit lib/order/calculate-totals. Cart zeigt
-  // keinen Promo-Discount an (der kommt erst beim Checkout) — daher
-  // basiert der Preview auf der rohen Zwischensumme. Beim Checkout-
-  // Übergang kann sich der Wert durch einen Promo-Code noch ändern.
-  const shipping =
-    subtotal >= FREE_SHIPPING_THRESHOLD_CENTS ? 0 : STANDARD_SHIPPING_CENTS;
+  // keinen Promo-Discount und KEIN konkretes Land an — der finale Preis
+  // pro Land kommt erst im Checkout, wenn die Adresse bekannt ist. Wir
+  // nehmen den DE-Standard-Tarif als "ab"-Anchor und kommunizieren das
+  // über das Label ("ab"). Free-Shipping-Schwelle gilt EU-weit, also
+  // ist der Free-Hinweis weiter exakt korrekt.
+  const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD_CENTS;
+  const shipping = isFreeShipping ? 0 : STANDARD_SHIPPING_CENTS;
   const total = subtotal + shipping;
 
   if (items.length === 0) {
@@ -227,20 +229,21 @@ export default function CartPage() {
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Versandkosten (geschätzt)</span>
+                <span className="text-muted-foreground">Versandkosten</span>
                 <span>
-                  {shipping === 0 ? (
+                  {isFreeShipping ? (
                     <span className="text-green-600 font-medium">Kostenlos</span>
                   ) : (
-                    formatPrice(shipping)
+                    <>ab {formatPrice(shipping)}</>
                   )}
                 </span>
               </div>
 
-              {shipping > 0 && (
+              {!isFreeShipping && (
                 <p className="text-xs text-muted-foreground">
-                  Kostenloser Versand ab{" "}
-                  {formatPrice(FREE_SHIPPING_THRESHOLD_CENTS)}
+                  Endgültige Versandkosten je nach Lieferland im Checkout —
+                  EU-weit kostenlos ab{" "}
+                  {formatPrice(FREE_SHIPPING_THRESHOLD_CENTS)}.
                 </p>
               )}
 
@@ -248,7 +251,9 @@ export default function CartPage() {
 
               <div className="flex justify-between font-semibold text-lg">
                 <span>Gesamt</span>
-                <span>{formatPrice(total)}</span>
+                <span>
+                  {isFreeShipping ? formatPrice(total) : <>ab {formatPrice(total)}</>}
+                </span>
               </div>
 
               <p className="text-xs text-muted-foreground">

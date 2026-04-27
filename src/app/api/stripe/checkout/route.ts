@@ -5,10 +5,8 @@ import { stripe } from "@/lib/stripe";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { absoluteUrl } from "@/lib/utils";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
-import {
-  FREE_SHIPPING_THRESHOLD_CENTS,
-  STANDARD_SHIPPING_CENTS,
-} from "@/lib/order/calculate-totals";
+import { FREE_SHIPPING_THRESHOLD_CENTS } from "@/lib/order/calculate-totals";
+import { resolveShippingRate } from "@/lib/shipping/rates";
 
 /**
  * POST /api/stripe/checkout — create a Stripe Checkout Session.
@@ -71,6 +69,7 @@ export async function POST(req: NextRequest) {
   const lineItems: LineItem[] = [];
   let subtotalInCents = 0;
   let shippingAddressId: string;
+  let shippingCountry: string;
   let customerEmail: string | undefined;
   let guestEmailForOrder: string | null = null;
   let guestNameForOrder: string | null = null;
@@ -299,6 +298,7 @@ export async function POST(req: NextRequest) {
       },
     });
     shippingAddressId = address.id;
+    shippingCountry = address.country;
     customerEmail = rawGuestEmail;
     guestEmailForOrder = rawGuestEmail;
     guestNameForOrder = rawGuestName;
@@ -320,6 +320,7 @@ export async function POST(req: NextRequest) {
       );
     }
     shippingAddressId = address.id;
+    shippingCountry = address.country;
 
     // Cart-Include erweitert um `isActive`, damit die Validierungs-
     // Schleife unten NICHT noch einmal pro Item einen Roundtrip zu
@@ -460,10 +461,25 @@ export async function POST(req: NextRequest) {
   }
 
   const subtotalAfterDiscount = Math.max(0, subtotalInCents - discountAmount);
+
+  // Versandtarif aus shipping_rates resolven. Wenn kein Tarif für das
+  // Land existiert (oder es deaktiviert ist), brechen wir hart ab —
+  // sonst würde der Kunde DE-Tarif zahlen und wir hätten einen
+  // Auslieferungs-Vertrag den wir nicht erfüllen können.
+  const shippingRate = await resolveShippingRate(shippingCountry);
+  if (!shippingRate) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Wir liefern aktuell nicht in dieses Land (${shippingCountry}). Bitte wende dich an support@chromepeps.com.`,
+      },
+      { status: 400 }
+    );
+  }
   const shippingCost =
     subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD_CENTS
       ? 0
-      : STANDARD_SHIPPING_CENTS;
+      : shippingRate.priceInCents;
 
   // Get (or lazily create) the Stripe coupon for this promo. Caching the
   // ID on the PromoCode row means we only hit stripe.coupons.create once

@@ -8,6 +8,7 @@ import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { cacheDel } from "@/lib/redis";
 import { CACHE_KEYS } from "@/lib/constants";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
+import { resolveShippingRate } from "@/lib/shipping/rates";
 
 /**
  * POST /api/checkout/bank-transfer
@@ -425,7 +426,25 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const totals = calculateOrderTotals({ subtotalInCents, discountInCents });
+  // Versandtarif aus shipping_rates resolven (per-Country). Hartes
+  // Reject wenn das Land nicht aktiv ist — sonst zahlt der Kunde
+  // versehentlich DE-Preis für eine Lieferung die wir nicht erfüllen.
+  const shippingRate = await resolveShippingRate(addressSnapshot.country);
+  if (!shippingRate) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Wir liefern aktuell nicht in dieses Land (${addressSnapshot.country}). Bitte wende dich an support@chromepeps.com.`,
+      },
+      { status: 400 }
+    );
+  }
+
+  const totals = calculateOrderTotals({
+    subtotalInCents,
+    discountInCents,
+    baseShippingInCents: shippingRate.priceInCents,
+  });
 
   // Create order in a transaction — atomic across order + promo
   // usage + stock decrement + (for auth users) cart clear.
