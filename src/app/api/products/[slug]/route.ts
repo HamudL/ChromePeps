@@ -148,26 +148,30 @@ export async function PATCH(
         },
       });
 
-      // Upsert each variant
-      for (const v of incomingVariants) {
-        await tx.productVariant.upsert({
-          where: { sku: v.sku },
-          update: {
-            name: v.name,
-            priceInCents: v.priceInCents,
-            stock: v.stock,
-            isActive: v.isActive ?? true,
-          },
-          create: {
-            productId: id,
-            name: v.name,
-            sku: v.sku,
-            priceInCents: v.priceInCents,
-            stock: v.stock,
-            isActive: v.isActive ?? true,
-          },
-        });
-      }
+      // Upsert each variant — parallelisiert. upsert lässt sich nicht
+      // batchen wie createMany, aber Promise.all bündelt den Client-
+      // Roundtrip-Overhead. Bei 5 Variants ~3-4 Roundtrips gespart.
+      await Promise.all(
+        incomingVariants.map((v) =>
+          tx.productVariant.upsert({
+            where: { sku: v.sku },
+            update: {
+              name: v.name,
+              priceInCents: v.priceInCents,
+              stock: v.stock,
+              isActive: v.isActive ?? true,
+            },
+            create: {
+              productId: id,
+              name: v.name,
+              sku: v.sku,
+              priceInCents: v.priceInCents,
+              stock: v.stock,
+              isActive: v.isActive ?? true,
+            },
+          }),
+        ),
+      );
     }
 
     return tx.product.findUnique({

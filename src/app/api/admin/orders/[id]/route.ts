@@ -218,23 +218,34 @@ export async function PATCH(
       stockWasDecremented &&
       !existing.isTestOrder
     ) {
-      for (const item of updated.items) {
-        if (item.variantId) {
-          await tx.productVariant
-            .update({
-              where: { id: item.variantId },
-              data: { stock: { increment: item.quantity } },
-            })
-            .catch(() => {});
-        } else if (item.productId) {
-          await tx.product
-            .update({
-              where: { id: item.productId },
-              data: { stock: { increment: item.quantity } },
-            })
-            .catch(() => {});
-        }
-      }
+      // Stock-Restore parallelisieren: zwar führt Postgres bei einer
+      // interactive transaction die Statements seriell auf derselben
+      // Connection aus, der Client-Side-Overhead (Statement-Encoding,
+      // Pipeline-Sending) wird aber durch Promise.all gebündelt. Bei
+      // 5+ Items spürbarer Latency-Gewinn ohne Semantik-Drift —
+      // jeder Update bleibt einzeln catch-isoliert (Variant/Product
+      // hard-deleted? → Item überspringen, andere weiter restoren).
+      await Promise.all(
+        updated.items.map((item) => {
+          if (item.variantId) {
+            return tx.productVariant
+              .update({
+                where: { id: item.variantId },
+                data: { stock: { increment: item.quantity } },
+              })
+              .catch(() => {});
+          }
+          if (item.productId) {
+            return tx.product
+              .update({
+                where: { id: item.productId },
+                data: { stock: { increment: item.quantity } },
+              })
+              .catch(() => {});
+          }
+          return Promise.resolve();
+        }),
+      );
     }
 
     return updated;

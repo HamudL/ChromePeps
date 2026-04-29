@@ -339,24 +339,32 @@ async function handleRefund(charge: Stripe.Charge) {
         },
       });
 
-      // Restore stock (skip if product/variant has been hard-deleted)
-      for (const item of order.items) {
-        if (item.variantId) {
-          await tx.productVariant
-            .update({
-              where: { id: item.variantId },
-              data: { stock: { increment: item.quantity } },
-            })
-            .catch(() => {});
-        } else if (item.productId) {
-          await tx.product
-            .update({
-              where: { id: item.productId },
-              data: { stock: { increment: item.quantity } },
-            })
-            .catch(() => {});
-        }
-      }
+      // Restore stock (skip if product/variant has been hard-deleted).
+      // Promise.all parallelisiert den Client-Side-Encode-Overhead, was
+      // bei größeren Refunds (mehrere Items) Latenz spart. Postgres
+      // führt die einzelnen Updates innerhalb der TX trotzdem seriell
+      // aus — die catch-Isolation pro Update bleibt erhalten.
+      await Promise.all(
+        order.items.map((item) => {
+          if (item.variantId) {
+            return tx.productVariant
+              .update({
+                where: { id: item.variantId },
+                data: { stock: { increment: item.quantity } },
+              })
+              .catch(() => {});
+          }
+          if (item.productId) {
+            return tx.product
+              .update({
+                where: { id: item.productId },
+                data: { stock: { increment: item.quantity } },
+              })
+              .catch(() => {});
+          }
+          return Promise.resolve();
+        }),
+      );
     });
   }
 }
