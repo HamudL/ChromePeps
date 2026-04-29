@@ -294,11 +294,8 @@ export function VariantBuyPanel({
             <Plus className="h-3 w-3" />
           </Button>
         </div>
-        {!isOutOfStock && (
-          <span className="text-xs text-muted-foreground">
-            {effectiveStock} auf Lager
-          </span>
-        )}
+        {/* Stock-Cap bleibt im Button-disabled aktiv, aber die exakte
+            Lagerzahl ist Customer-facing nicht relevant — siehe Q2-Direktive. */}
       </div>
 
       {/* In den Warenkorb */}
