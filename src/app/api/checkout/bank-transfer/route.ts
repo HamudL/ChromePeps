@@ -530,47 +530,49 @@ export async function POST(req: NextRequest) {
     await cacheDel(CACHE_KEYS.CART(userId));
   }
 
-  // Send order confirmation email with bank details. Never block on mail
-  // failures — the order is already committed. Log and move on if
-  // anything goes wrong. For guests we include an order-status URL so
-  // they have a way back into the order info without a login.
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-    const orderUrl = baseUrl
-      ? userId
-        ? `${baseUrl}/dashboard/orders/${order.id}`
-        : `${baseUrl}/order-status?orderNumber=${encodeURIComponent(
-            order.orderNumber
-          )}&email=${encodeURIComponent(recipientEmail)}`
-      : undefined;
-    await sendOrderConfirmationEmail({
-      to: recipientEmail,
-      customerName: recipientName,
-      orderNumber: order.orderNumber,
-      orderUrl,
-      placedAt: order.createdAt,
-      items: orderItems.map((item) => ({
-        name: item.productName,
-        variant: item.variantName,
-        sku: item.sku,
-        quantity: item.quantity,
-        priceInCents: item.priceInCents,
-        productId: item.productId,
-      })),
-      subtotalInCents: totals.subtotalInCents,
-      shippingInCents: totals.shippingInCents,
-      taxInCents: totals.taxInCents,
-      discountInCents: totals.discountInCents,
-      totalInCents: totals.totalInCents,
-      paymentMethod: "BANK_TRANSFER",
-      shippingAddress: addressSnapshot,
-    });
-  } catch (err) {
+  // Fire-and-forget: Mail-Send (mit COA-PDF-Attachments aus dem Filesystem
+  // + Resend-API-Call) blockt die HTTP-Response NICHT. Der User klickt
+  // "Bestellung aufgeben" und kriegt sofort die Erfolgs-Antwort + Redirect
+  // zur Success-Page; die Mail mit den Bankdaten landet in den nächsten
+  // 1-3 s in seinem Postfach. Vorher: User starrte 3-5 s auf den Loading-
+  // Spinner, weil der Webhook synchron auf Resend wartete.
+  // sendOrderConfirmationEmail ist bereits "graceful failure" — wir loggen
+  // .catch() nur für rare unhandled-rejections.
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const orderUrl = baseUrl
+    ? userId
+      ? `${baseUrl}/dashboard/orders/${order.id}`
+      : `${baseUrl}/order-status?orderNumber=${encodeURIComponent(
+          order.orderNumber
+        )}&email=${encodeURIComponent(recipientEmail)}`
+    : undefined;
+  void sendOrderConfirmationEmail({
+    to: recipientEmail,
+    customerName: recipientName,
+    orderNumber: order.orderNumber,
+    orderUrl,
+    placedAt: order.createdAt,
+    items: orderItems.map((item) => ({
+      name: item.productName,
+      variant: item.variantName,
+      sku: item.sku,
+      quantity: item.quantity,
+      priceInCents: item.priceInCents,
+      productId: item.productId,
+    })),
+    subtotalInCents: totals.subtotalInCents,
+    shippingInCents: totals.shippingInCents,
+    taxInCents: totals.taxInCents,
+    discountInCents: totals.discountInCents,
+    totalInCents: totals.totalInCents,
+    paymentMethod: "BANK_TRANSFER",
+    shippingAddress: addressSnapshot,
+  }).catch((err) => {
     console.error(
-      "[bank-transfer] order confirmation email failed:",
+      "[bank-transfer] background mail failed:",
       err instanceof Error ? err.message : err
     );
-  }
+  });
 
   return NextResponse.json({
     success: true,

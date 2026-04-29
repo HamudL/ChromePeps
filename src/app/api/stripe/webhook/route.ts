@@ -191,81 +191,103 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     await cacheDel(CACHE_KEYS.CART(userId));
   }
 
-  // Send order confirmation email. Never block on mail failures — we've
-  // already committed the order. Log and move on if anything goes
-  // wrong. For guest orders the recipient info comes from the session
-  // metadata; for auth users we read from the DB to pick up the most
-  // recent profile name.
-  try {
-    const fullOrder = await db.order.findUnique({
-      where: { id: createdOrderId },
-      include: { items: true, shippingAddress: true },
-    });
-    if (!fullOrder) return;
-
-    let recipientEmail: string | null = null;
-    let recipientName: string | null = null;
-    if (userId) {
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: { email: true, name: true },
-      });
-      recipientEmail = user?.email ?? null;
-      recipientName = user?.name ?? null;
-    } else {
-      recipientEmail = guestEmail;
-      recipientName = guestName;
-    }
-
-    if (recipientEmail) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-      const orderUrl = baseUrl
-        ? userId
-          ? `${baseUrl}/dashboard/orders/${fullOrder.id}`
-          : `${baseUrl}/order-status?orderNumber=${encodeURIComponent(
-              fullOrder.orderNumber
-            )}&email=${encodeURIComponent(recipientEmail)}`
-        : undefined;
-      await sendOrderConfirmationEmail({
-        to: recipientEmail,
-        customerName: recipientName,
-        orderNumber: fullOrder.orderNumber,
-        orderUrl,
-        placedAt: fullOrder.createdAt,
-        items: fullOrder.items.map((item) => ({
-          name: item.productName,
-          variant: item.variantName,
-          sku: item.sku,
-          quantity: item.quantity,
-          priceInCents: item.priceInCents,
-          productId: item.productId,
-        })),
-        subtotalInCents: fullOrder.subtotalInCents,
-        shippingInCents: fullOrder.shippingInCents,
-        taxInCents: fullOrder.taxInCents,
-        discountInCents: fullOrder.discountInCents,
-        totalInCents: fullOrder.totalInCents,
-        paymentMethod: "STRIPE",
-        shippingAddress: fullOrder.shippingAddress
-          ? {
-              firstName: fullOrder.shippingAddress.firstName,
-              lastName: fullOrder.shippingAddress.lastName,
-              company: fullOrder.shippingAddress.company,
-              street: fullOrder.shippingAddress.street,
-              street2: fullOrder.shippingAddress.street2,
-              postalCode: fullOrder.shippingAddress.postalCode,
-              city: fullOrder.shippingAddress.city,
-              country: fullOrder.shippingAddress.country,
-            }
-          : null,
-      });
-    }
-  } catch (err) {
+  // Fire-and-forget: Mail-Send blockt den Webhook NICHT. Stripe hat ein
+  // 30-s-Timeout; bei großen COA-Anhängen (PDFs vom Filesystem) + Resend-
+  // API-Latenz konnte das knapp werden — bei Timeout retried Stripe den
+  // Webhook, aber unsere DB-Side-Effects sind schon committed → potenziell
+  // doppelte Confirmation-Mails. Mit dem Background-Run kehrt der Webhook
+  // sofort nach Order-Create zurück (≤300 ms), die Mail wird im selben
+  // Container-Prozess danach versendet. sendOrderConfirmationEmail ist
+  // bereits "graceful failure" (loggt + returnt result, throw't nicht);
+  // .catch() fängt rare unhandled-rejections ab.
+  void sendStripeOrderConfirmationInBackground({
+    createdOrderId,
+    userId,
+    guestEmail,
+    guestName,
+  }).catch((err) => {
     console.error(
-      "[Stripe Webhook] order confirmation email failed:",
+      "[Stripe Webhook] background mail failed:",
       err instanceof Error ? err.message : err
     );
+  });
+}
+
+interface StripeMailContext {
+  createdOrderId: string;
+  userId: string | null;
+  guestEmail: string | null;
+  guestName: string | null;
+}
+
+async function sendStripeOrderConfirmationInBackground(
+  ctx: StripeMailContext
+): Promise<void> {
+  const { createdOrderId, userId, guestEmail, guestName } = ctx;
+  const fullOrder = await db.order.findUnique({
+    where: { id: createdOrderId },
+    include: { items: true, shippingAddress: true },
+  });
+  if (!fullOrder) return;
+
+  let recipientEmail: string | null = null;
+  let recipientName: string | null = null;
+  if (userId) {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    });
+    recipientEmail = user?.email ?? null;
+    recipientName = user?.name ?? null;
+  } else {
+    recipientEmail = guestEmail;
+    recipientName = guestName;
   }
+
+  if (!recipientEmail) return;
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const orderUrl = baseUrl
+    ? userId
+      ? `${baseUrl}/dashboard/orders/${fullOrder.id}`
+      : `${baseUrl}/order-status?orderNumber=${encodeURIComponent(
+          fullOrder.orderNumber
+        )}&email=${encodeURIComponent(recipientEmail)}`
+    : undefined;
+
+  await sendOrderConfirmationEmail({
+    to: recipientEmail,
+    customerName: recipientName,
+    orderNumber: fullOrder.orderNumber,
+    orderUrl,
+    placedAt: fullOrder.createdAt,
+    items: fullOrder.items.map((item) => ({
+      name: item.productName,
+      variant: item.variantName,
+      sku: item.sku,
+      quantity: item.quantity,
+      priceInCents: item.priceInCents,
+      productId: item.productId,
+    })),
+    subtotalInCents: fullOrder.subtotalInCents,
+    shippingInCents: fullOrder.shippingInCents,
+    taxInCents: fullOrder.taxInCents,
+    discountInCents: fullOrder.discountInCents,
+    totalInCents: fullOrder.totalInCents,
+    paymentMethod: "STRIPE",
+    shippingAddress: fullOrder.shippingAddress
+      ? {
+          firstName: fullOrder.shippingAddress.firstName,
+          lastName: fullOrder.shippingAddress.lastName,
+          company: fullOrder.shippingAddress.company,
+          street: fullOrder.shippingAddress.street,
+          street2: fullOrder.shippingAddress.street2,
+          postalCode: fullOrder.shippingAddress.postalCode,
+          city: fullOrder.shippingAddress.city,
+          country: fullOrder.shippingAddress.country,
+        }
+      : null,
+  });
 }
 
 async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
