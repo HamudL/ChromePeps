@@ -83,6 +83,7 @@ interface Certificate {
   purity: number | null;
   testMethod: string;
   laboratory: string;
+  dosage: string | null;
   reportUrl: string | null;
   pdfUrl: string | null;
   notes: string | null;
@@ -97,6 +98,7 @@ const defaultForm = {
   purity: "",
   testMethod: "HPLC",
   laboratory: "Janoshik",
+  dosage: "",
   reportUrl: "",
   pdfUrl: "",
   notes: "",
@@ -159,6 +161,7 @@ export default function AdminCertificatesPage() {
       purity: cert.purity != null ? String(cert.purity) : "",
       testMethod: cert.testMethod,
       laboratory: cert.laboratory,
+      dosage: cert.dosage ?? "",
       reportUrl: cert.reportUrl ?? "",
       pdfUrl: cert.pdfUrl ?? "",
       notes: cert.notes ?? "",
@@ -205,6 +208,7 @@ export default function AdminCertificatesPage() {
       purity: form.purity ? parseFloat(form.purity) : null,
       testMethod: form.testMethod,
       laboratory: form.laboratory,
+      dosage: form.dosage.trim() || null,
       reportUrl: form.reportUrl || null,
       pdfUrl: form.pdfUrl || null,
       notes: form.notes || null,
@@ -666,9 +670,20 @@ export default function AdminCertificatesPage() {
                     <TableRow key={cert.id}>
                       <TableCell />
                       <TableCell>
-                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                          {cert.batchNumber}
-                        </code>
+                        <div className="flex items-center gap-2">
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                            {cert.batchNumber}
+                          </code>
+                          {cert.dosage && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-mono uppercase tracking-wider"
+                              title="Dosis-Variante dieser Charge"
+                            >
+                              {cert.dosage}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                     <TableCell>
                       {cert.purity != null ? (
@@ -813,7 +828,7 @@ export default function AdminCertificatesPage() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Chargennummer *</Label>
                 <Input
@@ -826,6 +841,26 @@ export default function AdminCertificatesPage() {
                   }
                   placeholder="z.B. CS-se5-0116"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>
+                  Dosis{" "}
+                  <span className="text-xs text-muted-foreground font-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  value={form.dosage}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, dosage: e.target.value }))
+                  }
+                  placeholder="z.B. 5mg"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Muss mit dem Variant-Namen übereinstimmen, damit der Mail-Versand
+                  pro Variante den richtigen COA findet. Leer = gilt als Fallback
+                  für alle Varianten.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Testdatum *</Label>

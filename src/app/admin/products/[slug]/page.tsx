@@ -25,6 +25,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageUpload } from "@/components/admin/image-upload";
 import { VariantEditor, type VariantRow } from "@/components/admin/variant-editor";
+import {
+  BlendComponentEditor,
+  type BlendComponentRow,
+} from "@/components/admin/blend-component-editor";
 
 interface Category {
   id: string;
@@ -46,6 +50,18 @@ interface ProductVariant {
   priceInCents: number;
   stock: number;
   isActive: boolean;
+}
+
+interface ProductComponentApi {
+  componentProductId: string;
+  sortOrder: number;
+  component: { id: string; name: string; slug: string; sku: string };
+}
+
+interface ProductOption {
+  id: string;
+  name: string;
+  sku: string;
 }
 
 interface ProductData {
@@ -70,6 +86,7 @@ interface ProductData {
   weight: string | null;
   images: ProductImage[];
   variants: ProductVariant[];
+  components?: ProductComponentApi[];
   category: Category;
 }
 
@@ -87,6 +104,8 @@ export default function EditProductPage({
   const [categories, setCategories] = useState<Category[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([""]);
   const [variants, setVariants] = useState<VariantRow[]>([]);
+  const [components, setComponents] = useState<BlendComponentRow[]>([]);
+  const [allProducts, setAllProducts] = useState<ProductOption[]>([]);
   const [product, setProduct] = useState<ProductData | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -113,13 +132,31 @@ export default function EditProductPage({
   useEffect(() => {
     async function loadData() {
       try {
-        const [catRes, prodRes] = await Promise.all([
+        const [catRes, prodRes, allProdRes] = await Promise.all([
           fetch("/api/admin/categories"),
           fetch(`/api/products/${slug}`),
+          // Pool für den Komponenten-Picker. pageSize=200 reicht für den
+          // aktuellen Katalog komfortabel; falls wir mal über 200
+          // Produkte gehen, wird der Picker auf serverseitige Suche
+          // umgestellt — siehe Kommentar im BlendComponentEditor.
+          fetch("/api/products?pageSize=200"),
         ]);
 
         const catJson = await catRes.json();
         if (catJson.success) setCategories(catJson.data);
+
+        const allProdJson = await allProdRes.json();
+        if (allProdJson.success && allProdJson.data?.items) {
+          setAllProducts(
+            (
+              allProdJson.data.items as Array<{
+                id: string;
+                name: string;
+                sku: string;
+              }>
+            ).map((p) => ({ id: p.id, name: p.name, sku: p.sku })),
+          );
+        }
 
         const prodJson = await prodRes.json();
         if (!prodJson.success) {
@@ -161,6 +198,13 @@ export default function EditProductPage({
             stock: v.stock,
             isActive: v.isActive,
           }))
+        );
+        setComponents(
+          (p.components ?? []).map((c) => ({
+            componentProductId: c.componentProductId,
+            name: c.component.name,
+            sku: c.component.sku,
+          })),
         );
       } catch {
         setError("Failed to load product data.");
@@ -218,6 +262,10 @@ export default function EditProductPage({
         priceInCents: v.priceInCents,
         stock: v.stock,
         isActive: v.isActive,
+      })),
+      components: components.map((c, idx) => ({
+        componentProductId: c.componentProductId,
+        sortOrder: idx,
       })),
     };
 
@@ -573,6 +621,27 @@ export default function EditProductPage({
           </CardHeader>
           <CardContent>
             <VariantEditor variants={variants} onChange={setVariants} />
+          </CardContent>
+        </Card>
+
+        {/* Blend-Komponenten */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Blend-Komponenten</CardTitle>
+            <CardDescription>
+              Wenn dieses Produkt ein Blend ist (mehrere Wirkstoffe kombiniert),
+              hier die Komponenten als eigenständige Produkte verlinken. Beim
+              Mail-Versand werden dann auch die COAs der Komponenten an den
+              Customer angehängt.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BlendComponentEditor
+              parentProductId={product?.id ?? null}
+              components={components}
+              onChange={setComponents}
+              availableProducts={allProducts}
+            />
           </CardContent>
         </Card>
 

@@ -40,6 +40,19 @@ function matchProductSlug(name: string): string | null {
   return null;
 }
 
+/**
+ * Extrahiert die Dosis aus einem Spreadsheet-Namen wie "Semaglutide 5mg"
+ * → "5mg". Normalisiert das Format zu "<zahl>mg" (ohne Leerzeichen),
+ * damit die Mail-Logik gegen `ProductVariant.name` matchen kann (welche
+ * konventionell auch "5mg" heißt). Gibt null zurück, wenn keine Dosis
+ * im Namen steckt — dann gilt der COA als globaler Fallback.
+ */
+function extractDosage(name: string): string | null {
+  const match = name.match(/(\d+)\s*mg$/i);
+  if (!match) return null;
+  return `${match[1]}mg`;
+}
+
 /** Try to parse date from batch number like "CS-se5-0116" → Jan 16 */
 function parseBatchDate(batch: string): Date {
   const match = batch.match(/(\d{2})(\d{2})$/);
@@ -151,6 +164,7 @@ export async function POST() {
         reportUrl: true,
         testMethod: true,
         laboratory: true,
+        dosage: true,
       },
     });
     const existingMap = new Map(
@@ -205,6 +219,7 @@ export async function POST() {
       }
 
       const latestUrl = urls[0];
+      const dosage = extractDosage(name); // z.B. "5mg" aus "Semaglutide 5mg"
       const dedupKey = `${product.id}:${batch}`;
       const existing = existingMap.get(dedupKey);
 
@@ -218,6 +233,7 @@ export async function POST() {
               testMethod: "HPLC",
               laboratory: "Janoshik",
               reportUrl: latestUrl,
+              dosage,
               isPublished: true,
             },
           });
@@ -233,15 +249,22 @@ export async function POST() {
       }
 
       // Bestehender Eintrag — nur dann updaten, wenn sich etwas Sichtbares
-      // geändert hat (aktuell primär die Report-URL, da Janoshik Links
-      // gelegentlich neu ausgibt).
+      // geändert hat. Aktuell tracken wir reportUrl (Janoshik vergibt die
+      // Links gelegentlich neu) und dosage (frisch aus dem Sheet-Namen
+      // extrahiert — überschreibt einen Null-Eintrag, lässt manuell
+      // gepflegte Werte unangetastet, wenn sie identisch sind).
       const changedFields: string[] = [];
       const updateData: {
         reportUrl?: string;
+        dosage?: string | null;
       } = {};
       if (existing.reportUrl !== latestUrl) {
         changedFields.push("reportUrl");
         updateData.reportUrl = latestUrl;
+      }
+      if (dosage && existing.dosage !== dosage) {
+        changedFields.push("dosage");
+        updateData.dosage = dosage;
       }
 
       if (changedFields.length === 0) {

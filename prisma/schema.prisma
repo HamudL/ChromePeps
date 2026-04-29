@@ -151,6 +151,13 @@ model Product {
   wishlistItems WishlistItem[]
   certificates  CertificateOfAnalysis[]
 
+  // Wenn dieses Produkt ein Blend ist, listet `components` die Wirkstoffe
+  // (jeweils selbst eigenständige Produkte mit eigenen COAs). Wenn dieses
+  // Produkt selbst Wirkstoff in einem Blend ist, taucht es in
+  // `usedInBlends` der Blend-Eltern auf.
+  components   ProductComponent[] @relation("BlendParent")
+  usedInBlends ProductComponent[] @relation("BlendComponent")
+
   // KEIN @@index([slug]) — slug ist bereits @unique.
   @@index([categoryId])
   @@index([isActive, categoryId])
@@ -577,6 +584,12 @@ model CertificateOfAnalysis {
   purity      Float?
   testMethod  String   @default("HPLC")
   laboratory  String   @default("Janoshik")
+  // Optionale Dosis-Angabe pro COA (z.B. "5mg", "10mg"). Bei Produkten
+  // mit Varianten matcht die Mail-Logik OrderItem.variantName gegen
+  // diesen Wert, damit ein 5-mg-Kunde den 5-mg-COA bekommt und nicht
+  // den 10-mg-COA derselben Charge. Free-form String, weil die genaue
+  // Notation pro Produkt schwankt ("5mg" / "5 mg" / "5mg/Vial").
+  dosage      String?  @db.VarChar(20)
   reportUrl   String?
   pdfUrl      String?
   notes       String?  @db.Text
@@ -596,6 +609,30 @@ model CertificateOfAnalysis {
   //   Filter+Sort-Phase.
   @@index([productId, isPublished, testDate(sort: Desc)])
   @@map("certificates_of_analysis")
+}
+
+// Blend-Komponenten: ein Blend-Produkt (parent) verweist auf seine
+// Wirkstoff-Bestandteile (component), die selbst Produkte mit eigenen
+// COAs sind. Bei einer Bestellung des Blends sollen die COAs der
+// Komponenten in der Bestätigungs-Mail mitgeschickt werden — siehe
+// loadCoaAttachments. Kein dosage-Feld hier, weil die Komponente selbst
+// als eigenes Produkt mit Varianten/COAs existiert; die passende Dosis
+// kommt aus dem Blend-Naming bzw. dem Komponenten-COA-Match (Fallback
+// auf neuesten COA, wenn keine spezifische Dosis sich übersetzen lässt).
+model ProductComponent {
+  id                 String @id @default(cuid())
+  parentProductId    String
+  componentProductId String
+  sortOrder          Int    @default(0)
+
+  parent    Product @relation("BlendParent", fields: [parentProductId], references: [id], onDelete: Cascade)
+  component Product @relation("BlendComponent", fields: [componentProductId], references: [id])
+
+  // Ein Blend listet eine Komponente nur einmal — Dosen-Variation passiert
+  // über die Komponenten-COAs.
+  @@unique([parentProductId, componentProductId])
+  @@index([parentProductId])
+  @@map("product_components")
 }
 
 // ============================================================

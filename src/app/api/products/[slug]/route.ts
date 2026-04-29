@@ -50,13 +50,19 @@ export async function GET(
     return NextResponse.json({ success: true, data: product });
   }
 
-  // Admin: no isActive filter, no cache, include all variants
+  // Admin: no isActive filter, no cache, include all variants + components
   const product = await db.product.findUnique({
     where: { slug },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       category: true,
       variants: { orderBy: { priceInCents: "asc" } },
+      components: {
+        orderBy: { sortOrder: "asc" },
+        include: {
+          component: { select: { id: true, name: true, slug: true, sku: true } },
+        },
+      },
       reviews: {
         include: { user: { select: { name: true, image: true } } },
         orderBy: { createdAt: "desc" },
@@ -107,8 +113,30 @@ export async function PATCH(
     );
   }
 
-  const { id, images, variants: incomingVariants, ...updateData } = parsed.data;
+  const {
+    id,
+    images,
+    variants: incomingVariants,
+    components: incomingComponents,
+    ...updateData
+  } = parsed.data;
   const newSlug = updateData.name ? slugify(updateData.name) : undefined;
+
+  // Self-reference verhindern: ein Produkt darf sich nicht selbst als
+  // Komponente listen — das würde die Mail-Logik in einer Endlosschleife
+  // landen lassen (oder zumindest doppelte Anhänge erzeugen).
+  if (
+    incomingComponents !== undefined &&
+    incomingComponents.some((c) => c.componentProductId === id)
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Ein Produkt kann sich nicht selbst als Komponente referenzieren",
+      },
+      { status: 400 },
+    );
+  }
 
   // Check for slug collision when renaming
   if (newSlug && newSlug !== slug) {
@@ -135,6 +163,26 @@ export async function PATCH(
         }),
       },
     });
+
+    // Sync Blend-Komponenten: deleteMany + createMany ist hier sauberer
+    // als upsert, weil ProductComponent kein natürlicher Key (SKU)
+    // existiert — die Identität ergibt sich aus (parent, component).
+    // Plain replace genügt; es gibt keine FK-Beziehungen, die wir
+    // erhalten müssten.
+    if (incomingComponents !== undefined) {
+      await tx.productComponent.deleteMany({
+        where: { parentProductId: id },
+      });
+      if (incomingComponents.length > 0) {
+        await tx.productComponent.createMany({
+          data: incomingComponents.map((c, idx) => ({
+            parentProductId: id,
+            componentProductId: c.componentProductId,
+            sortOrder: c.sortOrder ?? idx,
+          })),
+        });
+      }
+    }
 
     // Sync variants: upsert by SKU, remove those no longer present
     if (incomingVariants !== undefined) {

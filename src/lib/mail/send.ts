@@ -70,9 +70,17 @@ export async function sendOrderConfirmationEmail(
     ? `Ihre Bestellung ${input.orderNumber} \u2013 bitte Vorkasse \u00fcberweisen`
     : `Bestellbest\u00e4tigung ${input.orderNumber}`;
 
-  // Load COA PDFs for ordered products
+  // Load COA PDFs for ordered products. Pro OrderItem matchen wir auf
+  // Produkt + Variante (Dosis) — und bei Blends auch die Komponenten-COAs.
   const attachments = await loadCoaAttachments(
-    input.items.map((i) => i.productId).filter(Boolean) as string[]
+    input.items
+      .filter((i): i is OrderConfirmationItem & { productId: string } =>
+        Boolean(i.productId),
+      )
+      .map((i) => ({
+        productId: i.productId,
+        variantName: i.variant ?? null,
+      })),
   );
 
   return sendMail({
@@ -106,67 +114,155 @@ export async function sendOrderConfirmationEmail(
   });
 }
 
-/** Load COA PDF files for the given product IDs and return as email attachments */
+/**
+ * Lädt COA-PDFs als Mail-Anhänge passend zu den bestellten Items.
+ *
+ * Matching-Logik:
+ *  - Pro Item suchen wir den COA mit gleicher `dosage` (matcht
+ *    OrderItem.variantName, z.B. "5mg"). Wenn keiner passt → neuester
+ *    veröffentlichter COA des Produkts (Fallback).
+ *  - Ist das Produkt ein Blend (hat `ProductComponent`-Einträge), dann
+ *    werden zusätzlich die COAs jeder Komponente angehängt — wieder
+ *    dosage-matched mit Fallback.
+ *
+ * Dedup: wenn mehrere Items denselben (productId, dosage) treffen, wird
+ * der Anhang nur einmal verschickt — mehrfach den gleichen PDF an die
+ * gleiche Mail anzuhängen ist nur Lärm.
+ */
 async function loadCoaAttachments(
-  productIds: string[]
+  items: Array<{ productId: string; variantName: string | null }>,
 ): Promise<import("./client").SendMailAttachment[]> {
-  if (productIds.length === 0) return [];
+  if (items.length === 0) return [];
 
   try {
     const { db } = await import("@/lib/db");
     const { readFile } = await import("fs/promises");
     const { join } = await import("path");
 
-    // Get the latest COA with a PDF for each product
-    const coas = await db.certificateOfAnalysis.findMany({
+    // 1) Top-Level-Produkte sammeln (deduped)
+    const topLevelIds = Array.from(new Set(items.map((it) => it.productId)));
+
+    // 2) Für jedes Top-Level-Produkt: die Blend-Komponenten holen.
+    //    Ein Top-Level-Produkt OHNE Komponenten ist ein normales
+    //    Single-Wirkstoff-Produkt — dann bleibt der Componenten-Eintrag leer.
+    const productsWithComponents = await db.product.findMany({
+      where: { id: { in: topLevelIds } },
+      select: {
+        id: true,
+        components: {
+          select: { componentProductId: true },
+          orderBy: { sortOrder: "asc" },
+        },
+      },
+    });
+    const componentsByParent = new Map<string, string[]>(
+      productsWithComponents.map((p) => [
+        p.id,
+        p.components.map((c) => c.componentProductId),
+      ]),
+    );
+
+    // 3) Targets aufbauen: jedes (productId, preferredDosage)-Paar, das
+    //    angehängt werden muss. Top-Level-Items + deren Komponenten.
+    type Target = { productId: string; preferredDosage: string | null };
+    const targets: Target[] = [];
+    const seenTargets = new Set<string>();
+    const addTarget = (productId: string, preferredDosage: string | null) => {
+      const k = `${productId}::${preferredDosage ?? ""}`;
+      if (seenTargets.has(k)) return;
+      seenTargets.add(k);
+      targets.push({ productId, preferredDosage });
+    };
+    for (const item of items) {
+      addTarget(item.productId, item.variantName);
+      const compIds = componentsByParent.get(item.productId) ?? [];
+      for (const cid of compIds) {
+        // Komponente erbt die Dosis des Items als "preferred" — wenn der
+        // Komponenten-COA keinen Match dazu hat, fällt loadCoa unten auf
+        // den neuesten zurück.
+        addTarget(cid, item.variantName);
+      }
+    }
+
+    // 4) Alle in Frage kommenden COAs in einem Query holen.
+    const allTargetProductIds = Array.from(
+      new Set(targets.map((t) => t.productId)),
+    );
+    const allCoas = await db.certificateOfAnalysis.findMany({
       where: {
-        productId: { in: productIds },
+        productId: { in: allTargetProductIds },
         isPublished: true,
         pdfUrl: { not: null },
       },
       orderBy: { testDate: "desc" },
       select: {
         pdfUrl: true,
+        dosage: true,
+        productId: true,
         product: { select: { name: true } },
       },
-      distinct: ["productId"],
     });
+    const coasByProduct = new Map<string, typeof allCoas>();
+    for (const coa of allCoas) {
+      const arr = coasByProduct.get(coa.productId) ?? [];
+      arr.push(coa);
+      coasByProduct.set(coa.productId, arr);
+    }
 
-    const attachments: import("./client").SendMailAttachment[] = [];
-
-    // Defense-in-depth: `pdfUrl` kommt aus der DB und wird von Admins
-    // gesetzt. Ein kompromittierter Admin-Account (oder ein Bug, der
-    // non-admin input in das Feld bringt) könnte `../../server.js`
-    // hinterlegen → `join()` resolved zu einem Pfad außerhalb von
-    // public/uploads/certificates und ein sensibler File wäre als
-    // Mail-Anhang leakbar. Wir pinnen den erlaubten Prefix hart,
-    // bevor readFile läuft — wenn der Path nicht darunter liegt,
-    // überspringen wir still.
+    // 5) Defense-in-depth: `pdfUrl` kommt aus der DB und wird von Admins
+    //    gesetzt. Ein kompromittierter Admin-Account (oder ein Bug, der
+    //    non-admin input in das Feld bringt) könnte `../../server.js`
+    //    hinterlegen → `join()` resolved zu einem Pfad außerhalb von
+    //    public/uploads/certificates und ein sensibler File wäre als
+    //    Mail-Anhang leakbar. Wir pinnen den erlaubten Prefix hart,
+    //    bevor readFile läuft — wenn der Path nicht darunter liegt,
+    //    überspringen wir still.
     const allowedRoot = join(
       process.cwd(),
       "public",
       "uploads",
-      "certificates"
+      "certificates",
     );
-    for (const coa of coas) {
-      if (!coa.pdfUrl) continue;
+
+    const attachments: import("./client").SendMailAttachment[] = [];
+    const seenAttachmentKeys = new Set<string>(); // dedupe by (productId, COA.dosage)
+
+    for (const target of targets) {
+      const productCoas = coasByProduct.get(target.productId) ?? [];
+      if (productCoas.length === 0) continue;
+
+      // Bevorzugter Match: dosage gleich. Sonst neuester (Liste ist
+      // bereits testDate desc sortiert, also Index 0).
+      const matched =
+        (target.preferredDosage
+          ? productCoas.find((c) => c.dosage === target.preferredDosage)
+          : undefined) ?? productCoas[0];
+      if (!matched?.pdfUrl) continue;
+
+      const attachmentKey = `${matched.productId}::${matched.dosage ?? ""}`;
+      if (seenAttachmentKeys.has(attachmentKey)) continue;
+      seenAttachmentKeys.add(attachmentKey);
+
       try {
-        const filePath = join(process.cwd(), "public", coa.pdfUrl);
+        const filePath = join(process.cwd(), "public", matched.pdfUrl);
         if (!filePath.startsWith(allowedRoot)) {
           console.warn(
-            `[mail] COA pdfUrl outside allowed root, skipping: ${coa.pdfUrl}`
+            `[mail] COA pdfUrl outside allowed root, skipping: ${matched.pdfUrl}`,
           );
           continue;
         }
         const content = await readFile(filePath);
-        const safeName = coa.product.name.replace(/[^a-zA-Z0-9-]/g, "_");
+        const safeName = matched.product.name.replace(/[^a-zA-Z0-9-]/g, "_");
+        const dosageSuffix = matched.dosage
+          ? `-${matched.dosage.replace(/[^a-zA-Z0-9]/g, "")}`
+          : "";
         attachments.push({
-          filename: `COA-${safeName}.pdf`,
+          filename: `COA-${safeName}${dosageSuffix}.pdf`,
           content,
         });
       } catch {
         // File not found — skip silently
-        console.warn(`[mail] COA PDF not found: ${coa.pdfUrl}`);
+        console.warn(`[mail] COA PDF not found: ${matched.pdfUrl}`);
       }
     }
 

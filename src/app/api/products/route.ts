@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { images, variants, ...productData } = parsed.data;
+  const { images, variants, components, ...productData } = parsed.data;
   const slug = slugify(productData.name);
 
   const existing = await db.product.findUnique({ where: { slug } });
@@ -175,6 +175,20 @@ export async function POST(req: NextRequest) {
       slug,
       images: images ? { createMany: { data: images } } : undefined,
       variants: variants ? { createMany: { data: variants } } : undefined,
+      // Bei Create kennen wir den eigenen Produkt-ID noch nicht, also
+      // verlinken wir die Komponenten ohne explizites parentProductId-
+      // Mapping — Prisma setzt den parent über die Nested-Relation.
+      components:
+        components && components.length > 0
+          ? {
+              createMany: {
+                data: components.map((c, idx) => ({
+                  componentProductId: c.componentProductId,
+                  sortOrder: c.sortOrder ?? idx,
+                })),
+              },
+            }
+          : undefined,
     },
     include: {
       images: true,

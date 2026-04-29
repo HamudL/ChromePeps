@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
       purity: parsed.data.purity ?? null,
       testMethod: parsed.data.testMethod ?? "HPLC",
       laboratory: parsed.data.laboratory ?? "Janoshik",
+      dosage: parsed.data.dosage?.trim() || null,
       reportUrl: parsed.data.reportUrl || null,
       pdfUrl: parsed.data.pdfUrl || null,
       notes: parsed.data.notes || null,

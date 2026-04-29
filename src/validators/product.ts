@@ -45,6 +45,17 @@ export const createProductSchema = z.object({
       })
     )
     .optional(),
+  // Wirkstoff-Komponenten für Blend-Produkte. Liste der Produkt-IDs, die
+  // als Bestandteile dieses Produkts gelten — beim Mail-Versand werden
+  // dann auch die COAs dieser Komponenten angehängt.
+  components: z
+    .array(
+      z.object({
+        componentProductId: z.string().cuid(),
+        sortOrder: z.number().int().min(0).default(0),
+      }),
+    )
+    .optional(),
 });
 
 export const updateProductSchema = createProductSchema.partial().extend({
