@@ -27,12 +27,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts    Account[]
-  sessions    Session[]
-  orders      Order[]
-  cart        Cart?
-  reviews     Review[]
-  addresses   Address[]
+  accounts      Account[]
+  sessions      Session[]
+  orders        Order[]
+  cart          Cart?
+  reviews       Review[]
+  addresses     Address[]
   promoUsages   PromoUsage[]
   wishlistItems WishlistItem[]
 
@@ -81,13 +81,13 @@ model VerificationToken {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   // SHA-256 hash of the raw token sent by email. Never store the raw token.
-  tokenHash String   @unique
+  tokenHash String    @unique
   userId    String
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId])
   @@index([expiresAt])
@@ -115,36 +115,36 @@ model Category {
 }
 
 model Product {
-  id                    String         @id @default(cuid())
+  id                    String   @id @default(cuid())
   name                  String
-  slug                  String         @unique
-  description           String         @db.Text
-  shortDesc             String?        @db.VarChar(300)
-  sku                   String         @unique
+  slug                  String   @unique
+  description           String   @db.Text
+  shortDesc             String?  @db.VarChar(300)
+  sku                   String   @unique
   priceInCents          Int
   compareAtPriceInCents Int?
   categoryId            String
-  stock                 Int            @default(0)
-  isActive              Boolean        @default(true)
-  isBestseller          Boolean        @default(false)
+  stock                 Int      @default(0)
+  isActive              Boolean  @default(true)
+  isBestseller          Boolean  @default(false)
   // Manuelle Sortierreihenfolge in Listings. Niedriger = weiter vorn.
   // Wird im Admin per Drag-and-Drop gesetzt, fällt sonst auf den
   // sekundären Sort (createdAt desc) zurück.
-  sortOrder             Int            @default(0)
-  purity                String?        @db.VarChar(20)
-  molecularWeight       String?        @db.VarChar(50)
-  sequence              String?        @db.Text
-  casNumber             String?        @db.VarChar(30)
-  storageTemp           String?        @db.VarChar(50)
-  form                  String?        @db.VarChar(50)
-  weight                String?        @db.VarChar(50)
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  sortOrder             Int      @default(0)
+  purity                String?  @db.VarChar(20)
+  molecularWeight       String?  @db.VarChar(50)
+  sequence              String?  @db.Text
+  casNumber             String?  @db.VarChar(30)
+  storageTemp           String?  @db.VarChar(50)
+  form                  String?  @db.VarChar(50)
+  weight                String?  @db.VarChar(50)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
-  category   Category         @relation(fields: [categoryId], references: [id])
-  images     ProductImage[]
-  cartItems  CartItem[]
-  orderItems OrderItem[]
+  category      Category                @relation(fields: [categoryId], references: [id])
+  images        ProductImage[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
   reviews       Review[]
   variants      ProductVariant[]
   wishlistItems WishlistItem[]
@@ -154,6 +154,19 @@ model Product {
   @@index([categoryId])
   @@index([isActive, categoryId])
   @@index([sortOrder])
+  // Compound-Indices für Hot-Path-Listings.
+  // Hauptkatalog: WHERE isActive=true [+ optional weitere Filter]
+  //               ORDER BY sortOrder ASC, createdAt DESC LIMIT 12
+  // → Postgres kann den vollständigen Sort aus dem Index lesen, ohne
+  //   Filter→Sort-Materialisierung. Bei 1k+ Produkten messbar.
+  @@index([isActive, sortOrder, createdAt(sort: Desc)])
+  // Kategorie-Listing: WHERE isActive=true AND categoryId=?
+  //                    ORDER BY sortOrder ASC, createdAt DESC
+  // → wie oben, aber pro Kategorie. Macht den vorhandenen
+  //   (isActive, categoryId)-Index nicht obsolet (FK-Joins ohne
+  //   sortOrder), aber für die typische Customer-Reihenfolge
+  //   schneller.
+  @@index([isActive, categoryId, sortOrder])
   @@map("products")
 }
 
@@ -175,10 +188,10 @@ model ShippingRate {
 }
 
 model ProductImage {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   url       String
   alt       String?
-  sortOrder Int    @default(0)
+  sortOrder Int     @default(0)
   productId String
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -208,10 +221,10 @@ model ProductVariant {
 // ============================================================
 
 model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items CartItem[]
@@ -288,14 +301,14 @@ model Order {
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
-  discountInCents       Int           @default(0)
-  promoCode             String?       @db.VarChar(20)
+  discountInCents Int     @default(0)
+  promoCode       String? @db.VarChar(20)
 
   // Admin-only Flag: markiert fiktive Orders, die Dashboards, Statistiken,
   // Exports und Email-Versand NICHT beeinflussen sollen. Pattern analog zu
   // status=ARCHIVED — überall wo Orders gezählt werden, wird
   // { isTestOrder: false } gefiltert.
-  isTestOrder           Boolean       @default(false)
+  isTestOrder Boolean @default(false)
 
   user            User?        @relation(fields: [userId], references: [id])
   items           OrderItem[]
@@ -313,6 +326,17 @@ model Order {
   @@index([orderNumber])
   @@index([stripePaymentIntentId])
   @@index([isTestOrder])
+  // Compound-Index für Admin-Order-Liste:
+  //   WHERE isTestOrder=false [+ optional status]
+  //   ORDER BY createdAt DESC LIMIT 20
+  // → ersetzt heute zwei separate Index-Scans + Sort. Bei 10k+ Orders
+  //   spürbar (~50-200 ms).
+  @@index([isTestOrder, createdAt(sort: Desc)])
+  // Compound-Index für Dashboard-Order-Liste:
+  //   WHERE userId=? ORDER BY createdAt DESC
+  // → User mit vielen Bestellungen sehen die neueste sofort, ohne
+  //   Postgres muss das gesamte User-Order-Set sortieren.
+  @@index([userId, createdAt(sort: Desc)])
   @@map("orders")
 }
 
@@ -437,18 +461,18 @@ enum DiscountType {
 }
 
 model PromoCode {
-  id            String       @id @default(cuid())
-  code          String       @unique
-  description   String?      @db.Text
-  discountType  DiscountType
-  discountValue Int          // percentage (1-100) or cents
-  maxUses       Int?         // null = unlimited
-  usedCount     Int          @default(0)
-  minOrderCents Int?         // minimum order subtotal in cents
-  isActive      Boolean      @default(true)
-  isCombinable  Boolean      @default(false)
-  startsAt      DateTime?
-  expiresAt     DateTime?
+  id             String       @id @default(cuid())
+  code           String       @unique
+  description    String?      @db.Text
+  discountType   DiscountType
+  discountValue  Int // percentage (1-100) or cents
+  maxUses        Int? // null = unlimited
+  usedCount      Int          @default(0)
+  minOrderCents  Int? // minimum order subtotal in cents
+  isActive       Boolean      @default(true)
+  isCombinable   Boolean      @default(false)
+  startsAt       DateTime?
+  expiresAt      DateTime?
   // Stripe Coupon ID cache. We used to create a new Stripe coupon on every
   // checkout that applied this promo — 100 checkouts meant 100 Stripe API
   // calls + 100 dashboard entries, all describing the same discount. Now
@@ -456,8 +480,8 @@ model PromoCode {
   // checkouts reuse it. Nullable so the migration stays backwards-
   // compatible (old code reading the record just sees `undefined`).
   stripeCouponId String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   usages PromoUsage[]
 
@@ -476,7 +500,7 @@ model PromoUsage {
   userId         String?
   guestEmail     String?
   orderId        String   @unique
-  discountAmount Int      // actual discount applied in cents
+  discountAmount Int // actual discount applied in cents
   createdAt      DateTime @default(now())
 
   promo PromoCode @relation(fields: [promoId], references: [id], onDelete: Cascade)
@@ -559,6 +583,14 @@ model CertificateOfAnalysis {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
+  // Hot-Path-Sub-Query in productCardSelect:
+  //   WHERE productId=? AND isPublished=true
+  //   ORDER BY testDate DESC LIMIT 1
+  // → wird pro ProductCard 1x ausgeführt. Bei 12 Cards/Listing
+  //   sind das 12 Sub-Queries. Mit diesem Compound liest Postgres
+  //   den nötigen Datensatz direkt aus dem Index, ohne weitere
+  //   Filter+Sort-Phase.
+  @@index([productId, isPublished, testDate(sort: Desc)])
   @@map("certificates_of_analysis")
 }
 
