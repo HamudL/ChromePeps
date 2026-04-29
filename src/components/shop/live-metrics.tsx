@@ -127,16 +127,7 @@ function MetricTile({ metric, delay }: { metric: Metric; delay: number }) {
   return (
     <div ref={ref} className="text-center">
       <div className="flex items-baseline justify-center">
-        <span
-          className="text-5xl md:text-6xl font-bold tracking-tight tabular-nums leading-none"
-          style={{
-            backgroundImage:
-              "linear-gradient(180deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%)",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            color: "transparent",
-          }}
-        >
+        <span className="text-5xl md:text-6xl font-bold tracking-tight tabular-nums leading-none text-foreground">
           {formatted}
         </span>
         {metric.suffix && (

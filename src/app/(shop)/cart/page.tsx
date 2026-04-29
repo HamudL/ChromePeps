@@ -180,11 +180,11 @@ export default function CartPage() {
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
-                          {item.quantity >= item.stock && (
-                            <span className="text-xs text-amber-600 ml-1">
-                              Max. Bestand
-                            </span>
-                          )}
+                          {/* Max-Bestand-Hint mit konkreter Zahl
+                              wurde entfernt — Stock-Werte sind Admin-
+                              Info, nicht customer-facing. Der +-Button
+                              wird trotzdem disabled wenn Max erreicht
+                              (siehe oben). */}
                         </div>
                         <Button
                           variant="ghost"

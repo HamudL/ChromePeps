@@ -113,3 +113,89 @@ export async function getFeaturedProduct(): Promise<FeaturedProductData | null> 
     coa: product.certificates[0] ?? null,
   };
 }
+
+/**
+ * Pool von Produkten für das rotierende Featured-Slot im Hero. Liefert
+ * bis zu `limit` aktive Produkte (Default 10), bevorzugt solche mit
+ * veröffentlichter COA — die haben das saubere "Lot/Reinheit"-Schaubild
+ * im FeaturedCard. Sortierung: createdAt desc, der Random-Pick passiert
+ * client-side im Carousel.
+ *
+ * Konsumenten: <FeaturedProductCarousel> auf der Homepage und der
+ * Hauptkatalog-Seite. Beide rendern auf Cache-Hit aus dem gleichen
+ * Pool — daher eignet sich der Pool hervorragend zum Cachen via Redis
+ * (siehe app/(shop)/page.tsx Homepage-Cache).
+ */
+export async function getFeaturedProductPool(
+  limit = 10,
+): Promise<FeaturedProductData[]> {
+  const select = {
+    id: true,
+    slug: true,
+    name: true,
+    shortDesc: true,
+    priceInCents: true,
+    weight: true,
+    form: true,
+    category: { select: { name: true, slug: true } },
+    images: {
+      select: { url: true, alt: true },
+      orderBy: { sortOrder: "asc" as const },
+      take: 1,
+    },
+    certificates: {
+      where: { isPublished: true },
+      orderBy: { testDate: "desc" as const },
+      take: 1,
+      select: {
+        batchNumber: true,
+        purity: true,
+        testMethod: true,
+        laboratory: true,
+        testDate: true,
+      },
+    },
+  };
+
+  // Erst die mit COA — die rendern visuell vollständig.
+  const withCoa = await db.product.findMany({
+    where: {
+      isActive: true,
+      certificates: { some: { isPublished: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select,
+  });
+
+  // Mit Lücken auffüllen aus aktiven Produkten ohne COA, falls
+  // weniger als `limit` mit COA da sind. Sonst rotiert nichts wenn
+  // der Shop frisch live ist.
+  let pool = withCoa;
+  if (pool.length < limit) {
+    const fallback = await db.product.findMany({
+      where: {
+        isActive: true,
+        id: { notIn: pool.map((p) => p.id) },
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit - pool.length,
+      select,
+    });
+    pool = [...pool, ...fallback];
+  }
+
+  return pool.map((product) => ({
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    shortDesc: product.shortDesc,
+    priceInCents: product.priceInCents,
+    weight: product.weight,
+    form: product.form,
+    categoryName: product.category.name,
+    categorySlug: product.category.slug,
+    image: product.images[0] ?? null,
+    coa: product.certificates[0] ?? null,
+  }));
+}

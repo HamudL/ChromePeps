@@ -211,6 +211,11 @@ export function TestOrderCreateDialog({ products }: TestOrderCreateDialogProps) 
         return;
       }
 
+      // setLoading(false) MUSS vor router.push() kommen, sonst bleibt der
+      // Dialog-Button im Spinner-State während der soft-navigation der
+      // Component-Tree noch mounted ist — User sieht einen "unendlichen"
+      // Lade-Indikator obwohl die Order schon angelegt ist.
+      setLoading(false);
       setOpen(false);
       resetForm();
       router.push(`/admin/orders/${json.data.orderId}`);

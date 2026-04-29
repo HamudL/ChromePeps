@@ -103,10 +103,12 @@ async function getDashboardStats() {
 
   const revenueByMonth: Record<string, { revenue: number; orders: number }> = {};
 
-  // Alle 12 Monate vorab mit 0 seeden — sonst zeichnet recharts bei nur 1–2
-  // gefüllten Monaten eine quasi unsichtbare Linie über 1 Punkt. Mit Seed
-  // erscheint die volle Zeitreihe und die Kurve ist lesbar.
-  for (let i = 0; i < 12; i++) {
+  // 13 Monate seeden (heute + 12 zurück) damit der aktuelle Monat
+  // garantiert im Chart erscheint, auch wenn er der einzige mit Orders
+  // ist. Vorher war das Loop nur 12 Monate ab twelveMonthsAgo, der
+  // current month fehlte am rechten Rand bei Edge-Cases an der Monats-
+  // Grenze.
+  for (let i = 0; i <= 12; i++) {
     const d = new Date(
       twelveMonthsAgo.getFullYear(),
       twelveMonthsAgo.getMonth() + i,
@@ -123,15 +125,32 @@ async function getDashboardStats() {
     revenueByMonth[key].orders += 1;
   }
 
+  // Alle Monate sortiert. Trim führende leere Monate: zeige die
+  // Zeitreihe ab dem ersten Monat mit Activity. Wenn das ganze Jahr
+  // leer ist, zeigen wir trotzdem die letzten 3 Monate damit das Chart
+  // nicht völlig kollabiert (recharts crasht mit empty data).
+  const sortedMonths = Object.entries(revenueByMonth).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
+  const firstActiveIndex = sortedMonths.findIndex(
+    ([, data]) => data.orders > 0,
+  );
+  const trimmedMonths =
+    firstActiveIndex === -1
+      ? sortedMonths.slice(-3) // gar keine Orders → letzte 3 Monate
+      : sortedMonths.slice(Math.max(0, firstActiveIndex - 1)); // 1 Monat Lead-in
+
   return {
     totalRevenue: totalRevenue._sum.totalInCents ?? 0,
     totalOrders,
     totalProducts,
     totalUsers,
     recentOrders,
-    revenueByMonth: Object.entries(revenueByMonth)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, data]) => ({ month, revenue: data.revenue, orders: data.orders })),
+    revenueByMonth: trimmedMonths.map(([month, data]) => ({
+      month,
+      revenue: data.revenue,
+      orders: data.orders,
+    })),
     ordersByStatus: ordersByStatus.map((g) => ({
       status: g.status,
       count: g._count,

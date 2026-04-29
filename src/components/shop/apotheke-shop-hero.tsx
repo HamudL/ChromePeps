@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
-import { FeaturedProductCard } from "@/components/shop/featured-product-card";
+import { FeaturedProductCarousel } from "@/components/shop/featured-product-carousel";
 import type { FeaturedProductData } from "@/lib/products/featured";
 
 /**
  * Apotheke-Hero — dunkles Top-Band für /products, Kategorie-Landings und
  * (optional) Produktdetail. Links: Crumb · H1 (Fraunces-italic-Akzent
  * auf einem Wort möglich) · Subline · Stats-Reihe. Rechts: optionale
- * FeaturedProductCard. Server Component ohne Interaktivität.
+ * FeaturedProductCarousel (rotiert alle 20s zufällig durch den Pool).
+ * Server Component ohne Interaktivität — der Carousel selbst ist
+ * "use client" und übernimmt das Rotieren intern.
  *
  * Die Stats-Reihe ist flexibel — wenn weniger als 2 echte Werte
  * verfügbar sind (z.B. noch keine COAs eingepflegt), wird sie
@@ -28,7 +30,12 @@ interface ApothekeShopHeroProps {
   title: ReactNode;
   subline: string;
   stats: HeroStat[];
-  featured: FeaturedProductData | null;
+  /**
+   * Pool von Featured-Produkten. Bei `length === 0` wird kein Featured-
+   * Slot gerendert (Layout fällt auf eine Spalte zurück). Bei `length === 1`
+   * zeigt der Carousel statisch dieses eine Produkt. Bei mehr rotiert er.
+   */
+  featured: FeaturedProductData[];
 }
 
 export function ApothekeShopHero({
@@ -46,7 +53,7 @@ export function ApothekeShopHero({
       <div className="container relative py-16 md:py-20 lg:py-24">
         <div
           className={`grid gap-10 lg:gap-16 ${
-            featured ? "lg:grid-cols-[1.2fr_1fr]" : "lg:grid-cols-1"
+            featured.length > 0 ? "lg:grid-cols-[1.2fr_1fr]" : "lg:grid-cols-1"
           }`}
         >
           {/* Left column — Text + Stats */}
@@ -98,10 +105,10 @@ export function ApothekeShopHero({
             )}
           </div>
 
-          {/* Right column — Featured Product */}
-          {featured && (
+          {/* Right column — Featured Product (rotiert) */}
+          {featured.length > 0 && (
             <div className="lg:pt-1">
-              <FeaturedProductCard product={featured} />
+              <FeaturedProductCarousel pool={featured} />
             </div>
           )}
         </div>

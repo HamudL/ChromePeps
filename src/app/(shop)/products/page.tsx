@@ -11,7 +11,7 @@ import {
   productCardSelect,
   getBestsellerProductIds,
 } from "@/lib/products/card";
-import { getFeaturedProduct } from "@/lib/products/featured";
+import { getFeaturedProductPool } from "@/lib/products/featured";
 import { getShopStats } from "@/lib/shop/stats";
 import type { ProductCardData } from "@/types";
 import type { Prisma } from "@prisma/client";
@@ -280,7 +280,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       // Featured nur auf der Haupt-Listing-Seite (ohne Kategorie-Filter
       // und ohne Suche) — sonst wäre "ein Bestseller" als Eyecatcher
       // neben einer Suche/Filterung semantisch falsch.
-      !category && !search ? getFeaturedProduct() : Promise.resolve(null),
+      !category && !search
+        ? getFeaturedProductPool(10)
+        : Promise.resolve([] as Awaited<ReturnType<typeof getFeaturedProductPool>>),
     ]);
 
   const hasActiveFilters = !!(

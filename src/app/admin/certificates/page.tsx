@@ -296,6 +296,38 @@ export default function AdminCertificatesPage() {
       ? certificates
       : certificates.filter((c) => c.productId === filterProduct);
 
+  // Gruppieren nach productId — pro Produkt eine eigene Sub-Sektion
+  // mit Produkt-Header + Charges darunter. Sortiert: Produkte
+  // alphabetisch, Charges innerhalb der Gruppe nach testDate desc.
+  const groupedByProduct = (() => {
+    const groups = new Map<
+      string,
+      { product: { id: string; name: string; slug: string }; certs: typeof filtered }
+    >();
+    for (const cert of filtered) {
+      const existing = groups.get(cert.productId);
+      if (existing) {
+        existing.certs.push(cert);
+      } else {
+        groups.set(cert.productId, {
+          product: cert.product,
+          certs: [cert],
+        });
+      }
+    }
+    // Innerhalb der Gruppe nach Datum desc sortieren (neueste zuerst).
+    for (const g of groups.values()) {
+      g.certs.sort(
+        (a, b) =>
+          new Date(b.testDate).getTime() - new Date(a.testDate).getTime(),
+      );
+    }
+    // Gruppen alphabetisch nach Produkt-Name.
+    return Array.from(groups.values()).sort((a, b) =>
+      a.product.name.localeCompare(b.product.name),
+    );
+  })();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -609,21 +641,35 @@ export default function AdminCertificatesPage() {
                   </TableCell>
                 </TableRow>
               ) : filtered.length > 0 ? (
-                filtered.map((cert) => (
-                  <TableRow key={cert.id}>
-                    <TableCell>
+                // Gruppiert: pro Produkt ein Header-Row mit Produkt-Name
+                // und Charge-Count, danach die einzelnen Charges (ohne
+                // erneut den Produkt-Namen pro Zeile zu wiederholen).
+                groupedByProduct.flatMap((group) => [
+                  <TableRow
+                    key={`group-${group.product.id}`}
+                    className="bg-muted/40 hover:bg-muted/40"
+                  >
+                    <TableCell colSpan={9} className="py-2">
                       <div className="flex items-center gap-2">
-                        <FileCheck className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium text-sm">
-                          {cert.product.name}
+                        <FileCheck className="h-4 w-4 text-primary" />
+                        <span className="font-semibold text-sm">
+                          {group.product.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          · {group.certs.length}{" "}
+                          {group.certs.length === 1 ? "Charge" : "Chargen"}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                        {cert.batchNumber}
-                      </code>
-                    </TableCell>
+                  </TableRow>,
+                  ...group.certs.map((cert) => (
+                    <TableRow key={cert.id}>
+                      <TableCell />
+                      <TableCell>
+                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                          {cert.batchNumber}
+                        </code>
+                      </TableCell>
                     <TableCell>
                       {cert.purity != null ? (
                         <Badge variant="secondary">{cert.purity}%</Badge>
@@ -708,8 +754,9 @@ export default function AdminCertificatesPage() {
                         )}
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))
+                    </TableRow>
+                  )),
+                ])
               ) : (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8">

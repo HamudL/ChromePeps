@@ -290,7 +290,7 @@ export default async function CategoryLandingPage({
         }
         subline={heroSubline}
         stats={heroStats}
-        featured={null}
+        featured={[]}
       />
 
       <ShopFilterBar

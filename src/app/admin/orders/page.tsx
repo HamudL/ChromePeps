@@ -187,6 +187,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                 <TableHead>Status</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead className="text-right">Total</TableHead>
+                <TableHead className="w-12 text-right">Rechnung</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -259,11 +260,43 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                     <TableCell className="text-right font-medium">
                       {formatPrice(order.totalInCents)}
                     </TableCell>
+                    <TableCell className="text-right">
+                      {/* Invoice-Download nur bei bezahlten Orders —
+                          der Endpoint /api/orders/[id]/invoice gibt
+                          sonst 409 zurück. UX-cleaner ist, den Button
+                          gleich disabled darzustellen. */}
+                      {order.paymentStatus === "SUCCEEDED" ? (
+                        <Button
+                          asChild
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Rechnung herunterladen"
+                        >
+                          <a
+                            href={`/api/orders/${order.id}/invoice`}
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      ) : (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          disabled
+                          title="Rechnung erst nach Zahlungseingang verfügbar"
+                          aria-label="Rechnung noch nicht verfügbar"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     <p className="text-muted-foreground">
                       {statusFilter !== "ALL"
                         ? `No ${ORDER_STATUS_LABELS[statusFilter]?.toLowerCase() ?? statusFilter.toLowerCase()} orders.`

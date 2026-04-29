@@ -19,8 +19,6 @@ import { db } from "@/lib/db";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 import { productJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { ReviewSection } from "@/components/shop/review-section";
 import { ReviewList, type ReviewListItem } from "@/components/shop/review-list";
 import { StarRating } from "@/components/shop/star-rating";
@@ -415,13 +413,13 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                       )}
                     />
                   )}
+                  {/* Stock-Anzeige bewusst nur als binärer Status:
+                      "Verfügbar" oder "Ausverkauft". Die genaue
+                      Stock-Zahl ist Admin-only-Info — Kunden interessiert
+                      nur ob sie kaufen können. */}
                   <PdpSpec
-                    k="Auf Lager"
-                    v={
-                      isOutOfStock
-                        ? "Ausverkauft"
-                        : `${product.stock} Stk.`
-                    }
+                    k="Verfügbarkeit"
+                    v={isOutOfStock ? "Ausverkauft" : "Verfügbar"}
                   />
                 </dl>
 
