@@ -1,10 +1,69 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createReviewSchema } from "@/validators/review";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { cacheDel } from "@/lib/redis";
 import { CACHE_KEYS } from "@/lib/constants";
+
+/**
+ * GET /api/reviews?productId=X&offset=Y&limit=N
+ *
+ * Lazy-Load-Endpoint für die Review-Liste auf der Produkt-Detailseite.
+ * Initial werden die ersten 20 Reviews vom SSR mitgeliefert (siehe
+ * `/(shop)/products/[slug]/page.tsx` REVIEWS_INITIAL_TAKE), weitere
+ * Blöcke werden vom <ReviewList>-Client per Klick auf "Mehr laden"
+ * angefordert.
+ *
+ * Public-Endpoint — Review-Inhalte sind ohnehin auf der Detailseite
+ * sichtbar, kein Auth-Gate nötig.
+ */
+const listReviewsSchema = z.object({
+  productId: z.string().cuid(),
+  offset: z.number().int().min(0).max(10_000).default(0),
+  limit: z.number().int().min(1).max(50).default(20),
+});
+
+export async function GET(req: NextRequest) {
+  const url = req.nextUrl;
+  const parsed = listReviewsSchema.safeParse({
+    productId: url.searchParams.get("productId") ?? "",
+    offset: parseInt(url.searchParams.get("offset") ?? "0", 10) || 0,
+    limit: parseInt(url.searchParams.get("limit") ?? "20", 10) || 20,
+  });
+  if (!parsed.success) {
+    return NextResponse.json(
+      { success: false, error: parsed.error.errors[0].message },
+      { status: 400 },
+    );
+  }
+
+  const reviews = await db.review.findMany({
+    where: { productId: parsed.data.productId },
+    orderBy: { createdAt: "desc" },
+    skip: parsed.data.offset,
+    take: parsed.data.limit,
+    select: {
+      id: true,
+      rating: true,
+      title: true,
+      body: true,
+      isVerified: true,
+      createdAt: true,
+      user: { select: { name: true, image: true } },
+    },
+  });
+
+  // Date → ISO-String für Client-Component-Boundary (JSON-safe).
+  return NextResponse.json({
+    success: true,
+    data: reviews.map((r) => ({
+      ...r,
+      createdAt: r.createdAt.toISOString(),
+    })),
+  });
+}
 
 /**
  * POST /api/reviews

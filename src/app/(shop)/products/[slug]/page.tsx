@@ -3,7 +3,6 @@ export const revalidate = 300; // ISR: regenerate every 5 minutes
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
-  Star,
   FlaskConical,
   Thermometer,
   Weight,
@@ -23,6 +22,8 @@ import { productJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReviewSection } from "@/components/shop/review-section";
+import { ReviewList, type ReviewListItem } from "@/components/shop/review-list";
+import { StarRating } from "@/components/shop/star-rating";
 import { ProductCard } from "@/components/shop/product-card";
 import { CertificateCard } from "@/components/shop/certificate-card";
 import { getRelatedProducts } from "@/lib/products/related";
@@ -42,6 +43,13 @@ interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Anzahl Reviews die initial mit dem Server-Render mitkommen. Mehr werden
+// vom <ReviewList>-Client-Component per /api/reviews?offset=N nachgeladen.
+// Default 20 schlägt einen guten Kompromiss: sieht "voll" aus auf einer
+// frischen Page, aber 500-Reviews-Produkte liefern nicht mehrere MB JSON
+// im SSR-Bundle.
+const REVIEWS_INITIAL_TAKE = 20;
+
 async function getProduct(slug: string): Promise<ProductWithDetails | null> {
   const product = await db.product.findUnique({
     where: { slug, isActive: true },
@@ -51,6 +59,7 @@ async function getProduct(slug: string): Promise<ProductWithDetails | null> {
       variants: { where: { isActive: true }, orderBy: { priceInCents: "asc" } },
       reviews: {
         orderBy: { createdAt: "desc" },
+        take: REVIEWS_INITIAL_TAKE,
         include: {
           user: { select: { name: true, image: true } },
         },
@@ -59,6 +68,27 @@ async function getProduct(slug: string): Promise<ProductWithDetails | null> {
   });
 
   return product as ProductWithDetails | null;
+}
+
+/**
+ * Reviews-Aggregate für die Header-Anzeige. Gleichwertig zum vorherigen
+ * `averageRating(product.reviews)` und `product.reviews.length`, aber
+ * über ALLE Reviews — nicht nur die ersten 20 die wir initial laden.
+ * Sonst würde der Stern-Score auf der Detailseite plötzlich anders
+ * aussehen als die Listing-Page-Aggregation.
+ */
+async function getReviewStats(
+  productId: string,
+): Promise<{ totalCount: number; avgRating: number }> {
+  const agg = await db.review.aggregate({
+    where: { productId },
+    _count: { _all: true },
+    _avg: { rating: true },
+  });
+  return {
+    totalCount: agg._count._all,
+    avgRating: agg._avg.rating ?? 0,
+  };
 }
 
 /**
@@ -127,28 +157,11 @@ export async function generateMetadata({
   };
 }
 
-function averageRating(reviews: ProductWithDetails["reviews"]): number {
-  if (reviews.length === 0) return 0;
-  const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
-  return sum / reviews.length;
-}
-
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }, (_, i) => (
-        <Star
-          key={i}
-          className={`h-4 w-4 ${
-            i < Math.round(rating)
-              ? "fill-yellow-400 text-yellow-400"
-              : "fill-muted text-muted"
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
+// averageRating-Helper und lokales <StarRating> wurden in
+// `@/components/shop/star-rating` extrahiert, weil <ReviewList>
+// (Client-Component) sie ebenfalls braucht. avgRating selbst kommt
+// jetzt aus getReviewStats() (DB-Aggregat über ALLE Reviews — auch
+// die noch nicht gelazyloadeten).
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
@@ -158,20 +171,25 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const avgRating = averageRating(product.reviews);
   const isOutOfStock = product.stock <= 0;
   // hasSale-Logik wanderte in VariantBuyPanel — wird dort anhand der
   // gleichen Felder (compareAtPriceInCents, priceInCents) berechnet.
 
-  // Related products + bestseller flags + latest COA run in parallel.
-  const [relatedRaw, bestsellerIds, latestCoa] = await Promise.all([
+  // Related products + bestseller flags + latest COA + Review-Stats
+  // run in parallel — die Stats-Aggregation muss separat laufen weil
+  // wir nur die ersten 20 Reviews mitladen (Lazy-Load via Client-
+  // Component für den Rest).
+  const [relatedRaw, bestsellerIds, latestCoa, reviewStats] = await Promise.all([
     getRelatedProducts(
       { id: product.id, categoryId: product.categoryId },
       4
     ),
     getBestsellerProductIds(),
     getLatestCertificate(product.id),
+    getReviewStats(product.id),
   ]);
+  const avgRating = reviewStats.avgRating;
+  const reviewsTotalCount = reviewStats.totalCount;
   const relatedProducts = relatedRaw.map((p) => ({
     ...p,
     isBestseller: bestsellerIds.has(p.id),
@@ -186,7 +204,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     inStock: !isOutOfStock,
     image: product.images[0]?.url ?? null,
     ratingValue: avgRating,
-    ratingCount: product.reviews.length,
+    ratingCount: reviewsTotalCount,
   });
 
   const breadcrumbSchema = breadcrumbJsonLd([
@@ -344,12 +362,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                     </p>
                   )}
 
-                  {product.reviews.length > 0 && (
+                  {reviewsTotalCount > 0 && (
                     <div className="flex items-center gap-2 pt-1">
                       <StarRating rating={avgRating} />
                       <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground">
-                        {avgRating.toFixed(1)} · {product.reviews.length}{" "}
-                        {product.reviews.length === 1
+                        {avgRating.toFixed(1)} · {reviewsTotalCount}{" "}
+                        {reviewsTotalCount === 1
                           ? "Bewertung"
                           : "Bewertungen"}
                       </span>
@@ -611,11 +629,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
                 Bewertungen
                 <span className="ml-2 text-muted-foreground font-medium">
-                  ({product.reviews.length})
+                  ({reviewsTotalCount})
                 </span>
               </h2>
             </div>
-            {product.reviews.length > 0 && (
+            {reviewsTotalCount > 0 && (
               <div className="flex items-center gap-2 rounded-full border bg-card px-4 py-1.5 shadow-sm">
                 <StarRating rating={avgRating} />
                 <span className="text-sm font-semibold tabular-nums">
@@ -627,67 +645,26 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </div>
         </FadeUp>
 
-        {product.reviews.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {product.reviews.map((review, i) => {
+        {reviewsTotalCount > 0 ? (
+          <ReviewList
+            productId={product.id}
+            initialReviews={product.reviews.map((review) => {
               const reviewer = (review as Record<string, unknown>).user as {
                 name: string | null;
                 image: string | null;
               } | null;
-              return (
-                <FadeUp key={review.id} delay={i * 0.05}>
-                  <Card className="h-full transition-shadow hover:shadow-md">
-                    <CardContent className="p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-sm font-semibold text-primary">
-                            {reviewer?.name?.[0]?.toUpperCase() ?? "?"}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-sm truncate">
-                              {reviewer?.name ?? "Anonym"}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(review.createdAt).toLocaleDateString(
-                                "de-DE",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                }
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-1 shrink-0">
-                          <StarRating rating={review.rating} />
-                          {review.isVerified && (
-                            <Badge
-                              variant="outline"
-                              className="border-primary/40 bg-primary/5 text-[10px] px-1.5 py-0"
-                            >
-                              <ShieldCheck className="mr-1 h-2.5 w-2.5 text-primary" />
-                              Verifiziert
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      {review.title && (
-                        <p className="mt-3 font-semibold text-sm">
-                          {review.title}
-                        </p>
-                      )}
-                      {review.body && (
-                        <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-                          {review.body}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </FadeUp>
-              );
+              return {
+                id: review.id,
+                rating: review.rating,
+                title: review.title,
+                body: review.body,
+                isVerified: review.isVerified,
+                createdAt: review.createdAt.toISOString(),
+                user: reviewer,
+              } satisfies ReviewListItem;
             })}
-          </div>
+            totalCount={reviewsTotalCount}
+          />
         ) : (
           <FadeUp delay={0.05}>
             <div className="rounded-2xl border-2 border-dashed border-border/60 py-12 text-center">
