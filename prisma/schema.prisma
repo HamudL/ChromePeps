@@ -36,7 +36,8 @@ model User {
   promoUsages   PromoUsage[]
   wishlistItems WishlistItem[]
 
-  @@index([email])
+  // KEIN @@index([email]) — `email @unique` legt bereits einen B-Tree-
+  // Index an, ein zweiter wäre 100 % deckungsgleich.
   @@map("users")
 }
 
@@ -110,7 +111,7 @@ model Category {
 
   products Product[]
 
-  @@index([slug])
+  // KEIN @@index([slug]) — slug ist bereits @unique.
   @@map("categories")
 }
 
@@ -150,7 +151,7 @@ model Product {
   wishlistItems WishlistItem[]
   certificates  CertificateOfAnalysis[]
 
-  @@index([slug])
+  // KEIN @@index([slug]) — slug ist bereits @unique.
   @@index([categoryId])
   @@index([isActive, categoryId])
   @@index([sortOrder])
@@ -323,9 +324,13 @@ model Order {
   // with orderNumber for the auth check.
   @@index([guestEmail])
   @@index([status])
-  @@index([orderNumber])
-  @@index([stripePaymentIntentId])
-  @@index([isTestOrder])
+  // KEIN @@index([orderNumber]) / @@index([stripePaymentIntentId]) —
+  // beide sind bereits @unique (s.o.), der explizite Single-Index wäre
+  // ein doppelter B-Tree.
+  // KEIN @@index([isTestOrder]) — durch das Compound-Index unten
+  // (isTestOrder, createdAt DESC) abgedeckt. Postgres würde einen
+  // Boolean-Singleton-Index ohnehin bei niedriger Selektivität
+  // selten direkt nutzen.
   // Compound-Index für Admin-Order-Liste:
   //   WHERE isTestOrder=false [+ optional status]
   //   ORDER BY createdAt DESC LIMIT 20
@@ -485,7 +490,7 @@ model PromoCode {
 
   usages PromoUsage[]
 
-  @@index([code])
+  // KEIN @@index([code]) — code ist bereits @unique.
   @@index([isActive, expiresAt])
   @@map("promo_codes")
 }
@@ -538,8 +543,7 @@ model NewsletterSubscriber {
   confirmedAt DateTime?
   createdAt   DateTime  @default(now())
 
-  @@index([email])
-  @@index([token])
+  // KEIN @@index([email]) / @@index([token]) — beide bereits @unique.
   @@map("newsletter_subscribers")
 }
 
