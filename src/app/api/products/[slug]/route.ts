@@ -60,7 +60,15 @@ export async function GET(
       components: {
         orderBy: { sortOrder: "asc" },
         include: {
-          component: { select: { id: true, name: true, slug: true, sku: true } },
+          component: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              sku: true,
+              isActive: true,
+            },
+          },
         },
       },
       reviews: {

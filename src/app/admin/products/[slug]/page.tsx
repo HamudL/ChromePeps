@@ -55,13 +55,20 @@ interface ProductVariant {
 interface ProductComponentApi {
   componentProductId: string;
   sortOrder: number;
-  component: { id: string; name: string; slug: string; sku: string };
+  component: {
+    id: string;
+    name: string;
+    slug: string;
+    sku: string;
+    isActive: boolean;
+  };
 }
 
 interface ProductOption {
   id: string;
   name: string;
   sku: string;
+  isActive: boolean;
 }
 
 interface ProductData {
@@ -135,26 +142,32 @@ export default function EditProductPage({
         const [catRes, prodRes, allProdRes] = await Promise.all([
           fetch("/api/admin/categories"),
           fetch(`/api/products/${slug}`),
-          // Pool für den Komponenten-Picker. pageSize=200 reicht für den
-          // aktuellen Katalog komfortabel; falls wir mal über 200
-          // Produkte gehen, wird der Picker auf serverseitige Suche
-          // umgestellt — siehe Kommentar im BlendComponentEditor.
-          fetch("/api/products?pageSize=200"),
+          // Pool für den Komponenten-Picker. Der Admin-Endpoint liefert
+          // im Gegensatz zum public `/api/products` auch inaktive
+          // Produkte (z.B. "RG3", das nur als Blend-Komponente
+          // existiert) und kennt kein Pagination-Cap.
+          fetch("/api/admin/products"),
         ]);
 
         const catJson = await catRes.json();
         if (catJson.success) setCategories(catJson.data);
 
         const allProdJson = await allProdRes.json();
-        if (allProdJson.success && allProdJson.data?.items) {
+        if (allProdJson.success && Array.isArray(allProdJson.data)) {
           setAllProducts(
             (
-              allProdJson.data.items as Array<{
+              allProdJson.data as Array<{
                 id: string;
                 name: string;
                 sku: string;
+                isActive: boolean;
               }>
-            ).map((p) => ({ id: p.id, name: p.name, sku: p.sku })),
+            ).map((p) => ({
+              id: p.id,
+              name: p.name,
+              sku: p.sku,
+              isActive: p.isActive,
+            })),
           );
         }
 
@@ -204,6 +217,7 @@ export default function EditProductPage({
             componentProductId: c.componentProductId,
             name: c.component.name,
             sku: c.component.sku,
+            isActive: c.component.isActive,
           })),
         );
       } catch {

@@ -23,12 +23,20 @@ export interface BlendComponentRow {
   /** Snapshot zur Anzeige — kommt aus dem Parent und wird nicht gespeichert. */
   name: string;
   sku: string;
+  /** Anzeige-Hilfsfeld: zeigt "inaktiv"-Badge in der ausgewählten Liste. */
+  isActive?: boolean;
 }
 
 interface ProductOption {
   id: string;
   name: string;
   sku: string;
+  /**
+   * Inaktive Produkte (z.B. "RG3" — Wirkstoff der nur als Blend-
+   * Komponente existiert, im Shop nicht direkt verkauft) werden
+   * im Picker mit Badge gekennzeichnet, sind aber wählbar.
+   */
+  isActive: boolean;
 }
 
 interface Props {
@@ -36,7 +44,7 @@ interface Props {
   parentProductId: string | null;
   components: BlendComponentRow[];
   onChange: (components: BlendComponentRow[]) => void;
-  /** Alle anderen Produkte, aus denen ausgewählt werden kann. */
+  /** Alle anderen Produkte, aus denen ausgewählt werden kann (inkl. inaktive). */
   availableProducts: ProductOption[];
 }
 
@@ -75,6 +83,7 @@ export function BlendComponentEditor({
         componentProductId: opt.id,
         name: opt.name,
         sku: opt.sku,
+        isActive: opt.isActive,
       },
     ]);
     setQuery("");
@@ -123,7 +132,17 @@ export function BlendComponentEditor({
                 </button>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{c.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium truncate">{c.name}</p>
+                  {c.isActive === false && (
+                    <span
+                      className="text-[10px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-700"
+                      title="Inaktives Produkt — nur als Blend-Komponente sichtbar"
+                    >
+                      inaktiv
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground font-mono">
                   {c.sku}
                 </p>
@@ -171,12 +190,20 @@ export function BlendComponentEditor({
                   type="button"
                   key={p.id}
                   onClick={() => addComponent(p)}
-                  className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
+                  className="w-full text-left px-3 py-2 hover:bg-muted text-sm flex items-center gap-2"
                 >
                   <span className="font-medium">{p.name}</span>
-                  <span className="ml-2 text-xs text-muted-foreground font-mono">
+                  <span className="text-xs text-muted-foreground font-mono">
                     {p.sku}
                   </span>
+                  {!p.isActive && (
+                    <span
+                      className="ml-auto text-[10px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-700"
+                      title="Inaktiv — nicht im Shop sichtbar, nur als Blend-Komponente verlinkbar"
+                    >
+                      inaktiv
+                    </span>
+                  )}
                 </button>
               ))
             )}
