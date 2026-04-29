@@ -12,25 +12,41 @@ interface RateLimitResult {
   reset: number;
 }
 
+// Atomic INCR + conditional PEXPIRE in einem einzigen Server-Roundtrip.
+// Beim ersten Hit (count == 1) wird die TTL gesetzt; bei späteren Hits
+// im selben Window bleibt die existierende TTL erhalten. Returnt
+// [count, pttl] — beide nach dem INCR konsistent gelesen.
+//
+// Vorher: INCR + PTTL als MULTI, dann separater EXPIRE wenn TTL=-1.
+// Race: zwischen INCR und EXPIRE konnten konkurrierende Requests den
+// TTL versehentlich neu setzen, wodurch das Sliding-Window stottern
+// konnte. Mit Lua läuft alles als ein Postgres-Statement-Äquivalent
+// auf dem Redis-Server — kein Interleaving möglich.
+const RATE_LIMIT_LUA = `
+local n = redis.call('INCR', KEYS[1])
+if n == 1 then
+  redis.call('PEXPIRE', KEYS[1], ARGV[1])
+end
+local ttl = redis.call('PTTL', KEYS[1])
+return {n, ttl}
+`;
+
 export async function rateLimit(
   identifier: string,
   config: RateLimitConfig = { maxRequests: 60, windowMs: 60_000 }
 ): Promise<RateLimitResult> {
   try {
     const key = `rate_limit:${identifier}`;
-    const windowSec = Math.ceil(config.windowMs / 1000);
 
-    const multi = redis.multi();
-    multi.incr(key);
-    multi.pttl(key);
-    const results = await multi.exec();
+    const result = (await redis.eval(
+      RATE_LIMIT_LUA,
+      1, // KEYS count
+      key,
+      config.windowMs.toString(),
+    )) as [number, number];
 
-    const count = (results?.[0]?.[1] as number) ?? 1;
-    const ttl = (results?.[1]?.[1] as number) ?? -1;
-
-    if (ttl === -1 || ttl === -2) {
-      await redis.expire(key, windowSec);
-    }
+    const count = result[0];
+    const ttl = result[1];
 
     const remaining = Math.max(0, config.maxRequests - count);
     const reset = ttl > 0 ? ttl : config.windowMs;

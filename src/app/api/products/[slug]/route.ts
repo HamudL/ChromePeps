@@ -187,6 +187,27 @@ export async function PATCH(
   }
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("homepage:*");
+
+  // Cart-Cache der betroffenen User invalidieren. Der gecachte Cart-
+  // Snapshot enthält stock/price/isActive/name/image — alles was sich
+  // bei einem Product-PATCH ändern kann. Ohne Invalidierung würde der
+  // User im Cart noch die alten Werte sehen, der Server-Side-Stock-
+  // Check beim Checkout würde dann ggf. den Order rejecten — UX-
+  // verwirrend ("Add to Cart" funktionierte aber Checkout sagt
+  // out-of-stock).
+  //
+  // Bewusst nur die betroffenen Carts statt cart:* — bei vielen
+  // gleichzeitig aktiven Carts blast-radius gering halten.
+  const affectedCarts = await db.cart.findMany({
+    where: { items: { some: { productId: id } } },
+    select: { userId: true },
+  });
+  if (affectedCarts.length > 0) {
+    await Promise.all(
+      affectedCarts.map((c) => cacheDel(CACHE_KEYS.CART(c.userId))),
+    );
+  }
+
   revalidatePath(`/products/${newSlug ?? slug}`);
   revalidatePath("/products");
 
@@ -219,11 +240,25 @@ export async function DELETE(
     );
   }
 
+  // Carts mit diesem Produkt VOR dem Delete sammeln — danach sind die
+  // CartItems via Cascade weg und der Lookup würde nichts mehr finden.
+  // Cache muss aber auch dann invalidiert werden, sonst zeigt der
+  // gecachte Snapshot noch das nicht mehr existierende Item.
+  const affectedCarts = await db.cart.findMany({
+    where: { items: { some: { productId: product.id } } },
+    select: { userId: true },
+  });
+
   await db.product.delete({ where: { slug } });
 
   await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(slug));
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("homepage:*");
+  if (affectedCarts.length > 0) {
+    await Promise.all(
+      affectedCarts.map((c) => cacheDel(CACHE_KEYS.CART(c.userId))),
+    );
+  }
   revalidatePath(`/products/${slug}`);
   revalidatePath("/products");
 
