@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { FlaskConical, Loader2, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -211,12 +212,17 @@ export function TestOrderCreateDialog({ products }: TestOrderCreateDialogProps) 
         return;
       }
 
-      // setLoading(false) MUSS vor router.push() kommen, sonst bleibt der
-      // Dialog-Button im Spinner-State während der soft-navigation der
-      // Component-Tree noch mounted ist — User sieht einen "unendlichen"
-      // Lade-Indikator obwohl die Order schon angelegt ist.
-      setLoading(false);
-      setOpen(false);
+      // flushSync zwingt React, den loading=false / open=false-State
+      // SOFORT zu committen, BEVOR der nachfolgende router.push() eine
+      // React-Transition startet. Ohne flushSync werden setState-Calls
+      // automatisch mit der Transition gebatcht — React zeigt den
+      // ALTEN Tree (Dialog offen + Spinner) bis die Ziel-Seite fertig
+      // gerendert hat, was auf langsamen Verbindungen wie ein
+      // unendliches Laden aussieht.
+      flushSync(() => {
+        setLoading(false);
+        setOpen(false);
+      });
       resetForm();
       router.push(`/admin/orders/${json.data.orderId}`);
       router.refresh();

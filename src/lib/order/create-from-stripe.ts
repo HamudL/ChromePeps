@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 import { generateOrderNumber } from "@/lib/order/generate-order-number";
 import { calculateOrderTotals } from "@/lib/order/calculate-totals";
+import { resolveShippingRate } from "@/lib/shipping/rates";
 
 /**
  * Shared order-creation logic used by the Stripe webhook handler,
@@ -163,11 +164,30 @@ export async function createOrderFromStripeSession(
   const rawDiscount =
     parseInt(stripeSession.metadata?.discountAmount ?? "0") || 0;
 
+  // Lieferland-Versandtarif resolven, damit der Order-Eintrag exakt dem
+  // entspricht, was Stripe als Shipping-Line-Item abgebucht hat. Ohne
+  // diesen Lookup würde calculateOrderTotals den DE-Default (5,99 €)
+  // einsetzen — der Customer hätte 5,99 € auf seiner Rechnung stehen,
+  // obwohl Stripe z.B. 12,99 € abgebucht hat (kostspieliger Bug bei
+  // Liefer-Ländern außerhalb DE).
+  let baseShippingInCents: number | undefined;
+  if (shippingAddressId) {
+    const address = await tx.address.findUnique({
+      where: { id: shippingAddressId },
+      select: { country: true },
+    });
+    if (address?.country) {
+      const rate = await resolveShippingRate(address.country);
+      if (rate) baseShippingInCents = rate.priceInCents;
+    }
+  }
+
   // Delegate the math to the shared pure helper so Stripe, bank-transfer,
   // and the verify-session fallback all produce byte-identical totals.
   const totals = calculateOrderTotals({
     subtotalInCents,
     discountInCents: rawDiscount,
+    baseShippingInCents,
   });
 
   const order = await tx.order.create({
