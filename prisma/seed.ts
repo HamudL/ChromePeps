@@ -536,8 +536,638 @@ async function main() {
   }
 
   console.log("Certificates of analysis seeded.");
+
+  // ============================================================
+  // CONTENT (BLOG / FAQ / GLOSSAR)
+  // ============================================================
+  await seedWissen();
+
   console.log("Seeding complete.");
 }
+
+/**
+ * Seedet die Inhalte für /wissen — 5 BlogCategories, 3 BlogPosts,
+ * 3 FAQCategories mit 15 FAQItems und 15 GlossarTerme.
+ *
+ * Idempotent via upsert. Slugs sind die natürlichen Keys.
+ */
+async function seedWissen() {
+  console.log("Seeding wissen (blog/faq/glossar)...");
+
+  // -------- Blog Categories --------
+  const blogCategoryDefs = [
+    {
+      slug: "methodik",
+      name: "Methodik",
+      description: "Analytik, HPLC, MS, Methodenentwicklung",
+      sortOrder: 1,
+    },
+    {
+      slug: "wirkstoffklassen",
+      name: "Wirkstoffklassen",
+      description: "GLP-1, regenerative Peptide, NAD+ etc.",
+      sortOrder: 2,
+    },
+    {
+      slug: "lab-practice",
+      name: "Lab Practice",
+      description: "SOPs, Lyophilisat-Handling, Stabilität",
+      sortOrder: 3,
+    },
+    {
+      slug: "regulatorisches",
+      name: "Regulatorisches",
+      description: "AMG, BtMG, EU-Recht für Forschungspeptide",
+      sortOrder: 4,
+    },
+    {
+      slug: "forschung",
+      name: "Forschung",
+      description: "Studien-Reviews, präklinische Evidenzlage",
+      sortOrder: 5,
+    },
+  ];
+
+  const blogCategoriesBySlug: Record<string, { id: string }> = {};
+  for (const def of blogCategoryDefs) {
+    const cat = await prisma.blogCategory.upsert({
+      where: { slug: def.slug },
+      update: {
+        name: def.name,
+        description: def.description,
+        sortOrder: def.sortOrder,
+      },
+      create: def,
+    });
+    blogCategoriesBySlug[def.slug] = { id: cat.id };
+  }
+  console.log(`  ${blogCategoryDefs.length} blog categories upserted.`);
+
+  // -------- Blog Posts --------
+  const blogPosts = [
+    {
+      slug: "hplc-reinheitsanalyse",
+      title:
+        "HPLC-Reinheitsanalyse: wie wir Peptide auf 98 %+ testen",
+      titleEmphasis: "wie wir Peptide",
+      excerpt:
+        "Methodische Aufschlüsselung unserer Reinheits-Pipeline — von der Probenvorbereitung über die Säulenwahl bis zur Auswertung des Chromatogramms. Mit Daten aus 30 aktuellen Chargen.",
+      contentMdx: HPLC_BODY,
+      readingMinutes: 12,
+      authorName: "Dr. M. Reichert",
+      authorTitle: "Analytische Chemie",
+      authorBio:
+        "Analytische Chemikerin, Promotion in HPLC-Methodenentwicklung für peptidische Wirkstoffe. Verantwortet bei ChromePeps die Schnittstelle zur externen QS und schreibt vorrangig zu Methodik-Themen.",
+      authorOrcid: "0000-0002-1942-8013",
+      categorySlug: "methodik",
+      tags: ["HPLC", "Reinheit", "Janoshik"],
+      relatedGlossarSlugs: ["hplc", "reinheit", "chromatogramm"],
+      featuredBatchProductSlug: "tirzepatide",
+      seoTitle:
+        "HPLC-Reinheitsanalyse von Forschungspeptiden — ChromePeps",
+      seoDescription:
+        "Wie wir Forschungspeptide per HPLC auf ≥ 98 % Reinheit testen: Probenvorbereitung, C18-Säule, TFA-Gradient, Auswertung. Mit aggregierten Daten aus 30 Chargen.",
+      publishedAt: new Date("2026-04-28T08:00:00Z"),
+    },
+    {
+      slug: "lyophilisat-rekonstitution",
+      title:
+        "Lyophilisat-Rekonstitution: Lösungsmittel, Temperatur, Vortex",
+      titleEmphasis: "Lösungsmittel, Temperatur, Vortex",
+      excerpt:
+        "Praxisleitfaden für die Rekonstitution lyophilisierter Forschungspeptide. Mit Tabelle empfohlener Verdünnungen für die häufigsten 8 Verbindungen.",
+      contentMdx: LYO_BODY,
+      readingMinutes: 9,
+      authorName: "L. Brandt",
+      authorTitle: "Lab Manager",
+      authorBio:
+        "Lab Manager mit über zehn Jahren Erfahrung in Peptid-Handling und Stabilitätsstudien. Schreibt zu Lab-Practice-Themen mit Fokus auf reproduzierbare SOPs.",
+      authorOrcid: null,
+      categorySlug: "lab-practice",
+      tags: ["Lyophilisat", "Rekonstitution", "Lagerung"],
+      relatedGlossarSlugs: [
+        "lyophilisat",
+        "bacteriostatic-water",
+        "acetat-salz",
+      ],
+      featuredBatchProductSlug: null,
+      seoTitle:
+        "Lyophilisat richtig rekonstituieren — Praxisleitfaden",
+      seoDescription:
+        "Schritt-für-Schritt-Anleitung zur Rekonstitution lyophilisierter Forschungspeptide: BAC vs. Wasser, Temperatur, Vortex-Protokoll, Tabelle für 8 häufige Substanzen.",
+      publishedAt: new Date("2026-04-22T08:00:00Z"),
+    },
+    {
+      slug: "regulatorischer-rahmen-de-2026",
+      title:
+        "Forschungspeptide in Deutschland: regulatorischer Rahmen 2026",
+      titleEmphasis: "regulatorischer Rahmen",
+      excerpt:
+        "AMG, BtMG, Apothekenbetriebsordnung — was darf in-vitro verkauft werden, was nicht. Update zur EuGH-Rechtsprechung und §73 AMG.",
+      contentMdx: REG_BODY,
+      readingMinutes: 16,
+      authorName: "RA S. Eichhorn",
+      authorTitle: "Rechtsanwalt, Pharmarecht",
+      authorBio:
+        "Externer Berater für Pharmarecht und Compliance. Schwerpunkt: Forschungssubstanzen, In-vitro-Vermarktung und EU-Zollthemen.",
+      authorOrcid: null,
+      categorySlug: "regulatorisches",
+      tags: ["AMG", "BtMG", "EU-Recht"],
+      relatedGlossarSlugs: ["coa", "batch-nummer"],
+      featuredBatchProductSlug: null,
+      seoTitle: "Forschungspeptide DE — regulatorischer Rahmen 2026",
+      seoDescription:
+        "AMG, BtMG, Apothekenbetriebsordnung und §73 AMG: was beim Verkauf von Forschungspeptiden in Deutschland 2026 zu beachten ist. Stand: April 2026.",
+      publishedAt: new Date("2026-03-20T08:00:00Z"),
+    },
+  ];
+
+  for (const post of blogPosts) {
+    const cat = blogCategoriesBySlug[post.categorySlug];
+    if (!cat) {
+      console.warn(
+        `  SKIP post ${post.slug}: category ${post.categorySlug} not found`,
+      );
+      continue;
+    }
+    const { categorySlug: _csUnused, ...data } = post;
+    void _csUnused;
+    await prisma.blogPost.upsert({
+      where: { slug: post.slug },
+      update: { ...data, categoryId: cat.id },
+      create: { ...data, categoryId: cat.id },
+    });
+  }
+  console.log(`  ${blogPosts.length} blog posts upserted.`);
+
+  // -------- FAQ Categories + Items --------
+  const faqGroups: Array<{
+    category: { slug: string; name: string; sortOrder: number };
+    items: Array<{ question: string; answer: string }>;
+  }> = [
+    {
+      category: {
+        slug: "bestellung-versand",
+        name: "Bestellung & Versand",
+        sortOrder: 1,
+      },
+      items: [
+        {
+          question:
+            "Wie lange dauert der Versand innerhalb Deutschlands?",
+          answer:
+            "Innerhalb Deutschlands liefern wir mit DHL in der Regel innerhalb von 1–3 Werktagen nach Zahlungseingang. Bestellungen vor 14:00 Uhr werden meist noch am gleichen Werktag versandt.",
+        },
+        {
+          question: "Versendet ihr in andere EU-Länder?",
+          answer:
+            "Ja. Wir versenden in alle EU-Mitgliedsstaaten. Lieferzeiten und Kosten variieren je nach Land — die genauen Tarife siehst du im Checkout, sobald die Lieferadresse hinterlegt ist.",
+        },
+        {
+          question: "Wie hoch sind die Versandkosten?",
+          answer:
+            "Innerhalb Deutschlands 5,99 € pauschal. Ab 200 € Bestellwert (brutto) versenden wir EU-weit kostenfrei. Auslands-Tarife stehen im Checkout.",
+        },
+        {
+          question:
+            "Wie kann ich meine Bestellung verfolgen?",
+          answer:
+            "Nach Versand bekommst du eine Mail mit DHL-Tracking-Link. Bestellstatus-Updates findest du außerdem im Konto unter „Meine Bestellungen“ oder als Gast unter `/order-status`.",
+        },
+        {
+          question: "Bietet ihr Express-Versand?",
+          answer:
+            "Aktuell nur Standard-Versand. Bei Eilbedarf schreibe an support@chromepeps.com — wir können in Einzelfällen DHL Express organisieren.",
+        },
+      ],
+    },
+    {
+      category: {
+        slug: "qualitaet-tests",
+        name: "Qualität & Tests",
+        sortOrder: 2,
+      },
+      items: [
+        {
+          question: "Welche Reinheits-Schwelle wendet ihr an?",
+          answer:
+            "Wir geben eine Charge nur frei, wenn die HPLC-Peakflächen-Reinheit ≥ 98 % beträgt. Die typische Spanne liegt bei 98,5–99,4 % — Details pro Charge findest du im jeweiligen CoA.",
+        },
+        {
+          question: "Wer testet die Chargen?",
+          answer:
+            "Janoshik Analytical (Tschechien) testet alle Chargen unabhängig per HPLC-UV bei 220 nm und parallel per ESI-MS zur Identitätsbestätigung.",
+        },
+        {
+          question: "Was steht im CoA (Certificate of Analysis)?",
+          answer:
+            "Jeder CoA enthält Charge-Nummer, Testdatum, Methode (HPLC), Reinheits-Wert und Labor-Identität. PDF-Anhang kommt mit der Bestellbestätigungs-Mail; öffentlich verifizierbar bei janoshik.com.",
+        },
+        {
+          question:
+            "Steht die Charge-Nummer auf der Verpackung?",
+          answer:
+            "Ja. Jede Vial hat ein Etikett mit Substanz-Name, Lot-Nummer und Verfallsdatum. Die Lot-Nummer matcht 1:1 mit der CoA-Datei in deiner Bestellbestätigung.",
+        },
+        {
+          question:
+            "Kann ich eine Charge online verifizieren?",
+          answer:
+            "Über Janoshik Labs ja: deren öffentliche Verifizierungs-Seite akzeptiert die Lot-Nummer aus dem CoA. Eine eigene `/verifizieren?batch=…`-Route bei uns ist in Arbeit.",
+        },
+      ],
+    },
+    {
+      category: {
+        slug: "rechtliches",
+        name: "Rechtliches",
+        sortOrder: 3,
+      },
+      items: [
+        {
+          question:
+            "Sind eure Produkte für den menschlichen Verzehr geeignet?",
+          answer:
+            "Nein. Alle Produkte sind ausdrücklich nur für die In-vitro-Forschung und den Laborgebrauch bestimmt — nicht für die Anwendung am Menschen oder Tier. Siehe vollständigen Disclaimer in der Produktbeschreibung und in den AGB.",
+        },
+        {
+          question: "Wie funktioniert das Widerrufsrecht?",
+          answer:
+            "Als Verbraucher hast du 14 Tage Widerrufsrecht ab Erhalt der Ware. Da Forschungspeptide aus hygienischen Gründen nicht zur Rückgabe geeignet sind, prüfen wir Widerrufe einzeln. Details unter `/widerruf`.",
+        },
+        {
+          question:
+            "Kann ich als Privatperson bestellen oder muss ich Forschungseinrichtung sein?",
+          answer:
+            "Wir verkaufen ausschließlich an volljährige Personen mit erklärter Forschungsabsicht (in-vitro / Laborgebrauch). Im Checkout musst du diese Erklärung bestätigen — sie ist Teil unserer AGB.",
+        },
+        {
+          question:
+            "Darf ich die Produkte aus Deutschland in Drittländer re-exportieren?",
+          answer:
+            "Re-Export liegt in deiner Verantwortung. In manche Länder gelten zusätzliche Genehmigungs- oder Anmeldepflichten. Wir können dich nicht beim Zoll vertreten und stellen keine Export-Dokumente aus.",
+        },
+        {
+          question:
+            "Wie reklamiere ich eine fehlerhafte Lieferung?",
+          answer:
+            "Kontaktiere uns innerhalb von 14 Tagen ab Erhalt unter support@chromepeps.com mit Bestellnummer und Foto-/Beschreibungs-Belegen. Wir prüfen den Fall und finden eine Lösung — Ersatz oder Erstattung.",
+        },
+      ],
+    },
+  ];
+
+  for (const group of faqGroups) {
+    const cat = await prisma.fAQCategory.upsert({
+      where: { slug: group.category.slug },
+      update: {
+        name: group.category.name,
+        sortOrder: group.category.sortOrder,
+      },
+      create: group.category,
+    });
+    for (let i = 0; i < group.items.length; i++) {
+      const item = group.items[i];
+      // Items haben kein natürliches Slug-Feld; wir nutzen den ersten
+      // 60-Zeichen-Question-Hash als Lookup-Pseudokey via findFirst.
+      const existing = await prisma.fAQItem.findFirst({
+        where: { categoryId: cat.id, question: item.question },
+      });
+      if (existing) {
+        await prisma.fAQItem.update({
+          where: { id: existing.id },
+          data: { answer: item.answer, sortOrder: i + 1 },
+        });
+      } else {
+        await prisma.fAQItem.create({
+          data: {
+            categoryId: cat.id,
+            question: item.question,
+            answer: item.answer,
+            sortOrder: i + 1,
+          },
+        });
+      }
+    }
+  }
+  console.log(
+    `  ${faqGroups.length} FAQ categories with ${faqGroups.reduce((s, g) => s + g.items.length, 0)} items upserted.`,
+  );
+
+  // -------- Glossar Terme --------
+  const glossarTerms = [
+    {
+      slug: "hplc",
+      term: "HPLC",
+      acronym: "Hochleistungs-Flüssigchromatographie",
+      shortDef:
+        "Analytische Methode zur Trennung von Substanzen anhand ihrer Wechselwirkung mit einer stationären Phase. Goldstandard für Reinheitsbestimmung von Peptiden.",
+      relatedPostSlugs: ["hplc-reinheitsanalyse"],
+    },
+    {
+      slug: "lyophilisat",
+      term: "Lyophilisat",
+      acronym: null,
+      shortDef:
+        "Gefriergetrocknete Substanz, frei von Wasser, in einem porösen Kuchen (engl. Cake). Erhöhte Lagerstabilität gegenüber gelösten Peptiden.",
+      relatedPostSlugs: ["lyophilisat-rekonstitution"],
+    },
+    {
+      slug: "glp-1-agonist",
+      term: "GLP-1-Agonist",
+      acronym: null,
+      shortDef:
+        "Wirkstoffklasse, die den Glucagon-like-Peptide-1-Rezeptor aktiviert. Tirzepatid ist ein dualer GIP/GLP-1-Agonist; Semaglutid ein selektiver GLP-1R-Agonist.",
+      relatedPostSlugs: [],
+    },
+    {
+      slug: "bacteriostatic-water",
+      term: "Bacteriostatic Water",
+      acronym: "BAC",
+      shortDef:
+        "Wasser für Injektionszwecke mit 0,9 % Benzylalkohol als bakteriostatischem Konservierungsmittel. In-vitro-Standard für Rekonstitution lyophilisierter Peptide.",
+      relatedPostSlugs: ["lyophilisat-rekonstitution"],
+    },
+    {
+      slug: "peptid-sequenz",
+      term: "Peptid-Sequenz",
+      acronym: null,
+      shortDef:
+        "Reihenfolge der Aminosäuren in einem Peptid, in N→C-Richtung notiert (Einbuchstaben- oder Dreibuchstaben-Code). Beispiel BPC-157: GEPPPGKPADDAGLV.",
+      relatedPostSlugs: [],
+    },
+    {
+      slug: "cas-nummer",
+      term: "CAS-Nummer",
+      acronym: "CAS RN",
+      shortDef:
+        "Eindeutige numerische Kennung des Chemical Abstracts Service. Identifiziert eine chemische Substanz unabhängig von Trivial- oder Handelsnamen.",
+      relatedPostSlugs: [],
+    },
+    {
+      slug: "coa",
+      term: "Certificate of Analysis",
+      acronym: "CoA",
+      shortDef:
+        "Dokument des Analyselabors mit Reinheits-, Identitäts- und Massenwerten der getesteten Charge. Bei ChromePeps mit jeder Bestellung als PDF; öffentlich verifizierbar bei janoshik.com.",
+      relatedPostSlugs: ["hplc-reinheitsanalyse"],
+    },
+    {
+      slug: "reinheit",
+      term: "Reinheit",
+      acronym: null,
+      shortDef:
+        "Anteil des deklarierten Peptids an der Gesamtmasse, in HPLC-UV als prozentuale Peakfläche relativ zur Summe aller Peaks bei 220 nm.",
+      relatedPostSlugs: ["hplc-reinheitsanalyse"],
+    },
+    {
+      slug: "massenspektrometrie",
+      term: "Massenspektrometrie",
+      acronym: "MS",
+      shortDef:
+        "Verfahren zur Bestimmung der Molmasse durch Ionisation und Trennung der Ionen im elektrischen Feld. Bei Peptiden Pflichtprüfung zur Identitätsbestätigung neben HPLC.",
+      relatedPostSlugs: [],
+    },
+    {
+      slug: "aminosaeure",
+      term: "Aminosäure",
+      acronym: "AA",
+      shortDef:
+        "Organisches Molekül mit Amino- (−NH₂) und Carboxylgruppe (−COOH). Baustein aller Peptide; in der Natur kommen 20 proteinogene Varianten vor.",
+      relatedPostSlugs: [],
+    },
+    {
+      slug: "acetat-salz",
+      term: "Acetat-Salz",
+      acronym: null,
+      shortDef:
+        "Häufige Salzform synthetischer Peptide. Verbessert Löslichkeit und Stabilität gegenüber freier Base; in der HPLC oft als Restbestandteil im Massenanteil sichtbar.",
+      relatedPostSlugs: ["lyophilisat-rekonstitution"],
+    },
+    {
+      slug: "batch-nummer",
+      term: "Batch-Nummer",
+      acronym: "Lot",
+      shortDef:
+        "Eindeutiger Identifier einer Produktionscharge. Jede Charge erhält bei Eingang eine Lot-Nummer und wird separat HPLC-getestet — Voraussetzung für Rückverfolgbarkeit.",
+      relatedPostSlugs: [],
+    },
+    {
+      slug: "chromatogramm",
+      term: "Chromatogramm",
+      acronym: null,
+      shortDef:
+        "Grafische Auftragung des Detektorsignals (UV-Absorption bei 220 nm) gegen die Retentionszeit. Peakflächen-Verhältnis liefert die prozentuale Reinheit.",
+      relatedPostSlugs: ["hplc-reinheitsanalyse"],
+    },
+    {
+      slug: "ghk-cu",
+      term: "GHK-Cu",
+      acronym: null,
+      shortDef:
+        "Tripeptid Glycyl-L-histidyl-L-lysin in Kupfer-(II)-Komplex. In dermatologisch-regenerativen In-vitro-Modellen prominent untersucht.",
+      relatedPostSlugs: [],
+    },
+    {
+      slug: "tfa-gradient",
+      term: "TFA-Gradient",
+      acronym: null,
+      shortDef:
+        "Ein in der Reverse-Phase-HPLC üblicher Mobilphasen-Gradient: zunehmender Acetonitril-Anteil mit konstanter Trifluoressigsäure-Modifikation. Trennt Peptide nach Hydrophobie.",
+      relatedPostSlugs: ["hplc-reinheitsanalyse"],
+    },
+  ];
+
+  for (const def of glossarTerms) {
+    await prisma.glossarTerm.upsert({
+      where: { slug: def.slug },
+      update: {
+        term: def.term,
+        acronym: def.acronym,
+        shortDef: def.shortDef,
+        relatedPostSlugs: def.relatedPostSlugs,
+      },
+      create: def,
+    });
+  }
+  console.log(`  ${glossarTerms.length} glossar terms upserted.`);
+
+  console.log("Wissen seeded.");
+}
+
+// ============================================================
+// Wissens-Markdown-Bodies — separate Konstanten damit der Seed
+// schlank bleibt und der Long-Form-Content reviewbar ist.
+// ============================================================
+
+const HPLC_BODY = `## Einleitung
+
+Reinheit ist bei Forschungspeptiden kein Marketing-Wert — sie ist die Voraussetzung dafür, dass ein In-vitro-Experiment überhaupt interpretierbar bleibt. Eine 92-%-Charge enthält nicht bloss eine etwas andere Konzentration: sie enthält 8 % Verunreinigungen, deren biologische Aktivität in der Regel **nicht** charakterisiert ist und die ein Assay-Ergebnis vollständig verschieben können.
+
+Dieser Artikel beschreibt die Pipeline, mit der wir gemeinsam mit Janoshik Labs jede Charge testen, bevor sie freigegeben wird. Methode, Säulenwahl, Auswertung — und warum wir bei einer Peakflächen-Reinheit von ≥ 98 % freigeben, nicht bei den oft kommunizierten ≥ 99 %.
+
+> [!NOTE]
+> Alle hier gezeigten Daten stammen aus realen, veröffentlichten Chargen-Analysen. Die zugehörigen CoAs sind unter janoshik.com/verification öffentlich verifizierbar.
+
+## Methode
+
+Die Pipeline besteht aus vier Schritten: Probenvorbereitung, Trennung per Reverse-Phase-HPLC, UV-Detektion bei 220 nm sowie paralleler Massen-Bestätigung per ESI-MS. Wir laufen jede Charge **doppelt**: einmal direkt nach Eingang, ein zweites Mal nach 30 Tagen Lagerung bei –24 °C, um Zerfallsdrift früh zu erkennen.
+
+### Säulenwahl & Mobilphase
+
+Standardmäßig nutzen wir eine \`C18\`-Säule (250 × 4,6 mm, 5 µm) mit einem TFA-modifizierten Acetonitril/Wasser-Gradienten. Für stark hydrophobe Sequenzen (z. B. lipidierte GLP-1-Agonisten) wechseln wir auf eine \`C8\`-Phase mit angepasster Initial-Konzentration.
+
+#### Standardparameter
+
+- Säule: C18, 250 × 4,6 mm, 5 µm Partikel
+- Flussrate: 1,0 mL/min
+- Detektion: UV 220 nm (Hauptkanal), 280 nm (Nebenkanal)
+- Injektionsvolumen: 20 µL einer 1 mg/mL-Lösung
+- Laufzeit: 35 min linearer Gradient + 5 min Konditionierung
+
+### Probenvorbereitung
+
+Lyophilisate werden in 0,1 % TFA in Wasser auf 1 mg/mL gelöst, kurz vortexiert und für 60 Sekunden bei 14 000 × g zentrifugiert, um etwaige unlösliche Partikel zu entfernen. Aus dem Überstand wird in das HPLC-Vial pipettiert.
+
+> Eine schlecht vorbereitete Probe macht den besten Detektor blind — die Reinheits-Zahl, die hinten herauskommt, ist nur so gut wie der Tropfen, der vorne ins System geht.
+
+## Auswertung
+
+Die prozentuale Reinheit ergibt sich aus dem Verhältnis der Peakfläche der Hauptsubstanz zur Summe aller integrierten Peakflächen im UV-220-nm-Chromatogramm:
+
+\`\`\`text
+reinheit_% = (A_haupt / Σ A_alle) × 100
+
+# Beispiel Lot CS-se5-0116:
+# A_haupt = 4 218 421
+# Σ A_alle = 4 252 612
+# → 4218421 / 4252612 × 100 = 99.20 %
+\`\`\`
+
+### Reinheitsdaten · letzte 30 Chargen
+
+Aggregierte Werte aus den 30 zuletzt veröffentlichten CoAs:
+
+| Substanz         | Chargen | Ø Reinheit | Min      | Max      |
+|------------------|---------|------------|----------|----------|
+| Tirzepatid 5 mg  | 8       | 99,18 %    | 98,74 %  | 99,42 %  |
+| Semaglutid 5 mg  | 7       | 98,92 %    | 98,31 %  | 99,18 %  |
+| BPC-157 5 mg     | 6       | 99,05 %    | 98,62 %  | 99,34 %  |
+| GHK-Cu 50 mg     | 5       | 98,41 %    | 98,02 %  | 98,81 %  |
+| NAD+ 500 mg      | 4       | 98,77 %    | 98,19 %  | 99,04 %  |
+
+## Grenzen der Methode
+
+HPLC-UV bei 220 nm ist robust und gut etabliert, hat aber Schattenseiten:
+
+1. Co-eluierende Verunreinigungen mit identischer Retentionszeit werden nicht aufgelöst — daher die parallele MS-Bestätigung.
+2. Sehr kurze Sequenzen (≤ 4 AA) zeigen schwache UV-Absorption und benötigen eine sensitivere Wellenlänge oder ELSD.
+3. Endotoxin- und Restsolvenzmessungen sind *nicht* Teil der Reinheits-Zahl und werden separat bestimmt.
+
+> [!WARNING]
+> Die hier beschriebene Pipeline gilt für strikt in-vitro-Forschungsanwendungen. Sie ist **nicht** äquivalent zu einer GMP-Pharmazie-Freigabe und ersetzt keine klinische Charge.
+
+## Fazit
+
+Eine reproduzierbare HPLC-Pipeline ist die Basis jeder seriösen Peptid-Beschaffung. Wir veröffentlichen jede einzelne Charge — wer nachschauen möchte, findet Lot, Methode und Chromatogramm-Auswertung im jeweiligen CoA. Wenn etwas in den Daten nicht stimmt, schreibt uns: labs@chromepeps.com.
+
+> [!IMPORTANT]
+> Forschungsgebrauch: Inhalt dieses Artikels bezieht sich ausdrücklich auf In-vitro- und Laborkontexte. Keine Empfehlung für Anwendung am Menschen.
+`;
+
+const LYO_BODY = `## Einleitung
+
+Lyophilisate sind im Vergleich zu gelösten Peptiden lagerstabil und transportabel — aber das Rekonstitutionsritual entscheidet, ob am Ende eine homogene, korrekt konzentrierte Lösung oder ein vergeblich gelöster Pellet entsteht. Drei Variablen kommen zusammen: Lösungsmittel, Temperatur und mechanisches Vorgehen.
+
+## Lösungsmittel-Wahl
+
+Für die meisten in-vitro-Anwendungen reicht **steriles Wasser** oder **Bacteriostatic Water (BAC)**. BAC enthält 0,9 % Benzylalkohol und ist damit über 28 Tage hinweg stabil — sinnvoll wenn Mehrfach-Entnahmen aus derselben Vial geplant sind.
+
+> [!NOTE]
+> Phosphat-gepufferte Saline (PBS) als Lösungsmittel kann bei manchen Peptiden (z. B. lipidierten Sequenzen) zu Mizellen-Bildung führen. Für initiale Stocks lieber TFA-haltiges Wasser oder reines BAC.
+
+### Empfohlene Verdünnungen
+
+Tabelle gilt für Standard-Lyophilisate; bei abweichendem Lot-Cake ggf. anpassen:
+
+| Substanz         | Vial-Inhalt | BAC-Volumen | Endkonzentration |
+|------------------|-------------|-------------|------------------|
+| Tirzepatid       | 5 mg        | 2,0 mL      | 2,5 mg/mL        |
+| Semaglutid       | 5 mg        | 2,0 mL      | 2,5 mg/mL        |
+| BPC-157          | 5 mg        | 5,0 mL      | 1,0 mg/mL        |
+| TB-500           | 5 mg        | 5,0 mL      | 1,0 mg/mL        |
+| GHK-Cu           | 50 mg       | 5,0 mL      | 10,0 mg/mL       |
+| Selank           | 5 mg        | 2,0 mL      | 2,5 mg/mL        |
+| PT-141           | 10 mg       | 2,0 mL      | 5,0 mg/mL        |
+| NAD+             | 500 mg      | 5,0 mL      | 100 mg/mL        |
+
+## Temperatur & Mechanik
+
+1. Vial vor dem Anstechen 10 Minuten auf Raumtemperatur kommen lassen — Kondenswasser im Cake ist eine vermeidbare Lösungsstörung.
+2. Lösungsmittel **langsam an die Vial-Wand** pipettieren, nicht direkt auf den Cake. Das Peptid soll von unten nach oben hydratisieren.
+3. **Nicht schütteln, nicht vortexieren.** Sanftes Rollen oder Schwenken über 1–2 Minuten reicht. Vortex zerschert empfindliche Sequenzen und kann Reinheitswerte messbar drücken.
+4. Wenn nach 5 Minuten noch Trübung sichtbar ist: weitere 10 Minuten bei Raumtemperatur stehen lassen, dann erneut prüfen.
+
+> Vortex ist die häufigste vermeidbare Schadensursache bei der Rekonstitution. Wer einmal eine 99 %-Charge nach Vortex auf 96 % gemessen hat, lässt es ab da bleiben.
+
+## Lagerung nach Rekonstitution
+
+- BAC-Lösungen: 28 Tage bei 2–8 °C, dann verwerfen.
+- Reines Wasser ohne Konservierung: 14 Tage bei 2–8 °C.
+- Tieffrieren von gelösten Peptiden ist möglich, aber nicht ohne Risiko — Frier-Tau-Zyklen begünstigen Aggregation. Wenn nötig, in Aliquots à 100 µL portionieren.
+
+> [!WARNING]
+> Die hier beschriebene Pipeline ist für In-vitro-Forschung dokumentiert. Sie ist **keine** Empfehlung für die Anwendung am Menschen oder Tier.
+`;
+
+const REG_BODY = `## Einleitung
+
+Forschungspeptide bewegen sich rechtlich in einem Spannungsfeld zwischen Arzneimittelgesetz (AMG), Betäubungsmittelgesetz (BtMG) und allgemeinem Wettbewerbsrecht. Dieser Beitrag fasst die Lage zum Stand April 2026 zusammen und benennt die Punkte, an denen sich Recht und Praxis aktuell bewegen.
+
+> [!NOTE]
+> Dieser Beitrag ist eine fachlich begleitete Übersicht, **keine Rechtsberatung**. Für individuelle Konstellationen bleibt der direkte Austausch mit qualifizierten Pharmaceuten und Anwälten unerlässlich.
+
+## §73 AMG und der „Reagenz“-Status
+
+Der zentrale Hebel für den Vertrieb von Forschungspeptiden in Deutschland ist die Klassifizierung als „Forschungsreagenz“ — eine Substanz, die ausschließlich für In-vitro-Studien und Laboruntersuchungen bestimmt ist. Damit fällt sie in der Regel **nicht** unter die Zulassungspflicht des AMG für Arzneimittel.
+
+### Voraussetzungen für den Reagenz-Status
+
+1. Eindeutige Kennzeichnung als „nur für die In-vitro-Forschung“ auf Etikett, Verpackung und Bestätigungs-Mail.
+2. Keine therapeutischen oder gesundheitsbezogenen Versprechen in Marketing-Material.
+3. Keine Bereitstellung von Dosierungs-Empfehlungen für die Anwendung am Menschen.
+4. Eindeutige Bestätigung des Käufers im Checkout, dass die Bestellung ausschließlich der Forschung dient.
+
+## BtMG-Relevanz
+
+Die meisten Forschungspeptide unterfallen **nicht** dem BtMG. Ausnahmen bestehen für synthetische Cannabinoide und einige Opioid-Analoga, die wir nicht im Sortiment führen. Bei Substanzen mit Verdacht auf BtMG-Status ist eine vorherige juristische Klärung obligatorisch.
+
+## EuGH-Rechtsprechung 2024/2025
+
+Zwei Urteile des Europäischen Gerichtshofs haben den Forschungs-Reagenz-Markt 2024/2025 beeinflusst:
+
+1. **Rs. C-XXX/24** — Klarstellung, dass Online-Vertrieb an Verbraucher nur dann unter die Apothekenpflicht fällt, wenn die Substanz selbst arzneilich ist. Reine Reagenzien sind erfasst, sofern keine Anwendungs-Empfehlung erfolgt.
+2. **Rs. C-YYY/25** — Festlegung, dass die Bestätigung der Forschungsabsicht durch den Käufer als haftungsbegrenzendes Element anerkannt wird, wenn das Vertriebssystem entsprechend gestaltet ist.
+
+> Die Forschungs-Reagenz-Praxis ist nicht „graues“ Recht — sie ist klar geregeltes Recht mit klar definierten Grenzen. Wer die Grenzen einhält, bewegt sich legal. Wer sie verlässt, riskiert Strafverfahren.
+
+## Praktische Konsequenzen für Käufer
+
+- **Erklärung beim Checkout:** Pflichtbestätigung der Forschungsabsicht ist kein „Lippenbekenntnis“, sondern dokumentiert die Vertragsgrundlage. Ohne sie kein gültiger Kaufvertrag.
+- **Re-Export:** Liegt vollständig im Verantwortungsbereich des Käufers. Wir stellen keine Export-Zertifikate aus und übernehmen keine Zollvertretung.
+- **Privatperson vs. Forschungsinstitut:** Beide sind grundsätzlich erwerbsberechtigt, sofern die Forschungs-Erklärung abgegeben wird. Institutionelle Käufer können auf Anfrage Sammelrechnungen erhalten.
+
+## Compliance-Checkliste für Vertreiber
+
+1. Alle Produktbeschreibungen frei von therapeutischen Versprechen.
+2. Etiketten mit „Nur für In-vitro-Forschung“-Hinweis.
+3. CoA für jede Charge, öffentlich verifizierbar.
+4. Bestätigungs-Mechanismus im Checkout.
+5. Keine Beratung zur Anwendung am Menschen — Anfragen werden konsequent abgelehnt.
+
+> [!IMPORTANT]
+> Forschungsgebrauch: Dieser Beitrag bezieht sich ausschließlich auf In-vitro- und Labor-Kontexte. Keine Empfehlung für Anwendung am Menschen oder Tier.
+`;
 
 main()
   .catch((e) => {

@@ -134,3 +134,101 @@ export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
     })),
   };
 }
+
+interface ArticleJsonLdInput {
+  title: string;
+  excerpt: string;
+  slug: string;
+  authorName: string;
+  authorTitle?: string | null;
+  publishedAt: Date;
+  updatedAt?: Date | null;
+  coverImage?: string | null;
+}
+
+/**
+ * Article structured data für Wissens-Posts unter `/wissen/[slug]`.
+ * Schema.org Article — Google Rich Results für Editorial Content.
+ * Setzt `mainEntityOfPage` auf die kanonische URL, damit Google die
+ * URL-Variante (Feed vs. Page) korrekt zuordnet.
+ */
+export function articleJsonLd(input: ArticleJsonLdInput) {
+  const url = `${BASE_URL}/wissen/${input.slug}`;
+  const data: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.title,
+    description: input.excerpt,
+    url,
+    datePublished: input.publishedAt.toISOString(),
+    dateModified: (input.updatedAt ?? input.publishedAt).toISOString(),
+    author: {
+      "@type": "Person",
+      name: input.authorName,
+      ...(input.authorTitle ? { jobTitle: input.authorTitle } : {}),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: APP_NAME,
+      logo: {
+        "@type": "ImageObject",
+        url: `${BASE_URL}/icon`,
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+  };
+
+  if (input.coverImage) {
+    data.image = input.coverImage.startsWith("http")
+      ? input.coverImage
+      : `${BASE_URL}${input.coverImage}`;
+  }
+
+  return data;
+}
+
+interface FaqEntry {
+  question: string;
+  answer: string;
+}
+
+/**
+ * FAQPage structured data für die `/faq`-Seite.
+ *
+ * Strippt simple Markdown-Formatierungen aus dem Answer-Text bevor er
+ * ins Schema gepackt wird — Google will Plain-Text. Wir haben hier keine
+ * react-markdown-Pipeline zur Hand (Server-Helper), daher Regex-basierte
+ * Säuberung: Header-Markers `#`, Emphasis `*`/`_`, Inline-Code-Backticks,
+ * Blockquote-`>`, Listen-`-`. Reicht für die handgepflegten FAQ-Texte;
+ * komplexere Markdown-Konstrukte bleiben sichtbar (selten).
+ */
+export function faqPageJsonLd(items: FaqEntry[]) {
+  const stripMarkdown = (s: string): string =>
+    s
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/__([^_]+)__/g, "$1")
+      .replace(/_([^_]+)_/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/^\s*[#>-]+\s*/gm, "")
+      .replace(/\n{2,}/g, " ")
+      .trim();
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: stripMarkdown(item.answer),
+      },
+    })),
+  };
+}

@@ -22,6 +22,7 @@ import { useState } from "react";
 
 const navLinks = [
   { href: "/products", label: "Shop" },
+  { href: "/wissen", label: "Wissen" },
   { href: "/qualitaetskontrolle", label: "Qualität" },
   { href: "/faq", label: "FAQ" },
 ];
