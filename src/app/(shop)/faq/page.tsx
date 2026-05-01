@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { APP_NAME } from "@/lib/constants";
+import { faqPageJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "FAQ — Häufige Fragen",
   description: `Antworten auf häufig gestellte Fragen zu Bestellungen, Versand, Zahlung und Produkten bei ${APP_NAME}.`,
   robots: { index: true, follow: true },
 };
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 const faqs: { question: string; answer: string }[] = [
   {
@@ -62,43 +61,27 @@ const faqs: { question: string; answer: string }[] = [
   },
 ];
 
-/** FAQPage JSON-LD schema for Google Rich Results */
-function faqJsonLd() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
-  };
-}
-
-function breadcrumbJsonLd() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
-      { "@type": "ListItem", position: 2, name: "FAQ", item: `${BASE_URL}/faq` },
-    ],
-  };
-}
-
 export default function FAQPage() {
+  // JSON-LD-Schemas via globalen Helper aus @/lib/json-ld — gleicher
+  // Output wie zuvor inline definiert, jetzt zentral gepflegt damit
+  // Wissens-Bereich und FAQ konsistent bleiben.
+  const faqSchema = faqPageJsonLd(faqs);
+  const breadcrumbSchema = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "FAQ", path: "/faq" },
+  ]);
+
   return (
     <div className="container max-w-3xl py-12">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd()) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd()) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbSchema),
+        }}
       />
 
       <h1 className="text-3xl font-bold tracking-tight mb-2">

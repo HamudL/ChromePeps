@@ -267,3 +267,746 @@
     animation: animDemoShimmerSweep 900ms ease-out;
   }
 }
+
+/* ============================================================
+ * WISSEN — Komponenten-Klassen für /wissen-Routes
+ * ============================================================
+ * Aus design/wissen/styles.css portiert (Mockup-Lieferung von Claude
+ * Design). Globale Tokens (--ink*, .section-ink, .apo-grid, .subtle-grid)
+ * sind oben bereits definiert. Hier nur die Klassen die der Wissens-
+ * Bereich exklusiv nutzt: Mono-Labels, Buttons im redaktionellen Stil,
+ * Article-Body-Typo (.prose, da @tailwindcss/typography nicht installiert
+ * ist), Glossar, Pagination, Cover-Placeholder-Variants.
+ */
+
+.mono-label {
+  font-family: var(--font-geist-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.mono-tag {
+  font-family: var(--font-geist-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Gold-Underline-Animation für Article-Titles auf Hover */
+.gold-underline {
+  background-image: linear-gradient(hsl(var(--primary)), hsl(var(--primary)));
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 280ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.gold-underline:hover,
+.group:hover .gold-underline {
+  background-size: 100% 1px;
+}
+
+/* Buttons im redaktionellen Stil (NICHT shadcn-Button — die Mockup-
+ * Designs nutzen eigene Hierarchie für Body-CTAs). */
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: hsl(var(--primary));
+  color: hsl(var(--ink));
+  font-weight: 600;
+  font-size: 14px;
+  padding: 11px 22px;
+  border: 1px solid hsl(var(--primary));
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background-color 180ms,
+    transform 180ms;
+  letter-spacing: 0.005em;
+}
+.btn-gold:hover {
+  background: hsl(45 92% 36%);
+}
+.btn-gold:active {
+  transform: translateY(1px);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: hsl(var(--foreground));
+  font-weight: 500;
+  font-size: 14px;
+  padding: 10px 18px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    border-color 180ms,
+    background-color 180ms;
+}
+.btn-ghost:hover {
+  border-color: hsl(var(--foreground));
+  background: hsl(40 20% 96%);
+}
+
+.btn-ink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: hsl(var(--primary));
+  font-family: var(--font-geist-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+.btn-ink:hover {
+  color: hsl(45 80% 60%);
+}
+
+.input-search {
+  width: 100%;
+  background: white;
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  padding: 14px 16px 14px 46px;
+  font-size: 15px;
+  font-family: var(--font-geist-sans);
+  color: hsl(var(--foreground));
+  transition:
+    border-color 180ms,
+    box-shadow 180ms;
+}
+.input-search:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+}
+
+/* Pill: Kategorie-Filter im Hub */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-geist-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--border));
+  background: white;
+  color: hsl(var(--foreground));
+  font-weight: 500;
+  transition: all 180ms;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pill:hover {
+  border-color: hsl(var(--foreground));
+}
+.pill.active {
+  border-color: hsl(var(--primary));
+  background: hsl(45 60% 97%);
+  color: hsl(45 92% 32%);
+}
+.pill .count {
+  font-size: 9.5px;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+/* Article-Card-Hover */
+.article-card {
+  transition: transform 280ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.article-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Cover-Placeholder — wenn kein Cover-Image hinterlegt ist, render Glyph
+ * mit dezent-getöntem Background. Sechs Varianten + dark-Variante. */
+.cover-ph {
+  position: relative;
+  background: var(--chrome-100, #eef1f6);
+  overflow: hidden;
+}
+.cover-ph::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(
+      circle at 30% 50%,
+      hsl(45 50% 50% / 0.1),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 70% 60%,
+      hsl(20 30% 30% / 0.1),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.025) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.025) 24px 24.5px
+    );
+}
+.cover-ph.v1::before {
+  background-image:
+    radial-gradient(
+      circle at 30% 40%,
+      hsl(45 60% 60% / 0.18),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 70% 70%,
+      hsl(20 30% 25% / 0.1),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    );
+}
+.cover-ph.v2::before {
+  background-image:
+    radial-gradient(
+      circle at 70% 30%,
+      hsl(200 30% 50% / 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 20% 80%,
+      hsl(45 40% 40% / 0.08),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    );
+}
+.cover-ph.v3::before {
+  background-image:
+    radial-gradient(
+      circle at 50% 50%,
+      hsl(20 14% 12% / 0.18),
+      transparent 55%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.04) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.04) 24px 24.5px
+    );
+}
+.cover-ph.v4::before {
+  background-image:
+    radial-gradient(
+      circle at 80% 30%,
+      hsl(45 70% 55% / 0.18),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 25% 65%,
+      hsl(0 30% 35% / 0.08),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    );
+}
+.cover-ph.v5::before {
+  background-image:
+    radial-gradient(
+      circle at 40% 60%,
+      hsl(120 20% 35% / 0.1),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      hsl(45 50% 50% / 0.1),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    );
+}
+.cover-ph.v6::before {
+  background-image:
+    radial-gradient(
+      circle at 60% 60%,
+      hsl(30 50% 35% / 0.14),
+      transparent 55%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.04) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.04) 24px 24.5px
+    );
+}
+.cover-ph.dark {
+  background-color: hsl(var(--ink));
+}
+.cover-ph.dark::before {
+  background-image:
+    radial-gradient(
+      circle at 30% 50%,
+      hsl(45 60% 50% / 0.18),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 100% / 0.04) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 100% / 0.04) 24px 24.5px
+    );
+}
+.cover-ph .glyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(20 14% 14% / 0.35);
+}
+.cover-ph.dark .glyph {
+  color: hsl(var(--ink-foreground) / 0.5);
+}
+
+/* Sticky-TOC */
+.toc-link {
+  display: block;
+  font-family: var(--font-geist-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
+  padding: 7px 0 7px 14px;
+  border-left: 1px solid hsl(var(--border));
+  transition:
+    color 160ms,
+    border-color 160ms;
+  text-transform: none;
+}
+.toc-link:hover {
+  color: hsl(var(--foreground));
+  border-left-color: hsl(var(--foreground));
+}
+.toc-link.active {
+  color: hsl(45 92% 32%);
+  border-left-color: hsl(var(--primary));
+  border-left-width: 2px;
+  padding-left: 13px;
+  font-weight: 600;
+}
+.toc-link.lvl-3 {
+  padding-left: 28px;
+  font-size: 11px;
+}
+.toc-link.lvl-3.active {
+  padding-left: 27px;
+}
+
+/* Hash-Anchor (Glossar-Buchstabenheader) */
+.hash-anchor {
+  font-family: var(--font-geist-mono);
+  color: hsl(var(--primary));
+  font-weight: 600;
+  margin-right: 14px;
+  user-select: none;
+}
+
+/* Letter-Anchor-Bar im Glossar */
+.letter-link {
+  font-family: var(--font-geist-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: all 140ms;
+}
+.letter-link:hover {
+  background: hsl(40 20% 94%);
+  color: hsl(var(--foreground));
+}
+.letter-link.active {
+  color: hsl(var(--ink));
+  background: hsl(var(--primary));
+}
+.letter-link.disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Glossar-Eintrag */
+.glossary-entry {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 32px;
+  padding: 18px 0;
+  border-top: 1px solid hsl(var(--border));
+  align-items: baseline;
+}
+.glossary-entry dt {
+  font-weight: 600;
+  font-size: 16.5px;
+  letter-spacing: -0.005em;
+}
+.glossary-entry dt .abbr {
+  display: block;
+  font-family: var(--font-geist-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+  margin-top: 2px;
+}
+.glossary-entry dd {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: hsl(20 8% 28%);
+}
+@media (max-width: 768px) {
+  .glossary-entry {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+/* Pagination */
+.pagination-num {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-geist-mono);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 3px;
+  color: hsl(var(--muted-foreground));
+  transition: all 160ms;
+  cursor: pointer;
+}
+.pagination-num:hover {
+  background: hsl(40 20% 94%);
+  color: hsl(var(--foreground));
+}
+.pagination-num.active {
+  background: hsl(var(--primary));
+  color: hsl(var(--ink));
+  font-weight: 600;
+}
+
+/* Callouts (Article-Body) */
+.callout {
+  margin: 28px 0;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 14px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  border-left: 2px solid;
+  background: hsl(40 20% 96%);
+}
+.callout p {
+  margin: 0;
+}
+.callout strong.callout-title {
+  display: block;
+  font-family: var(--font-geist-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.callout-info {
+  border-color: var(--chrome-700, #58657e);
+}
+.callout-info strong.callout-title {
+  color: var(--chrome-700, #58657e);
+}
+.callout-note {
+  border-color: hsl(var(--primary));
+  background: hsl(45 60% 96%);
+}
+.callout-note strong.callout-title {
+  color: hsl(45 92% 32%);
+}
+.callout-warn {
+  border-color: hsl(20 70% 45%);
+  background: hsl(20 50% 96%);
+}
+.callout-warn strong.callout-title {
+  color: hsl(20 70% 38%);
+}
+
+/* Article-Body — typografische States. NICHT @tailwindcss/typography
+ * (nicht installiert), sondern eigene scoped .prose-Klasse die exakt
+ * der Mockup-Typografie folgt. */
+.prose {
+  font-family: var(--font-geist-sans);
+  color: hsl(var(--foreground));
+  font-size: 17px;
+  line-height: 1.7;
+}
+.prose h2 {
+  font-family: var(--font-fraunces);
+  font-weight: 500;
+  font-size: 32px;
+  letter-spacing: -0.01em;
+  line-height: 1.18;
+  margin: 56px 0 16px;
+  scroll-margin-top: 96px;
+}
+.prose h3 {
+  font-family: var(--font-geist-sans);
+  font-weight: 600;
+  font-size: 20px;
+  margin: 36px 0 10px;
+  letter-spacing: -0.005em;
+  scroll-margin-top: 96px;
+}
+.prose h4 {
+  font-family: var(--font-geist-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  margin: 28px 0 8px;
+}
+.prose p {
+  margin: 0 0 18px;
+  text-wrap: pretty;
+}
+.prose p > strong {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.prose a {
+  color: hsl(var(--foreground));
+  background-image: linear-gradient(
+    hsl(var(--primary)),
+    hsl(var(--primary))
+  );
+  background-size: 100% 1px;
+  background-position: 0 calc(100% - 1px);
+  background-repeat: no-repeat;
+  padding-bottom: 1px;
+  transition: color 200ms;
+}
+.prose a:hover {
+  color: hsl(var(--primary));
+}
+.prose ul,
+.prose ol {
+  margin: 12px 0 22px;
+  padding: 0;
+  list-style: none;
+}
+.prose ul li,
+.prose ol li {
+  position: relative;
+  padding-left: 32px;
+  margin: 8px 0;
+}
+.prose ul li::before {
+  content: "#";
+  position: absolute;
+  left: 0;
+  top: 0.05em;
+  font-family: var(--font-geist-mono);
+  font-size: 13px;
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+.prose ol {
+  counter-reset: item;
+}
+.prose ol li {
+  counter-increment: item;
+}
+.prose ol li::before {
+  content: counter(item, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  font-family: var(--font-geist-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+.prose blockquote {
+  margin: 28px 0;
+  padding: 4px 0 4px 22px;
+  border-left: 2px solid hsl(var(--primary));
+  font-family: var(--font-fraunces);
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.45;
+  color: hsl(20 14% 16%);
+  letter-spacing: -0.005em;
+}
+.prose blockquote p {
+  margin: 0;
+}
+.prose blockquote cite {
+  display: block;
+  margin-top: 12px;
+  font-family: var(--font-geist-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-style: normal;
+  color: hsl(var(--muted-foreground));
+}
+.prose code {
+  font-family: var(--font-geist-mono);
+  font-size: 0.86em;
+  background: var(--chrome-100, #eef1f6);
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--chrome-200, #dde3ed);
+  color: hsl(20 14% 14%);
+}
+.prose pre {
+  background: hsl(var(--ink));
+  color: hsl(var(--ink-foreground));
+  border-radius: 4px;
+  padding: 22px;
+  overflow-x: auto;
+  margin: 28px 0;
+  position: relative;
+  font-size: 13px;
+  line-height: 1.7;
+  border: 1px solid hsl(var(--ink-border));
+}
+.prose pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+.prose pre .lang-tag {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-family: var(--font-geist-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(var(--ink-muted));
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 28px 0;
+  font-size: 14px;
+}
+.prose th,
+.prose td {
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+.prose th {
+  font-family: var(--font-geist-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  font-weight: 600;
+  border-top: 1px solid hsl(var(--foreground));
+  border-bottom: 1px solid hsl(var(--border));
+}
+.prose td.num {
+  font-family: var(--font-geist-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-size: 13.5px;
+}
+.prose figure {
+  margin: 32px 0;
+}
+.prose figure img {
+  width: 100%;
+  border: 1px solid hsl(var(--border));
+  border-radius: 2px;
+}
+.prose figcaption {
+  margin-top: 10px;
+  font-family: var(--font-geist-mono);
+  font-style: italic;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}

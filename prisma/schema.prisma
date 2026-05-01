@@ -646,3 +646,137 @@ model SiteSetting {
 
   @@map("site_settings")
 }
+
+// ============================================================
+// CONTENT (BLOG / FAQ / GLOSSAR)
+// ============================================================
+// Wissensbereich `/wissen` — Pillar-Pages, FAQ-CMS und Glossar.
+// Vollständig denormalisiert: Author-Felder als Strings am BlogPost,
+// Glossar/Post-Cross-References als String[]-Arrays mit Slugs (kein
+// FK), damit Inhalte ohne Foreign-Key-Friktion gepflegt werden können.
+
+model BlogCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?  @db.Text
+  // Manuelle Sortierreihenfolge auf Hub + Kategorie-Bar.
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts BlogPost[]
+
+  @@index([sortOrder])
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id             String  @id @default(cuid())
+  slug           String  @unique
+  title          String
+  // Italic-Highlight für Fraunces-Akzent im Title — Substring im
+  // Title, der im Frontend als <em class="font-serif italic"> gerendert
+  // wird (z.B. titleEmphasis="wie wir Peptide" → "HPLC: <em>wie wir
+  // Peptide</em> auf 98 %+"). Optional; wenn null, kein Highlight.
+  titleEmphasis  String?
+  excerpt        String  @db.Text
+  // Markdown-Body. Wird per react-markdown + remark-gfm gerendert,
+  // GitHub-Alerts (`> [!NOTE]`) werden auf Callout-Komponente gemappt.
+  contentMdx     String  @db.Text
+  coverImage     String?
+  readingMinutes Int     @default(5)
+
+  // Author — denormalisiert (kein FK auf User), weil Autoren externe
+  // Berater oder Pseudonyme sein können (RA Eichhorn ist nicht
+  // notwendigerweise ein User-Account). Vereinfacht Seed + Admin-Edit.
+  authorName   String
+  authorTitle  String?
+  authorBio    String? @db.Text
+  authorAvatar String?
+  authorOrcid  String?
+
+  categoryId String
+  category   BlogCategory @relation(fields: [categoryId], references: [id])
+
+  // Soft-Refs zu anderen Inhalten via Slug — keine FK, weil Cross-Modell
+  // (Glossar) und für Content-Migrations resilient bleibt.
+  tags                String[] @default([])
+  relatedGlossarSlugs String[] @default([])
+
+  // Optionaler Slug eines Produkts, dessen aktuelle COA im
+  // Article-Body als <BatchInfoCard> eingebettet wird (z.B.
+  // "tirzepatide" beim HPLC-Methodik-Artikel). Kein FK weil Posts
+  // ggf. auf nicht (mehr) existierende Produkte verweisen können.
+  featuredBatchProductSlug String?
+
+  seoTitle       String?
+  seoDescription String? @db.Text
+
+  // Drafts haben publishedAt = null und tauchen nicht im Hub/Sitemap auf.
+  // updatedManually überschreibt updatedAt für die Anzeige
+  // ("Aktualisiert am") — sinnvoll wenn z.B. nur SEO-Felder geändert
+  // wurden und der Content selbst stehen bleibt.
+  publishedAt     DateTime?
+  updatedManually DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Hot-Path-Sort: Hub holt latest 6 Posts, jede Kategorie-Page
+  // sortiert ebenfalls nach publishedAt desc. Compound-Index für
+  // Kategorie+Date deckt beide Wege.
+  @@index([publishedAt(sort: Desc)])
+  @@index([categoryId, publishedAt(sort: Desc)])
+  @@map("blog_posts")
+}
+
+model FAQCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items FAQItem[]
+
+  @@index([sortOrder])
+  @@map("faq_categories")
+}
+
+model FAQItem {
+  id          String      @id @default(cuid())
+  question    String      @db.Text
+  answer      String      @db.Text
+  categoryId  String
+  category    FAQCategory @relation(fields: [categoryId], references: [id])
+  sortOrder   Int         @default(0)
+  isPublished Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Render-Order auf der FAQ-Seite ist (categoryId, sortOrder).
+  @@index([categoryId, sortOrder])
+  @@map("faq_items")
+}
+
+model GlossarTerm {
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  term    String
+  // Optionales Akronym (z.B. "HPLC" hat acronym null, aber
+  // "Hochleistungs-Flüssigchromatographie" hat acronym "HPLC").
+  acronym String?
+
+  shortDef         String   @db.Text
+  longDef          String?  @db.Text
+  relatedPostSlugs String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Glossar-Suche/-Sort nach term — index für ORDER BY term ASC.
+  @@index([term])
+  @@map("glossar_terms")
+}
