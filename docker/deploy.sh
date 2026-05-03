@@ -67,12 +67,27 @@ fi
 
 # 4. Apply schema changes BEFORE the restart. `compose run` spins up a
 #    one-off container from the freshly pulled image, inheriting the
-#    existing env file + network, runs prisma db push, and exits. The
-#    old app container is still serving traffic during this step.
-#    Only when the schema is up to date do we cut over.
-log "[4/5] Applying database schema (prisma db push)..."
+#    existing env file + network, applies pending migrations / pushes
+#    the schema, and exits. The old app container is still serving
+#    traffic during this step. Only when the schema is up to date do
+#    we cut over.
+#
+# Two-step strategy:
+#   (a) `prisma migrate deploy` — wendet pending Migrations aus
+#       prisma/migrations/ an, idempotent (skipped wenn nichts pending).
+#       Wichtig für Migrations mit Backfill-SQL (z.B. denormalisiert →
+#       FK-Modell-Refactoring), die `db push` nicht abdecken kann.
+#   (b) `prisma db push --skip-generate` — sichert ab dass das laufende
+#       Schema mit der schema.prisma 1:1 matched. Wenn (a) lief, sieht
+#       (b) "no changes". Wenn (a) nichts hatte (z.B. ad-hoc Schema-
+#       Tweaks ohne Migration), pflegt (b) sie ein.
+log "[4/5] Applying database schema..."
+if ! docker compose run --rm --no-deps -T app npx prisma migrate deploy; then
+  log "ERROR: prisma migrate deploy failed. Old app container is still serving. Aborting deploy."
+  exit 1
+fi
 if ! docker compose run --rm --no-deps -T app npx prisma db push --skip-generate; then
-  log "ERROR: prisma db push failed. Old app container is still serving. Aborting deploy."
+  log "ERROR: prisma db push failed (after migrate deploy). Old app container is still serving. Aborting deploy."
   exit 1
 fi
 

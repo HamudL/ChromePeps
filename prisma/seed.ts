@@ -603,46 +603,76 @@ async function seedWissen() {
   }
   console.log(`  ${blogCategoryDefs.length} blog categories upserted.`);
 
+  // -------- Authors --------
+  const authorDefs = [
+    {
+      slug: "dr-m-reichert",
+      name: "Dr. M. Reichert",
+      title: "Analytische Chemie",
+      bio: "Analytische Chemikerin, Promotion in HPLC-Methodenentwicklung für peptidische Wirkstoffe. Verantwortet bei ChromePeps die Schnittstelle zur externen QS und schreibt vorrangig zu Methodik-Themen.",
+      orcid: "0000-0002-1942-8013",
+    },
+    {
+      slug: "l-brandt",
+      name: "L. Brandt",
+      title: "Lab Manager",
+      bio: "Lab Manager mit über zehn Jahren Erfahrung in Peptid-Handling und Stabilitätsstudien. Schreibt zu Lab-Practice-Themen mit Fokus auf reproduzierbare SOPs.",
+      orcid: null,
+    },
+    {
+      slug: "ra-s-eichhorn",
+      name: "RA S. Eichhorn",
+      title: "Rechtsanwalt, Pharmarecht",
+      bio: "Externer Berater für Pharmarecht und Compliance. Schwerpunkt: Forschungssubstanzen, In-vitro-Vermarktung und EU-Zollthemen.",
+      orcid: null,
+    },
+  ];
+
+  const authorsBySlug: Record<string, { id: string }> = {};
+  for (const def of authorDefs) {
+    const a = await prisma.author.upsert({
+      where: { slug: def.slug },
+      update: {
+        name: def.name,
+        title: def.title,
+        bio: def.bio,
+        orcid: def.orcid,
+      },
+      create: def,
+    });
+    authorsBySlug[def.slug] = { id: a.id };
+  }
+  console.log(`  ${authorDefs.length} authors upserted.`);
+
   // -------- Blog Posts --------
   const blogPosts = [
     {
       slug: "hplc-reinheitsanalyse",
-      title:
-        "HPLC-Reinheitsanalyse: wie wir Peptide auf 98 %+ testen",
+      title: "HPLC-Reinheitsanalyse: wie wir Peptide auf 98 %+ testen",
       titleEmphasis: "wie wir Peptide",
       excerpt:
         "Methodische Aufschlüsselung unserer Reinheits-Pipeline — von der Probenvorbereitung über die Säulenwahl bis zur Auswertung des Chromatogramms. Mit Daten aus 30 aktuellen Chargen.",
       contentMdx: HPLC_BODY,
       readingMinutes: 12,
-      authorName: "Dr. M. Reichert",
-      authorTitle: "Analytische Chemie",
-      authorBio:
-        "Analytische Chemikerin, Promotion in HPLC-Methodenentwicklung für peptidische Wirkstoffe. Verantwortet bei ChromePeps die Schnittstelle zur externen QS und schreibt vorrangig zu Methodik-Themen.",
-      authorOrcid: "0000-0002-1942-8013",
+      authorSlug: "dr-m-reichert",
       categorySlug: "methodik",
       tags: ["HPLC", "Reinheit", "Janoshik"],
       relatedGlossarSlugs: ["hplc", "reinheit", "chromatogramm"],
       featuredBatchProductSlug: "tirzepatide",
-      seoTitle:
-        "HPLC-Reinheitsanalyse von Forschungspeptiden — ChromePeps",
+      seoTitle: "HPLC-Reinheitsanalyse von Forschungspeptiden — ChromePeps",
       seoDescription:
         "Wie wir Forschungspeptide per HPLC auf ≥ 98 % Reinheit testen: Probenvorbereitung, C18-Säule, TFA-Gradient, Auswertung. Mit aggregierten Daten aus 30 Chargen.",
       publishedAt: new Date("2026-04-28T08:00:00Z"),
     },
     {
       slug: "lyophilisat-rekonstitution",
-      title:
-        "Lyophilisat-Rekonstitution: Lösungsmittel, Temperatur, Vortex",
+      title: "Lyophilisat-Rekonstitution: Lösungsmittel, Temperatur, Vortex",
       titleEmphasis: "Lösungsmittel, Temperatur, Vortex",
       excerpt:
         "Praxisleitfaden für die Rekonstitution lyophilisierter Forschungspeptide. Mit Tabelle empfohlener Verdünnungen für die häufigsten 8 Verbindungen.",
       contentMdx: LYO_BODY,
       readingMinutes: 9,
-      authorName: "L. Brandt",
-      authorTitle: "Lab Manager",
-      authorBio:
-        "Lab Manager mit über zehn Jahren Erfahrung in Peptid-Handling und Stabilitätsstudien. Schreibt zu Lab-Practice-Themen mit Fokus auf reproduzierbare SOPs.",
-      authorOrcid: null,
+      authorSlug: "l-brandt",
       categorySlug: "lab-practice",
       tags: ["Lyophilisat", "Rekonstitution", "Lagerung"],
       relatedGlossarSlugs: [
@@ -651,8 +681,7 @@ async function seedWissen() {
         "acetat-salz",
       ],
       featuredBatchProductSlug: null,
-      seoTitle:
-        "Lyophilisat richtig rekonstituieren — Praxisleitfaden",
+      seoTitle: "Lyophilisat richtig rekonstituieren — Praxisleitfaden",
       seoDescription:
         "Schritt-für-Schritt-Anleitung zur Rekonstitution lyophilisierter Forschungspeptide: BAC vs. Wasser, Temperatur, Vortex-Protokoll, Tabelle für 8 häufige Substanzen.",
       publishedAt: new Date("2026-04-22T08:00:00Z"),
@@ -666,11 +695,7 @@ async function seedWissen() {
         "AMG, BtMG, Apothekenbetriebsordnung — was darf in-vitro verkauft werden, was nicht. Update zur EuGH-Rechtsprechung und §73 AMG.",
       contentMdx: REG_BODY,
       readingMinutes: 16,
-      authorName: "RA S. Eichhorn",
-      authorTitle: "Rechtsanwalt, Pharmarecht",
-      authorBio:
-        "Externer Berater für Pharmarecht und Compliance. Schwerpunkt: Forschungssubstanzen, In-vitro-Vermarktung und EU-Zollthemen.",
-      authorOrcid: null,
+      authorSlug: "ra-s-eichhorn",
       categorySlug: "regulatorisches",
       tags: ["AMG", "BtMG", "EU-Recht"],
       relatedGlossarSlugs: ["coa", "batch-nummer"],
@@ -684,18 +709,26 @@ async function seedWissen() {
 
   for (const post of blogPosts) {
     const cat = blogCategoriesBySlug[post.categorySlug];
+    const author = authorsBySlug[post.authorSlug];
     if (!cat) {
       console.warn(
         `  SKIP post ${post.slug}: category ${post.categorySlug} not found`,
       );
       continue;
     }
-    const { categorySlug: _csUnused, ...data } = post;
+    if (!author) {
+      console.warn(
+        `  SKIP post ${post.slug}: author ${post.authorSlug} not found`,
+      );
+      continue;
+    }
+    const { categorySlug: _csUnused, authorSlug: _asUnused, ...data } = post;
     void _csUnused;
+    void _asUnused;
     await prisma.blogPost.upsert({
       where: { slug: post.slug },
-      update: { ...data, categoryId: cat.id },
-      create: { ...data, categoryId: cat.id },
+      update: { ...data, categoryId: cat.id, authorId: author.id },
+      create: { ...data, categoryId: cat.id, authorId: author.id },
     });
   }
   console.log(`  ${blogPosts.length} blog posts upserted.`);

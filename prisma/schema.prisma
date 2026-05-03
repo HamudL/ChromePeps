@@ -655,6 +655,26 @@ model SiteSetting {
 // Glossar/Post-Cross-References als String[]-Arrays mit Slugs (kein
 // FK), damit Inhalte ohne Foreign-Key-Friktion gepflegt werden können.
 
+// Author für Blog-Posts. Eigenes Modell statt denormalisierte Strings,
+// damit Bio/Avatar/ORCID einmal gepflegt + von mehreren Posts genutzt
+// werden. Kein FK auf User — Autoren können externe Berater oder
+// Pseudonyme sein und brauchen kein Login-Konto.
+model Author {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  title     String?
+  bio       String?  @db.Text
+  avatar    String?
+  orcid     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts BlogPost[]
+
+  @@map("authors")
+}
+
 model BlogCategory {
   id          String   @id @default(cuid())
   slug        String   @unique
@@ -687,14 +707,11 @@ model BlogPost {
   coverImage     String?
   readingMinutes Int     @default(5)
 
-  // Author — denormalisiert (kein FK auf User), weil Autoren externe
-  // Berater oder Pseudonyme sein können (RA Eichhorn ist nicht
-  // notwendigerweise ein User-Account). Vereinfacht Seed + Admin-Edit.
-  authorName   String
-  authorTitle  String?
-  authorBio    String? @db.Text
-  authorAvatar String?
-  authorOrcid  String?
+  // Author — FK auf Author-Tabelle. Bio/Avatar/ORCID werden in der
+  // Admin-UI einmal pro Author gepflegt und automatisch in alle Posts
+  // dieses Autors übernommen.
+  authorId String
+  author   Author @relation(fields: [authorId], references: [id])
 
   categoryId String
   category   BlogCategory @relation(fields: [categoryId], references: [id])
@@ -727,6 +744,7 @@ model BlogPost {
   // Kategorie+Date deckt beide Wege.
   @@index([publishedAt(sort: Desc)])
   @@index([categoryId, publishedAt(sort: Desc)])
+  @@index([authorId])
   @@map("blog_posts")
 }
 
