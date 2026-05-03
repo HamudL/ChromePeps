@@ -13,6 +13,7 @@ import {
   Mail,
   FileCheck,
   Truck,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/admin/promos", label: "Promo Codes", icon: Tag },
   { href: "/admin/announcement", label: "Announcement", icon: Megaphone },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+  { href: "/admin/wissen", label: "Wissen", icon: BookOpen },
   { href: "/admin/certificates", label: "Zertifikate", icon: FileCheck },
   { href: "/admin/shipping", label: "Versand", icon: Truck },
 ];

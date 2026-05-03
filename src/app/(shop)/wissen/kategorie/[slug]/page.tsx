@@ -72,7 +72,7 @@ export default async function WissenCategoryPage({
       orderBy,
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: { category: true },
+      include: { category: true, author: true },
     }),
     db.blogPost.count({
       where: { categoryId: category.id, publishedAt: { not: null } },
@@ -296,17 +296,22 @@ export default async function WissenCategoryPage({
   );
 }
 
-type PostWithCategory = Awaited<ReturnType<typeof db.blogPost.findFirst>> & {
+type PostWithCategoryAndAuthor = Awaited<
+  ReturnType<typeof db.blogPost.findFirst>
+> & {
   category: { name: string; slug: string };
+  author: { name: string };
 };
 
-function toCardData(post: NonNullable<PostWithCategory>): ArticleCardData {
+function toCardData(
+  post: NonNullable<PostWithCategoryAndAuthor>,
+): ArticleCardData {
   return {
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
     coverImage: post.coverImage,
-    authorName: post.authorName,
+    authorName: post.author.name,
     readingMinutes: post.readingMinutes,
     publishedAt: post.publishedAt!,
     category: { name: post.category.name, slug: post.category.slug },

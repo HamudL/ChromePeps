@@ -62,7 +62,7 @@ export default async function WissenArticlePage({ params }: Props) {
   const { slug } = await params;
   const post = await db.blogPost.findUnique({
     where: { slug },
-    include: { category: true },
+    include: { category: true, author: true },
   });
   if (!post || !post.publishedAt) notFound();
 
@@ -75,7 +75,7 @@ export default async function WissenArticlePage({ params }: Props) {
     },
     orderBy: { publishedAt: "desc" },
     take: 3,
-    include: { category: true },
+    include: { category: true, author: true },
   });
 
   const toc = extractToc(post.contentMdx);
@@ -97,8 +97,8 @@ export default async function WissenArticlePage({ params }: Props) {
     title: post.title,
     excerpt: post.excerpt,
     slug: post.slug,
-    authorName: post.authorName,
-    authorTitle: post.authorTitle,
+    authorName: post.author.name,
+    authorTitle: post.author.title,
     publishedAt: post.publishedAt,
     updatedAt: post.updatedManually ?? post.updatedAt,
     coverImage: post.coverImage,
@@ -173,15 +173,15 @@ export default async function WissenArticlePage({ params }: Props) {
                 border: "1px solid hsl(var(--border))",
               }}
             >
-              {initials(post.authorName)}
+              {initials(post.author.name)}
             </span>
             <span
               className="font-mono text-[12.5px] font-semibold"
               style={{ letterSpacing: "0.02em" }}
             >
-              {post.authorName}
+              {post.author.name}
             </span>
-            {post.authorTitle && (
+            {post.author.title && (
               <>
                 <span aria-hidden="true" className="opacity-40">
                   ·
@@ -190,7 +190,7 @@ export default async function WissenArticlePage({ params }: Props) {
                   className="mono-label text-muted-foreground"
                   style={{ fontSize: 10.5 }}
                 >
-                  {post.authorTitle}
+                  {post.author.title}
                 </span>
               </>
             )}
@@ -308,27 +308,27 @@ export default async function WissenArticlePage({ params }: Props) {
       </div>
 
       {/* Author box */}
-      {post.authorBio && (
+      {post.author.bio && (
         <section className="border-t border-border">
           <div className="container py-10 md:py-14">
             <div className="grid grid-cols-1 md:grid-cols-[80px_1fr] gap-6 max-w-[820px]">
               <div className="w-20 h-20 rounded-full bg-[hsl(20_14%_92%)] border border-border inline-flex items-center justify-center font-mono text-[18px] font-semibold">
-                {initials(post.authorName)}
+                {initials(post.author.name)}
               </div>
               <div>
                 <p className="mono-tag text-muted-foreground">Autor</p>
                 <h3 className="mt-1 font-serif text-[24px] tracking-tight font-medium">
-                  {post.authorName}
+                  {post.author.name}
                 </h3>
                 <p className="mt-2 text-[15px] leading-relaxed text-foreground/85 max-w-[60ch]">
-                  {post.authorBio}
+                  {post.author.bio}
                 </p>
-                {post.authorOrcid && (
+                {post.author.orcid && (
                   <p
                     className="mt-3 font-mono text-[11px] text-muted-foreground"
                     style={{ letterSpacing: "0.04em" }}
                   >
-                    ORCID {post.authorOrcid}
+                    ORCID {post.author.orcid}
                   </p>
                 )}
               </div>
@@ -450,17 +450,22 @@ function renderTitleWithEmphasis(
   );
 }
 
-type PostWithCategory = Awaited<ReturnType<typeof db.blogPost.findFirst>> & {
+type PostWithCategoryAndAuthor = Awaited<
+  ReturnType<typeof db.blogPost.findFirst>
+> & {
   category: { name: string; slug: string };
+  author: { name: string };
 };
 
-function toCardData(post: NonNullable<PostWithCategory>): ArticleCardData {
+function toCardData(
+  post: NonNullable<PostWithCategoryAndAuthor>,
+): ArticleCardData {
   return {
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
     coverImage: post.coverImage,
-    authorName: post.authorName,
+    authorName: post.author.name,
     readingMinutes: post.readingMinutes,
     publishedAt: post.publishedAt!,
     category: { name: post.category.name, slug: post.category.slug },

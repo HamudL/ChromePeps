@@ -34,14 +34,14 @@ export default async function WissenHubPage() {
     db.blogPost.findFirst({
       where: { publishedAt: { not: null } },
       orderBy: { publishedAt: "desc" },
-      include: { category: true },
+      include: { category: true, author: true },
     }),
     db.blogPost.findMany({
       where: { publishedAt: { not: null } },
       orderBy: { publishedAt: "desc" },
       skip: 1,
       take: 6,
-      include: { category: true },
+      include: { category: true, author: true },
     }),
     db.blogCategory.findMany({
       orderBy: { sortOrder: "asc" },
@@ -228,19 +228,22 @@ export default async function WissenHubPage() {
   );
 }
 
-type PostWithCategory = Awaited<
+type PostWithCategoryAndAuthor = Awaited<
   ReturnType<typeof db.blogPost.findFirst>
 > & {
   category: { name: string; slug: string };
+  author: { name: string };
 };
 
-function toCardData(post: NonNullable<PostWithCategory>): ArticleCardData {
+function toCardData(
+  post: NonNullable<PostWithCategoryAndAuthor>,
+): ArticleCardData {
   return {
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
     coverImage: post.coverImage,
-    authorName: post.authorName,
+    authorName: post.author.name,
     readingMinutes: post.readingMinutes,
     publishedAt: post.publishedAt!,
     category: { name: post.category.name, slug: post.category.slug },
