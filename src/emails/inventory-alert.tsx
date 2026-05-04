@@ -95,7 +95,7 @@ export function InventoryAlertEmail({
           /admin/products
         </a>
         . Alert-Schwelle pro Produkt: Edit-Form, Feld „Low-Stock
-        Threshold". Stille einzelne Produkte indem du die Schwelle auf
+        Threshold&ldquo;. Stille einzelne Produkte indem du die Schwelle auf
         0 setzt — dann nie wieder Alert für dieses Produkt.
       </Text>
     </EmailLayout>
