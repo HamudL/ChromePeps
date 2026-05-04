@@ -55,13 +55,89 @@ jobs:
       - run: npm run test:run
 
   # ──────────────────────────────────────────────
-  # 3. Build Docker image + push to GHCR
+  # 3. E2E (Playwright) — smoke against `next start`
+  # ──────────────────────────────────────────────
+  # Postgres + Redis as services so prisma migrate + seed can run.
+  # Wir bauen einmal die App, starten sie als Production-Server und
+  # schicken Playwright dagegen. Smoke-Scope: cookie-consent, cart,
+  # product-catalog, wissen, auth-forms, checkout-shell. KEIN echter
+  # Stripe-Roundtrip (das ist über die Webhook-Unit-Tests abgedeckt).
+  # AUDIT_REPORT_v3 §6 PR 3.
+  e2e:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: chromepeps
+          POSTGRES_PASSWORD: chromepeps
+          POSTGRES_DB: chromepeps_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chromepeps"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://chromepeps:chromepeps@localhost:5432/chromepeps_e2e
+      REDIS_URL: redis://localhost:6379
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: e2e-secret-not-for-prod
+      AUTH_SECRET: e2e-secret-not-for-prod
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      # Stripe + Resend bleiben in den E2E-Tests nicht erreichbar — die
+      # Tests stoppen vor dem Stripe-Redirect. Dummies reichen damit die
+      # App nicht beim Boot crasht.
+      STRIPE_SECRET_KEY: sk_test_dummy
+      STRIPE_WEBHOOK_SECRET: whsec_dummy
+      RESEND_API_KEY: re_dummy
+      MAIL_FROM_ADDRESS: noreply@example.com
+      MAIL_FROM_NAME: ChromePeps
+      CRON_SECRET: dummy
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      # `db push` ist hier OK weil die E2E-DB jedes Mal frisch ist —
+      # echte Migrations brauchen wir für den Smoke nicht.
+      - run: npx prisma db push --skip-generate
+      - run: npx prisma db seed
+      - run: npm run build
+      # Playwright-Browser nur Chromium (siehe playwright.config.ts).
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────
+  # 4. Build Docker image + push to GHCR
   # ──────────────────────────────────────────────
   # Image is built in the cloud (free GitHub runners) and pushed to
   # GitHub Container Registry. The VPS then just pulls the pre-built
   # image in seconds, avoiding OOM crashes from building on the 1.8 GB VPS.
   build-and-push:
-    needs: unit-tests
+    needs: [unit-tests, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30

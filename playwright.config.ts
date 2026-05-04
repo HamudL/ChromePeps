@@ -20,9 +20,13 @@ export default defineConfig({
     },
   ],
 
-  // Start dev server before tests (only when not already running)
+  // Start a server before tests (only when not already running). In CI
+  // benutzen wir die Production-Build (`npm run start`) — schneller als
+  // `next dev` nach dem ersten Build, deterministischer ohne HMR/Fast-
+  // Refresh-Glitches. Lokal bleibt's bei `next dev` damit Code-Änderungen
+  // im Browser sofort wirksam sind.
   webServer: {
-    command: "npm run dev",
+    command: process.env.CI ? "npm run start" : "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

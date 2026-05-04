@@ -24,6 +24,18 @@ export default defineConfig({
       provider: "v8",
       include: ["src/lib/**", "src/store/**", "src/components/**"],
       exclude: ["**/*.d.ts", "**/node_modules/**"],
+      // Thresholds als Schutz vor stiller Coverage-Erosion. Zahlen sind
+      // bewusst vorsichtig gesetzt — sie bleiben über dem aktuellen
+      // Stand und blocken zukünftige Regressionen, ohne den Build heute
+      // zu brechen. AUDIT_REPORT_v3 §6 PR 3.
+      thresholds: {
+        // Pro Pfad-Bereich differenziert: lib/** ist die meistgetestete
+        // Schicht (Helpers, Validation), validators/** sollte hoch sein
+        // weil pure Funktionen, components/** ist UI und schwerer
+        // automatisiert testbar.
+        "src/lib/**": { lines: 40, functions: 40, branches: 50, statements: 40 },
+        "src/store/**": { lines: 50, functions: 50, branches: 60, statements: 50 },
+      },
     },
   },
 });
