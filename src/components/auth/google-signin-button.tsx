@@ -6,12 +6,18 @@ import { Button } from "@/components/ui/button";
 
 /**
  * Google-OAuth-Button. Triggert den NextAuth-Flow für den `google`-Provider
- * via Client-redirect zu /api/auth/signin/google.
+ * via FORM-POST mit CSRF-Token an /api/auth/signin/google.
+ *
+ * Wichtig: NextAuth v5 erwartet POST mit `csrfToken` aus /api/auth/csrf.
+ * Ein simpler GET-Redirect liefert nur die default Sign-in-Page zurück,
+ * die wegen unseres `pages.signIn = "/login"` direkt zurück auf /login
+ * leitet — das hat sich beim ersten Versuch wie ein Page-Refresh
+ * angefühlt.
  *
  * Account-Linking: NextAuth verbindet automatisch das Google-Account mit
  * einem existierenden User-Datensatz mit derselben Email
- * (`allowDangerousEmailAccountLinking: true` im Provider-Config) — das ist
- * sicher weil Google verifizierte Emails liefert.
+ * (`allowDangerousEmailAccountLinking: true` im Provider-Config) — sicher
+ * weil Google verifizierte Emails liefert.
  *
  * Captcha-Bypass: OAuth-Logins werden NICHT per hCaptcha gegated weil der
  * gesamte OAuth-Flow extern bei Google läuft (eigene Brute-Force-Detection).
@@ -28,14 +34,39 @@ interface Props {
 export function GoogleSignInButton({ callbackUrl = "/", className }: Props) {
   const [isPending, setIsPending] = useState(false);
 
-  function handleClick() {
+  async function handleClick() {
     setIsPending(true);
-    // CSRF-Token wird von NextAuth's /api/auth/signin-Endpoint
-    // automatisch gesetzt — wir müssen nur den Redirect anstoßen.
-    const url = `/api/auth/signin/google?${new URLSearchParams({
-      callbackUrl,
-    }).toString()}`;
-    window.location.href = url;
+    try {
+      // 1. CSRF-Token holen (wie beim Credentials-Flow)
+      const csrfRes = await fetch("/api/auth/csrf");
+      if (!csrfRes.ok) throw new Error("CSRF-Token fehlt");
+      const { csrfToken } = await csrfRes.json();
+
+      // 2. Hidden Form bauen + submit. Damit der Browser dem 302-
+      //    Redirect zu Google folgt, MUSS das ein echter Form-Submit
+      //    sein (kein fetch — fetch folgt 302s nicht zu cross-origin).
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/api/auth/signin/google";
+
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = "csrfToken";
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+
+      const callbackInput = document.createElement("input");
+      callbackInput.type = "hidden";
+      callbackInput.name = "callbackUrl";
+      callbackInput.value = callbackUrl;
+      form.appendChild(callbackInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      console.error("[GoogleSignIn]", err);
+      setIsPending(false);
+    }
   }
 
   return (
