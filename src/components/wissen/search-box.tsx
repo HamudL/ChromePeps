@@ -121,8 +121,6 @@ export function WissenSearchBox() {
         placeholder='Begriff, Substanz oder Methode suchen — z. B. „Tirzepatid HPLC"'
         className="input-search"
         aria-label="Im Wissensbereich suchen"
-        aria-autocomplete="list"
-        aria-expanded={open}
       />
       {query && (
         <button
@@ -146,7 +144,7 @@ export function WissenSearchBox() {
           )}
           {!loading && totalHits === 0 && (
             <p className="p-4 text-xs text-muted-foreground italic">
-              Keine Treffer für „{query}".
+              Keine Treffer für „{query}&ldquo;.
             </p>
           )}
 
