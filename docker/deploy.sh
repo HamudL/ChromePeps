@@ -60,6 +60,16 @@ cd "$COMPOSE_DIR"
 # 3. Pull the pre-built image from GHCR
 #    If pull fails, the old running container stays up — no downtime.
 log "[3/5] Pulling latest image from GHCR..."
+# Vor dem pull das aktuelle (gleich-zu-überschreibende) Image als
+# `chromepeps:previous` taggen — damit `docker/rollback.sh` einen
+# garantierten Reset-Punkt hat. Wenn das aktuelle Image fehlt
+# (z.B. erster Deploy nach docker prune), wird das übersprungen.
+CURRENT_IMAGE="ghcr.io/hamudl/chromepeps:latest"
+if docker image inspect "$CURRENT_IMAGE" >/dev/null 2>&1; then
+  docker tag "$CURRENT_IMAGE" "chromepeps:previous" 2>/dev/null || true
+  log "  Tagged current image as chromepeps:previous (rollback target)"
+fi
+
 if ! docker compose pull app; then
   log "ERROR: Image pull failed! Old container is still running. Check GitHub Actions status."
   exit 1
