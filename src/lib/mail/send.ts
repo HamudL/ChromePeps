@@ -13,6 +13,10 @@ import OrderShippedEmail, {
 import ReviewRequestEmail, {
   type ReviewRequestProduct,
 } from "@/emails/review-request";
+import {
+  InventoryAlertEmail,
+  type LowStockItem,
+} from "@/emails/inventory-alert";
 import { BANK_DETAILS } from "@/lib/constants";
 
 /**
@@ -351,6 +355,37 @@ export async function sendReviewRequestEmail(
       customerName: input.customerName,
       orderNumber: input.orderNumber,
       products: input.products,
+    }),
+  });
+}
+
+// -------- Inventory Alert (Cron) --------
+
+export interface SendInventoryAlertInput {
+  to: string | string[];
+  items: LowStockItem[];
+  adminUrl?: string;
+}
+
+export async function sendInventoryAlertEmail(
+  input: SendInventoryAlertInput,
+): Promise<SendMailResult> {
+  const outCount = input.items.filter((i) => i.stock === 0).length;
+  const lowCount = input.items.length - outCount;
+  // Subject ist informativ, damit Admin in Inbox-Vorschau direkt sieht
+  // was los ist — ohne Mail öffnen zu müssen.
+  const subject =
+    outCount > 0
+      ? `[Inventory] ${outCount} ausverkauft, ${lowCount} knapp`
+      : `[Inventory] ${input.items.length} Artikel am Limit`;
+
+  return sendMail({
+    to: input.to,
+    subject,
+    tag: "inventory-alert",
+    react: InventoryAlertEmail({
+      items: input.items,
+      adminUrl: input.adminUrl,
     }),
   });
 }
