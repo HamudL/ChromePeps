@@ -21,7 +21,12 @@
     --secondary-foreground: 20 14% 10%;
 
     --muted: 30 10% 94%;
-    --muted-foreground: 20 6% 44%;
+    /* WCAG-AA: bei 44% Lightness gegen --background (#FAF8F5) lag der
+       Kontrast bei 4.32:1 — gerade UNTER 4.5:1 für Normaltext. Auf
+       38% gebumpt (~5.6:1). Sekundärtext (Captions/Labels) bleibt
+       sichtbar de-emphasized, ist aber jetzt AA-konform.
+       AUDIT_REPORT_v3 §6 PR 10. */
+    --muted-foreground: 20 6% 38%;
 
     --accent: 40 20% 90%;
     --accent-foreground: 20 14% 10%;

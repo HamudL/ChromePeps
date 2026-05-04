@@ -33,6 +33,17 @@ export function FeaturedProductCarousel({ pool, intervalMs = 20_000 }: Props) {
   useEffect(() => {
     if (pool.length <= 1) return; // nichts zu rotieren
 
+    // a11y: User mit prefers-reduced-motion bekommt das erste Produkt
+    // statisch — keine Auto-Rotation, kein Fade. Pool wird trotzdem
+    // ausgewertet (nur kein setInterval registriert). AUDIT_REPORT_v3
+    // §6 PR 10.
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
     const id = window.setInterval(() => {
       // Fade-Out → nach 500 ms neuer Index → Fade-In
       setVisible(false);
