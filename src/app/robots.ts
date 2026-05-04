@@ -30,6 +30,7 @@ export default function robots(): MetadataRoute.Robots {
           "/reset-password/",
           "/analysezertifikate",
           "/analysezertifikate/",
+          "/animations-demo",
           "/_next/",
         ],
       },
