@@ -5,18 +5,18 @@ test.describe("Shopping Cart", () => {
     // Navigate to products page
     await page.goto("/products");
 
-    // Wait for product DETAIL link (NOT category-pill `/products/category/...`).
+    // Statt ProductCard zu klicken (nested preventDefault-Handler) —
+    // direkt zur Detail-Page navigieren über den href des ersten
+    // Detail-Links.
     const productLink = page
       .locator("a[href^='/products/']")
       .and(page.locator(":not([href^='/products/category/'])"))
       .first();
     await productLink.waitFor({ timeout: 10_000 });
-    await productLink.click();
+    const href = await productLink.getAttribute("href");
+    await page.goto(href!);
 
-    // Auf der Product-Detail-Page: PRIMÄRER Add-to-Cart-Button (nicht
-    // die kleinen "Quick-Add"-Buttons in den Related-Cards). Wir
-    // matchen explizit den Button im Hauptbereich, der genau
-    // „In den Warenkorb" heißt.
+    // Auf der Product-Detail-Page: PRIMÄRER Add-to-Cart-Button.
     const addToCartBtn = page.getByRole("button", {
       // Tatsächlicher Button-Text: „In den Warenkorb — 49,99 €" — also
       // anchor nur am Anfang, kein $-Match auf das Ende.

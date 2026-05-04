@@ -31,17 +31,17 @@ test.describe("Checkout · Smoke", () => {
   });
 
   test("Produkt → Add-to-Cart → Cart-Drawer öffnet", async ({ page }) => {
+    // Statt ProductCard zu klicken (nested onClick-Handler killen die
+    // Navigation), direkt zur Detail-Page navigieren.
     await page.goto("/products");
-    // PRODUKT-DETAIL-Link, NICHT Kategorie-Pill.
     const firstProduct = page
       .locator("a[href^='/products/']")
       .and(page.locator(":not([href^='/products/category/'])"))
       .first();
-    await firstProduct.waitFor({ timeout: 10_000 });
-    await firstProduct.click();
+    const href = await firstProduct.getAttribute("href");
+    await page.goto(href!);
 
-    // Auf der Detail-Page der primäre Add-to-Cart-Button (exakt-Match,
-    // nicht die Quick-Add-Buttons der Related-Cards).
+    // Auf der Detail-Page der primäre Add-to-Cart-Button.
     const addToCart = page.getByRole("button", {
       // Tatsächlicher Button-Text: „In den Warenkorb — 49,99 €" — also
       // anchor nur am Anfang, kein $-Match auf das Ende.
@@ -63,7 +63,8 @@ test.describe("Checkout · Smoke", () => {
       .locator("a[href^='/products/']")
       .and(page.locator(":not([href^='/products/category/'])"))
       .first();
-    await firstProduct.click();
+    const href = await firstProduct.getAttribute("href");
+    await page.goto(href!);
     const addToCart = page.getByRole("button", {
       // Tatsächlicher Button-Text: „In den Warenkorb — 49,99 €" — also
       // anchor nur am Anfang, kein $-Match auf das Ende.
