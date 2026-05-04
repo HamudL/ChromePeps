@@ -3,6 +3,12 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
+// Three.js (~540 KB raw / ~150 KB gzip) wird NUR geladen wenn:
+//   - User ist auf Desktop (>= 768 px) UND
+//   - User hat KEIN `prefers-reduced-motion: reduce` gesetzt
+// Auf Mobile ODER Reduced-Motion bleibt's beim StaticLogo — der
+// dynamic-Import wird dann gar nicht ausgelöst, also kein Network-
+// Request. AUDIT_REPORT_v3 §6 PR 11.
 const ChromeLogo3D = dynamic(
   () =>
     import("@/components/shop/chrome-logo-3d").then((mod) => mod.ChromeLogo3D),
@@ -23,19 +29,31 @@ function StaticLogo() {
 
 export function HeroLogo() {
   const [isDesktop, setIsDesktop] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const mq = window.matchMedia("(min-width: 768px)");
-    setIsDesktop(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    const mqDesktop = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mqDesktop.matches);
+    const desktopHandler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mqDesktop.addEventListener("change", desktopHandler);
+
+    const mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mqMotion.matches);
+    const motionHandler = (e: MediaQueryListEvent) =>
+      setPrefersReducedMotion(e.matches);
+    mqMotion.addEventListener("change", motionHandler);
+
+    return () => {
+      mqDesktop.removeEventListener("change", desktopHandler);
+      mqMotion.removeEventListener("change", motionHandler);
+    };
   }, []);
 
-  // SSR + mobile → static CSS logo (no WebGL, no animation loop)
-  if (!mounted || !isDesktop) return <StaticLogo />;
+  // SSR + mobile + reduced-motion → static CSS logo (kein WebGL, kein
+  // Three.js-Download, keine Animation-Loop).
+  if (!mounted || !isDesktop || prefersReducedMotion) return <StaticLogo />;
   // Desktop WebGL logo has no DOM heading — add a visually hidden h1 so the
   // page retains its document outline for screen readers and assistive tech.
   return (
