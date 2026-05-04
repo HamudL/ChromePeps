@@ -1,5 +1,16 @@
 import { PrismaClient, Role } from "@prisma/client";
 import { hash } from "bcryptjs";
+import {
+  JANOSHIK_BODY,
+  TFA_VS_FA_BODY,
+  ESI_MS_BODY,
+  GLP1_FAMILIE_BODY,
+  BPC157_BODY,
+  NAD_BODY,
+  COLD_CHAIN_BODY,
+  EU_ZOLL_BODY,
+  STABILITAET_BODY,
+} from "./seed-wissen-bodies";
 
 const prisma = new PrismaClient();
 
@@ -626,6 +637,20 @@ async function seedWissen() {
       bio: "Externer Berater für Pharmarecht und Compliance. Schwerpunkt: Forschungssubstanzen, In-vitro-Vermarktung und EU-Zollthemen.",
       orcid: null,
     },
+    {
+      slug: "dr-h-walter",
+      name: "Dr. H. Walter",
+      title: "Biochemie / Peptid-Pharmakologie",
+      bio: "Promovierter Biochemiker mit Schwerpunkt auf Inkretin-Signaltransduktion und peptidischen Wachstumsfaktoren. Autor der Wirkstoffklassen-Reihe.",
+      orcid: "0000-0001-7325-9148",
+    },
+    {
+      slug: "j-falk",
+      name: "J. Falk",
+      title: "Quality Assurance",
+      bio: "Verantwortet die QC-Schnittstelle zu Janoshik Analytical und betreut die Stabilitätsdatenbank. Schreibt Lab-Practice- und Forschungs-Pillar-Beiträge.",
+      orcid: null,
+    },
   ];
 
   const authorsBySlug: Record<string, { id: string }> = {};
@@ -704,6 +729,174 @@ async function seedWissen() {
       seoDescription:
         "AMG, BtMG, Apothekenbetriebsordnung und §73 AMG: was beim Verkauf von Forschungspeptiden in Deutschland 2026 zu beachten ist. Stand: April 2026.",
       publishedAt: new Date("2026-03-20T08:00:00Z"),
+    },
+    // === Methodik · 3 weitere Pillar-Artikel (PR 16) ===
+    {
+      slug: "janoshik-analytical-vorgestellt",
+      title: "Janoshik Analytical: warum wir mit ihnen testen",
+      titleEmphasis: "warum wir mit ihnen",
+      excerpt:
+        "Profil unseres externen Analytik-Partners. ISO-17025-Akkreditierung, Methoden-Setup und das öffentliche Verifikations-Portal — und warum wir uns gegen ein deutsches Labor entschieden haben.",
+      contentMdx: JANOSHIK_BODY,
+      readingMinutes: 8,
+      authorSlug: "dr-m-reichert",
+      categorySlug: "methodik",
+      tags: ["Janoshik", "QC", "Akkreditierung"],
+      relatedGlossarSlugs: ["hplc", "coa", "massenspektrometrie"],
+      featuredBatchProductSlug: "tirzepatide",
+      seoTitle: "Janoshik Analytical — unser externes Analytik-Lab",
+      seoDescription:
+        "Wir testen jede Charge bei Janoshik Analytical (Tschechien). ISO 17025, HPLC-UV + ESI-MS, öffentliches Verifikations-Portal — Profil und Methoden.",
+      publishedAt: new Date("2026-04-25T08:00:00Z"),
+    },
+    {
+      slug: "tfa-vs-fa-mobilphase",
+      title: "TFA vs. Ameisensäure in der Peptid-HPLC",
+      titleEmphasis: "TFA vs. Ameisensäure",
+      excerpt:
+        "Welcher Modifier in der Mobilphase liefert was? Vergleich von Trifluoressigsäure und Formic Acid für Reinheits-QC vs. LC-MS-Workflows.",
+      contentMdx: TFA_VS_FA_BODY,
+      readingMinutes: 7,
+      authorSlug: "dr-m-reichert",
+      categorySlug: "methodik",
+      tags: ["HPLC", "TFA", "Mobilphase"],
+      relatedGlossarSlugs: ["hplc", "tfa-gradient", "chromatogramm"],
+      featuredBatchProductSlug: null,
+      seoTitle: "TFA vs. Ameisensäure als HPLC-Modifier — Vergleich",
+      seoDescription:
+        "TFA scharfe Peaks, FA MS-kompatibel: direkter Vergleich der zwei häufigsten Mobilphase-Modifier in der Forschungs-Peptid-Analytik.",
+      publishedAt: new Date("2026-04-18T08:00:00Z"),
+    },
+    {
+      slug: "esi-ms-peptid-identitaet",
+      title: "ESI-MS: Identitätsbestätigung für Peptide in der Praxis",
+      titleEmphasis: "Identitätsbestätigung für Peptide",
+      excerpt:
+        "Wie wir Peptid-Identität per Electrospray-Massenspektrometrie absichern. Multipel geladene Ionen, Adduct-Bildung, Stolperfallen — und warum HPLC alleine nicht reicht.",
+      contentMdx: ESI_MS_BODY,
+      readingMinutes: 9,
+      authorSlug: "dr-m-reichert",
+      categorySlug: "methodik",
+      tags: ["MS", "ESI", "Identität"],
+      relatedGlossarSlugs: ["massenspektrometrie", "hplc"],
+      featuredBatchProductSlug: null,
+      seoTitle: "ESI-MS für Peptid-Identität — Methodik & Stolperfallen",
+      seoDescription:
+        "Electrospray-Massenspektrometrie als zweite Stufe nach HPLC: wie wir Peptid-Identität bestätigen, wann Adducts irreführen und welche Charges wir ablehnen.",
+      publishedAt: new Date("2026-04-12T08:00:00Z"),
+    },
+    // === Wirkstoffklassen · 3 weitere Pillar-Artikel ===
+    {
+      slug: "glp1-familie-uebersicht",
+      title:
+        "GLP-1-Familie: Semaglutide, Tirzepatide, Retatrutide im Vergleich",
+      titleEmphasis: "Semaglutide, Tirzepatide, Retatrutide",
+      excerpt:
+        "Drei Substanzen, drei unterschiedliche Rezeptor-Profile. Strukturelle Unterschiede, präklinische Datenlage und Forschungs-Kontexte für die populärste Inkretin-Klasse.",
+      contentMdx: GLP1_FAMILIE_BODY,
+      readingMinutes: 11,
+      authorSlug: "dr-h-walter",
+      categorySlug: "wirkstoffklassen",
+      tags: ["GLP-1", "GIP", "Inkretine"],
+      relatedGlossarSlugs: ["glp-1-agonist", "peptid-sequenz", "reinheit"],
+      featuredBatchProductSlug: "semaglutide",
+      seoTitle: "GLP-1-Familie im Vergleich — Sema, Tirze, Reta",
+      seoDescription:
+        "Direktvergleich der drei GLP-1-Forschungspeptide: Rezeptor-Selektivität, Strukturen, präklinische Datenlage und In-vitro-Forschungs-Kontexte.",
+      publishedAt: new Date("2026-04-08T08:00:00Z"),
+    },
+    {
+      slug: "bpc-157-praeklinik",
+      title: "BPC-157: präklinische Datenlage und Forschungs-Kontext",
+      titleEmphasis: "präklinische Datenlage",
+      excerpt:
+        "Was die in-vitro- und Tierversuchsliteratur zu BPC-157 sagt. Untersuchte Signalwege, Stabilität und Reinheits-Anforderungen für reproduzierbare Assays.",
+      contentMdx: BPC157_BODY,
+      readingMinutes: 10,
+      authorSlug: "dr-h-walter",
+      categorySlug: "wirkstoffklassen",
+      tags: ["BPC-157", "Regenerativ", "Pentadekapeptid"],
+      relatedGlossarSlugs: ["peptid-sequenz", "acetat-salz", "reinheit"],
+      featuredBatchProductSlug: "bpc-157",
+      seoTitle: "BPC-157 — präklinische Datenlage & Forschungs-Kontext",
+      seoDescription:
+        "Übersicht der publizierten in-vitro- und tierexperimentellen Studien zu BPC-157. Signalwege, Stabilität, Reinheits-Erwartungen.",
+      publishedAt: new Date("2026-04-04T08:00:00Z"),
+    },
+    {
+      slug: "nad-plus-mitochondrien",
+      title: "NAD+: Coenzym, Sirtuin-Cofaktor, Mitochondrien-Marker",
+      titleEmphasis: "Coenzym, Sirtuin-Cofaktor",
+      excerpt:
+        "NAD+ in der Forschung: untersuchte Signalwege (Sirtuine, PARP, Atmungskette) und warum die Lagerung deutlich anspruchsvoller ist als bei klassischen Peptiden.",
+      contentMdx: NAD_BODY,
+      readingMinutes: 10,
+      authorSlug: "dr-h-walter",
+      categorySlug: "wirkstoffklassen",
+      tags: ["NAD+", "Sirtuine", "Mitochondrien"],
+      relatedGlossarSlugs: ["lyophilisat", "reinheit"],
+      featuredBatchProductSlug: "nad-plus",
+      seoTitle: "NAD+ — Forschungs-Coenzym, Lagerung, Signalwege",
+      seoDescription:
+        "NAD+ als Sirtuin- und PARP-Cofaktor in der präklinischen Forschung: untersuchte Pathways, Stabilitäts-Daten und Lagerungs-Empfehlungen.",
+      publishedAt: new Date("2026-03-28T08:00:00Z"),
+    },
+    // === Lab-Practice · 1 weiterer Pillar-Artikel ===
+    {
+      slug: "cold-chain-versand-peptide",
+      title: "Kühlkette beim Versand: was zerfällt, was nicht",
+      titleEmphasis: "was zerfällt, was nicht",
+      excerpt:
+        "Kühlempfindliche vs. robuste Forschungspeptide. Unser Versand-Setup, Empfangs-Checkliste und saisonale Anpassungen für Sommerhitze.",
+      contentMdx: COLD_CHAIN_BODY,
+      readingMinutes: 8,
+      authorSlug: "l-brandt",
+      categorySlug: "lab-practice",
+      tags: ["Kühlkette", "Versand", "Lagerung"],
+      relatedGlossarSlugs: ["lyophilisat", "bacteriostatic-water"],
+      featuredBatchProductSlug: null,
+      seoTitle: "Kühlkette für Forschungspeptide — Versand & Lagerung",
+      seoDescription:
+        "Welche Forschungspeptide sind kühlempfindlich, wie versenden wir, was beim Empfang prüfen — Praxis-Leitfaden für Käufer.",
+      publishedAt: new Date("2026-03-25T08:00:00Z"),
+    },
+    // === Regulatorisches · 1 weiterer Pillar-Artikel ===
+    {
+      slug: "eu-zoll-import-peptide",
+      title: "EU-Zoll und Import von Forschungspeptiden",
+      titleEmphasis: "EU-Zoll und Import",
+      excerpt:
+        "Innerhalb der EU entspannt, aus Drittländern komplex: Was ihr beim Import von Forschungspeptiden nach Deutschland und Österreich beachten müsst.",
+      contentMdx: EU_ZOLL_BODY,
+      readingMinutes: 9,
+      authorSlug: "ra-s-eichhorn",
+      categorySlug: "regulatorisches",
+      tags: ["EU-Recht", "Zoll", "USt"],
+      relatedGlossarSlugs: ["coa"],
+      featuredBatchProductSlug: null,
+      seoTitle: "EU-Zoll & Import von Forschungspeptiden — Leitfaden",
+      seoDescription:
+        "EU-Binnenmarkt: kein Zoll. Drittländer: Anmeldung, Einfuhrumsatzsteuer, Reagenz-Status. Compliance-Leitfaden für Käufer in DE und AT.",
+      publishedAt: new Date("2026-03-15T08:00:00Z"),
+    },
+    // === Forschung · 1 weiterer Pillar-Artikel ===
+    {
+      slug: "peptid-stabilitaet-langzeit",
+      title: "Peptid-Stabilität: Lyophilisat, Lösung, Frier-Tau",
+      titleEmphasis: "Lyophilisat, Lösung, Frier-Tau",
+      excerpt:
+        "Sequenz-spezifische Stabilitätsfaktoren, T0/T30-Daten aus 30 Chargen und Best-Practice-Workflow für Aliquots, die im Tiefkühler überleben.",
+      contentMdx: STABILITAET_BODY,
+      readingMinutes: 12,
+      authorSlug: "j-falk",
+      categorySlug: "forschung",
+      tags: ["Stabilität", "Lyophilisat", "Frier-Tau"],
+      relatedGlossarSlugs: ["lyophilisat", "bacteriostatic-water", "reinheit"],
+      featuredBatchProductSlug: null,
+      seoTitle: "Peptid-Langzeit-Stabilität — Daten & Workflow",
+      seoDescription:
+        "Aggregierte Stabilitätsdaten aus 30 Forschungspeptid-Chargen, sequenz-spezifische Faktoren und Best-Practice-Workflow für Lager-Aliquots.",
+      publishedAt: new Date("2026-03-10T08:00:00Z"),
     },
   ];
 
