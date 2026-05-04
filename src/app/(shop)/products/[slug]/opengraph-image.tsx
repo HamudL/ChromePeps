@@ -32,6 +32,15 @@ export default async function ProductOGImage({
       purity: true,
       weight: true,
       category: { select: { name: true } },
+      // Aktuelle COA-Charge mit ins OG-Bild — Audit v3 §4.11 wollte
+      // "Reinheit + Charge im Bild" für höhere Click-Through aus
+      // WhatsApp/Reddit. Wir nehmen die neueste publizierte Charge.
+      certificates: {
+        where: { isPublished: true },
+        orderBy: { testDate: "desc" },
+        take: 1,
+        select: { batchNumber: true, purity: true },
+      },
     },
   });
 
@@ -152,8 +161,21 @@ export default async function ProductOGImage({
               {formatPrice(product.priceInCents)}
             </div>
 
-            {/* Purity */}
-            {product.purity && (
+            {/* Purity (bevorzugt aus neuester COA, sonst Produkt-Feld) */}
+            {(product.certificates[0]?.purity ?? null) !== null ? (
+              <div
+                style={{
+                  fontSize: 24,
+                  fontWeight: 500,
+                  color: "#a0a0a0",
+                  padding: "6px 16px",
+                  border: "2px solid #444",
+                  borderRadius: 8,
+                }}
+              >
+                {product.certificates[0]!.purity!.toFixed(2)}% HPLC
+              </div>
+            ) : product.purity ? (
               <div
                 style={{
                   fontSize: 24,
@@ -166,7 +188,7 @@ export default async function ProductOGImage({
               >
                 {product.purity}
               </div>
-            )}
+            ) : null}
 
             {/* Weight */}
             {product.weight && (
@@ -181,6 +203,23 @@ export default async function ProductOGImage({
                 }}
               >
                 {product.weight}
+              </div>
+            )}
+
+            {/* Aktuelle Charge (aus neuester publizierter COA) */}
+            {product.certificates[0]?.batchNumber && (
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 500,
+                  color: "#d4af37",
+                  padding: "6px 16px",
+                  border: "2px solid #5a4a2a",
+                  borderRadius: 8,
+                  fontFamily: "monospace",
+                }}
+              >
+                Lot {product.certificates[0].batchNumber}
               </div>
             )}
           </div>

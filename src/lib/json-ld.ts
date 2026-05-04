@@ -1,4 +1,8 @@
-import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
+import {
+  APP_NAME,
+  APP_DESCRIPTION,
+  SELLER_DETAILS,
+} from "@/lib/constants";
 
 // Base URL with sensible fallback for local/dev builds.
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -231,4 +235,59 @@ export function faqPageJsonLd(items: FaqEntry[]) {
       },
     })),
   };
+}
+
+/**
+ * LocalBusiness JSON-LD für die Kontakt-Seite. Returnt `null` wenn die
+ * Adressdaten in SELLER_DETAILS noch Platzhalter (`[TODO: ...]`)
+ * enthalten — sonst würde Google ein Schema mit bedeutungsloser
+ * Adresse indexieren. Sobald die Werte echt sind, wird das Schema
+ * automatisch ausgegeben.
+ *
+ * AUDIT_REPORT_v3 §4.12.
+ */
+export function localBusinessJsonLd(): Record<string, unknown> | null {
+  // Wenn IRGENDEIN Pflichtfeld noch ein "[TODO: ...]"-Platzhalter ist,
+  // generieren wir kein Schema. Optional-Felder (phone, vatId etc.)
+  // werden bei TODO einfach weggelassen.
+  const requiredFields = [
+    SELLER_DETAILS.companyName,
+    SELLER_DETAILS.streetLine1,
+    SELLER_DETAILS.postalCodeCity,
+    SELLER_DETAILS.country,
+  ];
+  if (requiredFields.some((v) => !v || v.includes("[TODO"))) return null;
+
+  const [postalCode, ...cityParts] =
+    SELLER_DETAILS.postalCodeCity.split(" ");
+  const addressLocality = cityParts.join(" ");
+
+  const data: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": `${BASE_URL}/kontakt`,
+    name: SELLER_DETAILS.companyName,
+    url: BASE_URL,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: SELLER_DETAILS.streetLine1,
+      postalCode,
+      addressLocality,
+      addressCountry: "DE",
+    },
+    email: SELLER_DETAILS.email,
+  };
+  if (
+    SELLER_DETAILS.phone &&
+    !SELLER_DETAILS.phone.includes("[TODO")
+  ) {
+    data.telephone = SELLER_DETAILS.phone;
+  }
+  if (
+    SELLER_DETAILS.vatId &&
+    !SELLER_DETAILS.vatId.includes("[TODO")
+  ) {
+    data.vatID = SELLER_DETAILS.vatId;
+  }
+  return data;
 }
