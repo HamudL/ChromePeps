@@ -42,8 +42,13 @@ test.describe("Wissen", () => {
       "no published posts in DB — seed required for this case",
     );
     const href = await articleLink.first().getAttribute("href");
-    await articleLink.first().click();
-    await expect(page).toHaveURL(new RegExp(href ?? "/wissen/"));
+    // Promise.all stellt sicher dass der waitForURL VOR dem Click
+    // armed ist — sonst race-condition wenn die Navigation schneller
+    // ist als das await.
+    await Promise.all([
+      page.waitForURL(new RegExp(href ?? "/wissen/"), { timeout: 10_000 }),
+      articleLink.first().click(),
+    ]);
     // Article-Layout hat eine prose-class für den Body — ggf. lädt
     // react-markdown etwas, daher Timeout etwas großzügiger.
     await expect(page.locator(".prose").first()).toBeVisible({
