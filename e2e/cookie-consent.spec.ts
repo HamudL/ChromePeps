@@ -2,9 +2,16 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Cookie Consent Banner", () => {
   test.beforeEach(async ({ page }) => {
-    // Clear localStorage before each test so the banner shows up
+    // Clear localStorage before each test so the banner shows up.
+    // Direkt im Anschluss den ResearchDisclaimer-Accept wieder setzen,
+    // damit der Disclaimer-Modal nicht die Cookie-Banner-Klicks blockiert.
+    // (Default-storageState aus playwright.config.ts setzt diesen Wert
+    // beim Context-Setup, aber localStorage.clear() löscht ihn auch.)
     await page.goto("/");
-    await page.evaluate(() => localStorage.clear());
+    await page.evaluate(() => {
+      localStorage.clear();
+      localStorage.setItem("research-disclaimer-accepted", "true");
+    });
     await page.reload();
   });
 

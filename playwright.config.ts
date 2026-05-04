@@ -11,6 +11,12 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
+    // Vorgespeicherter localStorage-State, damit der ResearchDisclaimer-
+    // Modal nicht in jedem Test angezeigt wird und alle Klicks abfängt.
+    // Tests, die explizit mit unverbrauchtem Storage starten müssen
+    // (z.B. cookie-consent-Tests die das Banner sehen wollen), setzen
+    // den State in der eigenen beforeEach manuell zurück.
+    storageState: "playwright/storage-state.json",
   },
 
   projects: [
