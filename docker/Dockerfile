@@ -33,6 +33,11 @@ RUN npx prisma generate
 ARG NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 
+# hCaptcha-Site-Key landet im Client-Bundle (auf /login + /register als
+# Widget-sitekey). MUST be at build time.
+ARG NEXT_PUBLIC_HCAPTCHA_SITE_KEY
+ENV NEXT_PUBLIC_HCAPTCHA_SITE_KEY=${NEXT_PUBLIC_HCAPTCHA_SITE_KEY}
+
 # Sentry build-time config — NEXT_PUBLIC_SENTRY_DSN is inlined into the client
 # bundle, SENTRY_AUTH_TOKEN/ORG/PROJECT are needed by withSentryConfig to
 # upload source maps during the build. Missing tokens fall back to no upload

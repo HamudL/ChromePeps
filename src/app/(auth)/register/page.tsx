@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { UserPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,24 @@ import {
 import { registerAction } from "@/app/(auth)/actions/auth-actions";
 import { registerSchema } from "@/validators/auth";
 import { APP_NAME } from "@/lib/constants";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
+import dynamic from "next/dynamic";
+
+// hCaptcha lazy-loaded — sichtbar erst ab 2 Fehlversuchen, spart
+// ~50 KB First-Load für 99% der Registrierungen.
+const HCaptchaWidget = dynamic(
+  () =>
+    import("@/components/auth/hcaptcha-widget").then((m) => m.HCaptchaWidget),
+  { ssr: false },
+);
 
 export default function RegisterPage() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
+  const captchaResetRef = useRef<{ resetCaptcha: () => void } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,12 +63,27 @@ export default function RegisterPage() {
       return;
     }
 
+    // Captcha-Token in den FormData mitschicken — der Server liest
+    // ihn aus formData.get("captchaToken").
+    if (captchaRequired && captchaToken) {
+      formData.set("captchaToken", captchaToken);
+    }
+
     setIsPending(true);
     try {
       // Create account via server action (handles rate limiting + DB)
       const result = await registerAction(formData);
       if (!result.success) {
-        setError(result.error ?? "Etwas ist schiefgegangen. Bitte erneut versuchen.");
+        if (result.captchaRequired) {
+          setCaptchaRequired(true);
+          captchaResetRef.current?.resetCaptcha();
+          setCaptchaToken("");
+        }
+        if (result.error && result.error !== "captcha-required") {
+          setError(
+            result.error ?? "Etwas ist schiefgegangen. Bitte erneut versuchen.",
+          );
+        }
         return;
       }
 
@@ -204,7 +232,28 @@ export default function RegisterPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full gap-2" disabled={isPending}>
+          {/* hCaptcha — sichtbar nach 2 fehlgeschlagenen Register-
+              Attempts (z.B. Email existiert bereits). */}
+          {captchaRequired && (
+            <div className="space-y-2 w-full">
+              <p className="text-xs text-muted-foreground">
+                Zur Sicherheit bitte das Captcha lösen.
+              </p>
+              <HCaptchaWidget
+                resetRef={captchaResetRef}
+                onVerify={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken("")}
+              />
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full gap-2"
+            disabled={
+              isPending || (captchaRequired && !captchaToken)
+            }
+          >
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -217,6 +266,17 @@ export default function RegisterPage() {
               </>
             )}
           </Button>
+
+          {/* Google-OAuth-Alternative für Registrierung */}
+          <div className="relative w-full">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">oder</span>
+            </div>
+          </div>
+          <GoogleSignInButton className="w-full" />
 
           <p className="text-sm text-muted-foreground text-center">
             Bereits ein Konto?{" "}
