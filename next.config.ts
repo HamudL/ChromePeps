@@ -47,7 +47,14 @@ const nextConfig: NextConfig = {
       "frame-src https://hcaptcha.com https://*.hcaptcha.com",
       "object-src 'none'",
       "base-uri 'self'",
-      "form-action 'self'",
+      // form-action erlaubt POST-Submits an die eigene Origin und an
+      // accounts.google.com. Letzteres ist nötig weil NextAuth den
+      // OAuth-Flow per 302 von /api/auth/signin/google an Google's
+      // accounts.google.com weiterreicht — unter `'self'` allein
+      // blockiert der Browser den cross-origin-Redirect, das Form
+      // hängt für immer im Pending-State (genau das Symptom „lädt
+      // unendlich" beim Google-Button-Klick).
+      "form-action 'self' https://accounts.google.com",
     ].join("; ");
 
     return [
