@@ -626,7 +626,12 @@ model ProductComponent {
   sortOrder          Int    @default(0)
 
   parent    Product @relation("BlendParent", fields: [parentProductId], references: [id], onDelete: Cascade)
-  component Product @relation("BlendComponent", fields: [componentProductId], references: [id])
+  // Cascade auch auf component: wird ein Komponenten-Produkt (z.B. RG3)
+  // gelöscht, wird dieser ProductComponent-Eintrag mitgelöscht — der
+  // Blend selbst bleibt erhalten, hat dann nur eine Komponente weniger.
+  // Vorher (RESTRICT): Delete des Komponenten-Produkts wurde mit
+  // FK-Error blockiert, Admin musste die Blend-Beziehung manuell lösen.
+  component Product @relation("BlendComponent", fields: [componentProductId], references: [id], onDelete: Cascade)
 
   // Ein Blend listet eine Komponente nur einmal — Dosen-Variation passiert
   // über die Komponenten-COAs.
