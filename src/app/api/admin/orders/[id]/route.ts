@@ -339,6 +339,22 @@ export async function PATCH(
               orderNumber: fullOrder.orderNumber,
               products,
             });
+            // Idempotenz-Marker setzen, damit der nightly Cron
+            // (/api/cron/review-requests) diese Order nicht nochmal
+            // erfasst. Best-effort — wenn der UPDATE failed (z.B.
+            // gleichzeitiger Cron-Run), schickt der Cron eine zweite
+            // Mail, was auf jeden Fall noch dem Status quo entspricht.
+            try {
+              await db.order.update({
+                where: { id: fullOrder.id },
+                data: { reviewRequestedAt: new Date() },
+              });
+            } catch (err) {
+              console.warn(
+                "[admin/orders] reviewRequestedAt update failed:",
+                err instanceof Error ? err.message : err,
+              );
+            }
           }
         }
       }
