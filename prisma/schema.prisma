@@ -27,6 +27,24 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // === 2FA / TOTP ============================================
+  // `totpSecret` hält den Base32-kodierten Secret-Wert (otplib).
+  // Nicht verschlüsselt at-rest — die DB ist die Trust-Boundary,
+  // wer DB-Zugriff hat kann eh alle Sessions beenden / Passwörter
+  // resetten. Encryption-at-rest wäre Defense-in-Depth, aber für
+  // Soft-2FA bewusst ausgespart (KISS).
+  // `totpEnabledAt` ist null solange 2FA nicht aktiv ist. Sobald
+  // der User die erste TOTP-Code-Bestätigung im Setup-Flow
+  // erfolgreich liefert, wird der Timestamp gesetzt.
+  // `totpRecoveryCodes` ist ein Array von bcrypt-Hashes der
+  // 10 Recovery-Codes, die einmalig im Setup angezeigt werden.
+  // Bei Verbrauch wird der jeweilige Hash aus dem Array entfernt.
+  // Wenn alle aufgebraucht: User muss neu generieren.
+  // AUDIT_REPORT_v3 §4.2 + §6 PR 7.
+  totpSecret        String?
+  totpEnabledAt     DateTime?
+  totpRecoveryCodes String[]  @default([])
+
   accounts      Account[]
   sessions      Session[]
   orders        Order[]

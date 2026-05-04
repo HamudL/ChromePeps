@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
@@ -6,6 +6,23 @@ import { db } from "@/lib/db";
 import { loginSchema } from "@/validators/auth";
 import type { Role } from "@prisma/client";
 import { authConfig } from "@/lib/auth.config";
+import {
+  verifyTotpCode,
+  consumeRecoveryCode,
+} from "@/lib/two-factor";
+
+/**
+ * Custom CredentialsSignin error mit `code` der vom Client als
+ * `?error=<code>`-Param ausgewertet werden kann. NextAuth v5 macht
+ * das automatisch wenn die Klasse von CredentialsSignin erbt — die
+ * `code`-Property landet im URL-Param.
+ */
+class TwoFactorRequiredError extends CredentialsSignin {
+  code = "TwoFactorRequired";
+}
+class InvalidTwoFactorCodeError extends CredentialsSignin {
+  code = "InvalidTwoFactorCode";
+}
 
 // IMPORTANT: do NOT statically import `@/lib/redis` at the top of this
 // file. This module is transitively imported by code that runs on the
@@ -79,6 +96,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        // Optionales 2FA-Feld. Wird nur ausgewertet wenn der User
+        // tatsächlich 2FA aktiviert hat. Akzeptiert TOTP-Code (6
+        // Ziffern) ODER Recovery-Code (XXXX-XXXX).
+        totpCode: { label: "TOTP", type: "text" },
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials);
@@ -96,6 +117,48 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!isValid) return null;
+
+        // 2FA-Check NUR wenn der User es aktiviert hat. Soft-Mode:
+        // Admins ohne 2FA dürfen weiter rein (separater Banner +
+        // Setup-Empfehlung im /admin-Layout). Pflichtbetrieb wäre
+        // ein separater Toggle und ist hier explizit OUT-OF-SCOPE.
+        if (user.totpEnabledAt && user.totpSecret) {
+          const totpInput =
+            typeof credentials?.totpCode === "string"
+              ? credentials.totpCode.trim()
+              : "";
+
+          if (!totpInput) {
+            // Frontend zeigt daraufhin das TOTP-Eingabefeld an —
+            // Password ist bereits validiert, das ist sicher.
+            throw new TwoFactorRequiredError();
+          }
+
+          // Erst TOTP versuchen (häufigster Fall). Fallback auf
+          // Recovery-Code wenn TOTP nicht passt UND der Input
+          // nach Recovery-Code aussieht (8 chars, optional Dash).
+          const totpOk = verifyTotpCode(totpInput, user.totpSecret);
+          if (!totpOk) {
+            const cleaned = totpInput.toUpperCase().replace(/\s+/g, "");
+            const looksLikeRecovery =
+              cleaned.length === 8 || cleaned.length === 9;
+            if (looksLikeRecovery) {
+              const newCodes = await consumeRecoveryCode(
+                totpInput,
+                user.totpRecoveryCodes,
+              );
+              if (!newCodes) {
+                throw new InvalidTwoFactorCodeError();
+              }
+              await db.user.update({
+                where: { id: user.id },
+                data: { totpRecoveryCodes: newCodes },
+              });
+            } else {
+              throw new InvalidTwoFactorCodeError();
+            }
+          }
+        }
 
         return {
           id: user.id,

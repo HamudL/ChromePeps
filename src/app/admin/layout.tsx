@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
 import { APP_NAME } from "@/lib/constants";
 import { DashboardNav } from "@/components/admin/admin-nav";
+import { AdminTwoFactorBanner } from "@/components/admin/admin-2fa-banner";
 import { Shield } from "lucide-react";
 
 export const metadata = {
@@ -13,7 +15,15 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  // Soft-Enforcement: Admin hat 2FA NICHT aktiv → Banner zeigt
+  // CTA zur Setup-Page. Kein Block, kein Redirect.
+  // AUDIT_REPORT_v3 §4.2 — User-Pick "soft + recovery codes".
+  const adminUser = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { totpEnabledAt: true },
+  });
+  const needsTwoFactor = !adminUser?.totpEnabledAt;
 
   return (
     <div className="flex min-h-screen">
@@ -71,7 +81,10 @@ export default async function AdminLayout({
             </Link>
           </nav>
         </header>
-        <main className="flex-1 p-6 bg-muted/10">{children}</main>
+        <main className="flex-1 p-6 bg-muted/10">
+          {needsTwoFactor && <AdminTwoFactorBanner />}
+          {children}
+        </main>
       </div>
     </div>
   );
