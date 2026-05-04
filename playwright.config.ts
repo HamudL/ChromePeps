@@ -11,6 +11,12 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
+    // Vorgespeicherter localStorage-State, damit der ResearchDisclaimer-
+    // Modal nicht in jedem Test angezeigt wird und alle Klicks abfängt.
+    // Tests, die explizit mit unverbrauchtem Storage starten müssen
+    // (z.B. cookie-consent-Tests die das Banner sehen wollen), setzen
+    // den State in der eigenen beforeEach manuell zurück.
+    storageState: "playwright/storage-state.json",
   },
 
   projects: [
@@ -20,9 +26,13 @@ export default defineConfig({
     },
   ],
 
-  // Start dev server before tests (only when not already running)
+  // Start a server before tests (only when not already running). In CI
+  // benutzen wir die Production-Build (`npm run start`) — schneller als
+  // `next dev` nach dem ersten Build, deterministischer ohne HMR/Fast-
+  // Refresh-Glitches. Lokal bleibt's bei `next dev` damit Code-Änderungen
+  // im Browser sofort wirksam sind.
   webServer: {
-    command: "npm run dev",
+    command: process.env.CI ? "npm run start" : "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

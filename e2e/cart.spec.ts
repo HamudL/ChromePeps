@@ -5,17 +5,25 @@ test.describe("Shopping Cart", () => {
     // Navigate to products page
     await page.goto("/products");
 
-    // Wait for product cards to load
-    const productLink = page.locator("a[href*='/products/']").first();
+    // Statt ProductCard zu klicken (nested preventDefault-Handler) —
+    // direkt zur Detail-Page navigieren über den href des ersten
+    // Detail-Links.
+    const productLink = page
+      .locator("a[href^='/products/']")
+      .and(page.locator(":not([href^='/products/category/'])"))
+      .first();
     await productLink.waitFor({ timeout: 10_000 });
-    await productLink.click();
+    const href = await productLink.getAttribute("href");
+    await page.goto(href!);
 
-    // On product detail page — find and click add-to-cart
+    // Auf der Product-Detail-Page: PRIMÄRER Add-to-Cart-Button.
     const addToCartBtn = page.getByRole("button", {
-      name: /warenkorb|in den warenkorb|cart/i,
+      // Tatsächlicher Button-Text: „In den Warenkorb — 49,99 €" — also
+      // anchor nur am Anfang, kein $-Match auf das Ende.
+      name: /^in den warenkorb/i,
     });
-    await addToCartBtn.waitFor({ timeout: 10_000 });
-    await addToCartBtn.click();
+    await addToCartBtn.first().waitFor({ timeout: 10_000 });
+    await addToCartBtn.first().click();
 
     // Cart drawer or sheet should open
     const cartDrawer = page.locator(

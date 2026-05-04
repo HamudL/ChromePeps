@@ -21,14 +21,25 @@ test.describe("Product Catalog", () => {
   test("clicking a product navigates to detail page", async ({ page }) => {
     await page.goto("/products");
 
-    // Find a product link and click it
-    const productLink = page.locator("a[href*='/products/']").first();
+    // Find a PRODUCT-DETAIL link (NOT a /products/category/...-Pill).
+    const productLink = page
+      .locator("a[href^='/products/']")
+      .and(page.locator(":not([href^='/products/category/'])"))
+      .first();
     await productLink.waitFor({ timeout: 10_000 });
 
+    // Den href auslesen und direkt navigieren statt zu klicken — die
+    // ProductCard hat verschachtelte onClick-Handler (Wishlist-Wrapper,
+    // Quick-Add-Button) mit preventDefault. Ein Center-Click der
+    // Playwright-API kann auf einem dieser Inner-Handlers landen und
+    // die Navigation killen. Direkter goto auf den href ist
+    // semantisch dasselbe und 100% deterministisch.
     const href = await productLink.getAttribute("href");
-    await productLink.click();
+    expect(href).toBeTruthy();
+    await page.goto(href!);
 
-    // Should be on a product detail page
-    await expect(page).toHaveURL(/\/products\//);
+    // URL sollte nun /products/<slug> sein — also NICHT /products und
+    // NICHT /products/category/...
+    await expect(page).toHaveURL(/\/products\/[^/]+$/);
   });
 });

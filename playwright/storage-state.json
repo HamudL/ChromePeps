@@ -1,0 +1,11 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        { "name": "research-disclaimer-accepted", "value": "true" }
+      ]
+    }
+  ]
+}

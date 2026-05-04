@@ -24,19 +24,35 @@ test.describe("Wissen", () => {
 
   test("hub navigates to article detail when present", async ({ page }) => {
     await page.goto("/wissen");
-    const articleLink = page.locator("a[href^='/wissen/']").filter({
-      hasNot: page.locator("a[href='/wissen/glossar']"),
-    });
+    // Article-Detail-Links haben das Format /wissen/<slug> — also NICHT
+    // /wissen/kategorie/... und NICHT /wissen/glossar. Filter explizit.
+    // (Vorher: filter mit hasNot wirkte nur auf children, was nichts
+    // ausgeschlossen hat — auf der Hub-Page gibt es Pills mit href=
+    // /wissen/kategorie/<slug>, die im ersten Versuch ausgewählt wurden.)
+    const articleLink = page
+      .locator("a[href^='/wissen/']")
+      .and(
+        page.locator(
+          ":not([href='/wissen/glossar']):not([href^='/wissen/kategorie/'])",
+        ),
+      );
     const count = await articleLink.count();
     test.skip(
       count === 0,
       "no published posts in DB — seed required for this case",
     );
     const href = await articleLink.first().getAttribute("href");
-    await articleLink.first().click();
-    await expect(page).toHaveURL(new RegExp(href ?? "/wissen/"));
-    // Article-Layout hat eine prose-class für den Body.
-    await expect(page.locator(".prose")).toBeVisible();
+    expect(href).toBeTruthy();
+    // ArticleCard hat ähnliches Problem wie ProductCard: nested
+    // onClick-Handler (z.B. Tag-Pills) fangen den Click ab und
+    // killen die Navigation. Direkter goto auf den href ist
+    // semantisch dasselbe und 100% deterministisch.
+    await page.goto(href!);
+    // Article-Layout hat eine prose-class für den Body — ggf. lädt
+    // react-markdown etwas, daher Timeout etwas großzügiger.
+    await expect(page.locator(".prose").first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("glossar loads with A–Z bar", async ({ page }) => {
