@@ -68,23 +68,45 @@ export function LiveMetrics({ metrics = DEFAULTS }: LiveMetricsProps) {
 
 function MetricTile({ metric, delay }: { metric: Metric; delay: number }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [value, setValue] = useState(0);
+  // Initial-State ist der finale Target-Wert — damit SSR und der erste
+  // Client-Render direkt die echte Zahl zeigen. Wenn die Section beim
+  // Mount UNTER dem Viewport liegt (User muss noch scrollen), starten
+  // wir die Count-up-Animation; sonst bleibt der Wert direkt sichtbar.
+  // Vorher initialisierte useState(0), wodurch SSR + initial Hydration
+  // "0" rendert — wenn der User die Section nicht scrollt (z.B. bleibt
+  // im Hero-Bereich), bleibt's bei "0" sichtbar. Result: "0 Chargen"
+  // auf der Homepage trotz korrekter DB- und Cache-Werte.
+  const [value, setValue] = useState(metric.target);
   const hasRun = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || hasRun.current) return;
 
-    const reduced =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (reduced) {
+      // Bei Reduced-Motion gar keine Animation — target bleibt sichtbar.
+      hasRun.current = true;
+      return;
+    }
+
+    // Section bereits im oder oberhalb des Viewports? Dann keine
+    // Count-up-Animation mehr — der User sieht den Wert ohnehin direkt
+    // und ein nachträgliches "0 → target"-Reset würde flackern.
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight) {
+      hasRun.current = true;
+      return;
+    }
+
+    // Section ist unter dem Viewport — Count-up vorbereiten und auf
+    // Intersection warten.
+    setValue(0);
 
     const run = () => {
       hasRun.current = true;
-      if (reduced) {
-        setValue(metric.target);
-        return;
-      }
       const duration = 1600;
       const start = performance.now() + delay;
       const tick = (now: number) => {
@@ -109,7 +131,7 @@ function MetricTile({ metric, delay }: { metric: Metric; delay: number }) {
           }
         });
       },
-      { threshold: 0.4 }
+      { threshold: 0.4 },
     );
     io.observe(el);
     return () => io.disconnect();
