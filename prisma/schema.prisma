@@ -306,6 +306,11 @@ model Order {
   shippedAt             DateTime?
   deliveredAt           DateTime?
   cancelledAt           DateTime?
+  // Wird gesetzt, sobald die Review-Request-Mail an den Kunden ging
+  // (entweder beim Status-Wechsel auf DELIVERED via Admin-UI, oder
+  // verzögert via /api/cron/review-requests). Idempotenz-Schutz
+  // gegen Doppel-Mails. Siehe AUDIT_REPORT_v3 §3.2.
+  reviewRequestedAt     DateTime?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
