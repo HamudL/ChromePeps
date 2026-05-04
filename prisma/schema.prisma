@@ -664,6 +664,49 @@ model SiteSetting {
 }
 
 // ============================================================
+// AUDIT LOG (admin actions)
+// ============================================================
+// Tracking aller Admin-Schreib-Aktionen außerhalb des bestehenden
+// OrderEvent-Logs. Pattern: jeder admin-API-Endpoint, der State
+// ändert (POST/PATCH/DELETE auf /api/admin/**), schreibt eine Zeile
+// via writeAuditLog() in @/lib/admin-audit. Compliance + Forensik.
+// AUDIT_REPORT_v3 §4.14.
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  // User der die Aktion ausgeführt hat. Nullable falls der User später
+  // gelöscht wird — Log soll Audit-bar bleiben.
+  actorId    String?
+  // Snapshot des Actor-Emails zum Zeitpunkt der Aktion. Bleibt erhalten
+  // auch wenn User später gelöscht/anonymisiert wird.
+  actorEmail String?
+  // Verb: "create", "update", "delete", "refund", "publish", etc.
+  // Free-form String — Helper kapselt die Standard-Verben pro Resource.
+  action     String
+  // Dotted resource path: "order", "product", "blog_post", "promo".
+  entity     String
+  // ID der betroffenen Entity (z.B. Order.id).
+  entityId   String
+  // Optional: relevante Felder vor + nach der Änderung. JSON struktur
+  // ist absichtlich locker — pro Action-Type kann der Aufrufer eigene
+  // Shape mitgeben.
+  payload    Json?
+  // Optional: User-Agent + IP für IT-Audit. Kann null sein wenn die
+  // Action aus einem Cron oder Server-Script kommt.
+  userAgent  String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  // Zeitstempel-Index für "letzte 100 Admin-Aktionen"-Listing.
+  @@index([createdAt(sort: Desc)])
+  // Pro-Entity-Filter für "wer hat was an Order X gemacht".
+  @@index([entity, entityId, createdAt(sort: Desc)])
+  // Pro-Actor-Filter für "was hat User X gemacht".
+  @@index([actorId, createdAt(sort: Desc)])
+  @@map("admin_audit_logs")
+}
+
+// ============================================================
 // CONTENT (BLOG / FAQ / GLOSSAR)
 // ============================================================
 // Wissensbereich `/wissen` — Pillar-Pages, FAQ-CMS und Glossar.

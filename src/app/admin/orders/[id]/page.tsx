@@ -30,6 +30,7 @@ import {
 import { OrderStatusForm } from "@/components/admin/order-status-form";
 import { OrderArchiveButton } from "@/components/admin/order-archive-button";
 import { TestOrderToggle } from "@/components/admin/test-order-toggle";
+import { RefundButton } from "@/components/admin/refund-button";
 import { notFound } from "next/navigation";
 
 interface Props {
@@ -355,6 +356,16 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             paymentMethod={order.paymentMethod}
             paymentStatus={order.paymentStatus}
           />
+
+          {/* Refund (nur Stripe-bezahlte Orders) */}
+          {order.paymentMethod === "STRIPE" &&
+            order.paymentStatus === "SUCCEEDED" && (
+              <RefundButton
+                orderId={order.id}
+                orderNumber={order.orderNumber}
+                totalInCents={order.totalInCents}
+              />
+            )}
 
           {/* Test-Order toggle */}
           <TestOrderToggle

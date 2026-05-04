@@ -14,6 +14,7 @@ import {
   FileCheck,
   Truck,
   BookOpen,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/admin/wissen", label: "Wissen", icon: BookOpen },
   { href: "/admin/certificates", label: "Zertifikate", icon: FileCheck },
   { href: "/admin/shipping", label: "Versand", icon: Truck },
+  { href: "/admin/audit-log", label: "Audit-Log", icon: Activity },
 ];
 
 export function DashboardNav() {
