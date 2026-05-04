@@ -81,6 +81,7 @@ interface ProductData {
   priceInCents: number;
   categoryId: string;
   stock: number;
+  lowStockThreshold: number;
   sortOrder: number;
   isActive: boolean;
   isBestseller: boolean;
@@ -124,6 +125,7 @@ export default function EditProductPage({
     priceEur: "",
     categoryId: "",
     stock: "0",
+    lowStockThreshold: "5",
     sortOrder: "0",
     isActive: true,
     isBestseller: false,
@@ -188,6 +190,7 @@ export default function EditProductPage({
           priceEur: (p.priceInCents / 100).toFixed(2),
           categoryId: p.categoryId,
           stock: String(p.stock),
+          lowStockThreshold: String(p.lowStockThreshold ?? 5),
           sortOrder: String(p.sortOrder ?? 0),
           isActive: p.isActive,
           isBestseller: p.isBestseller ?? false,
@@ -259,6 +262,7 @@ export default function EditProductPage({
       priceInCents,
       categoryId: form.categoryId,
       stock: parseInt(form.stock) || 0,
+      lowStockThreshold: parseInt(form.lowStockThreshold) || 0,
       sortOrder: parseInt(form.sortOrder) || 0,
       isActive: form.isActive,
       isBestseller: form.isBestseller,
@@ -508,6 +512,25 @@ export default function EditProductPage({
                   onChange={(e) => updateField("stock", e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lowStockThreshold">
+                  Low-Stock-Threshold
+                </Label>
+                <Input
+                  id="lowStockThreshold"
+                  type="number"
+                  min="0"
+                  value={form.lowStockThreshold}
+                  onChange={(e) =>
+                    updateField("lowStockThreshold", e.target.value)
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Cron-Mail wenn Stock auf oder unter diesen Wert fällt.
+                  0 = keine Alerts für dieses Produkt.
+                </p>
               </div>
 
               <div className="space-y-2">

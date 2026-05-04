@@ -139,6 +139,12 @@ model Product {
   storageTemp           String?  @db.VarChar(50)
   form                  String?  @db.VarChar(50)
   weight                String?  @db.VarChar(50)
+  // Pro-Produkt-Schwelle für Low-Stock-Alerts (Cron + Admin-Banner).
+  // Default 5 entspricht der vorherigen globalen LOW_STOCK_THRESHOLD-
+  // Konstante. Pro Produkt überschreibbar — bei spezialisierten Items
+  // sinnvoll niedriger (2-3), bei Hot-Sellern höher (10+).
+  // AUDIT_REPORT_v3 §4.8.
+  lowStockThreshold     Int      @default(5)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 

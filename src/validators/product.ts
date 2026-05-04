@@ -13,6 +13,9 @@ export const createProductSchema = z.object({
   compareAtPriceInCents: z.number().int().positive().nullish(),
   categoryId: z.string().cuid(),
   stock: z.number().int().min(0).default(0),
+  // Pro-Produkt-Schwelle für Low-Stock-Alerts (Cron + Admin-Banner).
+  // 0 = Alert disabled für dieses Produkt.
+  lowStockThreshold: z.number().int().min(0).default(5),
   isActive: z.boolean().default(true),
   isBestseller: z.boolean().default(false),
   // Manuelle Sortier-Position. Niedriger = weiter vorn in Listings.

@@ -125,8 +125,27 @@ export default async function AdminProductsPage({ searchParams }: Props) {
 
   const totalPages = Math.ceil(total / ADMIN_ITEMS_PER_PAGE);
 
+  // Live-Count Low-Stock-Items für den Banner. Pro-Produkt-Threshold;
+  // Varianten werden pro-Stück gezählt. Nur aktive Produkte mit
+  // threshold > 0 (0 = alert-disabled).
+  const lowStockBannerCount = await countLowStockItems();
+
   return (
     <div className="space-y-6">
+      {lowStockBannerCount > 0 && (
+        <div className="flex items-center justify-between rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm">
+          <p className="text-amber-800">
+            <strong>{lowStockBannerCount}</strong>{" "}
+            {lowStockBannerCount === 1 ? "Artikel" : "Artikel"} unter dem
+            konfigurierten Mindestbestand. Per Mail benachrichtigen wir
+            dich täglich (siehe Cron <code>/api/cron/inventory-alerts</code>).
+          </p>
+          <Button asChild variant="outline" size="sm">
+            <Link href="#low-stock">Anzeigen</Link>
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Products</h2>
@@ -319,4 +338,36 @@ export default async function AdminProductsPage({ searchParams }: Props) {
       )}
     </div>
   );
+}
+
+/**
+ * Zählt aktive Produkte/Varianten unter ihrem konfigurierten
+ * lowStockThreshold. Pattern wie im Cron — App-side Filter weil Prisma
+ * kein Cross-Column-Compare im Filter unterstützt.
+ *
+ * Threshold = 0 → Produkt aus dem Alert ausgeschlossen (keine Aufnahme).
+ */
+async function countLowStockItems(): Promise<number> {
+  const products = await db.product.findMany({
+    where: { isActive: true, lowStockThreshold: { gt: 0 } },
+    select: {
+      stock: true,
+      lowStockThreshold: true,
+      variants: {
+        where: { isActive: true },
+        select: { stock: true },
+      },
+    },
+  });
+  let count = 0;
+  for (const p of products) {
+    if (p.variants.length > 0) {
+      for (const v of p.variants) {
+        if (v.stock <= p.lowStockThreshold) count++;
+      }
+    } else if (p.stock <= p.lowStockThreshold) {
+      count++;
+    }
+  }
+  return count;
 }
