@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { ArticleCard, type ArticleCardData } from "@/components/wissen/article-card";
 import { ArticleBody } from "@/components/wissen/article-body";
 import { BatchInfoCard } from "@/components/wissen/batch-info-card";
+import { BlogPostViewTracker } from "@/components/wissen/blog-post-view-tracker";
 import { CategoryBadge } from "@/components/wissen/category-badge";
 import { CoverPlaceholder } from "@/components/wissen/cover-placeholder";
 import { MetaLine } from "@/components/wissen/meta-line";
@@ -125,6 +126,7 @@ export default async function WissenArticlePage({ params }: Props) {
           __html: JSON.stringify(breadcrumbSchema),
         }}
       />
+      <BlogPostViewTracker slug={post.slug} />
 
       {/* Header */}
       <header className="border-b border-border">

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { db } from "@/lib/db";
 import { ArticleCard, type ArticleCardData } from "@/components/wissen/article-card";
 import { NewsletterBlock } from "@/components/wissen/newsletter-block";
+import { WissenSearchBox } from "@/components/wissen/search-box";
 
 /**
  * /wissen — Wissens-Hub.
@@ -74,25 +75,11 @@ export default async function WissenHubPage() {
             Marketing-Deck.
           </p>
 
-          {/* Search-Stub — wird in eigener Iteration mit /api/search verdrahtet. */}
-          <form
-            method="get"
-            action="/wissen"
-            className="mt-9 max-w-[640px] relative"
-          >
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            {/* TODO(salih): wire to /api/search when shipped. */}
-            <input
-              type="search"
-              name="q"
-              placeholder='Begriff, Substanz oder Methode suchen — z. B. „Tirzepatid HPLC"'
-              className="input-search"
-              aria-label="Im Wissensbereich suchen"
-            />
-          </form>
+          {/* Live-Search: WissenSearchBox (client) callt
+              /api/wissen/search mit Debounce 300ms. */}
+          <div className="mt-9">
+            <WissenSearchBox />
+          </div>
 
           {/* Kategorie-Pills */}
           <div className="mt-7 flex flex-wrap gap-2">

@@ -752,6 +752,11 @@ model BlogPost {
   // wurden und der Content selbst stehen bleibt.
   publishedAt     DateTime?
   updatedManually DateTime?
+  // View-Tracking: client-side <BlogPostViewTracker> ruft beim Mount
+  // POST /api/wissen/posts/[slug]/view, der Endpoint inkrementiert
+  // dieses Feld. Anti-Bot via Redis-Lock (1 View/IP/Slug/Tag).
+  // Powering "Meistgelesen"-Sortierung. AUDIT_REPORT_v3 §3.4.
+  viewCount       Int       @default(0)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -761,6 +766,10 @@ model BlogPost {
   @@index([publishedAt(sort: Desc)])
   @@index([categoryId, publishedAt(sort: Desc)])
   @@index([authorId])
+  // "Meistgelesen"-Sortierung pro Kategorie: WHERE publishedAt IS NOT
+  // NULL AND categoryId = ? ORDER BY viewCount DESC. Compound-Index
+  // damit Postgres den Sort aus dem Index lesen kann.
+  @@index([categoryId, viewCount(sort: Desc)])
   @@map("blog_posts")
 }
 

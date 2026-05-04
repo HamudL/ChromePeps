@@ -59,12 +59,17 @@ export default async function WissenCategoryPage({
   });
   if (!category) notFound();
 
-  // "Meistgelesen" hat kein View-Tracking → fällt auf publishedAt desc
-  // zurück. TODO(salih): hook view counter when shipped.
+  // Sortierung pro URL-State:
+  //  - alphabetisch  → title asc
+  //  - meistgelesen  → viewCount desc (BlogPost.viewCount, gefüllt
+  //                    via /api/wissen/posts/[slug]/view-Tracker)
+  //  - neueste (default) → publishedAt desc
   const orderBy =
     sort === "alphabetisch"
       ? { title: "asc" as const }
-      : { publishedAt: "desc" as const };
+      : sort === "meistgelesen"
+        ? { viewCount: "desc" as const }
+        : { publishedAt: "desc" as const };
 
   const [posts, total] = await Promise.all([
     db.blogPost.findMany({
