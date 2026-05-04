@@ -47,7 +47,9 @@ test.describe("Auth · Smoke", () => {
     await page.goto("/login");
     await page.getByLabel(/e-mail/i).fill("nichtexistent@example.com");
     await page.getByLabel(/passwort/i).fill("falsches-passwort");
-    await page.getByRole("button", { name: /anmelden/i }).click();
+    // Exakt-Match auf „Anmelden" — sonst matcht es auch den
+    // „Mit Google anmelden"-Button (PR 4).
+    await page.getByRole("button", { name: "Anmelden", exact: true }).click();
     // Server-Side rate-check oder credentials-error — beide erscheinen
     // im error-Banner mit role=alert.
     const error = page.locator("[role='alert']");
