@@ -43,7 +43,9 @@ test.describe("Checkout · Smoke", () => {
     // Auf der Detail-Page der primäre Add-to-Cart-Button (exakt-Match,
     // nicht die Quick-Add-Buttons der Related-Cards).
     const addToCart = page.getByRole("button", {
-      name: /^in den warenkorb$/i,
+      // Tatsächlicher Button-Text: „In den Warenkorb — 49,99 €" — also
+      // anchor nur am Anfang, kein $-Match auf das Ende.
+      name: /^in den warenkorb/i,
     });
     await addToCart.first().waitFor({ timeout: 10_000 });
     await addToCart.first().click();
@@ -63,7 +65,9 @@ test.describe("Checkout · Smoke", () => {
       .first();
     await firstProduct.click();
     const addToCart = page.getByRole("button", {
-      name: /^in den warenkorb$/i,
+      // Tatsächlicher Button-Text: „In den Warenkorb — 49,99 €" — also
+      // anchor nur am Anfang, kein $-Match auf das Ende.
+      name: /^in den warenkorb/i,
     });
     await addToCart.first().click();
 

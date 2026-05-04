@@ -18,7 +18,9 @@ test.describe("Shopping Cart", () => {
     // matchen explizit den Button im Hauptbereich, der genau
     // „In den Warenkorb" heißt.
     const addToCartBtn = page.getByRole("button", {
-      name: /^in den warenkorb$/i,
+      // Tatsächlicher Button-Text: „In den Warenkorb — 49,99 €" — also
+      // anchor nur am Anfang, kein $-Match auf das Ende.
+      name: /^in den warenkorb/i,
     });
     await addToCartBtn.first().waitFor({ timeout: 10_000 });
     await addToCartBtn.first().click();
