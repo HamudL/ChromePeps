@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
+import { getOrCreateStripeCoupon } from "@/lib/stripe-coupon";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { absoluteUrl } from "@/lib/utils";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
@@ -505,37 +506,20 @@ export async function POST(req: NextRequest) {
   // `percent_off` for percentage promos — that one IS stable and safe to
   // cache. FIXED_AMOUNT promos yield a stable `amount_off` and are also
   // safe to cache.
+  //
+  // Race-Safety: getOrCreateStripeCoupon nutzt Redis-Lock + DB-Recheck
+  // damit zwei parallele Checkouts mit demselben fresh-erstellten Code
+  // NICHT zwei Stripe-Coupons mit gleicher Beschreibung erzeugen.
+  // Siehe AUDIT_REPORT_v3 §3.5.
   let stripeCouponId: string | undefined;
   if (discountAmount > 0 && validatedPromo && validatedPromoId) {
-    if (validatedPromo.stripeCouponId) {
-      stripeCouponId = validatedPromo.stripeCouponId;
-    } else {
-      const coupon =
-        validatedPromo.discountType === "PERCENTAGE"
-          ? await stripe.coupons.create({
-              percent_off: validatedPromo.discountValue,
-              duration: "once",
-              name: `Promo: ${promoCode!.toUpperCase()}`,
-            })
-          : await stripe.coupons.create({
-              amount_off: validatedPromo.discountValue,
-              currency: "eur",
-              duration: "once",
-              name: `Promo: ${promoCode!.toUpperCase()}`,
-            });
-      stripeCouponId = coupon.id;
-      db.promoCode
-        .update({
-          where: { id: validatedPromoId },
-          data: { stripeCouponId: coupon.id },
-        })
-        .catch((err) => {
-          console.error(
-            "[stripe checkout] failed to cache stripeCouponId:",
-            err instanceof Error ? err.message : err
-          );
-        });
-    }
+    stripeCouponId = await getOrCreateStripeCoupon({
+      id: validatedPromoId,
+      code: promoCode!,
+      discountType: validatedPromo.discountType,
+      discountValue: validatedPromo.discountValue,
+      stripeCouponId: validatedPromo.stripeCouponId,
+    });
   }
 
   if (shippingCost > 0) {
