@@ -21,14 +21,19 @@ test.describe("Product Catalog", () => {
   test("clicking a product navigates to detail page", async ({ page }) => {
     await page.goto("/products");
 
-    // Find a product link and click it
-    const productLink = page.locator("a[href*='/products/']").first();
+    // Find a PRODUCT-DETAIL link (NOT a /products/category/...-Pill).
+    // Sonst klickt der Test eine Kategorie-Pill und bleibt auf der
+    // Listing-Page mit URL=/products/category/<slug>, was die URL-
+    // Assertion mit /\/products\// nicht eindeutig prüft.
+    const productLink = page
+      .locator("a[href^='/products/']")
+      .and(page.locator(":not([href^='/products/category/'])"))
+      .first();
     await productLink.waitFor({ timeout: 10_000 });
-
-    const href = await productLink.getAttribute("href");
     await productLink.click();
 
-    // Should be on a product detail page
-    await expect(page).toHaveURL(/\/products\//);
+    // URL sollte nun /products/<slug> sein — also NICHT /products und
+    // NICHT /products/category/...
+    await expect(page).toHaveURL(/\/products\/[^/]+$/);
   });
 });

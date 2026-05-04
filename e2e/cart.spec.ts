@@ -5,17 +5,23 @@ test.describe("Shopping Cart", () => {
     // Navigate to products page
     await page.goto("/products");
 
-    // Wait for product cards to load
-    const productLink = page.locator("a[href*='/products/']").first();
+    // Wait for product DETAIL link (NOT category-pill `/products/category/...`).
+    const productLink = page
+      .locator("a[href^='/products/']")
+      .and(page.locator(":not([href^='/products/category/'])"))
+      .first();
     await productLink.waitFor({ timeout: 10_000 });
     await productLink.click();
 
-    // On product detail page — find and click add-to-cart
+    // Auf der Product-Detail-Page: PRIMÄRER Add-to-Cart-Button (nicht
+    // die kleinen "Quick-Add"-Buttons in den Related-Cards). Wir
+    // matchen explizit den Button im Hauptbereich, der genau
+    // „In den Warenkorb" heißt.
     const addToCartBtn = page.getByRole("button", {
-      name: /warenkorb|in den warenkorb|cart/i,
+      name: /^in den warenkorb$/i,
     });
-    await addToCartBtn.waitFor({ timeout: 10_000 });
-    await addToCartBtn.click();
+    await addToCartBtn.first().waitFor({ timeout: 10_000 });
+    await addToCartBtn.first().click();
 
     // Cart drawer or sheet should open
     const cartDrawer = page.locator(

@@ -25,8 +25,9 @@ test.describe("Auth · Smoke", () => {
     await expect(
       page.getByRole("heading", { name: /konto erstellen|registrier/i }),
     ).toBeVisible();
-    // Pflichtfelder vorhanden
-    await expect(page.getByLabel(/^name/i).first()).toBeVisible();
+    // Pflichtfelder vorhanden — Register-Page nutzt „Vollständiger Name",
+    // also matchen wir auf das Wort „name" irgendwo im Label.
+    await expect(page.getByLabel(/name/i).first()).toBeVisible();
     await expect(page.getByLabel(/e-mail/i).first()).toBeVisible();
     await expect(page.getByLabel(/passwort/i).first()).toBeVisible();
   });

@@ -32,15 +32,21 @@ test.describe("Checkout · Smoke", () => {
 
   test("Produkt → Add-to-Cart → Cart-Drawer öffnet", async ({ page }) => {
     await page.goto("/products");
-    const firstProduct = page.locator("a[href*='/products/']").first();
+    // PRODUKT-DETAIL-Link, NICHT Kategorie-Pill.
+    const firstProduct = page
+      .locator("a[href^='/products/']")
+      .and(page.locator(":not([href^='/products/category/'])"))
+      .first();
     await firstProduct.waitFor({ timeout: 10_000 });
     await firstProduct.click();
 
+    // Auf der Detail-Page der primäre Add-to-Cart-Button (exakt-Match,
+    // nicht die Quick-Add-Buttons der Related-Cards).
     const addToCart = page.getByRole("button", {
-      name: /warenkorb|cart/i,
+      name: /^in den warenkorb$/i,
     });
-    await addToCart.waitFor({ timeout: 10_000 });
-    await addToCart.click();
+    await addToCart.first().waitFor({ timeout: 10_000 });
+    await addToCart.first().click();
 
     // Cart-Drawer öffnet
     const drawer = page.locator("[role='dialog']").first();
@@ -51,12 +57,15 @@ test.describe("Checkout · Smoke", () => {
     // Erst ein Produkt in den Cart legen, sonst redirected /checkout
     // u.U. zurück zu /cart wegen Empty-Guard.
     await page.goto("/products");
-    const firstProduct = page.locator("a[href*='/products/']").first();
+    const firstProduct = page
+      .locator("a[href^='/products/']")
+      .and(page.locator(":not([href^='/products/category/'])"))
+      .first();
     await firstProduct.click();
     const addToCart = page.getByRole("button", {
-      name: /warenkorb|cart/i,
+      name: /^in den warenkorb$/i,
     });
-    await addToCart.click();
+    await addToCart.first().click();
 
     await page.goto("/checkout");
     // Kontaktdaten + Adresse erwartet — Felder können je nach Render-
