@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { localBusinessJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "Kontakt",
@@ -10,8 +11,28 @@ export const metadata: Metadata = {
 };
 
 export default function KontaktPage() {
+  // LocalBusiness-Schema wird nur ausgegeben wenn SELLER_DETAILS keine
+  // [TODO: ...]-Platzhalter mehr enthält (siehe lib/json-ld.ts).
+  const localBusiness = localBusinessJsonLd();
+  const breadcrumb = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Kontakt", path: "/kontakt" },
+  ]);
+
   return (
     <div className="container max-w-3xl py-12">
+      {localBusiness && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(localBusiness),
+          }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
       <h1 className="text-3xl font-bold tracking-tight mb-2">Kontakt</h1>
       <p className="text-sm text-muted-foreground mb-8">
         Wir sind für Sie da — bei Fragen zu Produkten, Bestellungen oder

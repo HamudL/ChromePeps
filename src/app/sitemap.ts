@@ -4,9 +4,16 @@ import { db } from "@/lib/db";
 // Base URL with sensible fallback for local/dev builds.
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-// Force dynamic so the sitemap is regenerated on every request.
-// Cheap enough (two indexed queries) and always reflects catalog changes.
-export const dynamic = "force-dynamic";
+// ISR: re-generiert alle 1h, sonst statisch ausgeliefert. Reduziert
+// Crawler-Last erheblich — Googlebot polled die Sitemap mehrfach pro
+// Tag, mit force-dynamic war das jeweils ein DB-Hit (5 parallele
+// Queries). Bei 5 Wissen-Posts und ~15 Produkten zwar billig, aber
+// AUDIT_REPORT_v3 §4.13 + v2 §5.5 wollten das aufgeräumt haben.
+//
+// Build-time: try/catch unten fängt fehlende DATABASE_URL ab und
+// liefert nur staticRoutes() — die ISR-Revalidation generiert dann
+// nach 1h die volle Sitemap zur Laufzeit.
+export const revalidate = 3600;
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
