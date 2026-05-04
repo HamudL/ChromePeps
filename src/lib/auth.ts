@@ -1,6 +1,7 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/validators/auth";
@@ -169,7 +170,46 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       },
     }),
+    // Google OAuth — Node-Side mit Account-Linking via PrismaAdapter.
+    // `allowDangerousEmailAccountLinking: true` ist OK weil Google
+    // verifizierte Emails liefert (siehe Kommentar in auth.config.ts).
+    // AUDIT_REPORT_v3 §6 PR 4.
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
   ],
+
+  events: {
+    // Bei jedem erfolgreichen Sign-In (Credentials oder OAuth):
+    //   - Login-Failure-Counter im Redis löschen, damit das Captcha
+    //     nicht weiter angezeigt wird
+    //   - Bei Google-Sign-In zusätzlich `emailVerified` setzen — Google
+    //     liefert verifizierte Emails per definition
+    async signIn({ user, account }) {
+      if (user?.email) {
+        try {
+          const { redis } = await import("@/lib/redis");
+          await redis.del(`login-fail:${user.email.toLowerCase()}`);
+          await redis.del(`register-fail:${user.email.toLowerCase()}`);
+        } catch {
+          /* fail-silent */
+        }
+      }
+
+      if (account?.provider === "google" && user?.id) {
+        await db.user
+          .update({
+            where: { id: user.id },
+            data: { emailVerified: new Date() },
+          })
+          .catch(() => {
+            /* no-op wenn user-row noch nicht da (race) */
+          });
+      }
+    },
+  },
 
   callbacks: {
     // Preserve the edge-safe jwt and authorized callbacks from the

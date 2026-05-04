@@ -1,4 +1,5 @@
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import type { NextAuthConfig } from "next-auth";
 import type { Role } from "@prisma/client";
 
@@ -52,6 +53,21 @@ export const authConfig = {
         password: { label: "Password", type: "password" },
       },
       authorize: async () => null,
+    }),
+    // Google OAuth — derselbe Provider muss sowohl in der edge-safe
+    // Config (damit middleware die Provider-Liste kennt) als auch in
+    // src/lib/auth.ts deklariert sein. AUDIT_REPORT_v3 §6 PR 4.
+    //
+    // `allowDangerousEmailAccountLinking: true` ist hier explizit OK,
+    // weil Google die Email-Verifikation garantiert (verified_email=true
+    // im id_token). Das schließt das normale Risiko von Account-
+    // Übernahme über unverifizierte OAuth-Provider aus. Damit kann ein
+    // User, der vorher mit Email+Passwort registriert hat, später per
+    // „Mit Google anmelden" auf dasselbe Konto zugreifen.
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
   callbacks: {

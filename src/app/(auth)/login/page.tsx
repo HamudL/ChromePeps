@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { LogIn, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { checkLoginRateLimit } from "@/app/(auth)/actions/auth-actions";
+import {
+  checkLoginRateLimit,
+  recordLoginFailure,
+} from "@/app/(auth)/actions/auth-actions";
 import { APP_NAME } from "@/lib/constants";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
+import dynamic from "next/dynamic";
+
+// hCaptcha lazy-loaded — die meisten User erreichen das Widget nie
+// (sichtbar erst ab 2 Fehlversuchen). Spart ~50 KB First-Load.
+const HCaptchaWidget = dynamic(
+  () =>
+    import("@/components/auth/hcaptcha-widget").then((m) => m.HCaptchaWidget),
+  { ssr: false },
+);
 
 /**
  * Manual credential sign-in via fetch — bypasses next-auth/react's signIn()
@@ -94,16 +107,18 @@ function errorMessageFor(code: string): string {
 export default function LoginPage() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // 2FA-State: wenn der Server `TwoFactorRequired` returnt, schalten
-  // wir auf eine zweite Stufe — Email/Password bleiben in State (User
-  // muss nicht erneut tippen), zusätzlich blenden wir das TOTP-Feld
-  // ein. Beim Submit der Stufe-2 senden wir alle 3 Werte in EINEM
-  // /callback/credentials POST.
+  // 2FA-State (siehe oben)
   const [pendingCredentials, setPendingCredentials] = useState<{
     email: string;
     password: string;
   } | null>(null);
   const [totpCode, setTotpCode] = useState("");
+  // Captcha-State: server-side gesteuert via `captchaRequired` aus
+  // `checkLoginRateLimit`. Nach 2 Fehlversuchen aus Sicht des Servers
+  // (Redis-Counter) wird das Widget eingeblendet.
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
+  const captchaResetRef = useRef<{ resetCaptcha: () => void } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -122,13 +137,29 @@ export default function LoginPage() {
         email = formData.get("email") as string;
         password = formData.get("password") as string;
 
-        // Server-side rate limit check (nur in Stufe 1; Stufe 2 hat
-        // bereits gültiges Passwort, Brute-Force ist hier nicht das
-        // Problem — TOTP-Range ist 1e6, 6-Digits, ±30s).
-        const rateCheck = await checkLoginRateLimit(email);
+        // Server-side rate limit + captcha check (nur in Stufe 1).
+        const rateCheck = await checkLoginRateLimit(
+          email,
+          captchaRequired ? captchaToken : undefined,
+        );
         if (!rateCheck.success) {
-          setError(rateCheck.error ?? "Zu viele Anmeldeversuche.");
+          if (rateCheck.captchaRequired) {
+            setCaptchaRequired(true);
+          }
+          // „captcha-required" ist ein interner Code — keine User-Meldung
+          // wenn der Server nur signalisiert „bitte erst Captcha lösen".
+          if (rateCheck.error && rateCheck.error !== "captcha-required") {
+            setError(rateCheck.error);
+          }
+          captchaResetRef.current?.resetCaptcha();
+          setCaptchaToken("");
           return;
+        }
+        // Captcha war erfolgreich — Token verbrauchen, neuer braucht's
+        // erst beim nächsten Failure.
+        if (captchaRequired) {
+          captchaResetRef.current?.resetCaptcha();
+          setCaptchaToken("");
         }
       }
 
@@ -149,6 +180,9 @@ export default function LoginPage() {
         setTotpCode("");
       } else {
         setError(errorMessageFor(result.error ?? "CredentialsSignin"));
+        // Failure-Counter erhöhen → eventuell zeigt der nächste
+        // Submit-Versuch das Captcha. Fire-and-forget.
+        void recordLoginFailure(email);
         // Bei InvalidTwoFactorCode bleiben wir in Stufe 2, damit der
         // User nochmal eingeben kann.
         if (result.error !== "InvalidTwoFactorCode") {
@@ -224,6 +258,22 @@ export default function LoginPage() {
             </>
           )}
 
+          {/* hCaptcha — nur sichtbar wenn der Server >=2 Fehlversuche
+              für diese Email gezählt hat. Wird automatisch nach
+              erfolgreichem Login wieder versteckt. */}
+          {captchaRequired && !pendingCredentials && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Zur Sicherheit bitte das Captcha lösen.
+              </p>
+              <HCaptchaWidget
+                resetRef={captchaResetRef}
+                onVerify={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken("")}
+              />
+            </div>
+          )}
+
           {/* Stufe 2: TOTP-Code (oder Recovery-Code) */}
           {pendingCredentials && (
             <div className="space-y-2">
@@ -262,7 +312,13 @@ export default function LoginPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full gap-2" disabled={isPending}>
+          <Button
+            type="submit"
+            className="w-full gap-2"
+            disabled={
+              isPending || (captchaRequired && !pendingCredentials && !captchaToken)
+            }
+          >
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -276,16 +332,32 @@ export default function LoginPage() {
             )}
           </Button>
 
+          {/* Google-OAuth-Alternative — separat unter dem primären
+              Submit, mit horizontalem Trenner. NICHT in Stufe 2 (TOTP)
+              sichtbar, weil OAuth einen eigenen Flow startet. */}
           {!pendingCredentials && (
-            <p className="text-sm text-muted-foreground text-center">
-              Noch kein Konto?{" "}
-              <Link
-                href="/register"
-                className="text-primary font-medium hover:underline"
-              >
-                Jetzt registrieren
-              </Link>
-            </p>
+            <>
+              <div className="relative w-full">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    oder
+                  </span>
+                </div>
+              </div>
+              <GoogleSignInButton className="w-full" />
+              <p className="text-sm text-muted-foreground text-center">
+                Noch kein Konto?{" "}
+                <Link
+                  href="/register"
+                  className="text-primary font-medium hover:underline"
+                >
+                  Jetzt registrieren
+                </Link>
+              </p>
+            </>
           )}
         </CardFooter>
       </form>

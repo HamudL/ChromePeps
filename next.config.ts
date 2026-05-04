@@ -26,17 +26,25 @@ const nextConfig: NextConfig = {
       "script-src 'self' 'unsafe-inline'",
       isDev && "'unsafe-eval'",
       "analytics.chromepeps.com *.googletagmanager.com",
+      // hCaptcha lädt sein Widget-JS von hcaptcha.com
+      "https://hcaptcha.com https://*.hcaptcha.com",
     ]
       .filter(Boolean)
       .join(" ");
     const csp = [
       "default-src 'self'",
       scriptSrc,
-      "style-src 'self' 'unsafe-inline'",
+      // hCaptcha-Widget bringt eigenes Stylesheet mit, hosted auf
+      // hcaptcha.com.
+      "style-src 'self' 'unsafe-inline' https://hcaptcha.com https://*.hcaptcha.com",
       "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com *.edgeone.app *.google-analytics.com *.googletagmanager.com",
       "font-src 'self'",
-      "connect-src 'self' analytics.chromepeps.com *.ingest.de.sentry.io *.google-analytics.com *.analytics.google.com *.googletagmanager.com",
-      "frame-src 'none'",
+      // hCaptcha-Verify-Call geht an api.hcaptcha.com (server-side),
+      // Widget kommuniziert clientseitig mit hcaptcha.com.
+      "connect-src 'self' analytics.chromepeps.com *.ingest.de.sentry.io *.google-analytics.com *.analytics.google.com *.googletagmanager.com https://hcaptcha.com https://*.hcaptcha.com",
+      // hCaptcha rendert das Challenge-UI in einem iframe von
+      // hcaptcha.com — sonst kein Captcha-Solve möglich.
+      "frame-src https://hcaptcha.com https://*.hcaptcha.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
