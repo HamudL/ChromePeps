@@ -562,7 +562,7 @@ async function main() {
  *
  * Idempotent via upsert. Slugs sind die natürlichen Keys.
  */
-async function seedWissen() {
+export async function seedWissen() {
   console.log("Seeding wissen (blog/faq/glossar)...");
 
   // -------- Blog Categories --------
@@ -1395,11 +1395,22 @@ Zwei Urteile des Europäischen Gerichtshofs haben den Forschungs-Reagenz-Markt 2
 > Forschungsgebrauch: Dieser Beitrag bezieht sich ausschließlich auf In-vitro- und Labor-Kontexte. Keine Empfehlung für Anwendung am Menschen oder Tier.
 `;
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// Nur ausführen wenn dieses File DIREKT gestartet wird (z.B. per
+// `prisma db seed`). Wenn ein anderes Script `seedWissen` importiert,
+// soll main() NICHT autom. laufen — sonst würde ein „nur Wissen seeden"-
+// Skript unbeabsichtigt auch Admin/Categories/Products etc. anlegen.
+if (require.main === module) {
+  main()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
+
+// `prisma` als auto-disconnecting Singleton exportieren — andere Skripte
+// (z.B. scripts/seed-wissen-only.ts) reusen diesen Client damit nicht
+// zwei parallele Connection-Pools entstehen.
+export { prisma };

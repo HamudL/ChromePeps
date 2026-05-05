@@ -2,8 +2,9 @@ import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
 import { APP_NAME } from "@/lib/constants";
 
-// Inline formatPrice — can't import from @/lib/utils because it pulls in
-// Node.js `crypto` which isn't available in the Edge runtime.
+// Inline formatPrice — gleiche Implementation wie @/lib/utils, aber lokal
+// damit dieses File keine Lib-Abhängigkeit hat (war ein Relikt vom
+// vorherigen `runtime = "edge"`-Setup).
 function formatPrice(cents: number): string {
   return new Intl.NumberFormat("de-DE", {
     style: "currency",
@@ -11,7 +12,12 @@ function formatPrice(cents: number): string {
   }).format(cents / 100);
 }
 
-export const runtime = "edge";
+// WICHTIG: NICHT `runtime = "edge"` — dieses File ruft Prisma auf
+// (`db.product.findUnique`), und Prisma Client läuft nicht in Edge-
+// Runtime ohne Driver-Adapter. Mit edge-runtime crashed der Endpoint
+// mit `PrismaClientValidationError: In order to run Prisma Client on
+// edge runtime, either: …`. Default ist nodejs — passt für uns.
+// AUDIT_REPORT_v3 §6 PR 9 Hotfix.
 
 export const alt = "ChromePeps Produkt";
 export const size = { width: 1200, height: 630 };
