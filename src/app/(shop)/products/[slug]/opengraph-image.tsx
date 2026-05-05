@@ -179,7 +179,7 @@ export default async function ProductOGImage({
                   borderRadius: 8,
                 }}
               >
-                {product.certificates[0]!.purity!.toFixed(2)}% HPLC
+                {`${product.certificates[0]!.purity!.toFixed(2)}% HPLC`}
               </div>
             ) : product.purity ? (
               <div
@@ -225,7 +225,7 @@ export default async function ProductOGImage({
                   fontFamily: "monospace",
                 }}
               >
-                Lot {product.certificates[0].batchNumber}
+                {`Lot ${product.certificates[0].batchNumber}`}
               </div>
             )}
           </div>
