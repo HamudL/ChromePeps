@@ -122,16 +122,22 @@ export async function generateMetadata({
 
   const description = product.shortDesc ?? product.description.slice(0, 160);
   const canonical = `/products/${product.slug}`;
-  const ogImage = product.images[0]
-    ? [
-        {
-          url: product.images[0].url,
-          alt: product.images[0].alt ?? product.name,
-          width: 1200,
-          height: 630,
-        },
-      ]
-    : undefined;
+
+  // og:image / twitter:image bewusst NICHT hier setzen.
+  //
+  // Next.js findet `src/app/(shop)/products/[slug]/opengraph-image.tsx`
+  // automatisch und generiert daraus eine `og:image`-Route mit
+  // dynamischem Hash (z.B. /products/<slug>/opengraph-image-16g1u1).
+  // Würden wir hier `images: [...]` setzen, würde der Override greifen
+  // und unser hochgeladenes Produkt-Foto als og:image verwenden — das
+  // war die Ausgangslage bis AUDIT_REPORT_v3 §6 PR 9 / Audit-Sprint:
+  // dadurch war die Charge-/Reinheits-Karte aus opengraph-image.tsx
+  // toter Code.
+  //
+  // Mit dieser Variante zeigt Twitter/WhatsApp/Reddit beim Teilen die
+  // generierte Karte mit „Lot CS-… · 99,71% HPLC" statt das Produkt-
+  // foto. Wer das Foto bevorzugt: einfach die `openGraph.images`/
+  // `twitter.images`-Felder wieder hinzufügen.
 
   return {
     title: product.name,
@@ -144,13 +150,11 @@ export async function generateMetadata({
       siteName: APP_NAME,
       title: `${product.name} | ${APP_NAME}`,
       description,
-      images: ogImage,
     },
     twitter: {
       card: "summary_large_image",
       title: `${product.name} | ${APP_NAME}`,
       description,
-      images: ogImage?.map((img) => img.url),
     },
   };
 }
