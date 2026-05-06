@@ -249,20 +249,35 @@ export default async function ProductOGImage({
             </div>
           </div>
 
-          {/* "◆ CERTIFIED" oben rechts in der linken Pane */}
+          {/* „◆ CERTIFIED" oben rechts in der linken Pane.
+              Der Diamond-Glyph (U+25C6) ist nicht in der JetBrains-Mono-
+              WOFF-Subset enthalten und rendert als Tofu-Replacement.
+              Lösung: Inline-SVG-Diamond als eigenes <svg>-Element. Pixel-
+              genau gleicher Look, unabhängig von Font-Coverage. */}
           <div
             style={{
               position: "absolute",
               top: 54,
-              left: 560,
+              left: 555,
               display: "flex",
+              alignItems: "center",
+              gap: 8,
               color: COLORS.goldSoft,
               fontFamily: "JetBrains Mono",
               fontSize: 12,
               letterSpacing: 2.16,
             }}
           >
-            ◆ CERTIFIED
+            <svg
+              width="9"
+              height="9"
+              viewBox="0 0 9 9"
+              fill="rgba(214, 168, 84, 0.85)"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M4.5 0 L9 4.5 L4.5 9 L0 4.5 Z" />
+            </svg>
+            CERTIFIED
           </div>
 
           {/* Kategorie */}
