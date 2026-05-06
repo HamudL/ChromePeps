@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { writeAuditLog } from "@/lib/admin-audit";
 
 const updateUserRoleSchema = z.object({
   role: z.enum(["USER", "ADMIN"]),
@@ -39,10 +40,26 @@ export async function PATCH(
     );
   }
 
+  const previousUser = await db.user.findUnique({
+    where: { id },
+    select: { role: true, email: true },
+  });
+
   const user = await db.user.update({
     where: { id },
     data: { role: parsed.data.role },
     select: { id: true, name: true, email: true, role: true },
+  });
+
+  await writeAuditLog(req, {
+    action: "user.role_change",
+    entity: "user",
+    entityId: id,
+    payload: {
+      targetEmail: user.email,
+      previousRole: previousUser?.role ?? null,
+      newRole: parsed.data.role,
+    },
   });
 
   return NextResponse.json({ success: true, data: user });
@@ -50,7 +67,7 @@ export async function PATCH(
 
 // DELETE /api/admin/users/[id] — delete user (soft: deactivate, or hard)
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
@@ -82,7 +99,22 @@ export async function DELETE(
     );
   }
 
+  const userToDelete = await db.user.findUnique({
+    where: { id },
+    select: { email: true, role: true },
+  });
+
   await db.user.delete({ where: { id } });
+
+  await writeAuditLog(req, {
+    action: "user.delete",
+    entity: "user",
+    entityId: id,
+    payload: {
+      deletedUserEmail: userToDelete?.email ?? null,
+      deletedUserRole: userToDelete?.role ?? null,
+    },
+  });
 
   return NextResponse.json({ success: true });
 }
