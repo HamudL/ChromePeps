@@ -32,7 +32,7 @@ export default async function DashboardOrdersPage(props: {
 }) {
   const session = await requireAuth();
   const searchParams = await props.searchParams;
-  const currentPage = Math.max(1, parseInt(searchParams.page ?? "1", 10));
+  const currentPage = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
   const skip = (currentPage - 1) * PAGE_SIZE;
 
   const [orders, total] = await Promise.all([

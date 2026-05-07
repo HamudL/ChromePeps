@@ -20,7 +20,6 @@ import {
   Microscope,
   ShieldCheck,
   Sparkles,
-  Truck,
   Waves,
   Zap,
 } from "lucide-react";

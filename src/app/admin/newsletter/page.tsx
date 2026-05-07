@@ -29,7 +29,7 @@ interface Props {
 export default async function AdminNewsletterPage({ searchParams }: Props) {
   await requireAdmin();
   const params = await searchParams;
-  const page = Math.max(1, parseInt(params.page ?? "1"));
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const status = params.status ?? "all";
   const skip = (page - 1) * ADMIN_ITEMS_PER_PAGE;
 

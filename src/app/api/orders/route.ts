@@ -12,7 +12,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const page = parseInt(req.nextUrl.searchParams.get("page") ?? "1");
+  const page = Math.max(
+    1,
+    parseInt(req.nextUrl.searchParams.get("page") ?? "1", 10) || 1
+  );
   const pageSize = 10;
   const skip = (page - 1) * pageSize;
 

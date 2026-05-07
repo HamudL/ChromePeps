@@ -46,7 +46,7 @@ interface Props {
 export default async function AdminOrdersPage({ searchParams }: Props) {
   await requireAdmin();
   const params = await searchParams;
-  const page = Math.max(1, parseInt(params.page ?? "1"));
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const statusFilter = params.status ?? "ALL";
   const showTest = params.showTest === "1";
   const skip = (page - 1) * ADMIN_ITEMS_PER_PAGE;

@@ -44,7 +44,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
   await requireAdmin();
   const params = await searchParams;
   const isReorderMode = params.mode === "reorder";
-  const page = Math.max(1, parseInt(params.page ?? "1"));
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const search = params.search ?? "";
 
   // Reorder-Mode: lade ALLE Produkte (bis REORDER_MAX), keine Search,

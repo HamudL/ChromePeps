@@ -32,7 +32,7 @@ interface Props {
 export default async function AdminUsersPage({ searchParams }: Props) {
   const session = await requireAdmin();
   const params = await searchParams;
-  const page = Math.max(1, parseInt(params.page ?? "1"));
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const search = params.search ?? "";
   const skip = (page - 1) * ADMIN_ITEMS_PER_PAGE;
   const currentUserId = session.user.id;
