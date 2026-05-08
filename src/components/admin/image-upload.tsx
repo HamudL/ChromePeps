@@ -75,8 +75,8 @@ export function ImageUpload({ images, onChange }: ImageUploadProps) {
     }
   }
 
-  function removeImage(index: number) {
-    onChange(images.filter((_, i) => i !== index));
+  function removeImage(url: string) {
+    onChange(images.filter((u) => u !== url));
   }
 
   return (
@@ -154,7 +154,7 @@ export function ImageUpload({ images, onChange }: ImageUploadProps) {
                   variant="destructive"
                   size="icon"
                   className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => removeImage(index)}
+                  onClick={() => removeImage(url)}
                 >
                   <X className="h-3 w-3" />
                 </Button>

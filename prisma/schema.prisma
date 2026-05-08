@@ -228,6 +228,12 @@ model ProductImage {
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  // Postgres legt für FKs keinen automatischen Index an. Jede
+  // productCardSelect-Subquery filtert WHERE productId=? ORDER BY
+  // sortOrder ASC LIMIT 1 — auf jeder Listing-Seite × 12 Cards.
+  // Ohne Index = Sequential Scan pro Card. Pattern ist konsistent
+  // mit ProductVariant (selber FK-Index).
+  @@index([productId])
   @@map("product_images")
 }
 
