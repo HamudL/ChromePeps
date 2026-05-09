@@ -41,10 +41,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  // Upsert (re-subscribing resets the token for a new confirmation email)
+  // Upsert (re-subscribing resets the token for a new confirmation email).
+  // `createdAt` wird beim Update mit-aktualisiert, weil das confirm-Endpoint
+  // es als Token-Issuance-Zeitpunkt für den 7-Tage-Expiry liest. Ohne den
+  // Reset würde ein Re-Subscribe nach >7 Tagen einen frisch ausgegebenen
+  // Token sofort als abgelaufen markieren.
   const subscriber = await db.newsletterSubscriber.upsert({
     where: { email },
-    update: { token: crypto.randomUUID(), confirmedAt: null },
+    update: {
+      token: crypto.randomUUID(),
+      confirmedAt: null,
+      createdAt: new Date(),
+    },
     create: { email },
   });
 

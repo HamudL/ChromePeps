@@ -202,8 +202,11 @@ export async function PATCH(
     //  1) Test-Orders haben nie Stock dekrementiert (siehe
     //     /api/admin/orders/test) → dürfen auch nichts re-incrementen
     //     (sonst phantom inventory pro gecancelter Test-Order).
-    //  2) Stock wurde nur bei echten Kauf-Status-Übergängen
-    //     (PROCESSING / SHIPPED) dekrementiert. Transitions wie
+    //  2) Stock wurde bei allen aktiven Kauf-Status-Übergängen
+    //     (PENDING / PROCESSING / SHIPPED) dekrementiert. PENDING
+    //     gehört dazu, weil Vorkasse-Orders (BANK_TRANSFER) bereits
+    //     beim Anlegen Stock reservieren — siehe
+    //     /api/checkout/bank-transfer. Transitions wie
     //     ARCHIVED → CANCELLED oder DELIVERED → CANCELLED würden
     //     ohne diesen Guard doppelt oder fälschlich re-incrementen
     //     (ARCHIVED hatte meist schon einen restore hinter sich,
@@ -211,8 +214,8 @@ export async function PATCH(
     //  3) `.catch(() => {})` bleibt, falls product/variant
     //     hard-deleted wurde.
     const stockWasDecremented = (
-      ["PROCESSING", "SHIPPED"] as const
-    ).includes(existing.status as "PROCESSING" | "SHIPPED");
+      ["PENDING", "PROCESSING", "SHIPPED"] as const
+    ).includes(existing.status as "PENDING" | "PROCESSING" | "SHIPPED");
     if (
       parsed.data.status === "CANCELLED" &&
       stockWasDecremented &&
