@@ -370,10 +370,12 @@ function renderTitleWithEmphasis(
   if (!emphasis) return title;
   const idx = title.indexOf(emphasis);
   if (idx === -1) return title;
+  // Gleicher Akzent wie auf der Live-/wissen/[slug]-Page: Gold-Color
+  // statt Italic. Soft-Bio-Pharma-Stack hat keine Italic-Display-Cut.
   return (
     <>
       {title.slice(0, idx)}
-      <em className="font-serif italic font-normal">{emphasis}</em>
+      <em className="not-italic text-primary">{emphasis}</em>
       {title.slice(idx + emphasis.length)}
     </>
   );
