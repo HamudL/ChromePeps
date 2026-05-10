@@ -912,7 +912,9 @@
   padding: 4px 0 4px 22px;
   border-left: 2px solid hsl(var(--primary));
   font-family: var(--font-display);
-  font-style: italic;
+  /* kein italic — Soft-Bio-Pharma-Stack hat keinen italic-Cut.
+     Display-Font (Comfortaa) + dezente Akzent-Farbe genügt. */
+  font-style: normal;
   font-size: 22px;
   line-height: 1.45;
   color: hsl(20 14% 16%);
@@ -1009,11 +1011,21 @@
 .prose figcaption {
   margin-top: 10px;
   font-family: var(--font-mono);
-  font-style: italic;
+  /* kein italic — Soft-Bio-Pharma. Mono-Font + muted-Color reichen. */
+  font-style: normal;
   font-size: 12px;
   letter-spacing: 0.04em;
   color: hsl(var(--muted-foreground));
   line-height: 1.5;
+}
+/* `*emphasis*` in Markdown wird zu <em>. Browser-Default ist italic,
+   das wollen wir aber komplett aus der Site raus haben. Ersatz:
+   medium-Weight statt italic — semantische Hervorhebung bleibt
+   sichtbar, ohne Soft-Bio-Pharma-Stack zu brechen. */
+.prose em,
+.prose i {
+  font-style: normal;
+  font-weight: 500;
 }
 
 /* FAQ-Answer-Markdown — kompaktere Variante von .prose, scoped auf

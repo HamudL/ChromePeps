@@ -283,7 +283,7 @@ export default async function CategoryLandingPage({
         crumb={heroCrumb}
         title={
           <>
-            <em className="font-serif italic font-normal text-primary">
+            <em className="not-italic text-primary">
               {category.name}
             </em>
           </>

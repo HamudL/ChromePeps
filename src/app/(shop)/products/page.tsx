@@ -319,12 +319,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const year = new Date().getFullYear();
   const heroTitle = search ? (
     <>
-      Suche. <em className="font-serif italic font-normal text-primary">Gefiltert.</em>{" "}
+      Suche. <em className="not-italic text-primary">Gefiltert.</em>{" "}
       Versand aus Deutschland.
     </>
   ) : (
     <>
-      Rein. <em className="font-serif italic font-normal text-primary">Verifiziert.</em>{" "}
+      Rein. <em className="not-italic text-primary">Verifiziert.</em>{" "}
       Versand aus Deutschland.
     </>
   );

@@ -66,7 +66,7 @@ export default async function WissenHubPage() {
           </span>
           <h1 className="mt-5 font-serif text-[44px] md:text-[64px] lg:text-[72px] leading-[1.02] tracking-[-0.02em] font-medium max-w-[16ch]">
             Forschung{" "}
-            <em className="font-serif italic">verstehen</em>.
+            <em className="not-italic text-primary">verstehen</em>.
           </h1>
           <p className="mt-6 text-[17px] md:text-[19px] text-muted-foreground leading-relaxed max-w-[58ch]">
             Methodik, Wirkstoffklassen, Lab Practice. Lesematerial für
