@@ -48,7 +48,7 @@ export function ChainGlyph() {
             x={cx}
             y="33.5"
             textAnchor="middle"
-            fontFamily="var(--font-geist-mono), monospace"
+            fontFamily="var(--font-mono), monospace"
             fontSize="9"
             fill="currentColor"
             stroke="none"

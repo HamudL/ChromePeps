@@ -97,12 +97,18 @@ const config: Config = {
         shimmer: "shimmer 2s infinite",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)"],
-        mono: ["var(--font-geist-mono)"],
-        // Fraunces-Serif für Apotheke-Hero-Akzent („Rein. Verifiziert.")
-        // und Kategorie-Titel. Wird per next/font/google in layout.tsx
-        // geladen und als --font-fraunces exposed.
-        serif: ["var(--font-fraunces)", "Georgia", "serif"],
+        // Semantische Namen — Schrift-Stack ist „Soft Bio-Pharma"
+        // (DM Sans + Comfortaa + DM Mono), gewählt aus /fonts-demo.
+        // Wird per next/font/google in layout.tsx geladen und als
+        // --font-sans / --font-display / --font-mono exposed.
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        display: ["var(--font-display)", "var(--font-sans)", "sans-serif"],
+        // `serif` als Alias auf --font-display behalten — Backwards-
+        // Compat für Komponenten die explizit `font-serif` nutzen
+        // (z.B. Apotheke-Hero-Italic-Akzent). Comfortaa ist zwar kein
+        // Serif, aber der Display-Slot bleibt der „besondere" Font.
+        serif: ["var(--font-display)", "Georgia", "serif"],
       },
     },
   },
