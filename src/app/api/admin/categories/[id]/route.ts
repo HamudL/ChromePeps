@@ -29,7 +29,6 @@ export async function PATCH(
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { id: _id, ...updateData } = parsed.data;
   const slug = updateData.name ? slugify(updateData.name) : undefined;
 

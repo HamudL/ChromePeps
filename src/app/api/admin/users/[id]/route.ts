@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
@@ -6,6 +7,12 @@ import { z } from "zod";
 const updateUserRoleSchema = z.object({
   role: z.enum(["USER", "ADMIN"]),
 });
+
+function isRecordNotFound(err: unknown): boolean {
+  return (
+    err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025"
+  );
+}
 
 // PATCH /api/admin/users/[id] — update user role
 export async function PATCH(
@@ -39,13 +46,22 @@ export async function PATCH(
     );
   }
 
-  const user = await db.user.update({
-    where: { id },
-    data: { role: parsed.data.role },
-    select: { id: true, name: true, email: true, role: true },
-  });
-
-  return NextResponse.json({ success: true, data: user });
+  try {
+    const user = await db.user.update({
+      where: { id },
+      data: { role: parsed.data.role },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    return NextResponse.json({ success: true, data: user });
+  } catch (err) {
+    if (isRecordNotFound(err)) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+    throw err;
+  }
 }
 
 // DELETE /api/admin/users/[id] — delete user (soft: deactivate, or hard)
@@ -82,7 +98,16 @@ export async function DELETE(
     );
   }
 
-  await db.user.delete({ where: { id } });
-
-  return NextResponse.json({ success: true });
+  try {
+    await db.user.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    if (isRecordNotFound(err)) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+    throw err;
+  }
 }

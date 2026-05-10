@@ -41,7 +41,6 @@ export async function PATCH(
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { id: _id, ...updateData } = parsed.data;
 
   if (updateData.isDefault) {

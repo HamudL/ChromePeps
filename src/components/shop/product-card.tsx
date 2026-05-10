@@ -233,7 +233,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
             )}
           >
             <ShoppingCart className="h-3 w-3" />
-            Add
+            Hinzufügen
           </button>
         ) : (
           <span

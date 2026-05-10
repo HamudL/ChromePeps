@@ -227,7 +227,6 @@ export default async function ProductOGImage({
               gap: 12,
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={cpLogoSrc}
               alt=""
@@ -383,7 +382,6 @@ export default async function ProductOGImage({
 
           {/* Vial-Bild — fallback auf transparente Box wenn kein Bild */}
           {vialUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={vialUrl}
               alt=""

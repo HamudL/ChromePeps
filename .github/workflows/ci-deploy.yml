@@ -116,8 +116,8 @@ jobs:
       STRIPE_SECRET_KEY: sk_test_dummy
       STRIPE_WEBHOOK_SECRET: whsec_dummy
       RESEND_API_KEY: re_dummy
-      MAIL_FROM_ADDRESS: noreply@example.com
-      MAIL_FROM_NAME: ChromePeps
+      MAIL_FROM: "ChromePeps <noreply@example.com>"
+      MAIL_REPLY_TO: support@example.com
       CRON_SECRET: dummy
       CI: "true"
     steps:
