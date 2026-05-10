@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendInventoryAlertEmail } from "@/lib/mail/send";
 import type { LowStockItem } from "@/emails/inventory-alert";
+import { checkCronAuth } from "@/lib/cron-auth";
 
 /**
  * Cron-Endpoint: schickt eine Inventory-Alert-Mail an alle Admin-User,
@@ -128,24 +129,3 @@ export async function GET(req: NextRequest) {
   });
 }
 
-function checkCronAuth(req: NextRequest): NextResponse | null {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          "CRON_SECRET nicht konfiguriert — Endpoint deaktiviert für Sicherheit.",
-      },
-      { status: 503 },
-    );
-  }
-  const header = req.headers.get("authorization") ?? "";
-  if (header !== `Bearer ${secret}`) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 },
-    );
-  }
-  return null;
-}

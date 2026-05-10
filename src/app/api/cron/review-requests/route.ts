@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendReviewRequestEmail } from "@/lib/mail/send";
+import { checkCronAuth } from "@/lib/cron-auth";
 
 /**
  * Cron-Endpoint: schickt Review-Request-Mails an Kunden, deren
@@ -144,29 +145,3 @@ export async function GET(req: NextRequest) {
   });
 }
 
-/**
- * Bearer-Auth-Check. Returnt eine NextResponse wenn nicht autorisiert,
- * `null` bei Erfolg. Spät-bindender CRON_SECRET-Lookup damit Build-Zeit
- * nicht gegen leere ENV failed.
- */
-function checkCronAuth(req: NextRequest): NextResponse | null {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          "CRON_SECRET nicht konfiguriert — Endpoint deaktiviert für Sicherheit.",
-      },
-      { status: 503 },
-    );
-  }
-  const header = req.headers.get("authorization") ?? "";
-  if (header !== `Bearer ${secret}`) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 },
-    );
-  }
-  return null;
-}
