@@ -1,31 +1,37 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
-import { Fraunces } from "next/font/google";
+import { DM_Sans, Comfortaa, DM_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/json-ld";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff2",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
+// === Schrift-Stack: „Soft Bio-Pharma"-Palette ===
+// User-Auswahl aus dem Vergleichs-Tool /fonts-demo (Palette 06).
+// Semantische CSS-Variablen-Namen damit zukünftige Wechsel ohne
+// Search-and-Replace gehen. Tailwind exposed sie via theme.fontFamily.
+//
+// dmSans     → UI / Body (default)
+// comfortaa  → Display / Headlines (rounded, freundlich, pharma-modern)
+// dmMono     → Lab-Cert / Code / Mono-Labels
 
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff2",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
-
-// Fraunces — serif display-face für den Apotheke-Shop-Hero-Akzent
-// („Rein. Verifiziert.") und Kategorie-Titel. Nur 400/500 italic, keine
-// weiteren Weights — das hält den Font-Payload klein.
-const fraunces = Fraunces({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-fraunces",
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const comfortaa = Comfortaa({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["300", "400", "500"],
   display: "swap",
 });
 
@@ -112,7 +118,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} font-sans antialiased`}
+        className={`${dmSans.variable} ${comfortaa.variable} ${dmMono.variable} font-sans antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

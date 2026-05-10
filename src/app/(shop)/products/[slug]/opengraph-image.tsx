@@ -65,24 +65,22 @@ const COLORS = {
 
 async function loadFontsAndAssets() {
   const fontsBase = path.join(process.cwd(), "node_modules", "@fontsource");
-  const [interSemibold, comfortaa, arvoItalic, jbMono, cpLogo] =
-    await Promise.all([
-      readFile(path.join(fontsBase, "inter/files/inter-latin-600-normal.woff")),
-      readFile(
-        path.join(fontsBase, "comfortaa/files/comfortaa-latin-400-normal.woff"),
-      ),
-      readFile(
-        path.join(fontsBase, "arvo/files/arvo-latin-400-italic.woff"),
-      ),
-      readFile(
-        path.join(
-          fontsBase,
-          "jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff",
-        ),
-      ),
-      readFile(path.join(process.cwd(), "public/email-logo.png")),
-    ]);
-  return { interSemibold, comfortaa, arvoItalic, jbMono, cpLogo };
+  // Schrift-Stack „Soft Bio-Pharma" — passt zum globalen Stack aus
+  // src/app/layout.tsx. Comfortaa für die Headline, DM Sans für UI-
+  // Labels, DM Mono für Lab-Cert-Felder.
+  const [dmSansSemibold, comfortaa, dmMono, cpLogo] = await Promise.all([
+    readFile(
+      path.join(fontsBase, "dm-sans/files/dm-sans-latin-600-normal.woff"),
+    ),
+    readFile(
+      path.join(fontsBase, "comfortaa/files/comfortaa-latin-400-normal.woff"),
+    ),
+    readFile(
+      path.join(fontsBase, "dm-mono/files/dm-mono-latin-400-normal.woff"),
+    ),
+    readFile(path.join(process.cwd(), "public/email-logo.png")),
+  ]);
+  return { dmSansSemibold, comfortaa, dmMono, cpLogo };
 }
 
 export default async function ProductOGImage({
@@ -120,8 +118,8 @@ export default async function ProductOGImage({
 
   const fonts = [
     {
-      name: "Inter",
-      data: assets.interSemibold,
+      name: "DM Sans",
+      data: assets.dmSansSemibold,
       weight: 600 as const,
       style: "normal" as const,
     },
@@ -132,14 +130,8 @@ export default async function ProductOGImage({
       style: "normal" as const,
     },
     {
-      name: "Arvo",
-      data: assets.arvoItalic,
-      weight: 400 as const,
-      style: "italic" as const,
-    },
-    {
-      name: "JetBrains Mono",
-      data: assets.jbMono,
+      name: "DM Mono",
+      data: assets.dmMono,
       weight: 400 as const,
       style: "normal" as const,
     },
@@ -199,7 +191,7 @@ export default async function ProductOGImage({
           height: "100%",
           display: "flex",
           backgroundColor: COLORS.bgDark,
-          fontFamily: "Inter",
+          fontFamily: "DM Sans",
           color: COLORS.offWhite,
           position: "relative",
         }}
@@ -239,7 +231,7 @@ export default async function ProductOGImage({
               style={{
                 display: "flex",
                 color: COLORS.textPrimary,
-                fontFamily: "Inter",
+                fontFamily: "DM Sans",
                 fontSize: 17,
                 fontWeight: 600,
                 letterSpacing: -0.17,
@@ -263,7 +255,7 @@ export default async function ProductOGImage({
               alignItems: "center",
               gap: 8,
               color: COLORS.goldSoft,
-              fontFamily: "JetBrains Mono",
+              fontFamily: "DM Mono",
               fontSize: 12,
               letterSpacing: 2.16,
             }}
@@ -288,7 +280,7 @@ export default async function ProductOGImage({
               left: 56,
               display: "flex",
               color: COLORS.textMuted45,
-              fontFamily: "Inter",
+              fontFamily: "DM Sans",
               fontSize: 13,
               letterSpacing: 4.16,
               textTransform: "uppercase",
@@ -317,7 +309,7 @@ export default async function ProductOGImage({
             {product.name}
           </div>
 
-          {/* Preis */}
+          {/* Preis — Comfortaa wie die Headline (Soft Bio-Pharma) */}
           <div
             style={{
               position: "absolute",
@@ -325,9 +317,9 @@ export default async function ProductOGImage({
               left: 56,
               display: "flex",
               color: COLORS.gold,
-              fontFamily: "Arvo",
-              fontStyle: "italic",
-              fontSize: 38,
+              fontFamily: "Comfortaa",
+              fontWeight: 400,
+              fontSize: 36,
             }}
           >
             {formatPrice(product.priceInCents)}
@@ -405,7 +397,7 @@ export default async function ProductOGImage({
               bottom: 24,
               display: "flex",
               color: COLORS.textMuted30,
-              fontFamily: "JetBrains Mono",
+              fontFamily: "DM Mono",
               fontSize: 11,
               letterSpacing: 1.5,
             }}
@@ -437,7 +429,7 @@ function LabRow({
       style={{
         display: "flex",
         height: 28,
-        fontFamily: "JetBrains Mono",
+        fontFamily: "DM Mono",
         fontSize: 14,
       }}
     >
