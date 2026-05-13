@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
 import { Product3DTilt } from "@/components/shop/product-3d-tilt";
-import { Product3DVialLazy } from "@/components/shop/product-3d-vial-lazy";
 
 /* ----------------------------------------------------------------
  * Image Gallery
@@ -68,30 +67,25 @@ export function ImageGallery({
 
   return (
     <div className="space-y-3">
-      {/* Main image:
-          - Wenn das ERSTE Bild aktiv ist → echtes 3D-Vial-Modell
-            (lazy via Product3DVialLazy, fallback während Three.js
-            lädt ist 2D-Tilt mit demselben Bild)
-          - Wenn der User auf ein Thumbnail klickt → 2D-Tilt für
-            dieses Bild, weil das andere Fotos sein können (z.B.
-            Verpackung, Detail-Aufnahmen) wo das 3D-Modell semantisch
-            nicht passt */}
+      {/* Main image — 2D-Tilt-Effect für alle Bilder.
+          (Das echte 3D-Modell aus Product3DVialLazy/Product3DVial
+          ist im Repo vorhanden, aber rendert auf Production
+          unzuverlässig — die R3F-Scene initialisiert nicht
+          deterministisch auf einem Next-15 + React-19-Setup.
+          Code bleibt für eine spätere Iteration mit echtem GLB-
+          Asset stehen, ist aktuell aber nicht im Render-Path.) */}
       <div className={mainFrame}>
-        {selected === 0 && productName ? (
-          <Product3DVialLazy
-            productName={productName}
-            capColor={capColor}
-            fallbackSrc={images[0].url}
-            fallbackAlt={images[0].alt}
-          />
-        ) : (
-          <Product3DTilt
-            src={images[selected].url}
-            alt={images[selected].alt}
-            fit={fit}
-            priority
-          />
-        )}
+        <Product3DTilt
+          src={images[selected].url}
+          alt={images[selected].alt}
+          fit={fit}
+          priority
+        />
+      </div>
+      {/* productName, capColor sind hier ungenutzt — bleiben in den
+          Props als Vorbereitung für die nächste 3D-Iteration. */}
+      <div hidden aria-hidden>
+        {productName ?? ""} {capColor ?? ""}
       </div>
 
       {/* Thumbnails */}
