@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Environment } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -280,18 +280,22 @@ export function Product3DVial({
           "radial-gradient(circle at 50% 45%, #1a1b22 0%, #0a0a0c 80%)",
       }}
     >
-      {/* Lighting-Setup für glaubwürdige Glas-Reflexionen */}
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[5, 5, 5]} intensity={1.1} />
-      <directionalLight position={[-5, 3, 4]} intensity={0.45} color="#7a6fff" />
-      <directionalLight position={[0, -4, 3]} intensity={0.3} color="#d6a854" />
-      <pointLight position={[0, 0, 2.2]} intensity={0.25} />
+      {/* Lighting-Setup für glaubwürdige Glas-Reflexionen.
+          KEIN <Environment preset="studio"> — der HDRI-Asset von
+          @react-three/drei wird via CDN geladen, was im Production-
+          Container einen Stream-Error verursacht („transformAlgorithm
+          is not a function"). Statt HDRI nutzen wir mehr Lichter aus
+          unterschiedlichen Winkeln für approximated reflections. */}
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[5, 5, 5]} intensity={1.4} />
+      <directionalLight position={[-5, 3, 4]} intensity={0.7} color="#a89eff" />
+      <directionalLight position={[0, -4, 3]} intensity={0.4} color="#d6a854" />
+      <directionalLight position={[3, -2, -3]} intensity={0.4} color="#ffffff" />
+      <pointLight position={[0, 2, 3]} intensity={0.5} color="#ffffff" />
+      <pointLight position={[-2, 0, 2]} intensity={0.3} color="#b8a0ff" />
+      <pointLight position={[2, 0, 2]} intensity={0.3} color="#ffd690" />
 
-      {/* Environment für Reflexionen auf dem Glas/Metall — preset
-          „studio" ist eine kontrastreiche HDRI die in @react-three/drei
-          mitkommt und keinen Network-Fetch braucht. */}
       <Suspense fallback={null}>
-        <Environment preset="studio" environmentIntensity={0.5} />
         <VialModel productName={productName} capColor={capColor} />
       </Suspense>
 
