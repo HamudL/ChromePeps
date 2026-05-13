@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
 import { Product3DTilt } from "@/components/shop/product-3d-tilt";
+import { Product3DVialLazy } from "@/components/shop/product-3d-vial-lazy";
 
 /* ----------------------------------------------------------------
  * Image Gallery
@@ -20,11 +21,19 @@ interface GalleryImage {
 
 export function ImageGallery({
   images,
+  productName,
+  capColor,
   fit = "cover",
   frameless = false,
 }: {
   images: GalleryImage[];
   productName?: string;
+  /**
+   * Cap-Farbe für das 3D-Vial-Modell (HEX). Default lila — passt für
+   * GLP-1-Familie. Falls Categorie-spezifisch gewünscht, siehe
+   * mapping in der Produkt-Page.
+   */
+  capColor?: string;
   /**
    * Wie das Bild in seinen Aspect-Square-Slot passt.
    * - "cover" (default, für lifestyle/product-shots mit Hintergrund)
@@ -59,16 +68,30 @@ export function ImageGallery({
 
   return (
     <div className="space-y-3">
-      {/* Main image — 3D-tilt bei Hover/Pointer-Move.
-          Bei prefers-reduced-motion oder Touch-only-Devices verhält
-          sich Product3DTilt statisch (kein Tilt-Effect). */}
+      {/* Main image:
+          - Wenn das ERSTE Bild aktiv ist → echtes 3D-Vial-Modell
+            (lazy via Product3DVialLazy, fallback während Three.js
+            lädt ist 2D-Tilt mit demselben Bild)
+          - Wenn der User auf ein Thumbnail klickt → 2D-Tilt für
+            dieses Bild, weil das andere Fotos sein können (z.B.
+            Verpackung, Detail-Aufnahmen) wo das 3D-Modell semantisch
+            nicht passt */}
       <div className={mainFrame}>
-        <Product3DTilt
-          src={images[selected].url}
-          alt={images[selected].alt}
-          fit={fit}
-          priority
-        />
+        {selected === 0 && productName ? (
+          <Product3DVialLazy
+            productName={productName}
+            capColor={capColor}
+            fallbackSrc={images[0].url}
+            fallbackAlt={images[0].alt}
+          />
+        ) : (
+          <Product3DTilt
+            src={images[selected].url}
+            alt={images[selected].alt}
+            fit={fit}
+            priority
+          />
+        )}
       </div>
 
       {/* Thumbnails */}
