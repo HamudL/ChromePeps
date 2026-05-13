@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
+import { Product3DTilt } from "@/components/shop/product-3d-tilt";
 
 /* ----------------------------------------------------------------
  * Image Gallery
@@ -58,14 +59,14 @@ export function ImageGallery({
 
   return (
     <div className="space-y-3">
-      {/* Main image */}
+      {/* Main image — 3D-tilt bei Hover/Pointer-Move.
+          Bei prefers-reduced-motion oder Touch-only-Devices verhält
+          sich Product3DTilt statisch (kein Tilt-Effect). */}
       <div className={mainFrame}>
-        <Image
+        <Product3DTilt
           src={images[selected].url}
           alt={images[selected].alt}
-          fill
-          className={fitClass}
-          sizes="(max-width: 1024px) 100vw, 50vw"
+          fit={fit}
           priority
         />
       </div>
