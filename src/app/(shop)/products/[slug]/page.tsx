@@ -323,6 +323,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                         alt: img.alt ?? product.name,
                       }))}
                       productName={product.name}
+                      capColor={capColorForCategory(product.category.slug)}
                       fit="contain"
                       frameless
                     />
@@ -753,4 +754,26 @@ function PdpSpec({
       </p>
     </div>
   );
+}
+
+/**
+ * Cap-Color für das 3D-Vial-Modell, abgeleitet aus der Produkt-Kategorie.
+ *
+ * Echte Pharma-Caps sind farbcodiert nach Substanz-Klasse — wir mimen
+ * das hier nach Kategorie-Slug. Default ist Gold (passt zur Brand).
+ *
+ * Wenn der Admin später einen `capColor`-Field pro Produkt will, kann
+ * man dieses Mapping ersetzen durch `product.capColor ?? fallback`.
+ */
+function capColorForCategory(slug: string): string {
+  const map: Record<string, string> = {
+    "weight-loss": "#8b5fbf",        // Metabolic / GLP-1 → purple
+    recovery: "#e0e0e6",              // Regenerative → clear/white
+    "anti-aging": "#b87333",          // Cellular Aging → bronze/copper (GHK-Cu)
+    "growth-hormone": "#d6a854",      // GH Secretagogue → gold/amber
+    longevity: "#e6c95a",             // NAD+ → yellow
+    cognitive: "#4a7bb5",             // Neuropeptide → blue
+    "sexual-health": "#a83a3a",       // Neuroendocrine → red
+  };
+  return map[slug] ?? "#d6a854";
 }
