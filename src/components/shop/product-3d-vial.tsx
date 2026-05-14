@@ -40,7 +40,16 @@ interface VialSceneProps {
 
 function VialScene({ autoRotate }: VialSceneProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF(VIAL_GLB_PATH);
+  // useGLTF(path, useDraco=false, useMeshopt=false): beide Decoder
+  // explizit AUS. drei aktiviert sie sonst per Default — und der
+  // Meshopt-Decoder ruft WebAssembly.instantiate() auf, was unsere
+  // CSP (script-src ohne 'wasm-unsafe-eval' in Production) blockt:
+  // der GLTF-Loader crasht beim Setup, die R3F-Scene initialisiert
+  // nie (canvas.__r3f bleibt undefined). Unser GLB ist plain und
+  // unkomprimiert (kein KHR_draco_* / EXT_meshopt_*), braucht also
+  // keinen der beiden Decoder. useDraco=false killt zusätzlich den
+  // gstatic.com-CDN-Fetch, den der Draco-Decoder sonst auslöst.
+  const { scene } = useGLTF(VIAL_GLB_PATH, false, false);
   const [userInteracting, setUserInteracting] = useState(false);
 
   // Auto-Rotation pausiert während der User selbst dreht.
@@ -140,5 +149,8 @@ export function Product3DVial({}: Product3DVialProps) {
 }
 
 // Preload damit das GLB schon im Hintergrund lädt sobald die
-// Komponente importiert wird (next/dynamic-Chunk).
-useGLTF.preload(VIAL_GLB_PATH);
+// Komponente importiert wird (next/dynamic-Chunk). Dieselben
+// Decoder-Flags (false, false) wie beim useGLTF-Hook oben — sonst
+// fasst der Preload-Pfad den Meshopt-WASM-Decoder an und scheitert
+// genauso an der CSP.
+useGLTF.preload(VIAL_GLB_PATH, false, false);
