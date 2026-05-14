@@ -31,6 +31,8 @@ export default function robots(): MetadataRoute.Robots {
           "/analysezertifikate",
           "/analysezertifikate/",
           "/animations-demo",
+          "/fonts-demo",
+          "/3d-test",
           "/_next/",
         ],
       },
