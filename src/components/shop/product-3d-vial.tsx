@@ -115,10 +115,20 @@ export function Product3DVial({}: Product3DVialProps) {
       style={{
         width: "100%",
         height: "100%",
-        background:
-          "radial-gradient(circle at 50% 42%, #1a1b22 0%, #0a0a0c 82%)",
+        // Heller Pre-Render-Fallback. Sobald R3F rendert und gl.alpha
+        // false ist, zählt nicht dieses CSS-background sondern das
+        // <color attach="background"> unten — beide hell gehalten,
+        // damit es vor/nach R3F-Mount keinen Farbsprung gibt.
+        background: "#eef0f2",
       }}
     >
+      {/* Scene-Background hell: das Vial-Modell ist überwiegend dunkel
+          (schwarzes Label, dunkellila Cap, Klarglas) und war auf dem
+          vorherigen fast-schwarzen Grund praktisch unsichtbar. Hell
+          lässt es abheben, entspricht dem Produktfoto-Look UND gibt
+          dem transmissiven Klarglas etwas Helles zum Durchscheinen. */}
+      <color attach="background" args={["#eef0f2"]} />
+
       {/* Lighting — kein <Environment>, weil dessen HDRI-Preset über
           eine CDN fetched und im Production-Container den Render-
           Stream killt. Stattdessen mehrere Lights aus verschiedenen
