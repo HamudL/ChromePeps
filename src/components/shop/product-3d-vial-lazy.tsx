@@ -37,7 +37,6 @@ const Product3DVial = dynamic(
 
 interface Props {
   productName: string;
-  capColor?: string;
   /** Fallback-Bild wenn 3D nicht geladen/möglich ist. */
   fallbackSrc: string;
   fallbackAlt: string;
@@ -45,7 +44,6 @@ interface Props {
 
 export function Product3DVialLazy({
   productName,
-  capColor,
   fallbackSrc,
   fallbackAlt,
 }: Props) {
@@ -94,7 +92,7 @@ export function Product3DVialLazy({
         height: "100%",
       }}
     >
-      <Product3DVial productName={productName} capColor={capColor} />
+      <Product3DVial productName={productName} />
     </div>
   );
 }
