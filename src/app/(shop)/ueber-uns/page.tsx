@@ -1,113 +1,72 @@
 import type { Metadata } from "next";
-import { FlaskConical, Shield, Truck, Award } from "lucide-react";
 import { APP_NAME } from "@/lib/constants";
+import { UeberUnsInteractions } from "./interactions";
+import { DESIGN_BODY_HTML } from "./design-body";
+import "./ueber-uns.css";
+
+/**
+ * /ueber-uns — Über uns
+ *
+ * Phase-1-Integration des Claude-Design-Handoff
+ * ("Über uns-handoff.zip"). Strategie:
+ *
+ *   - Design-HTML steckt 1:1 in design-body.ts und wird per
+ *     dangerouslySetInnerHTML in einen .ueber-uns-design Wrapper
+ *     injected. Das HTML manuell zu JSX zu konvertieren wäre 500+
+ *     Zeilen Mechanik und fehleranfällig — der Wrapper plus CSS-
+ *     Scoping isolieren die Design-Styles vom Rest der App.
+ *   - CSS (ueber-uns.css) ist auto-scoped auf .ueber-uns-design (siehe
+ *     dortigen Header-Kommentar). Dadurch leaken die :root-Variables
+ *     und body/html-Resets nicht in andere Seiten.
+ *   - JS (interactions.tsx) ist ein Client-Component, das nach Mount
+ *     die Reveal-Observer, Scroll-Progress, Hero-Parallax, sticky
+ *     Story, Count-up, Magnetic Buttons und HPLC-Animation einrichtet
+ *     und auf Unmount sauber wieder abräumt.
+ *
+ * Phase-1-Scope:
+ *   - Statisches Rendering der Design-Sections, exakt wie im Handoff
+ *   - Vial-Frames aus dem Handoff-ZIP (36× WebP) liegen unter
+ *     /ueber-uns/vial/ — werden in Phase 3 ggf. neu gerendert
+ *   - TODO/TODO:self-Marker im Design bleiben sichtbar, werden in
+ *     Phase 2 mit echten Daten / Eigentümer-Markierung ersetzt
+ *   - Site-Header und Site-Footer aus dem (shop)-Layout bleiben aktiv;
+ *     der Design-eigene Footer wurde entfernt, die Design-Nav
+ *     bleibt als Section-Sub-Nav für diese lange Seite drin
+ */
 
 export const metadata: Metadata = {
-  title: "Über uns",
-  description: `${APP_NAME} — Ihr Partner für hochreine Forschungspeptide. Erfahren Sie mehr über unsere Mission, Qualitätsstandards und unser Team.`,
+  title: `Über uns — ${APP_NAME}`,
+  description: `${APP_NAME} ist ein deutsches Labor-Supply für Forschungspeptide. Jede Charge wird durch Janoshik Labs per HPLC analysiert, bevor sie das Lager verlässt.`,
   robots: { index: true, follow: true },
 };
 
-const values = [
-  {
-    icon: FlaskConical,
-    title: "Reinheit & Qualität",
-    description:
-      "Jedes Peptid wird mittels HPLC und Massenspektrometrie analysiert. Wir liefern Analysezertifikate (CoA) zu jedem Produkt — Transparenz ist für uns nicht verhandelbar.",
-  },
-  {
-    icon: Shield,
-    title: "Compliance & Datenschutz",
-    description:
-      "Als deutsches Unternehmen halten wir streng die DSGVO ein. Unsere Website verzichtet auf invasives Tracking — Ihre Daten gehören Ihnen.",
-  },
-  {
-    icon: Truck,
-    title: "Schneller Versand",
-    description:
-      "Bestellungen werden innerhalb von 24 Stunden bearbeitet und in stabiler, neutraler Verpackung versendet. So kommt Ihre Ware sicher und unversehrt im Labor an.",
-  },
-  {
-    icon: Award,
-    title: "Forschung im Fokus",
-    description:
-      "Wir arbeiten mit Forschungseinrichtungen und Laboren zusammen, um ein Sortiment zu bieten, das den aktuellen Stand der Peptidforschung widerspiegelt.",
-  },
-];
-
 export default function UeberUnsPage() {
   return (
-    <div className="container max-w-4xl py-12">
-      <h1 className="text-3xl font-bold tracking-tight mb-2">
-        Über {APP_NAME}
-      </h1>
-      <p className="text-lg text-muted-foreground mb-10 max-w-2xl">
-        Wir sind ein spezialisierter Anbieter von Forschungspeptiden mit dem
-        Anspruch, Wissenschaftlern und Laboren hochreine Substanzen zu fairen
-        Preisen bereitzustellen.
-      </p>
+    <>
+      {/* Design nutzt drei Google Fonts. JSX-<link> wird von Next 15
+          automatisch in den <head> gehoben + dedupliziert. Phase 5
+          stellt das ggf. auf next/font/google um (self-hosted, ohne
+          Render-Block). */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossOrigin="anonymous"
+      />
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap"
+      />
 
-      {/* Mission */}
-      <section className="mb-12">
-        <h2 className="text-xl font-bold mb-4">Unsere Mission</h2>
-        <div className="prose prose-sm max-w-none text-muted-foreground">
-          <p>
-            Peptide sind die Grundbausteine moderner biomedizinischer Forschung.
-            Ob Metabolismus, Zellsignalisierung oder Geweberegeneration — die
-            Qualität der eingesetzten Substanzen entscheidet über die
-            Aussagekraft jeder Studie.
-          </p>
-          <p>
-            Bei {APP_NAME} verbinden wir präzise Analytik mit einem
-            unkomplizierten Bestellprozess. Unser Ziel: Forschende sollen sich
-            auf ihre Arbeit konzentrieren können — nicht auf die
-            Lieferantenbewertung.
-          </p>
-        </div>
-      </section>
+      <div
+        className="ueber-uns-design"
+        // Scoped CSS-Wrapper. dangerouslySetInnerHTML ist hier sicher,
+        // weil das HTML aus dem statischen Design-Bundle kommt (kein
+        // User-Input, kein dynamischer Content).
+        dangerouslySetInnerHTML={{ __html: DESIGN_BODY_HTML }}
+      />
 
-      {/* Values */}
-      <section className="mb-12">
-        <h2 className="text-xl font-bold mb-6">Unsere Werte</h2>
-        <div className="grid sm:grid-cols-2 gap-6">
-          {values.map((value) => (
-            <div key={value.title} className="border rounded-lg p-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <value.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="font-semibold">{value.title}</h3>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {value.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="border-t pt-8 text-center">
-        <h2 className="text-xl font-bold mb-3">Haben Sie Fragen?</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Wir helfen Ihnen gerne weiter — ob zu Produkten, Bestellungen oder
-          Kooperationen.
-        </p>
-        <div className="flex justify-center gap-4">
-          <a
-            href="/kontakt"
-            className="inline-flex items-center rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            Kontakt aufnehmen
-          </a>
-          <a
-            href="/faq"
-            className="inline-flex items-center rounded-md border px-5 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
-          >
-            FAQ ansehen
-          </a>
-        </div>
-      </section>
-    </div>
+      <UeberUnsInteractions />
+    </>
   );
 }
