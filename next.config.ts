@@ -41,14 +41,7 @@ const nextConfig: NextConfig = {
       "font-src 'self'",
       // hCaptcha-Verify-Call geht an api.hcaptcha.com (server-side),
       // Widget kommuniziert clientseitig mit hcaptcha.com.
-      // blob: — three.js GLTFLoader entpackt die im GLB eingebetteten
-      // WEBP-Texturen (EXT_texture_webp) in blob:-URLs und lädt sie
-      // auf Chrome über den ImageBitmapLoader, der die URL per fetch()
-      // holt. fetch() fällt unter connect-src, nicht img-src (dort ist
-      // blob: schon erlaubt) — ohne blob: hier scheitern die Texturen
-      // des 3D-Vial-Modells mit "Couldn't load texture blob:". blob:
-      // ist eine same-origin Object-URL-Allowance, kein externer Zugriff.
-      "connect-src 'self' blob: analytics.chromepeps.com *.ingest.de.sentry.io *.google-analytics.com *.analytics.google.com *.googletagmanager.com https://hcaptcha.com https://*.hcaptcha.com",
+      "connect-src 'self' analytics.chromepeps.com *.ingest.de.sentry.io *.google-analytics.com *.analytics.google.com *.googletagmanager.com https://hcaptcha.com https://*.hcaptcha.com",
       // hCaptcha rendert das Challenge-UI in einem iframe von
       // hcaptcha.com — sonst kein Captcha-Solve möglich.
       "frame-src https://hcaptcha.com https://*.hcaptcha.com",
