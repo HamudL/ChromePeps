@@ -1,42 +1,17 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { ProductVialTurntable } from "@/components/shop/product-vial-turntable";
 
 /**
- * /3d-test — isolierter Render-Test des GLB-Vial-Modells.
+ * /3d-test — Render-Check des 360°-Turntable-Viewers.
  *
- * Zeigt das 3D-Vial groß und allein, ohne Produkt-Page-Kontext.
- * Wenn das hier rendert + drehbar ist, kann das Modell sicher in
- * die ImageGallery eingebaut werden.
+ * Zeigt das Vial groß und allein, ohne Produkt-Page-Kontext. Wenn das
+ * hier rendert + dreht + draggbar ist, kann der Turntable sicher in
+ * die ImageGallery der Produkt-Detailseiten eingebaut werden.
  *
- * Bewusst: kein Lazy-Wrapper hier, sondern direkt dynamic({ ssr:false })
- * damit der Test so nah wie möglich am echten Render-Pfad ist.
+ * Die Komponente nutzt 36 pre-rendered Cycles-Frames statt Echtzeit-3D
+ * — Photo-Qualität, dafür nur Z-Achsen-Rotation (kein Tilt/Zoom).
  */
-
-const Product3DVial = dynamic(
-  () =>
-    import("@/components/shop/product-3d-vial").then((m) => ({
-      default: m.Product3DVial,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-          fontFamily: "monospace",
-          fontSize: 13,
-          color: "rgba(245,243,238,0.5)",
-        }}
-      >
-        Lade 3D-Modell …
-      </div>
-    ),
-  },
-);
 
 export default function ThreeDTestPage() {
   return (
@@ -61,15 +36,17 @@ export default function ThreeDTestPage() {
           INTERNAL · 3D-TEST
         </div>
         <h1 style={{ fontSize: 28, margin: "8px 0 0", fontWeight: 600 }}>
-          GLB-Vial-Modell — Render-Check
+          Turntable-Vial — Render-Check
         </h1>
         <p style={{ fontSize: 14, opacity: 0.6, marginTop: 8 }}>
-          Drag zum Drehen. Wenn das Modell hier rendert + sich dreht,
-          ist es production-ready für die Produkt-Seiten.
+          Drag horizontal zum Drehen. 36 pre-rendered Cycles-Frames,
+          Photo-Qualität. Idle dreht sich auto.
         </p>
       </div>
 
-      {/* 3D-Canvas-Bühne — quadratisch, mit Rahmen */}
+      {/* Turntable-Bühne — quadratisch, mit Rahmen. Heller Hintergrund
+          weil die Frames transparenten BG haben und das Vial dunkel
+          ist — auf hell hebt es sich ab. */}
       <div
         style={{
           position: "relative",
@@ -78,9 +55,10 @@ export default function ThreeDTestPage() {
           border: "1px solid rgba(255,255,255,0.1)",
           borderRadius: 8,
           overflow: "hidden",
+          background: "#eef0f2",
         }}
       >
-        <Product3DVial />
+        <ProductVialTurntable alt="ChromePeps Retatrutide 10mg Vial — drehen per Drag" />
       </div>
 
       <div
@@ -91,7 +69,7 @@ export default function ThreeDTestPage() {
           letterSpacing: 1,
         }}
       >
-        public/3d/vial.glb · 6 meshes · ~2.5 MB
+        public/3d/vial-turntable/ · 36 frames · ~1.1 MB · WebP
       </div>
     </main>
   );
