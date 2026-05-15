@@ -1,7 +1,13 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
+import {
+  ContactShadows,
+  Environment,
+  Lightformer,
+  OrbitControls,
+  useGLTF,
+} from "@react-three/drei";
 import { Suspense, useEffect, useRef, useState } from "react";
 import type * as THREE from "three";
 
@@ -129,21 +135,67 @@ export function Product3DVial({}: Product3DVialProps) {
           dem transmissiven Klarglas etwas Helles zum Durchscheinen. */}
       <color attach="background" args={["#eef0f2"]} />
 
-      {/* Lighting — kein <Environment>, weil dessen HDRI-Preset über
-          eine CDN fetched und im Production-Container den Render-
-          Stream killt. Stattdessen mehrere Lights aus verschiedenen
-          Winkeln + Farben für approximated reflections. */}
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[5, 6, 5]} intensity={1.5} />
-      <directionalLight position={[-5, 3, 4]} intensity={0.7} color="#a89eff" />
-      <directionalLight position={[0, -3, 4]} intensity={0.4} color="#d6a854" />
-      <directionalLight position={[3, -1, -4]} intensity={0.5} color="#ffffff" />
-      <pointLight position={[0, 2, 3]} intensity={0.5} />
-      <pointLight position={[-2, 0, 2]} intensity={0.35} color="#b8a0ff" />
+      {/* Procedurale Studio-Environment für Glas-Refraktion + Metall-
+          Reflexion. drei rendert aus den <Lightformer>-Kindern eine
+          Cube-Map in einen internen RenderTarget — KEIN externes File,
+          KEIN CDN-Fetch (genau das Problem, das <Environment preset=…>
+          früher hatte). `background={false}` heißt: nur als Env-Map
+          fürs Beleuchten/Reflektieren, der sichtbare Hintergrund bleibt
+          das <color attach="background"> oben. Eine Top-Softbox, zwei
+          Side-Panels, ein Backlight — Standard-Produktfoto-Setup. */}
+      <Environment background={false} resolution={256}>
+        <Lightformer
+          intensity={2.5}
+          position={[0, 3.5, 0]}
+          rotation-x={Math.PI / 2}
+          scale={[5, 5, 1]}
+          color="#ffffff"
+        />
+        <Lightformer
+          intensity={1.0}
+          position={[4, 1, 4]}
+          rotation-y={-Math.PI / 4}
+          scale={[3, 6, 1]}
+          color="#ffffff"
+        />
+        <Lightformer
+          intensity={1.0}
+          position={[-4, 1, 4]}
+          rotation-y={Math.PI / 4}
+          scale={[3, 6, 1]}
+          color="#ffffff"
+        />
+        <Lightformer
+          intensity={0.8}
+          position={[0, 2, -4]}
+          rotation-y={Math.PI}
+          scale={[4, 4, 1]}
+          color="#ffffff"
+        />
+      </Environment>
+
+      {/* Direct Lights ergänzend zur Env-Map — die Env liefert Ambient
+          + Reflexionen, hier nur noch ein dezenter Key für Highlight-
+          Richtung und ein sanftes Fill. Die früheren bunten Fill-Lights
+          (#a89eff / #d6a854 / #b8a0ff) waren Kompensation für die
+          fehlende Env-Map und sind jetzt überflüssig. */}
+      <ambientLight intensity={0.25} />
+      <directionalLight position={[4, 5, 4]} intensity={1.2} />
+      <directionalLight position={[-3, 2, 3]} intensity={0.35} />
 
       <Suspense fallback={null}>
         <VialScene autoRotate={autoRotate} />
       </Suspense>
+
+      {/* Soft Contact-Shadow direkt unter dem Vial — verankert das
+          Modell visuell auf dem hellen Hintergrund (Produktfoto-Look). */}
+      <ContactShadows
+        position={[0, -1.05, 0]}
+        scale={5}
+        blur={2.4}
+        opacity={0.32}
+        far={2.5}
+      />
 
       <OrbitControls
         enableZoom={false}
