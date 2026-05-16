@@ -199,7 +199,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
         <div class="story-vial-glow"></div>
         <div class="story-vial-frame" id="storyVialFrame">
           <div class="story-scanline" aria-hidden="true"><i></i></div>
-          <img id="storyVialImg" src="/ueber-uns/vial/frame_01.webp" alt="ChromePeps Vial" />
+          <img id="storyVialImg" src="/ueber-uns/vial-assembly/frame_01.webp" alt="ChromePeps Vial" />
           <div class="story-vial-sheen" aria-hidden="true"></div>
           <!-- inline annotations that fade per panel -->
           <div class="vial-anno a-1"><span class="dot"></span><span class="line"></span><b>STERIL · NEUTRAL VERPACKT</b></div>
