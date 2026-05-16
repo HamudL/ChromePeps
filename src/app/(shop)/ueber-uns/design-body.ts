@@ -87,7 +87,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
         </div>
         <div class="hero-meta-sep"></div>
         <div class="hero-meta-item">
-          <div class="hero-meta-num">TODO</div>
+          <div class="hero-meta-num" data-count="{{CHARGEN_COUNT}}" data-decimals="0">0</div>
           <div class="hero-meta-lbl">Chargen freigegeben</div>
         </div>
         <div class="hero-meta-sep"></div>
@@ -218,10 +218,14 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
           <div class="mono-label gold">02 / VOM ROHSTOFF ZUR CHARGE</div>
           <h2>Jede&nbsp;Charge erhält eine Identität, bevor sie ein Etikett bekommt.</h2>
           <p>
-            Eingangs­wiegung, Sichtprüfung der Lyophilisat-Struktur, eindeutige Lot-Nummer.....TODO
+            Eingangs­wiegung, Sichtprüfung der Lyophilisat-Struktur, eindeutige
+            Lot-Nummer und Foto-Dokumentation. Die Charge geht in den
+            −24 °C-Quarantäne-Schrank, bevor sie überhaupt einen Schritt
+            weiter im Prozess macht  jede Bewegung ist ab Tag 1 mit der
+            Lot-ID verknüpft.
           </p>
           <dl class="panel-data">
-            <div><dt>Lot-ID-Format</dt><dd>CP-TODO</dd></div>
+            <div><dt>Lot-ID-Format</dt><dd>CP-{Peptid}{mg}-{MMDD}</dd></div>
             <div><dt>Quarantäne-Zone</dt><dd>−24 °C, getrennt</dd></div>
             <div><dt>Rückverfolgung</dt><dd>End-to-End</dd></div>
           </dl>
@@ -358,7 +362,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
           <li><span class="bullet"></span><div><b>Säule:</b> C18, 4,6 × 250 mm, 5 µm</div></li>
           <li><span class="bullet"></span><div><b>Fluss:</b> 1,0 ml/min · UV 220 nm</div></li>
           <li><span class="bullet"></span><div><b>Gradient:</b> 0,1 % TFA / Acetonitril</div></li>
-          <li><span class="bullet"></span><div>Referenz: Janoshik LOT-</div></li>
+          <li><span class="bullet"></span><div>Referenz: Janoshik LOT-{{LOT_NUMBER}}</div></li>
         </ul>
         <a class="btn-gold inline" href="#" data-magnet>
           <span>CoA-Beispiel ansehen</span>
@@ -370,10 +374,10 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
         <div class="hplc-header">
           <div class="hplc-title">
             <span class="dot live"></span>
-            <span>HPLC · RETATRUTIDE · LOT-</span>
+            <span>HPLC · {{PRODUCT_NAME_UPPER}} · LOT-{{LOT_NUMBER}}</span>
           </div>
           <div class="hplc-stat">
-            <span>PURITY</span><b>%</b>
+            <span>PURITY</span><b>{{PURITY}} %</b>
           </div>
         </div>
         <div class="hplc-stage">
@@ -425,9 +429,9 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
           </div>
         </div>
         <div class="hplc-footer">
-          <div><span class="lbl">SAMPLE</span><span class="val"></span></div>
+          <div><span class="lbl">SAMPLE</span><span class="val">{{LOT_NUMBER}}</span></div>
           <div><span class="lbl">METHOD</span><span class="val">RP-HPLC 220nm</span></div>
-          <div><span class="lbl">RUN</span><span class="val"></span></div>
+          <div><span class="lbl">RUN</span><span class="val">{{TEST_DATE_RUN}}</span></div>
           <div><span class="lbl">STATUS</span><span class="val pass">PASS</span></div>
         </div>
       </div>
@@ -451,7 +455,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
         <div class="metric-sub">über alle Janoshik-getesteten Chargen</div>
       </div>
       <div class="metric reveal">
-        <div class="metric-num"><span data-text="TODO">TODO</span></div>
+        <div class="metric-num"><span data-count="{{CHARGEN_COUNT}}" data-decimals="0">0</span></div>
         <div class="metric-lbl">Chargen freigegeben</div>
         <div class="metric-sub">seit Gründung</div>
       </div>
