@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { APP_NAME } from "@/lib/constants";
+import { db } from "@/lib/db";
 import { UeberUnsInteractions } from "./interactions";
 import { DESIGN_BODY_HTML } from "./design-body";
 import "./ueber-uns.css";
@@ -7,32 +8,33 @@ import "./ueber-uns.css";
 /**
  * /ueber-uns — Über uns
  *
- * Phase-1-Integration des Claude-Design-Handoff
- * ("Über uns-handoff.zip"). Strategie:
+ * Phase 2 (Daten):
+ *   - Server-Component fetched zwei Live-Daten aus der DB:
+ *     · `chargenCount` — distinct batchNumbers in CertificateOfAnalysis
+ *       (published) → "Chargen freigegeben"-Zahlen in Hero + Zahlen-Section
+ *     · `showcaseLot` — eine veröffentlichte COA mit höchster purity
+ *       (egal welches Produkt) → HPLC-Demo-Chart unten (Lot-Nummer,
+ *       Purity, Produkt-Name, Run-Datum)
+ *   - Die Werte werden via {{PLACEHOLDER}}-Tokens in die statische
+ *     Design-HTML-String eingesetzt, bevor sie ins DOM injected wird.
+ *   - ISR mit 1h-Revalidate: die Seite cached, regen sich aber nach
+ *     einer Stunde neu — wenn neue Chargen freigegeben werden,
+ *     erscheint die aktuelle Zahl ohne Deploy.
+ *   - Fallbacks: bei DB-Fehler oder leerer Tabelle wird "—" für die
+ *     Counter angezeigt; für die Demo-HPLC ein Hardcoded-Beispiel,
+ *     damit das Chart immer mit konsistenten Demo-Werten rendert.
  *
- *   - Design-HTML steckt 1:1 in design-body.ts und wird per
- *     dangerouslySetInnerHTML in einen .ueber-uns-design Wrapper
- *     injected. Das HTML manuell zu JSX zu konvertieren wäre 500+
- *     Zeilen Mechanik und fehleranfällig — der Wrapper plus CSS-
- *     Scoping isolieren die Design-Styles vom Rest der App.
- *   - CSS (ueber-uns.css) ist auto-scoped auf .ueber-uns-design (siehe
- *     dortigen Header-Kommentar). Dadurch leaken die :root-Variables
- *     und body/html-Resets nicht in andere Seiten.
- *   - JS (interactions.tsx) ist ein Client-Component, das nach Mount
- *     die Reveal-Observer, Scroll-Progress, Hero-Parallax, sticky
- *     Story, Count-up, Magnetic Buttons und HPLC-Animation einrichtet
- *     und auf Unmount sauber wieder abräumt.
+ * Phase 1 (vorhanden):
+ *   - Design-HTML aus design-body.ts, scoped-CSS aus ueber-uns.css,
+ *     Client-Interactions aus interactions.tsx.
+ *   - Frames aus /public/ueber-uns/vial/frame_*.webp (Phase 3 ggf. neu).
  *
- * Phase-1-Scope:
- *   - Statisches Rendering der Design-Sections, exakt wie im Handoff
- *   - Vial-Frames aus dem Handoff-ZIP (36× WebP) liegen unter
- *     /ueber-uns/vial/ — werden in Phase 3 ggf. neu gerendert
- *   - TODO/TODO:self-Marker im Design bleiben sichtbar, werden in
- *     Phase 2 mit echten Daten / Eigentümer-Markierung ersetzt
- *   - Site-Header und Site-Footer aus dem (shop)-Layout bleiben aktiv;
- *     der Design-eigene Footer wurde entfernt, die Design-Nav
- *     bleibt als Section-Sub-Nav für diese lange Seite drin
+ * TODO:self bleibt sichtbar — user füllt EST., Standort, Gegründet,
+ * Lagerung, USt-ID, HRB selber.
  */
+
+// ISR: cache 1 Stunde, dann auf nächsten Request frisch.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: `Über uns — ${APP_NAME}`,
@@ -40,7 +42,106 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function UeberUnsPage() {
+interface UeberUnsData {
+  chargenCount: number | null;
+  showcase: {
+    batchNumber: string;
+    purity: number;
+    testDate: Date;
+    productNameUpper: string;
+  } | null;
+}
+
+/**
+ * Live-Daten aus der DB. Beide Queries laufen parallel. Errors werden
+ * gefangen, damit die Seite auch bei DB-Ausfall noch rendert — dann
+ * mit "—" und Hardcoded-Demo-Werten.
+ */
+async function fetchUeberUnsData(): Promise<UeberUnsData> {
+  try {
+    const [distinctBatches, showcase] = await Promise.all([
+      db.certificateOfAnalysis.findMany({
+        where: { isPublished: true },
+        distinct: ["batchNumber"],
+        select: { batchNumber: true },
+      }),
+      db.certificateOfAnalysis.findFirst({
+        where: { isPublished: true, purity: { not: null } },
+        orderBy: [{ purity: "desc" }, { testDate: "desc" }],
+        include: { product: { select: { name: true } } },
+      }),
+    ]);
+
+    return {
+      chargenCount: distinctBatches.length,
+      showcase:
+        showcase && showcase.purity != null
+          ? {
+              batchNumber: showcase.batchNumber,
+              purity: showcase.purity,
+              testDate: showcase.testDate,
+              productNameUpper: showcase.product.name.toUpperCase(),
+            }
+          : null,
+    };
+  } catch (err) {
+    // Build- und Dev-Mode ohne DB sollen nicht crashen.
+    console.error("[ueber-uns] DB fetch failed:", err);
+    return { chargenCount: null, showcase: null };
+  }
+}
+
+/**
+ * Setzt die {{PLACEHOLDER}}-Tokens in der Design-HTML mit echten
+ * Werten. Fallbacks rendern in einem konsistenten Demo-State (kein
+ * leeres "%" oder "LOT-"-Tail), falls die DB nichts liefert.
+ */
+function applyPlaceholders(html: string, data: UeberUnsData): string {
+  let out = html;
+
+  // Chargen-Count: wenn DB-Wert da ist, normal substituieren (die
+  // Counter-Animation greift via [data-count]). Wenn null/Fehler:
+  // das gesamte animierte Span durch ein statisches "—" ersetzen,
+  // damit kein data-count="—" am DOM steht (parseFloat würde NaN
+  // liefern und "NaN" rendern).
+  if (data.chargenCount !== null) {
+    out = out.replaceAll("{{CHARGEN_COUNT}}", String(data.chargenCount));
+  } else {
+    out = out.replaceAll(
+      'data-count="{{CHARGEN_COUNT}}" data-decimals="0">0',
+      ">—",
+    );
+    // safety net falls noch ein Token rumliegt
+    out = out.replaceAll("{{CHARGEN_COUNT}}", "—");
+  }
+
+  // HPLC-Showcase: echte COA oder konsistente Demo-Werte
+  const lotNumber = data.showcase?.batchNumber ?? "CS-re10-0322";
+  const purity = data.showcase
+    ? data.showcase.purity.toFixed(2).replace(".", ",")
+    : "99,41";
+  const productNameUpper =
+    data.showcase?.productNameUpper ?? "RETATRUTIDE";
+  const testDateRun = data.showcase
+    ? data.showcase.testDate.toLocaleDateString("de-DE", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "22.03.2025";
+
+  out = out.replaceAll("{{LOT_NUMBER}}", lotNumber);
+  out = out.replaceAll("{{PURITY}}", purity);
+  out = out.replaceAll("{{PRODUCT_NAME_UPPER}}", productNameUpper);
+  out = out.replaceAll("{{TEST_DATE_RUN}}", testDateRun);
+
+  return out;
+}
+
+export default async function UeberUnsPage() {
+  const data = await fetchUeberUnsData();
+  const html = applyPlaceholders(DESIGN_BODY_HTML, data);
+
   return (
     <>
       {/* Design nutzt drei Google Fonts. JSX-<link> wird von Next 15
@@ -60,10 +161,11 @@ export default function UeberUnsPage() {
 
       <div
         className="ueber-uns-design"
-        // Scoped CSS-Wrapper. dangerouslySetInnerHTML ist hier sicher,
-        // weil das HTML aus dem statischen Design-Bundle kommt (kein
-        // User-Input, kein dynamischer Content).
-        dangerouslySetInnerHTML={{ __html: DESIGN_BODY_HTML }}
+        // Scoped CSS-Wrapper. dangerouslySetInnerHTML ist hier sicher:
+        // das HTML kommt aus dem statischen Design-Bundle, und die
+        // Placeholder-Werte sind serialisierte Numbers / DB-Strings
+        // (batchNumber, product.name) — keine User-Eingaben.
+        dangerouslySetInnerHTML={{ __html: html }}
       />
 
       <UeberUnsInteractions />

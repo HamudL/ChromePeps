@@ -183,6 +183,10 @@ export function UeberUnsInteractions() {
       if (counted.has(el)) return;
       counted.add(el);
       const target = parseFloat(el.dataset.count || "0");
+      // Robustness: if data-count is missing/non-numeric (z.B. wenn der
+      // Server "—" eingesetzt hat statt einer Zahl), nicht animieren —
+      // sonst würde "NaN" gerendert.
+      if (!Number.isFinite(target)) return;
       const decimals = parseInt(el.dataset.decimals || "0", 10);
       const suffix = el.dataset.suffix || "";
       const duration = 1600;
