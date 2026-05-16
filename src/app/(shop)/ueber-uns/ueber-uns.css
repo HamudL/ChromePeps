@@ -1867,3 +1867,39 @@ to {
 .ueber-uns-design .hero-title .line, .ueber-uns-design .hero-sub, .ueber-uns-design .hero-ctas, .ueber-uns-design .hero-meta {
  opacity: 1; }
 }
+
+/* ============================================================
+ * Phase 3a — Hero/Story Background-Polish
+ *
+ * Das Basis-Design hat um beide Vials (Hero + Story-Sticky) eine
+ * Stack aus Scanline + rotierendem Disc-Ring + pulsierendem Glow
+ * + Vial-Bobbing + driftenden Ambient-Orbs. Alles zusammen wirkt
+ * "unruhig" (User-Feedback). Hier toneln wir die Aufmerksamkeit-
+ * stärksten Elemente runter — gleiche Stimmung, weniger Visual-
+ * Lärm. Reine CSS-Overrides, keine Design-HTML-Änderung.
+ * ============================================================ */
+
+.ueber-uns-design .vial-scan,
+.ueber-uns-design .story-scanline {
+  display: none;
+}
+.ueber-uns-design .vial-disc::after,
+.ueber-uns-design .story-vial-disc::after {
+  display: none;
+}
+.ueber-uns-design .vial-glow,
+.ueber-uns-design .story-vial-glow {
+  opacity: 0.5;
+  animation: none;
+  filter: blur(56px);
+}
+.ueber-uns-design .vial-img,
+.ueber-uns-design #storyVialImg {
+  animation: none;
+}
+.ueber-uns-design .ambient-orb {
+  opacity: 0.09;
+}
+.ueber-uns-design .hero-grid {
+  opacity: 0.5;
+}
