@@ -120,15 +120,45 @@ export function UeberUnsInteractions() {
       });
     }
 
-    // ===== Scroll-driven story section =====
+    // ===== Scroll-driven story section + Assembly-Frame-Scrubbing =====
     const storyTrack = document.getElementById("storyTrack");
     const storyFrame = document.getElementById("storyVialFrame");
     const storyAngle = document.getElementById("storyAngle");
     const storyFill = document.getElementById("storyProgressFill");
+    const storyVialImg = document.getElementById(
+      "storyVialImg",
+    ) as HTMLImageElement | null;
     const panels = document.querySelectorAll<HTMLElement>(
       ".ueber-uns-design .story-panel",
     );
     const PANEL_COUNT = panels.length;
+
+    // Assembly-Animation: 60 vor-gerenderte Cycles-Frames die das Vial von
+    // disassembled (frame 1, Teile schweben) zu assembled (frame 60) zeigen.
+    // Der scroll-Progress t (0-1) der Story-Section mappt direkt auf den
+    // Frame-Index. Pfad: /ueber-uns/vial-assembly/frame_NN.webp.
+    const ASSEMBLY_FRAMES = 60;
+    const ASSEMBLY_URLS = Array.from(
+      { length: ASSEMBLY_FRAMES },
+      (_, i) =>
+        `/ueber-uns/vial-assembly/frame_${String(i + 1).padStart(2, "0")}.webp`,
+    );
+    let currentAssemblyIdx = -1;
+
+    // Frames im Hintergrund vorladen — beim ersten Mount kommen alle 60
+    // (~3 MB) in den HTTP-Cache, damit Scroll-Scrubbing instant funktioniert.
+    // `requestIdleCallback` falls verfügbar, sonst sofort.
+    const preloadAssembly = () => {
+      for (const url of ASSEMBLY_URLS) {
+        const img = new Image();
+        img.src = url;
+      }
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(preloadAssembly, { timeout: 2000 });
+    } else {
+      window.setTimeout(preloadAssembly, 100);
+    }
 
     const updateStory = () => {
       if (!storyTrack) return;
@@ -156,6 +186,20 @@ export function UeberUnsInteractions() {
           String(idx + 1).padStart(2, "0") + " / 04";
       if (storyFill)
         storyFill.style.width = (t * 100).toFixed(1) + "%";
+
+      // Assembly-Frame-Scrubbing: t → Frame-Index.
+      // Nur src wechseln wenn sich der Index ändert (sonst flackert das
+      // Browser-Image-Decoding bei jedem Scroll-Tick).
+      if (storyVialImg) {
+        const aIdx = Math.min(
+          ASSEMBLY_FRAMES - 1,
+          Math.floor(t * ASSEMBLY_FRAMES),
+        );
+        if (aIdx !== currentAssemblyIdx) {
+          currentAssemblyIdx = aIdx;
+          storyVialImg.src = ASSEMBLY_URLS[aIdx];
+        }
+      }
     };
     let storyRaf = false;
     const onStoryScroll = () => {
