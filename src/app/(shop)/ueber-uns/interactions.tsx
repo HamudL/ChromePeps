@@ -12,15 +12,13 @@ import { useEffect } from "react";
  *   - Reveal-on-scroll for `.reveal` elements (IntersectionObserver)
  *   - Top scroll-progress bar (#nav-progress-bar width tied to scrollY)
  *   - Hero vial mouse-parallax (CSS vars --mx/--my on #vial3d)
- *   - Sticky-scroll story section: panel switching + CSS class show-N
+ *   - Sticky-scroll story section: panel switching + CSS class show-N +
+ *     assembly-frame scrubbing (120 vor-gerenderte Cycles-Frames mit
+ *     rAF-Lerp für Smooth-Scroll auch bei schnellen Scroll-Sprüngen)
  *   - Count-up numbers ([data-count])
  *   - Magnetic buttons ([data-magnet])
  *   - HPLC chromatogram SVG draw-in animation
  *   - Smooth-scroll for in-page anchor links
- *
- * No frame-scrubbing in this iteration — assembly animation will land in
- * Phase 4. Currently the story-section vial is a static image whose
- * surrounding annotations swap per panel.
  *
  * `prefers-reduced-motion: reduce` short-circuits the parallax loop only
  * (other animations are CSS-controlled and respect their own queries).
@@ -133,25 +131,36 @@ export function UeberUnsInteractions() {
     );
     const PANEL_COUNT = panels.length;
 
-    // Assembly-Animation: 60 vor-gerenderte Cycles-Frames die das Vial von
-    // disassembled (frame 1, Teile schweben) zu assembled (frame 60) zeigen.
-    // Der scroll-Progress t (0-1) der Story-Section mappt direkt auf den
-    // Frame-Index. Pfad: /ueber-uns/vial-assembly/frame_NN.webp.
-    const ASSEMBLY_FRAMES = 60;
+    // Phase 4 v3 Assembly-Animation: 120 vor-gerenderte Cycles-Frames mit
+    // choreographischem Ablauf:
+    //   1-50:    Pulver rieselt von 0 auf finale Höhe (scale Z 0.001 → 0.32)
+    //   30-64:   Stopfen senkt sich (pure-Z drop, kein glass-clip)
+    //   56-84:   Crimp senkt sich auf den Stopfen
+    //   80-110:  Lila Cap senkt sich auf den Crimp
+    //   95-120:  Label wrappt um die Bottle (scale-Y 0.001 → 1.0,
+    //            "flat strip → curved natural wrap")
+    // 3-digit padding (frame_001.webp … frame_120.webp). ~6 MB total preload.
+    const ASSEMBLY_FRAMES = 120;
     const ASSEMBLY_URLS = Array.from(
       { length: ASSEMBLY_FRAMES },
       (_, i) =>
-        `/ueber-uns/vial-assembly/frame_${String(i + 1).padStart(2, "0")}.webp`,
+        `/ueber-uns/vial-assembly/frame_${String(i + 1).padStart(3, "0")}.webp`,
     );
     let currentAssemblyIdx = -1;
+    let targetAssemblyIdx = 0;
+    let displayedAssemblyIdx = 0;
+    let lerpRaf: number | null = null;
 
-    // Frames im Hintergrund vorladen — beim ersten Mount kommen alle 60
-    // (~3 MB) in den HTTP-Cache, damit Scroll-Scrubbing instant funktioniert.
-    // `requestIdleCallback` falls verfügbar, sonst sofort.
+    // Preload + decode: img.decode() landet die decodierten Pixel im
+    // Browser-Cache. Subsequent src-swaps sind dann <5ms (sonst 15-30ms wg.
+    // re-decode/re-paint Latenz). Macht den Frame-Scrubbing-Effekt smoother.
+    // Catch ignored — decode() kann auf manchen Browsern bei früher cached
+    // images error werfen, der src ist trotzdem gesetzt.
     const preloadAssembly = () => {
       for (const url of ASSEMBLY_URLS) {
         const img = new Image();
         img.src = url;
+        img.decode?.().catch(() => {});
       }
     };
     if (typeof window.requestIdleCallback === "function") {
@@ -159,6 +168,34 @@ export function UeberUnsInteractions() {
     } else {
       window.setTimeout(preloadAssembly, 100);
     }
+
+    // rAF-Lerp loop: glättet abrupte Scroll-Sprünge. Bei schnellem Scroll
+    // springt targetAssemblyIdx z.B. 30 → 90 — der displayed Index "fließt"
+    // über mehrere RAF-Ticks zum Ziel (factor 0.25 ≈ sichtbar smooth, nicht
+    // laggy). Bei langsamem Scroll (1-2 Frames pro Tick) ist der Effekt
+    // unsichtbar weil der Lerp sofort konvergiert. Verhindert das jerky
+    // "ein-Frame-pro-Scroll-Event"-Verhalten der v2-Implementation.
+    const lerpAssemblyTick = () => {
+      const diff = targetAssemblyIdx - displayedAssemblyIdx;
+      if (Math.abs(diff) < 0.5) {
+        displayedAssemblyIdx = targetAssemblyIdx;
+        lerpRaf = null;
+      } else {
+        displayedAssemblyIdx += diff * 0.25;
+        lerpRaf = requestAnimationFrame(lerpAssemblyTick);
+      }
+      const intIdx = Math.max(
+        0,
+        Math.min(ASSEMBLY_FRAMES - 1, Math.round(displayedAssemblyIdx)),
+      );
+      if (storyVialImg && intIdx !== currentAssemblyIdx) {
+        currentAssemblyIdx = intIdx;
+        storyVialImg.src = ASSEMBLY_URLS[intIdx];
+      }
+    };
+    cleanups.push(() => {
+      if (lerpRaf !== null) cancelAnimationFrame(lerpRaf);
+    });
 
     const updateStory = () => {
       if (!storyTrack) return;
@@ -187,17 +224,15 @@ export function UeberUnsInteractions() {
       if (storyFill)
         storyFill.style.width = (t * 100).toFixed(1) + "%";
 
-      // Assembly-Frame-Scrubbing: t → Frame-Index.
-      // Nur src wechseln wenn sich der Index ändert (sonst flackert das
-      // Browser-Image-Decoding bei jedem Scroll-Tick).
+      // Assembly-Frame-Scrubbing: t → target Frame-Index. Der lerp tick
+      // übernimmt den eigentlichen src-swap mit Easing.
       if (storyVialImg) {
-        const aIdx = Math.min(
+        targetAssemblyIdx = Math.min(
           ASSEMBLY_FRAMES - 1,
           Math.floor(t * ASSEMBLY_FRAMES),
         );
-        if (aIdx !== currentAssemblyIdx) {
-          currentAssemblyIdx = aIdx;
-          storyVialImg.src = ASSEMBLY_URLS[aIdx];
+        if (lerpRaf === null) {
+          lerpRaf = requestAnimationFrame(lerpAssemblyTick);
         }
       }
     };
