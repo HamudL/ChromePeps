@@ -46,44 +46,56 @@ interface UeberUnsData {
 }
 
 /**
- * Live-Daten aus der DB. Drei Queries parallel; Errors werden gefangen,
- * damit die Seite auch bei DB-Ausfall noch rendert (dann mit "—" + Demo).
+ * Live-Daten aus der DB. Die zwei Queries laufen über `Promise.allSettled`,
+ * damit ein fehlschlagender Query die anderen NICHT mitreißt (sonst würde
+ * z.B. eine kaputte Aggregation auch chargenCount + showcase auf null
+ * ziehen → alles "—"). chargenCount + avgPurity kommen aus EINER findMany
+ * (distinct in JS gezählt, Ø in JS gemittelt) — kein separater aggregate-
+ * Query, ein Failure-Point weniger. Pro Query eigener Fallback auf null.
  */
 async function fetchUeberUnsData(): Promise<UeberUnsData> {
-  try {
-    const [distinctBatches, avg, showcase] = await Promise.all([
-      db.certificateOfAnalysis.findMany({
-        where: { isPublished: true },
-        distinct: ["batchNumber"],
-        select: { batchNumber: true },
-      }),
-      db.certificateOfAnalysis.aggregate({
-        where: { isPublished: true, purity: { not: null } },
-        _avg: { purity: true },
-      }),
-      db.certificateOfAnalysis.findFirst({
-        where: { isPublished: true, purity: { not: null } },
-        orderBy: [{ purity: "desc" }, { testDate: "desc" }],
-        select: { batchNumber: true, purity: true, testDate: true },
-      }),
-    ]);
+  const [rowsRes, showcaseRes] = await Promise.allSettled([
+    db.certificateOfAnalysis.findMany({
+      where: { isPublished: true },
+      select: { batchNumber: true, purity: true },
+    }),
+    db.certificateOfAnalysis.findFirst({
+      where: { isPublished: true, purity: { not: null } },
+      orderBy: [{ purity: "desc" }, { testDate: "desc" }],
+      select: { batchNumber: true, purity: true, testDate: true },
+    }),
+  ]);
 
-    return {
-      chargenCount: distinctBatches.length,
-      avgPurity: avg._avg.purity ?? null,
-      showcase:
-        showcase && showcase.purity != null
-          ? {
-              batchNumber: showcase.batchNumber,
-              purity: showcase.purity,
-              testDate: showcase.testDate,
-            }
-          : null,
-    };
-  } catch (err) {
-    console.error("[ueber-uns] DB fetch failed:", err);
-    return { chargenCount: null, avgPurity: null, showcase: null };
+  let chargenCount: number | null = null;
+  let avgPurity: number | null = null;
+  if (rowsRes.status === "fulfilled") {
+    const rows = rowsRes.value;
+    chargenCount = new Set(rows.map((r) => r.batchNumber)).size;
+    const purities = rows
+      .map((r) => r.purity)
+      .filter((p): p is number => p != null);
+    avgPurity = purities.length
+      ? purities.reduce((a, b) => a + b, 0) / purities.length
+      : null;
+  } else {
+    console.error("[ueber-uns] COA rows query failed:", rowsRes.reason);
   }
+
+  let showcase: UeberUnsData["showcase"] = null;
+  if (showcaseRes.status === "fulfilled") {
+    const sc = showcaseRes.value;
+    if (sc && sc.purity != null) {
+      showcase = {
+        batchNumber: sc.batchNumber,
+        purity: sc.purity,
+        testDate: sc.testDate,
+      };
+    }
+  } else {
+    console.error("[ueber-uns] showcase query failed:", showcaseRes.reason);
+  }
+
+  return { chargenCount, avgPurity, showcase };
 }
 
 /**
