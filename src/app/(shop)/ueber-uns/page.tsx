@@ -17,8 +17,12 @@ import "./ueber-uns.css";
  *   - `showcase`      — COA mit höchster purity → Specimen-Card-Lot, Story-
  *     Annotationen, HPLC-Figure-Card (Lot, Reinheit, Run-Datum)
  *
- * ISR mit 1h-Revalidate. Fallbacks: bei DB-Fehler/leerer Tabelle "—" für
- * die Counter + konsistente Demo-Werte für die Showcase-Felder.
+ * `force-dynamic`: die Seite wird pro Request server-side gerendert (wie
+ * /products), damit die Live-Counter echte Daten zeigen. Mit ISR
+ * (`revalidate`) würde sie beim Docker-Build OHNE DB statisch vorgerendert
+ * → der "—"-Fallback wäre eingebacken bis zur ersten Revalidation.
+ * Fallbacks bleiben: bei DB-Fehler/leerer Tabelle "—" für die Counter +
+ * konsistente Demo-Werte für die Showcase-Felder.
  *
  * Das Vial ist unsere 120-Frame Cycles-Assembly: Hero zeigt frame_120
  * (assembled, statisch + Maus-Parallax), die Story-Section scrubbt frame_001
@@ -27,7 +31,7 @@ import "./ueber-uns.css";
  * TODO:self bleibt sichtbar — user füllt USt-ID, HRB selber (kontakt-card).
  */
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: `Über uns — ${APP_NAME}`,
