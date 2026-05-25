@@ -74,10 +74,10 @@ export function FeaturedProductCard({
         {/* 2x2 Specs (nur bei vorhandener COA) */}
         {product.coa && (
           <dl className="mt-6 grid grid-cols-2 gap-x-6">
-            <SpecItem k="Reinheit" v={product.coa.purity != null ? `${product.coa.purity.toFixed(2)}%` : "—"} gold />
+            <SpecItem k="Reinheit" v={product.coa.purity != null ? `${product.coa.purity.toFixed(2)}%` : "n. v."} gold />
             <SpecItem k="Methode" v={`${product.coa.testMethod} 220 nm`} />
             <SpecItem k="Labor" v={product.coa.laboratory} />
-            <SpecItem k="Datum" v={testedAt ?? "—"} />
+            <SpecItem k="Datum" v={testedAt ?? "n. v."} />
           </dl>
         )}
 

@@ -34,8 +34,8 @@ import "./ueber-uns.css";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: `Über uns — ${APP_NAME}`,
-  description: `${APP_NAME} liefert Forschungspeptide nach veröffentlichter Methode. Jede Charge erhält eine Lot-Nummer und ein HPLC-Chromatogramm von Janoshik Analytical — gemessen, nicht versprochen.`,
+  title: `Über uns | ${APP_NAME}`,
+  description: `${APP_NAME} liefert Forschungspeptide nach veröffentlichter Methode. Jede Charge erhält eine Lot-Nummer und ein HPLC-Chromatogramm von Janoshik Analytical: gemessen, nicht versprochen.`,
   robots: { index: true, follow: true },
 };
 
@@ -116,9 +116,9 @@ function applyPlaceholders(html: string, data: UeberUnsData): string {
   } else {
     out = out.replaceAll(
       'data-count="{{AVG_PURITY_RAW}}" data-decimals="2">0',
-      ">—",
+      ">n. v.",
     );
-    out = out.replaceAll("{{AVG_PURITY_RAW}}", "—");
+    out = out.replaceAll("{{AVG_PURITY_RAW}}", "n. v.");
   }
 
   // Chargen freigegeben (Hero + Zahlen)
@@ -127,9 +127,9 @@ function applyPlaceholders(html: string, data: UeberUnsData): string {
   } else {
     out = out.replaceAll(
       'data-count="{{CHARGEN_COUNT}}" data-decimals="0">0',
-      ">—",
+      ">n. v.",
     );
-    out = out.replaceAll("{{CHARGEN_COUNT}}", "—");
+    out = out.replaceAll("{{CHARGEN_COUNT}}", "n. v.");
   }
 
   // Showcase-Felder: echte COA oder konsistente Demo-Werte

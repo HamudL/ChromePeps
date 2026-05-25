@@ -230,7 +230,7 @@ export function CartSheet() {
                   asChild
                 >
                   <Link href="/checkout">
-                    Zur Kasse — {formatPrice(totalPrice)}
+                    Zur Kasse · {formatPrice(totalPrice)}
                   </Link>
                 </Button>
                 <Button

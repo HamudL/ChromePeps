@@ -131,7 +131,7 @@ nicht versprochen.</h1>
           Der Markt für Forschungspeptide ist voll von Anbietern, die das Wort <b>Reinheit</b> als Schlagwort verwenden. Wir behandeln es als Messwert. Jede Charge, die unser Lager verlässt, trägt einen Datensatz: Reinheit per HPLC, Identität per Massenspektrometrie, eindeutige Lot-Nummer, Datum, Methode.
         </p>
         <p>
-          Diese Daten gehören nicht uns. Sie gehören in jede Bestellung, in jede E-Mail, in jeden öffentlich verifizierbaren <span class="accent">Janoshik-Eintrag</span>. Transparenz ist die teuerste Marketing-Strategie — und die einzige, die unter HPLC standhält.
+          Diese Daten gehören nicht uns. Sie gehören in jede Bestellung, in jede E-Mail, in jeden öffentlich verifizierbaren <span class="accent">Janoshik-Eintrag</span>. Transparenz ist die teuerste Marketing-Strategie und die einzige, die unter HPLC standhält.
         </p>
         <p>
           Wir geben keine Heilversprechen. Wir liefern <b>Material</b> nach <b>Methode</b>, mit <b>Beleg</b>. Was unsere Kunden damit anfangen, ist deren Wissenschaft.
@@ -146,7 +146,7 @@ nicht versprochen.</h1>
           <div class="row"><dt>Lagerung</dt><dd>tiefgekühlt · isolierter Schrank</dd></div>
           <div class="row"><dt>Analytik</dt><dd>Janoshik Labs · HPLC / MS</dd></div>
           <div class="row"><dt>Versand</dt><dd>DE + EU · ~24 h Handling</dd></div>
-          <div class="row"><dt>Zahlung</dt><dd>Stripe · SEPA · Crypto (soon)</dd></div>
+          <div class="row"><dt>Zahlung</dt><dd>Stripe · SEPA · Vorkasse</dd></div>
           <div class="row"><dt>Klasse</dt><dd>Research Use Only</dd></div>
         </dl>
       </aside>
@@ -166,7 +166,7 @@ nicht versprochen.</h1>
       <h2 style="font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 4.2vw, 56px); line-height: 1.05; letter-spacing: -0.02em; margin: 14px 0 14px; color: var(--foreground);">
         Was passiert, bevor das Etikett <span class="accent" style="color: var(--primary)">freigegeben</span> wird.
       </h2>
-      <p style="font-size: 17px; color: var(--muted-fg); margin: 0;">Vier Schritte vom Rohstoff bis zur versendeten Charge — scrollen Sie weiter, das Vial dreht sich mit.</p>
+      <p style="font-size: 17px; color: var(--muted-fg); margin: 0;">Vier Schritte vom Rohstoff bis zur versendeten Charge. Scrollen Sie weiter, das Vial dreht sich mit.</p>
     </div>
 
     <div class="story-inner">
@@ -486,7 +486,7 @@ verkäufer.</h3>
       <div class="tl-row">
         <div class="tl-q"><span class="dot"></span>Q2 · 2026</div>
         <div class="tl-t">Cold-Chain &amp; EU-Versand</div>
-        <div class="tl-d">Isolierte Verpackung, *24 h Handling, Versand in DE und ausgewählten EU-Ländern.</div>
+        <div class="tl-d">Isolierte Verpackung, ~24 h Handling, Versand in DE und ausgewählten EU-Ländern.</div>
         <div class="tl-s">erledigt ✓</div>
       </div>
       <div class="tl-row current">
@@ -498,7 +498,7 @@ verkäufer.</h3>
       <div class="tl-row future">
         <div class="tl-q"><span class="dot"></span>Q1 · 2027</div>
         <div class="tl-t">Endotoxin-Routine-Testing</div>
-        <div class="tl-d">LAL-Test zusätzlich zur HPLC für jede sensible Charge Standard wird angehoben.</div>
+        <div class="tl-d">LAL-Test zusätzlich zur HPLC für jede sensible Charge. Standard wird angehoben.</div>
         <div class="tl-s">geplant</div>
       </div>
       <div class="tl-row future">
@@ -522,10 +522,10 @@ verkäufer.</h3>
     <div class="kontakt-left reveal">
       <div class="mono-label gold"><span class="dot"></span>07 · KONTAKT</div>
       <h2>Forschungsfragen.<br/>Sortiments­anfragen.<br/><span class="accent">CoA-Verifikation.</span></h2>
-      <p class="sub">Wir antworten innerhalb von 24 Werktags­stunden, auf Deutsch oder Englisch. Kein Bot, kein Ticket-System.</p>
+      <p class="sub">Wir antworten innerhalb eines Werktags, auf Deutsch oder Englisch. Kein Bot, kein Ticket-System.</p>
       <div class="kontakt-ctas">
-        <a class="btn-gold large" href="mailto:hello@chromepeps.com">
-          hello@chromepeps.com
+        <a class="btn-gold large" href="mailto:support@chromepeps.com">
+          support@chromepeps.com
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m0 0L8 3m4 4L8 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
         <a class="btn-ghost large" href="#">FAQ ansehen</a>
@@ -537,11 +537,11 @@ verkäufer.</h3>
       <ul>
         <li><span>Rechtsträger</span><b>ChromePeps UG (haftungsbeschränkt)</b></li>
         <li><span>Sitz</span><b>Baden-Württemberg, DE</b></li>
-        <li><span>USt-ID</span><b>DE 3xx xxx xxx</b></li>
-        <li><span>HR</span><b>AG · HRB ····</b></li>
+        <li><span>USt-ID</span><b>TODO:self</b></li>
+        <li><span>HR</span><b>TODO:self</b></li>
         <li><span>Analytik</span><b>Janoshik Analytical s.r.o.</b></li>
         <li><span>Versand</span><b>DHL · EU-weit</b></li>
-        <li><span>Klasse</span><b>Research Use Only · §6 AMG</b></li>
+        <li><span>Klasse</span><b>Research Use Only</b></li>
       </ul>
     </aside>
 
