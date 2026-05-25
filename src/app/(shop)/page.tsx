@@ -191,7 +191,7 @@ export default async function HomePage() {
               <HeroLogo />
 
               <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto">
-                Premium-Forschungspeptide. Laborgeprüfte Reinheit.
+                Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit. Jede Charge mit Analysezertifikat.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
@@ -290,7 +290,7 @@ export default async function HomePage() {
           {[
             { icon: Package, n: "1", title: "Chargen-Handling", desc: "Lagerung bei -24\u00B0C mit eindeutiger Lot-Nummer" },
             { icon: Microscope, n: "2", title: "Janoshik-Test", desc: "HPLC-Analyse durch unabhängiges Drittlabor" },
-            { icon: ShieldCheck, n: "3", title: "Qualitätskontrolle", desc: "Nur Chargen die alle Tests bestehen werden freigegeben" },
+            { icon: ShieldCheck, n: "3", title: "Qualitätskontrolle", desc: "Nur Chargen, die alle Tests bestehen, werden freigegeben" },
             { icon: Eye, n: "4", title: "Online verifizierbar", desc: "Ergebnisse öffentlich einsehbar auf janoshik.com" },
           ].map((step, i) => (
             <FadeUp key={step.n} delay={i * 0.1}>

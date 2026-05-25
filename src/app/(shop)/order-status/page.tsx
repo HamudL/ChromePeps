@@ -159,7 +159,7 @@ function OrderStatusInner() {
             Bestellung verfolgen
           </h1>
           <p className="mt-3 text-base text-muted-foreground max-w-2xl">
-            Bestellnummer und E-Mail-Adresse eingeben — wir zeigen dir den
+            Bestellnummer und E-Mail-Adresse eingeben. Wir zeigen dir den
             aktuellen Stand deiner Bestellung.
           </p>
         </div>

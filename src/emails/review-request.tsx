@@ -45,8 +45,8 @@ export function ReviewRequestEmail({
       </Text>
 
       <Text className="text-sm leading-6 text-neutral-700">
-        vielen Dank, dass Sie bei ChromePeps bestellt haben &ndash; wir hoffen,
-        alles ist gut bei Ihnen angekommen. Wenn Sie einen Moment Zeit haben,
+        vielen Dank, dass Sie bei ChromePeps bestellt haben. Wir hoffen, alles
+        ist gut bei Ihnen angekommen. Wenn Sie einen Moment Zeit haben,
         w&uuml;rden wir uns sehr &uuml;ber eine kurze Bewertung freuen. Ihre
         R&uuml;ckmeldung hilft anderen Forschenden bei der Auswahl.
       </Text>

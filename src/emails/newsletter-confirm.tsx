@@ -55,8 +55,8 @@ export function NewsletterConfirmEmail({
 
       <Text className="mt-6 text-xs leading-5 text-neutral-500">
         Sie haben sich nicht angemeldet? Dann k&ouml;nnen Sie diese E-Mail
-        einfach ignorieren &mdash; ohne Best&auml;tigung tragen wir Sie nicht
-        in den Verteiler ein.
+        einfach ignorieren. Ohne Best&auml;tigung tragen wir Sie nicht in den
+        Verteiler ein.
       </Text>
     </EmailLayout>
   );

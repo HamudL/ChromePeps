@@ -120,11 +120,10 @@ export function ResearchDisclaimer() {
           id="research-disclaimer-body"
           className="text-sm text-muted-foreground text-center leading-relaxed mb-6"
         >
-          Alle Produkte von {APP_NAME} sind ausschließlich als
-          Referenzmaterialien für die In-vitro-Forschung bestimmt. Sie sind
-          nicht für den menschlichen oder tierischen Konsum vorgesehen und
-          dürfen nicht für therapeutische, diagnostische oder medizinische
-          Zwecke verwendet werden.
+          Alle Produkte von {APP_NAME} werden ausschließlich als
+          Referenzmaterialien für die In-vitro-Forschung abgegeben. Sie sind
+          nicht zum Konsum durch Menschen oder Tiere bestimmt und nicht für
+          therapeutische, diagnostische oder medizinische Zwecke.
         </p>
 
         {/* Checkbox */}
@@ -137,9 +136,11 @@ export function ResearchDisclaimer() {
             className="mt-1 h-4 w-4 rounded border-border accent-primary shrink-0"
           />
           <span className="text-sm leading-relaxed">
-            Ich bestätige, dass ich ein qualifizierter Forscher oder
-            Laborexperte bin und die Produkte ausschließlich für
-            Forschungszwecke verwende.
+            Ich bestätige, dass ich in einem Forschungs- oder Laborkontext
+            tätig bin und die Substanzen ausschließlich als Referenzmaterial
+            für die In-vitro-Forschung verwende. Mir ist bekannt, dass die
+            Produkte nicht zur Anwendung am Menschen oder Tier zugelassen
+            sind.
           </span>
         </label>
 

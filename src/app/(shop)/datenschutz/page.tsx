@@ -130,13 +130,13 @@ export default function DatenschutzPage() {
           </p>
           <ul className="list-disc pl-5 mt-1 space-y-0.5">
             <li>
-              <strong>Essentielle Cookies</strong> — technisch notwendig für
+              <strong>Essentielle Cookies:</strong> technisch notwendig für
               Login, Warenkorb und Checkout (§ 25 Abs. 2 Nr. 2 TTDSG).
             </li>
             <li>
-              <strong>Statistik / Marketing</strong> — derzeit nicht im Einsatz.
-              Sollten wir künftig Analyse-Tools einsetzen, holen wir vorher Ihre
-              Einwilligung über das Cookie-Banner ein.
+              <strong>Statistik und Marketing:</strong> derzeit nicht im
+              Einsatz. Sollten wir künftig Analyse-Tools einsetzen, holen wir
+              vorher Ihre Einwilligung über das Cookie-Banner ein.
             </li>
           </ul>
         </section>

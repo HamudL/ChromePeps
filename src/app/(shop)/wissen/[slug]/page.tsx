@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
   if (!post || !post.publishedAt) return { title: "Artikel nicht gefunden" };
 
-  const title = post.seoTitle ?? `${post.title} — ChromePeps Wissen`;
+  const title = post.seoTitle ?? `${post.title} | ChromePeps Wissen`;
   const description = post.seoDescription ?? post.excerpt;
   return {
     title,

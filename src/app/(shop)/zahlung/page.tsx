@@ -73,9 +73,9 @@ export default function ZahlungPage() {
             Wir akzeptieren Visa, Mastercard und American Express. Die Zahlung
             wird über den PCI-DSS-zertifizierten Zahlungsdienstleister Stripe
             abgewickelt. Ihre Zahlungsdaten werden verschlüsselt direkt an
-            Stripe übermittelt — wir selbst erhalten und speichern keine
+            Stripe übermittelt; wir selbst erhalten und speichern keine
             Kreditkartendaten. Nach erfolgreicher Freigabe wird die Bestellung
-            sofort bearbeitet und versandt.
+            bearbeitet und versandt.
           </p>
         </section>
 

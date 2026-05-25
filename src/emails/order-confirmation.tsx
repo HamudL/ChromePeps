@@ -78,8 +78,8 @@ export function OrderConfirmationEmail({
   }).format(placedAt);
 
   const preview = isBank
-    ? `Bestellbest\u00e4tigung ${orderNumber} \u2013 bitte per Vorkasse bezahlen`
-    : `Bestellbest\u00e4tigung ${orderNumber} \u2013 vielen Dank f\u00fcr Ihren Einkauf`;
+    ? `Bestellbest\u00e4tigung ${orderNumber}, bitte per Vorkasse bezahlen`
+    : `Bestellbest\u00e4tigung ${orderNumber}, vielen Dank f\u00fcr Ihren Einkauf`;
 
   return (
     <EmailLayout preview={preview}>

@@ -57,7 +57,7 @@ export function InventoryAlertEmail({
             >
               <strong>{item.name}</strong>
               <span className="text-neutral-500"> · {item.sku}</span>
-              <span className="text-rose-700"> — 0 / {item.threshold}</span>
+              <span className="text-rose-700"> · 0 / {item.threshold}</span>
             </Text>
           ))}
         </Section>
@@ -77,7 +77,7 @@ export function InventoryAlertEmail({
               <span className="text-neutral-500"> · {item.sku}</span>
               <span className="text-amber-700">
                 {" "}
-                — {item.stock} / {item.threshold}
+                · {item.stock} / {item.threshold}
               </span>
             </Text>
           ))}
@@ -95,8 +95,8 @@ export function InventoryAlertEmail({
           /admin/products
         </a>
         . Alert-Schwelle pro Produkt: Edit-Form, Feld „Low-Stock
-        Threshold&ldquo;. Stille einzelne Produkte indem du die Schwelle auf
-        0 setzt — dann nie wieder Alert für dieses Produkt.
+        Threshold&ldquo;. Stille einzelne Produkte, indem du die Schwelle auf
+        0 setzt; dann erscheint kein Alert mehr für dieses Produkt.
       </Text>
     </EmailLayout>
   );

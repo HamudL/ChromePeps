@@ -68,7 +68,7 @@ export function PasswordResetEmail({
 
       <Text className="mt-6 text-xs leading-5 text-neutral-500">
         Sie haben diese E-Mail nicht angefordert? Dann k&ouml;nnen Sie sie
-        ignorieren &mdash; Ihr Passwort bleibt unver&auml;ndert.
+        ignorieren. Ihr Passwort bleibt unver&auml;ndert.
       </Text>
     </EmailLayout>
   );

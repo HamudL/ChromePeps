@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return {};
 
   return {
-    title: `${product.name} — Analysezertifikate | ChromePeps`,
+    title: `${product.name} · Analysezertifikate | ChromePeps`,
     description: `Drittlabor-verifizierte Analysezertifikate für ${product.name}. ${product.certificates.length} Testergebnisse verfügbar.`,
   };
 }

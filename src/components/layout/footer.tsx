@@ -11,8 +11,7 @@ export function Footer() {
           <div className="col-span-2 space-y-3">
             <h3 className="text-lg font-bold chrome-text">{APP_NAME}</h3>
             <p className="text-sm text-white/50 max-w-sm">
-              Premium-Forschungspeptide mit verifizierter Reinheit und
-              umfassenden Analysezertifikaten.
+              Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit. Jede Charge wird mit Analysezertifikat ausgeliefert.
             </p>
             <div className="mt-4 space-y-2">
               <p className="text-sm font-medium text-white/80">Newsletter</p>
@@ -53,7 +52,7 @@ export function Footer() {
             {RESEARCH_DISCLAIMER}
           </p>
           <p className="text-xs text-white/50 text-center mt-4">
-            &copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+            &copy; {new Date().getFullYear()} {APP_NAME}. Alle Rechte vorbehalten.
           </p>
         </div>
       </div>

@@ -32,7 +32,7 @@ export default function CheckoutError({
         <h1 className="text-2xl font-bold">Checkout unterbrochen</h1>
         <p className="text-sm text-muted-foreground">
           Beim Abschluss deiner Bestellung ist leider ein Fehler aufgetreten.
-          Dein Warenkorb ist noch vollständig — du kannst den Vorgang gefahrlos
+          Dein Warenkorb ist noch vollständig. Du kannst den Vorgang gefahrlos
           wiederholen. Es wurde noch <strong>nichts</strong> abgebucht.
         </p>
         {error.digest && (

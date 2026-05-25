@@ -35,8 +35,8 @@ export default function KontaktPage() {
       />
       <h1 className="text-3xl font-bold tracking-tight mb-2">Kontakt</h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Wir sind für Sie da — bei Fragen zu Produkten, Bestellungen oder
-        Forschungsanwendungen.
+        Bei Fragen zu Produkten, Bestellungen oder Forschungsanwendungen
+        sind wir für Sie da.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-4 mb-8">
@@ -67,7 +67,7 @@ export default function KontaktPage() {
             [TODO: +49 XXX XXXXXXX]
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Mo–Fr, 9:00–17:00 Uhr
+            Mo bis Fr, 9:00 bis 17:00 Uhr
           </p>
         </div>
 
@@ -93,7 +93,7 @@ export default function KontaktPage() {
           <p className="text-muted-foreground text-sm">
             Montag bis Freitag
             <br />
-            9:00–17:00 Uhr
+            9:00 bis 17:00 Uhr
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Bestellungen rund um die Uhr über den Shop möglich.

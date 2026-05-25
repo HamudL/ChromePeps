@@ -58,7 +58,7 @@ export function HeroLogo() {
   // page retains its document outline for screen readers and assistive tech.
   return (
     <>
-      <h1 className="sr-only">ChromePeps — Premium Forschungspeptide</h1>
+      <h1 className="sr-only">ChromePeps · Forschungspeptide mit unabhängig geprüfter Reinheit</h1>
       <ChromeLogo3D />
     </>
   );

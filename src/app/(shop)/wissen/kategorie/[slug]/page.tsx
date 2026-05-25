@@ -36,7 +36,7 @@ export async function generateMetadata({
   });
   if (!cat) return { title: "Kategorie nicht gefunden" };
   return {
-    title: `${cat.name} — Wissen`,
+    title: `${cat.name} · Wissen`,
     description: cat.description ?? `Beiträge in ${cat.name}.`,
     alternates: { canonical: `/wissen/kategorie/${slug}` },
   };
