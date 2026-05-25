@@ -1,576 +1,554 @@
 /**
- * Design-HTML der /ueber-uns Seite, 1:1 aus dem Claude-Design-Handoff
- * ("Über uns-handoff.zip" → ueber-uns.html), in eine getrennte Datei
- * extrahiert, weil ~25 KB Markup die page.tsx sonst aufblähen würden.
+ * Design-HTML der /ueber-uns Seite — Brand-Edition aus dem Claude-Design-
+ * Handoff (ueber-uns.html), in eine getrennte Datei extrahiert.
  *
  * Wird in page.tsx via dangerouslySetInnerHTML in den .ueber-uns-design
- * Wrapper injected. Die scoped CSS (ueber-uns.css) und der Client-Side
- * JS (interactions.tsx) docken über IDs/Klassen an dieses Markup an.
+ * Wrapper injected. Scoped CSS (ueber-uns.css) + Client-JS (interactions.tsx)
+ * docken über IDs/Klassen an.
  *
  * Anpassungen ggü. Quell-HTML:
- *   - <head>, <body>, <script src="ueber-uns.js"> entfernt (Next handled)
- *   - <footer class="foot"> entfernt (wir behalten den Site-Footer aus dem
- *     (shop)-Layout statt dem Design-eigenen)
- *   - assets/vial/ Pfade auf /ueber-uns/vial/ umgeschrieben (public-Pfad)
+ *   - <head>, <body>, design-eigene <nav>, <div.foot>, <script> entfernt
+ *     (Site-Header + Footer kommen aus dem (shop)-Layout; chrom-nav bleibt
+ *     als Sub-Navigation und sitzt sticky unter dem Header)
+ *   - Vial-<img>s zeigen auf unsere 120-Frame Assembly-Sequenz:
+ *     Hero = frame_120 (assembled, statisches Showcase + Maus-Parallax),
+ *     Story = frame_001 (scroll-scrubbed durch interactions.tsx)
+ *   - {{PLACEHOLDER}}-Tokens für Live-Daten aus der DB (page.tsx ersetzt sie):
+ *     AVG_PURITY_RAW, CHARGEN_COUNT, LOT_NUMBER, PURITY, TEST_DATE
  */
 
-export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
-<nav class="nav" id="nav">
-  <div class="nav-inner">
-    <a class="brand" href="#top" aria-label="ChromePeps Startseite">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32" width="22" height="22">
-          <defs>
-            <linearGradient id="brandGrad" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stop-color="#e9c97a" />
-              <stop offset="50%" stop-color="#c89a2a" />
-              <stop offset="100%" stop-color="#8c6712" />
-            </linearGradient>
-          </defs>
-          <path d="M16 2L29 9v14L16 30 3 23V9z" fill="none" stroke="url(#brandGrad)" stroke-width="1.5"/>
-          <path d="M11 12h8l-2 4h-4l4 6h-3l-5-7z" fill="url(#brandGrad)"/>
-        </svg>
-      </span>
-      <span class="brand-word">ChromePeps</span>
-    </a>
-    <div class="nav-links">
-      <a href="#manifest">Manifest</a>
-      <a href="#prozess">Prozess</a>
-      <a href="#labor">Labor</a>
-      <a href="#zahlen">Zahlen</a>
-      <a href="#roadmap">Roadmap</a>
+export const DESIGN_BODY_HTML = `
+
+<!-- ========================================================================
+     TOP NAV — Brand
+     ==================================================================== -->
+
+
+<!-- ========================================================================
+     CHROMATOGRAM SUB-NAV — table of contents as HPLC trace
+     ==================================================================== -->
+<div class="chrom-nav" id="chromNavBar" aria-label="Inhalt als HPLC-Chromatogramm">
+  <div class="chrom-nav-inner">
+    <div class="chrom-nav-label">
+      <span class="live"></span>
+      <span>RP-HPLC · 220 nm</span>
     </div>
-    <a class="nav-cta" href="#kontakt">
-      <span>Kontakt</span>
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8m0 0L6.5 2.5M10 6L6.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </a>
+    <div class="chrom-nav-svg-wrap">
+      <svg class="chrom-nav-svg" id="chromNav" viewBox="0 0 1000 56" preserveAspectRatio="none" aria-hidden="false">
+        <g class="grid">
+          <line x1="0" x2="1000" y1="14" y2="14"/>
+          <line x1="0" x2="1000" y1="28" y2="28"/>
+          <line x1="0" x2="1000" y1="42" y2="42"/>
+        </g>
+        <line class="baseline" x1="0" x2="1000" y1="50" y2="50"/>
+        <path id="chromNavFill" class="trace-fill" d=""/>
+        <path id="chromNavTrace" class="trace" d=""/>
+        <g id="chromNavPeaks"></g>
+        <line class="playhead" id="chromNavPlayhead" x1="0" x2="0" y1="0" y2="56"/>
+      </svg>
+    </div>
+    <div class="chrom-nav-right">
+      <b id="chromNavTime">00:00</b>
+      <span>min</span>
+    </div>
   </div>
-  <div class="nav-progress"><div id="nav-progress-bar"></div></div>
-</nav>
+</div>
 
-<!-- ========== HERO ========== -->
-<section class="hero" id="top">
-  <div class="hero-grain" aria-hidden="true"></div>
-  <div class="hero-grid" aria-hidden="true"></div>
-  <div class="ambient-orb orb-1" aria-hidden="true"></div>
-  <div class="ambient-orb orb-2" aria-hidden="true"></div>
-
+<!-- ========================================================================
+     HERO
+     ==================================================================== -->
+<section class="hero hero-ambient" id="top">
+  <div class="subtle-grid"></div>
   <div class="hero-inner">
+
     <div class="hero-copy">
-      <div class="mono-label hero-mono">
-        <span class="dot"></span>EST. TODO:SELF &nbsp;·&nbsp; (STANDORT)TODO:SELF·&nbsp; STAND MAI 2026
-      </div>
-      <h1 class="hero-title">
-        <span class="line">Reinheit</span>
-        <span class="line muted" style="width: 648px">ist keine</span>
-        <span class="line chrome" style="opacity: 0">Behauptung.</span>
-      </h1>
-      <p class="hero-sub">
-        ChromePeps ist ein deutsches Labor-Supply für Forschungspeptide. Jede Charge wird durch
-        Janoshik Labs per HPLC analysiert, bevor sie das Lager verlässt. Kein Marketing-Filter
-        zwischen Forscher und Chromatogramm.
-      </p>
+      <div class="hero-kicker">Über uns · Mai 2026</div>
+      <h1 class="hero-title">Reinheit, gemessen
+nicht versprochen.</h1>
+      <p class="hero-sub">ChromePeps liefert Forschungspeptide nach veröffentlichter Methode. Jede Charge erhält eine Lot-Nummer; jede Lot-Nummer ein HPLC-Chromatogramm von Janoshik Analytical. Was Sie auf dem Etikett lesen, hat ein unabhängiges Labor gemessen, nicht wir.</p>
       <div class="hero-ctas">
-        <a class="btn-gold" href="#labor" data-magnet>
-          <span>Wie wir testen</span>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10m0 0L8 3m4 4L8 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <a class="btn-gold" href="#labor">
+          Wie wir testen
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m0 0L8 3m4 4L8 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
-        <a class="btn-ghost-dark" href="#manifest" data-magnet>
-          <span>Unser Manifest</span>
-        </a>
+        <a class="btn-ghost" href="#manifest">Unser Manifest</a>
       </div>
 
       <div class="hero-meta">
         <div class="hero-meta-item">
-          <div class="hero-meta-num" data-count="99.34" data-decimals="2" data-suffix="%">0</div>
-          <div class="hero-meta-lbl">Ø HPLC-Reinheit · 2026</div>
+          <div class="v"><span data-count="{{AVG_PURITY_RAW}}" data-decimals="2">0</span><small>%</small></div>
+          <div class="k">Ø HPLC-Reinheit · 2026</div>
         </div>
-        <div class="hero-meta-sep"></div>
         <div class="hero-meta-item">
-          <div class="hero-meta-num" data-count="{{CHARGEN_COUNT}}" data-decimals="0">0</div>
-          <div class="hero-meta-lbl">Chargen freigegeben</div>
+          <div class="v"><span data-count="{{CHARGEN_COUNT}}" data-decimals="0">0</span></div>
+          <div class="k">Chargen freigegeben</div>
         </div>
-        <div class="hero-meta-sep"></div>
         <div class="hero-meta-item">
-          <div class="hero-meta-num" data-count="100" data-suffix="%">0</div>
-          <div class="hero-meta-lbl">3rd-Party verifiziert</div>
+          <div class="v"><span data-count="100" data-decimals="0">0</span><small>%</small></div>
+          <div class="k">3rd-Party verifiziert</div>
         </div>
       </div>
     </div>
 
-    <div class="hero-vial-wrap">
-      <div class="vial-stage" id="heroVialStage">
-        <div class="vial-backdrop" aria-hidden="true">
-          <div class="vial-disc"></div>
-          <div class="vial-scan"></div>
+    <div class="hero-stage">
+      <div class="specimen-card" id="specCard">
+        <div class="specimen-head">
+          <span>SPECIMEN · {{LOT_NUMBER}}</span>
+          <span class="live">live</span>
         </div>
-        <div class="vial-3d" id="vial3d">
-          <div class="vial-glow"></div>
-          <img class="vial-img" src="/ueber-uns/vial/frame_01.webp" alt="ChromePeps Retatrutide Vial" />
-          <div class="vial-sheen" aria-hidden="true"></div>
-          <div class="vial-shadow"></div>
+        <div class="specimen-vial" id="specVialStage">
+          <span class="caliper top"><span>⌀ 22&nbsp;mm</span></span>
+          <span class="caliper right">↕&nbsp;58&nbsp;mm · 10&nbsp;ml borosilikat</span>
+          <img src="/ueber-uns/vial-assembly/frame_120.webp" alt="ChromePeps Vial" id="specVialImg" />
+          <span class="caliper lot"><b>LOT</b>&nbsp;{{LOT_NUMBER}} · <span class="pass">HPLC {{PURITY}} %</span></span>
+          <span class="stamp-ruo">RUO<small>Research Use Only</small></span>
         </div>
-        <div class="vial-callouts" aria-hidden="true">
-          <div class="callout c-top">
-            <span class="line"></span>
-            <span class="label"><b>10ml</b>· clear borosilicate</span>
-          </div>
-          <div class="callout c-mid">
-            <span class="line"></span>
-            <span class="label"><b>HPLC ≥ 98%</b>· Janoshik verified</span>
-          </div>
-          <div class="callout c-bot">
-            <span class="line"></span>
-            <span class="label"><b>LOT-2026-K83</b>· −24°C cold-chain</span>
-          </div>
+        <div class="specimen-foot">
+          <div><div class="k">Method</div><div class="v">RP-HPLC · ESI-MS</div></div>
+          <div><div class="k">Released</div><div class="v amber">PASS · {{TEST_DATE}}</div></div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ticker -->
-  <div class="ticker" aria-hidden="true">
-    <div class="ticker-track">
-      <span>HPLC ≥ 98%</span><span>·</span>
-      <span>JANOSHIK LABS · INDEPENDENT</span><span>·</span>
-      <span>COA PER ORDER</span><span>·</span>
-      <span>COLD CHAIN</span><span>·</span>
-      <span>GDPR · DSGVO</span><span>·</span>
-      <span>RESEARCH USE ONLY</span><span>·</span>
-      <span>LOT-TRACED · END TO END</span><span>·</span>
-      <span>HPLC ≥ 98%</span><span>·</span>
-      <span>JANOSHIK LABS · INDEPENDENT</span><span>·</span>
-      <span>COA PER ORDER</span><span>·</span>
-      <span>COLD CHAIN</span><span>·</span>
-      <span>GDPR · DSGVO</span><span>·</span>
-      <span>RESEARCH USE ONLY</span><span>·</span>
-      <span>LOT-TRACED · END TO END</span><span>·</span>
-    </div>
   </div>
 </section>
 
-<!-- ========== MANIFEST ========== -->
-<section class="manifest" id="manifest">
+<!-- ========================================================================
+     MANIFEST (dark)
+     ==================================================================== -->
+<section class="manifest section-ink" id="manifest">
+  <div class="apo-grid-ink"></div>
   <div class="container">
-    <div class="manifest-head reveal">
-      <div class="mono-label dark"><span class="num">01</span> &nbsp;/&nbsp; MANIFEST</div>
-    </div>
     <div class="manifest-grid">
-      <div class="manifest-text reveal">
-        <p class="lede">
-          Wir bauen ChromePeps für Forschende, die ein <em>Chromatogramm</em> lesen
-          können, und für alle, die es lernen wollen.
+
+      <div class="manifest-head reveal">
+        <div class="mono-label gold"><span class="dot"></span>01 · MANIFEST</div>
+        <h2>Reinheit ist <span class="accent">kein Schlagwort.</span><br/>Es ist eine Messung.</h2>
+      </div>
+
+      <div class="manifest-body reveal">
+        <p>
+          Der Markt für Forschungspeptide ist voll von Anbietern, die das Wort <b>Reinheit</b> als Schlagwort verwenden. Wir behandeln es als Messwert. Jede Charge, die unser Lager verlässt, trägt einen Datensatz: Reinheit per HPLC, Identität per Massenspektrometrie, eindeutige Lot-Nummer, Datum, Methode.
         </p>
         <p>
-          Der Markt für Forschungspeptide ist gefüllt mit Anbietern, die das Wort
-          „Reinheit" als Schlagwort verwenden. Wir behandeln es als Messwert. Jede
-          Charge, die unser Lager verlässt, hat einen Datensatz: Massenspektrum, Lot-Nummer, Test-Datum.
+          Diese Daten gehören nicht uns. Sie gehören in jede Bestellung, in jede E-Mail, in jeden öffentlich verifizierbaren <span class="accent">Janoshik-Eintrag</span>. Transparenz ist die teuerste Marketing-Strategie und die einzige, die unter HPLC standhält.
         </p>
         <p>
-          Diese Daten gehören nicht uns. Sie gehören in jede Bestellung, in jede
-          E-Mail, in jeden öffentlich verifizierbaren Janoshik-Eintrag. Transparenz
-          ist die teuerste Marketing-Strategie und die einzige, die unter HPLC
-          standhält.
+          Wir geben keine Heilversprechen. Wir liefern <b>Material</b> nach <b>Methode</b>, mit <b>Beleg</b>. Was unsere Kunden damit anfangen, ist deren Wissenschaft.
         </p>
       </div>
+
       <aside class="manifest-side reveal">
-        <ul class="meta-list">
-          <li><span class="k">Gegründet</span><span class="v">TODO:self</span></li>
-          <li><span class="k">Rechtsform</span><span class="v">UG (haftungsbeschränkt)</span></li>
-          <li><span class="k">Sitz</span><span class="v">München, DE</span></li>
-          <li><span class="k">Lagerung</span><span class="v">TODO:self</span></li>
-          <li><span class="k">Analytik</span><span class="v">Janoshik Labs · HPLC/MS</span></li>
-          <li><span class="k">Versand</span><span class="v">DE + EU · ~24 h Handling</span></li>
-          <li><span class="k">Zahlung</span><span class="v">Stripe · SEPA</span></li>
-          <li><span class="k">Klasse</span><span class="v">Research Use Only</span></li>
-        </ul>
+        <dl>
+          <div class="row"><dt>Gegründet</dt><dd>2024</dd></div>
+          <div class="row"><dt>Rechtsform</dt><dd>UG (haftungsbeschränkt)</dd></div>
+          <div class="row"><dt>Sitz</dt><dd>Baden-Württemberg, DE</dd></div>
+          <div class="row"><dt>Lagerung</dt><dd>tiefgekühlt · isolierter Schrank</dd></div>
+          <div class="row"><dt>Analytik</dt><dd>Janoshik Labs · HPLC / MS</dd></div>
+          <div class="row"><dt>Versand</dt><dd>DE + EU · ~24 h Handling</dd></div>
+          <div class="row"><dt>Zahlung</dt><dd>Stripe · SEPA · Vorkasse</dd></div>
+          <div class="row"><dt>Klasse</dt><dd>Research Use Only</dd></div>
+        </dl>
       </aside>
+
     </div>
   </div>
 </section>
 
-<!-- ========== SCROLL-LOCKED VIAL STORY ========== -->
-<section class="story" id="story">
-  <div class="story-track" id="storyTrack">
-    <div class="story-sticky">
-      <div class="story-bg-grid" aria-hidden="true"></div>
-      <div class="story-vial">
-        <div class="story-vial-disc" aria-hidden="true"></div>
-        <div class="story-vial-glow"></div>
-        <div class="story-vial-frame" id="storyVialFrame">
-          <div class="story-scanline" aria-hidden="true"><i></i></div>
-          <img id="storyVialImg" src="/ueber-uns/vial-assembly/frame_01.webp" alt="ChromePeps Vial" />
-          <div class="story-vial-sheen" aria-hidden="true"></div>
-          <!-- inline annotations that fade per panel -->
-          <div class="vial-anno a-1"><span class="dot"></span><span class="line"></span><b>STERIL · NEUTRAL VERPACKT</b></div>
-          <div class="vial-anno a-2"><span class="dot"></span><span class="line"></span><b>HPLC · 99.4&thinsp;%</b></div>
-          <div class="vial-anno a-3"><span class="dot"></span><span class="line"></span><b>LOT-2026-K83</b></div>
-          <div class="vial-anno a-4"><span class="dot"></span><span class="line"></span><b>RESEARCH USE ONLY</b></div>
-        </div>
-        <div class="story-progress">
-          <span id="storyAngle">01 / 04</span>
-          <span class="story-progress-bar"><i id="storyProgressFill"></i></span>
+<!-- ========================================================================
+     STORY — scroll-locked specimen (light, apo-grid)
+     ==================================================================== -->
+<section class="story apo-grid" id="story">
+  <div class="container">
+
+    <div class="manifest-head reveal" style="text-align: center; max-width: 720px; margin: 0 auto 56px;">
+      <div class="mono-label" style="justify-content: center; display: inline-flex;"><span class="dot"></span>02 · VIAL → CHARGE</div>
+      <h2 style="font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 4.2vw, 56px); line-height: 1.05; letter-spacing: -0.02em; margin: 14px 0 14px; color: var(--foreground);">
+        Was passiert, bevor das Etikett <span class="accent" style="color: var(--primary)">freigegeben</span> wird.
+      </h2>
+      <p style="font-size: 17px; color: var(--muted-fg); margin: 0;">Vier Schritte vom Rohstoff bis zur versendeten Charge. Scrollen Sie weiter, das Vial dreht sich mit.</p>
+    </div>
+
+    <div class="story-inner">
+
+      <div class="story-stage-wrap">
+        <div class="story-stage" id="storyStage">
+          <div class="gridbg"></div>
+          <div class="holder"><img src="/ueber-uns/vial-assembly/frame_001.webp" alt="" id="storyVial" /></div>
+          <span class="scan" id="storyScan"></span>
+
+          <span class="annot left a1" data-show="1"><span class="ln"></span><span><b>STERIL</b> · NEUTRAL VERPACKT</span></span>
+          <span class="annot right a2" data-show="2"><span class="ln"></span><span><b>HPLC {{PURITY}} %</b> · Janoshik</span></span>
+          <span class="annot left a3" data-show="3"><span class="ln"></span><span><b>{{LOT_NUMBER}}</b> · −24 °C</span></span>
+          <span class="annot right a4" data-show="4"><span class="ln"></span><span><b>RUO</b> · Research Use Only</span></span>
+
+          <div class="progress">
+            <span id="storyIdx">01 / 04</span>
+            <span class="bar"><i id="storyBar"></i></span>
+            <span id="storyTotal">04</span>
+          </div>
         </div>
       </div>
 
       <div class="story-panels">
-        <article class="story-panel active" data-panel="0">
-          <div class="mono-label gold">02 / VOM ROHSTOFF ZUR CHARGE</div>
-          <h2>Jede&nbsp;Charge erhält eine Identität, bevor sie ein Etikett bekommt.</h2>
-          <p>
-            Eingangs­wiegung, Sichtprüfung der Lyophilisat-Struktur, eindeutige
-            Lot-Nummer und Foto-Dokumentation. Die Charge geht in den
-            −24 °C-Quarantäne-Schrank, bevor sie überhaupt einen Schritt
-            weiter im Prozess macht. Jede Bewegung ist ab Tag 1 mit der
-            Lot-ID verknüpft.
-          </p>
-          <dl class="panel-data">
-            <div><dt>Lot-ID-Format</dt><dd>CP-{Peptid}{mg}-{MMDD}</dd></div>
-            <div><dt>Quarantäne-Zone</dt><dd>−24 °C, getrennt</dd></div>
-            <div><dt>Rückverfolgung</dt><dd>End-to-End</dd></div>
+
+        <article class="story-panel reveal" data-panel="1">
+          <div class="mono-label gold">i · WARENEINGANG</div>
+          <h3>Jede Charge erhält eine <span class="accent">Identität</span>, bevor sie ein Etikett bekommt.</h3>
+          <p>Eingangs­wiegung, Sicht­prüfung der Lyophilisat-Struktur, eindeutige Lot-Nummer.</p>
+          <dl>
+            <div><dt>Lot-ID</dt><dd>{{LOT_NUMBER}}</dd></div>
+            <div><dt>Quarantäne</dt><dd>isoliert</dd></div>
+            <div><dt>Doku</dt><dd>End-to-End</dd></div>
+            <div><dt>Handling</dt><dd>≤ 60 min</dd></div>
           </dl>
         </article>
 
-        <article class="story-panel" data-panel="1">
-          <div class="mono-label gold">03 / UNABHÄNGIGE ANALYTIK</div>
-          <h2>Wir testen nicht selbst. Das ist der Punkt.</h2>
-          <p>
-            Jede Charge geht in einer Probe an
-            <em>Janoshik Analytical</em>, ein unabhängiges Labor mit
-            öffentlicher Datenbank. HPLC bestimmt die Reinheit, Massen­spektrometrie
-            verifiziert die Identität. Das Ergebnis ist nicht „unser" Ergebnis. Es
-            ist Janoshiks.
-          </p>
-          <dl class="panel-data">
+        <article class="story-panel reveal" data-panel="2">
+          <div class="mono-label gold">ii · JANOSHIK</div>
+          <h3>Wir testen <span class="accent">nicht selbst.</span> Das ist der Punkt.</h3>
+          <p>Eine versiegelte Probe geht an Janoshik Analytical, ein unabhängiges Labor mit öffentlicher Datenbank. RP-HPLC bestimmt die Reinheit, ESI-MS verifiziert die Identität gegen Referenz­spektrum. Das Ergebnis ist nicht „unser" Ergebnis.</p>
+          <dl>
             <div><dt>Methode</dt><dd>RP-HPLC + ESI-MS</dd></div>
-            <div><dt>Schwelle</dt><dd>≥ 98 % zur Freigabe</dd></div>
-            <div><dt>Verifikation</dt><dd>janoshik.com/verify</dd></div>
+            <div><dt>Schwelle</dt><dd>≥ 98 %</dd></div>
+            <div><dt>Labor</dt><dd>Janoshik s.r.o.</dd></div>
+            <div><dt>Verifikation</dt><dd>janoshik.com</dd></div>
           </dl>
         </article>
 
-        <article class="story-panel" data-panel="2">
-          <div class="mono-label gold">04 / FREIGABE &amp; VERSAND</div>
-          <h2>Eine Charge wird erst freigegeben, wenn die Daten es erlauben.</h2>
-          <p>
-            Reinheit ≥ 98 %, Identität bestätigt. Erst dann verlässt die Charge das
-            Lager. Versand in neutraler, isolierter Verpackung. Das passende CoA
-            wird automatisch mit der Bestätigungs-E-Mail versendet, ohne Anfrage.
-          </p>
-          <dl class="panel-data">
-            <div><dt>Handling</dt><dd>≤ 24 h ab Eingang</dd></div>
+        <article class="story-panel reveal" data-panel="3">
+          <div class="mono-label gold">iii · FREIGABE &amp; VERSAND</div>
+          <h3>Eine Charge wird <span class="accent">erst freigegeben</span>, wenn die Daten es erlauben.</h3>
+          <p>≥ 98 % Reinheit, bestätigte Identität. Erst dann verlässt die Charge das Lager. Versand in neutraler, isolierter Verpackung. Das CoA der konkreten Lot-Nummer liegt der Versandbestätigung automatisch bei.</p>
+          <dl>
+            <div><dt>Handling</dt><dd>~24 h</dd></div>
             <div><dt>Verpackung</dt><dd>neutral · isoliert</dd></div>
-            <div><dt>CoA-Versand</dt><dd>automatisch · per Order</dd></div>
+            <div><dt>Cold-Chain</dt><dd>EU-weit</dd></div>
+            <div><dt>CoA</dt><dd>auto · per Order</dd></div>
           </dl>
         </article>
 
-        <article class="story-panel" data-panel="3">
-          <div class="mono-label gold">05 / WAS WIR NICHT SIND</div>
-          <h2>Kein Apotheker, kein Arzt, kein Wundermittel-Verkäufer.</h2>
-          <p>
-            ChromePeps liefert <em>Research Use Only</em>-Material. Wir geben
-            keine medizinische Beratung, keine Dosierungs­empfehlungen, keine
-            Heilversprechen. Unsere Kunden sind Labore, Forschende, Hochschulen
-            und Menschen, die wissen, wozu HPLC-Daten da sind: für die Wissenschaft,
-            nicht für Werbung.
-          </p>
-          <dl class="panel-data">
-            <div><dt>Klasse</dt><dd>RUO, kein GMP-Status</dd></div>
-            <div><dt>Beratung</dt><dd>technisch, keine medizinische</dd></div>
+        <article class="story-panel reveal" data-panel="4">
+          <div class="mono-label gold">iv · WAS WIR NICHT SIND</div>
+          <h3>Kein Apotheker. Kein Arzt. Kein Wundermittel-
+verkäufer.</h3>
+          <p>ChromePeps liefert Material der Klasse <b>Research Use Only</b>. Wir geben keine medizinische Beratung, keine Dosierungs­empfehlungen, keine Heilversprechen. Unsere Kunden wissen, wozu HPLC-Daten da sind: für die Wissenschaft, nicht für Werbung.</p>
+          <dl>
+            <div><dt>Klasse</dt><dd>RUO</dd></div>
+            <div><dt>Beratung</dt><dd>technisch</dd></div>
             <div><dt>Datenschutz</dt><dd>DSGVO · cookieless</dd></div>
+            <div><dt>Sitz</dt><dd>BaWü, DE</dd></div>
           </dl>
         </article>
+
       </div>
+
+    </div>
+
+    <div style="height: 96px;"></div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     PROZESS (dark — 4 steps with icons)
+     ==================================================================== -->
+<section class="prozess section-ink" id="prozess">
+  <div class="apo-grid-ink"></div>
+  <div class="container prozess-inner reveal">
+    <div class="mono-label gold" style="justify-content: center; display: inline-flex;"><span class="dot"></span>03 · DER PROZESS</div>
+    <h2>Vom Eingang zum Etikett in vier verifizierten Schritten.</h2>
+    <p class="sub">Keine Abkürzungen. Keine Ausnahmen. Keine „Sonderchargen".</p>
+
+    <div class="prozess-grid">
+
+      <div class="proz-step">
+        <span class="step-n">1</span>
+        <span class="icon-wrap">
+          <!-- lucide: Package -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        </span>
+        <h3>Eingang &amp; Lot-Anlage</h3>
+        <p>Charge entgegen genommen, mit Lot-ID versehen und in den isolierten Kühlschrank eingelagert.</p>
+        <div class="tags">
+          <span class="tag">≤ 60 min</span><span class="tag">ISOLIERT</span><span class="tag">Lot-ID</span>
+        </div>
+      </div>
+
+      <div class="proz-step">
+        <span class="step-n">2</span>
+        <span class="icon-wrap">
+          <!-- lucide: Microscope -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>
+        </span>
+        <h3>Janoshik HPLC-Analyse</h3>
+        <p>Versiegelte Probe geht an Janoshik Analytical. RP-HPLC bestimmt Reinheit, ESI-MS bestätigt Identität gegen Referenz.</p>
+        <div class="tags">
+          <span class="tag">RP-HPLC</span><span class="tag">ESI-MS</span><span class="tag">3rd party</span>
+        </div>
+      </div>
+
+      <div class="proz-step">
+        <span class="step-n">3</span>
+        <span class="icon-wrap">
+          <!-- lucide: ShieldCheck -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+        </span>
+        <h3>Freigabe oder Reject</h3>
+        <p>≥ 98 % Reinheit + bestätigte Identität = Freigabe. Bei Abweichung wird die Charge zurückgewiesen, nicht „angepasst".</p>
+        <div class="tags">
+          <span class="tag pass">PASS ≥ 98 %</span><span class="tag">binary</span>
+        </div>
+      </div>
+
+      <div class="proz-step">
+        <span class="step-n">4</span>
+        <span class="icon-wrap">
+          <!-- lucide: Mail -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </span>
+        <h3>Versand mit CoA</h3>
+        <p>Neutrale, isolierte Verpackung. Das CoA der konkreten Lot-Nummer kommt automatisch mit der Versandbestätigung.</p>
+        <div class="tags">
+          <span class="tag">24 h Handling</span><span class="tag">CoA · auto</span><span class="tag">EU-weit</span>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
 
-<!-- ========== QUALITY PROCESS TIMELINE ========== -->
-<section class="prozess" id="prozess">
-  <div class="container">
-    <header class="section-head reveal">
-      <div class="mono-label gold">06 / DER PROZESS</div>
-      <h2 class="section-title">Vom Eingang zum Etikett, in vier verifizierten Schritten.</h2>
-      <p class="section-sub">Keine Abkürzungen. Keine Ausnahmen. Keine „Sonderchargen".</p>
-    </header>
-
-    <ol class="timeline">
-      <li class="step reveal" data-step="01">
-        <div class="step-num" style="margin: 13px 0px 22px">01</div>
-        <div class="step-line" style="margin: 0px"></div>
-        <div class="step-body">
-          <h3>Wareneingang &amp; Lot-Anlage</h3>
-          <p>Charge wird gewogen, fotografiert, mit Lot-ID versehen und in den −24°C Quarantäne-Schrank eingelagert.</p>
-          <div class="step-tags">
-            <span>≤ 60 min</span><span>−24 °C</span><span>Lot-ID</span>
-          </div>
-        </div>
-      </li>
-
-      <li class="step reveal" data-step="02">
-        <div class="step-num" style="margin: 13px 0px 22px">02</div>
-        <div class="step-line"></div>
-        <div class="step-body">
-          <h3>Janoshik HPLC-Analyse</h3>
-          <p>Versiegelte Probe geht an Janoshik Analytical. RP-HPLC bestimmt Reinheit, ESI-MS bestätigt Identität gegen Referenz.</p>
-          <div class="step-tags">
-            <span>RP-HPLC</span><span>ESI-MS</span><span>3rd party</span>
-          </div>
-        </div>
-      </li>
-
-      <li class="step reveal" data-step="03">
-        <div class="step-num" style="margin: 13px 0px 22px">03</div>
-        <div class="step-line"></div>
-        <div class="step-body">
-          <h3>Freigabe-Entscheidung</h3>
-          <p>≥ 98 % Reinheit + bestätigte Identität = Freigabe. Bei Abweichung: Charge wird zurückgewiesen, nicht „angepasst".</p>
-          <div class="step-tags">
-            <span>≥ 98 %</span><span>binary pass/fail</span>
-          </div>
-        </div>
-      </li>
-
-      <li class="step reveal last" data-step="04">
-        <div class="step-num" style="margin: 13px 0px 22px">04</div>
-        <div class="step-line"></div>
-        <div class="step-body">
-          <h3>Versand mit CoA</h3>
-          <p>Neutrale, isolierte Verpackung mit Kühlpacks. Das CoA der konkreten Lot-Nummer kommt automatisch mit der Versandbestätigung.</p>
-          <div class="step-tags">
-            <span>24 h Handling</span><span>CoA · auto</span><span>EU-weit</span>
-          </div>
-        </div>
-      </li>
-    </ol>
-  </div>
-</section>
-
-<!-- ========== CHROMATOGRAM SECTION ========== -->
+<!-- ========================================================================
+     LABOR · HPLC FIGURE CARD (light)
+     ==================================================================== -->
 <section class="labor" id="labor">
-  <div class="container">
-    <div class="labor-grid">
-      <div class="labor-copy reveal">
-        <div class="mono-label gold">07 / EVIDENZ · NICHT MARKETING</div>
-        <h2 class="section-title light">So sieht ein „passed" Lot aus.</h2>
-        <p class="labor-lead">
-          Echtes HPLC-Chromatogramm einer ChromePeps-Charge. Der Haupt-Peak
-          bei <span class="tab">t<sub>R</sub> = 5,82 min</span> ist das
-          Zielpeptid. Die Fläche unter der Kurve im Verhältnis zur Gesamt­fläche
-          gibt die Reinheit: <b class="gold">99,41 %</b>.
-        </p>
-        <ul class="labor-points">
-          <li><span class="bullet"></span><div><b>Säule:</b> C18, 4,6 × 250 mm, 5 µm</div></li>
-          <li><span class="bullet"></span><div><b>Fluss:</b> 1,0 ml/min · UV 220 nm</div></li>
-          <li><span class="bullet"></span><div><b>Gradient:</b> 0,1 % TFA / Acetonitril</div></li>
-          <li><span class="bullet"></span><div>Referenz: Janoshik LOT-{{LOT_NUMBER}}</div></li>
-        </ul>
-        <a class="btn-gold inline" href="#" data-magnet>
-          <span>CoA-Beispiel ansehen</span>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10m0 0L8 3m4 4L8 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="apo-grid"></div>
+  <div class="container labor-inner">
+
+    <div class="labor-copy reveal">
+      <div class="mono-label gold"><span class="dot"></span>04 · EVIDENZ · NICHT MARKETING</div>
+      <h2>So sieht ein <span class="accent">„passed"</span> Lot aus.</h2>
+      <p class="lead">
+        Echtes HPLC-Chromatogramm einer ChromePeps-Charge. Der Haupt-Peak bei <span class="tab">t<sub>R</sub> = 5,82 min</span> ist das Zielpeptid. Die Fläche unter der Kurve im Verhältnis zur Gesamt­fläche gibt die Reinheit: <b class="gold">{{PURITY}} %</b>.
+      </p>
+      <ul class="labor-points">
+        <li><div><b>Säule:</b> C18, 4,6 × 250 mm, 5 µm</div></li>
+        <li><div><b>Fluss:</b> 1,0 ml/min · UV 220 nm</div></li>
+        <li><div><b>Gradient:</b> 0,1 % TFA / Acetonitril, 5 → 60 % über 10 min</div></li>
+        <li><div><b>Referenz:</b> Janoshik MS-Library · Match-Score 0,997</div></li>
+      </ul>
+      <div class="labor-cta">
+        <a class="btn-gold" href="#kontakt">
+          CoA-Beispiel ansehen
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m0 0L8 3m4 4L8 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
       </div>
+    </div>
 
-      <div class="hplc reveal">
-        <div class="hplc-header">
-          <div class="hplc-title">
-            <span class="dot live"></span>
-            <span>HPLC · {{PRODUCT_NAME_UPPER}} · LOT-{{LOT_NUMBER}}</span>
-          </div>
-          <div class="hplc-stat">
-            <span>PURITY</span><b>{{PURITY}} %</b>
-          </div>
+    <div class="hplc-card reveal">
+      <div class="hplc-head">
+        <div class="cell"><div class="k">Sample</div><div class="v">{{LOT_NUMBER}}</div></div>
+        <div class="cell"><div class="k">Method</div><div class="v">RP-HPLC · 220 nm</div></div>
+        <div class="cell"><div class="k">Säule</div><div class="v">C18 · 4,6×250 mm</div></div>
+        <div class="cell"><div class="k">Run</div><div class="v">{{TEST_DATE}}</div></div>
+        <div class="cell"><div class="k">Status</div><div class="v pass">PASS · {{PURITY}} %</div></div>
+      </div>
+
+      <div class="hplc-stage">
+        <svg id="hplcSvg" viewBox="0 0 1000 320" preserveAspectRatio="none" aria-hidden="true">
+          <g class="grid">
+            <line x1="0" x2="1000" y1="50" y2="50"/>
+            <line x1="0" x2="1000" y1="110" y2="110"/>
+            <line x1="0" x2="1000" y1="170" y2="170"/>
+            <line x1="0" x2="1000" y1="230" y2="230"/>
+            <line x1="0" x2="1000" y1="290" y2="290"/>
+            <line x1="200" x2="200" y1="0" y2="300"/>
+            <line x1="400" x2="400" y1="0" y2="300"/>
+            <line x1="600" x2="600" y1="0" y2="300"/>
+            <line x1="800" x2="800" y1="0" y2="300"/>
+          </g>
+          <line class="axis-line" x1="0" x2="1000" y1="300" y2="300"/>
+          <line class="baseline" x1="0" x2="1000" y1="280" y2="280"/>
+
+          <path id="peakArea" class="trace-fill" d=""/>
+          <path id="peakStroke" class="trace" d="" stroke-dasharray="0 9999"/>
+
+          <g id="peakMarker" opacity="0">
+            <line class="marker" x1="465" x2="465" y1="30" y2="280"/>
+            <text class="label" x="475" y="48">t<tspan font-style="italic">R</tspan> 5,82 min</text>
+            <text class="label dim" x="475" y="64">{{PURITY}} %</text>
+          </g>
+          <g id="impurityMarker" opacity="0">
+            <line class="marker" x1="710" x2="710" y1="244" y2="280"/>
+            <text class="label dim" x="720" y="260">0,31 %</text>
+          </g>
+
+          <text class="y-label" x="8" y="14">mAU</text>
+          <text class="axis-tick" x="200" y="314">2</text>
+          <text class="axis-tick" x="400" y="314">4</text>
+          <text class="axis-tick" x="600" y="314">6</text>
+          <text class="axis-tick" x="800" y="314">8</text>
+          <text class="axis-tick" x="965" y="314">10 min</text>
+        </svg>
+
+        <span class="stamp-pass" id="stampPass">PASSED<small>14 · MAI · 26</small></span>
+      </div>
+
+      <div class="hplc-foot">
+        <div class="notes">
+          <b>Bedingungen:</b> RP-HPLC · C18 · 4,6 × 250 mm · 5 µm · Fluss 1,0 ml/min · UV 220 nm · Gradient 0,1 % TFA / Acetonitril, 5 → 60 % über 10 min. Referenz­spektrum: Janoshik MS-Library, Match-Score 0,997.
         </div>
-        <div class="hplc-stage">
-          <svg id="hplcSvg" viewBox="0 0 600 300" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="peakFill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stop-color="rgba(232,193,80,0.55)" />
-                <stop offset="100%" stop-color="rgba(232,193,80,0)" />
-              </linearGradient>
-              <linearGradient id="peakLine" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stop-color="#f4d97a" />
-                <stop offset="100%" stop-color="#b9851c" />
-              </linearGradient>
-            </defs>
-            <!-- grid -->
-            <g class="hplc-grid">
-              <line x1="0" x2="600" y1="60" y2="60"/>
-              <line x1="0" x2="600" y1="120" y2="120"/>
-              <line x1="0" x2="600" y1="180" y2="180"/>
-              <line x1="0" x2="600" y1="240" y2="240"/>
-              <line x1="100" x2="100" y1="0" y2="300"/>
-              <line x1="200" x2="200" y1="0" y2="300"/>
-              <line x1="300" x2="300" y1="0" y2="300"/>
-              <line x1="400" x2="400" y1="0" y2="300"/>
-              <line x1="500" x2="500" y1="0" y2="300"/>
-            </g>
-            <!-- baseline -->
-            <line class="hplc-baseline" x1="0" x2="600" y1="270" y2="270"/>
-            <!-- peak path -->
-            <path id="peakArea" d="" fill="url(#peakFill)" opacity="0"/>
-            <path id="peakStroke" d="" fill="none" stroke="url(#peakLine)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"
-                  stroke-dasharray="0 9999" />
-            <!-- markers -->
-            <g id="peakMarker" opacity="0">
-              <line x1="280" x2="280" y1="40" y2="270" stroke="rgba(244,217,122,0.45)" stroke-dasharray="3 4"/>
-              <text x="286" y="54" class="hplc-tag">tR 5.82 min</text>
-              <text x="286" y="68" class="hplc-tag dim">99.41 %</text>
-            </g>
-            <g id="impurityMarker" opacity="0">
-              <line x1="430" x2="430" y1="230" y2="270" stroke="rgba(255,255,255,0.18)" stroke-dasharray="3 4"/>
-              <text x="436" y="240" class="hplc-tag dim">0.31 %</text>
-            </g>
-          </svg>
-          <div class="hplc-axis-x">
-            <span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10 min</span>
-          </div>
-          <div class="hplc-axis-y">
-            <span>mAU</span>
-          </div>
-        </div>
-        <div class="hplc-footer">
-          <div><span class="lbl">SAMPLE</span><span class="val">{{LOT_NUMBER}}</span></div>
-          <div><span class="lbl">METHOD</span><span class="val">RP-HPLC 220nm</span></div>
-          <div><span class="lbl">RUN</span><span class="val">{{TEST_DATE_RUN}}</span></div>
-          <div><span class="lbl">STATUS</span><span class="val pass">PASS</span></div>
+        <div class="cta">
+          <a href="#kontakt">CoA anfordern <span>↗</span></a>
         </div>
       </div>
     </div>
+
   </div>
 </section>
 
-<!-- ========== ZAHLEN / METRICS ========== -->
+<!-- ========================================================================
+     ZAHLEN (light)
+     ==================================================================== -->
 <section class="zahlen" id="zahlen">
   <div class="container">
-    <header class="section-head reveal">
-      <div class="mono-label gold">08 / IN ZAHLEN</div>
-      <h2 class="section-title">Operationelle Realität, 2026.</h2>
-      <p class="section-sub">Werte aus dem laufenden Janoshik-Verifikations­fluss, keine Hochrechnungen.</p>
-    </header>
+    <div class="zahlen-head reveal">
+      <div class="mono-label gold" style="justify-content: center; display: inline-flex;"><span class="dot"></span>05 · IN ZAHLEN</div>
+      <h2>Operationelle Realität, <span class="accent">2026.</span></h2>
+      <p class="sub">Werte aus dem laufenden Janoshik-Verifikations­fluss, keine Hochrechnungen.</p>
+    </div>
 
-    <div class="metrics-grid">
+    <div class="zahlen-grid">
       <div class="metric reveal">
-        <div class="metric-num"><span data-count="99.34" data-decimals="2">0</span><small>%</small></div>
-        <div class="metric-lbl">Ø HPLC-Reinheit · 12 Monate</div>
-        <div class="metric-sub">über alle Janoshik-getesteten Chargen</div>
+        <div class="num">fig. 5.1</div>
+        <div class="v"><span data-count="{{AVG_PURITY_RAW}}" data-decimals="2">0</span><small>%</small></div>
+        <div class="lbl">Ø HPLC-Reinheit</div>
+        <div class="desc">12-Monats-Mittel · alle Janoshik-getesteten Chargen</div>
       </div>
       <div class="metric reveal">
-        <div class="metric-num"><span data-count="{{CHARGEN_COUNT}}" data-decimals="0">0</span></div>
-        <div class="metric-lbl">Chargen freigegeben</div>
-        <div class="metric-sub">seit Gründung</div>
+        <div class="num">fig. 5.2</div>
+        <div class="v"><span class="accent"></span><span data-count="{{CHARGEN_COUNT}}" data-decimals="0">0</span></div>
+        <div class="lbl">Chargen freigegeben</div>
+        <div class="desc">seit Gründung · Stand Mai 2026</div>
       </div>
       <div class="metric reveal">
-        <div class="metric-num"><span data-count="7">0</span><small>%</small></div>
-        <div class="metric-lbl">Reject-Rate</div>
-        <div class="metric-sub">zurückgewiesen, nicht „angepasst"</div>
+        <div class="num">fig. 5.3</div>
+        <div class="v"><span data-count="7" data-decimals="0">0</span><small>%</small></div>
+        <div class="lbl">Reject-Rate</div>
+        <div class="desc">zurückgewiesen, nicht „angepasst"</div>
       </div>
       <div class="metric reveal">
-        <div class="metric-num"><span data-count="22">0</span><small>h</small></div>
-        <div class="metric-lbl">Ø Handling-Zeit</div>
-        <div class="metric-sub">Bestelleingang → Versand</div>
+        <div class="num">fig. 5.4</div>
+        <div class="v"><span data-count="22" data-decimals="0">~24</span><small>h</small></div>
+        <div class="lbl">Ø Handling-Zeit</div>
+        <div class="desc">Bestelleingang → Versand</div>
       </div>
       <div class="metric reveal">
-        <div class="metric-num"><span data-count="0">0</span></div>
-        <div class="metric-lbl">Re-Calls</div>
-        <div class="metric-sub">Charge zurückgerufen nach Freigabe</div>
+        <div class="num">fig. 5.5</div>
+        <div class="v"><span data-count="0" data-decimals="0">0</span></div>
+        <div class="lbl">Re-Calls</div>
+        <div class="desc">Charge je zurückgerufen: nein.</div>
       </div>
       <div class="metric reveal">
-        <div class="metric-num"><span data-count="100" >0</span><small>%</small></div>
-        <div class="metric-lbl">CoA-Coverage</div>
-        <div class="metric-sub">jede Bestellung · automatisch</div>
+        <div class="num">fig. 5.6</div>
+        <div class="v"><span data-count="100" data-decimals="0">0</span><small>%</small></div>
+        <div class="lbl">CoA-Coverage</div>
+        <div class="desc">jede Bestellung · automatisch</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ========== ROADMAP ========== -->
-<section class="roadmap" id="roadmap">
-  <div class="container">
-    <header class="section-head reveal">
-      <div class="mono-label dark">09 / ROADMAP</div>
-      <h2 class="section-title">Was als Nächstes verifizierbar wird.</h2>
-    </header>
+<!-- ========================================================================
+     ROADMAP (dark)
+     ==================================================================== -->
+<section class="roadmap section-ink" id="roadmap">
+  <div class="apo-grid-ink"></div>
+  <div class="container roadmap-inner">
+    <div class="roadmap-head reveal">
+      <div class="mono-label gold" style="justify-content: center; display: inline-flex;"><span class="dot"></span>06 · ROADMAP</div>
+      <h2>Was als Nächstes <span class="accent">verifizierbar</span> wird.</h2>
+      <p class="sub">Eine Roadmap ist nur dann ehrlich, wenn auch die noch nicht erreichten Punkte darin stehen. Hier sind beide.</p>
+    </div>
 
-    <div class="rm-grid">
-      <div class="rm-col reveal">
-        <div class="rm-tag done">Q2 2024 · ✓</div>
-        <h3>Gründung &amp; erstes Sortiment</h3>
-        <p>UG-Gründung in München. Vier Kern-Peptide gelistet. Erster Janoshik-Vertrag.</p>
+    <div class="tl reveal">
+      <div class="tl-row">
+        <div class="tl-q"><span class="dot"></span>Q2 · 2026</div>
+        <div class="tl-t">Gründung &amp; erstes Sortiment</div>
+        <div class="tl-d">UG-Gründung in BaWü. Vier Kern-Peptide gelistet. Erster Janoshik-Vertrag.</div>
+        <div class="tl-s">erledigt ✓</div>
       </div>
-      <div class="rm-col reveal">
-        <div class="rm-tag done">Q4 2024 · ✓</div>
-        <h3>Lot-Tracking-System</h3>
-        <p>Eigenes Tooling: Lot-ID, CoA-Mapping, automatisierter CoA-Versand pro Bestellung.</p>
+      <div class="tl-row">
+        <div class="tl-q"><span class="dot"></span>Q2 · 2026</div>
+        <div class="tl-t">Lot-Tracking-System</div>
+        <div class="tl-d">Eigenes Tooling: Lot-ID, CoA-Mapping, automatisierter CoA-Versand pro Bestellung.</div>
+        <div class="tl-s">erledigt ✓</div>
       </div>
-      <div class="rm-col reveal">
-        <div class="rm-tag done">Q3 2025 · ✓</div>
-        <h3>Cold-Chain &amp; EU-Versand</h3>
-        <p>Isolierte Verpackung, 24h-Handling, Versand in DE und ausgewählten EU-Ländern.</p>
+      <div class="tl-row">
+        <div class="tl-q"><span class="dot"></span>Q2 · 2026</div>
+        <div class="tl-t">Cold-Chain &amp; EU-Versand</div>
+        <div class="tl-d">Isolierte Verpackung, ~24 h Handling, Versand in DE und ausgewählten EU-Ländern.</div>
+        <div class="tl-s">erledigt ✓</div>
       </div>
-      <div class="rm-col reveal">
-        <div class="rm-tag done" style="background-color: rgb(253, 244, 216)">Q3 2026 ·</div>
-        <h3>Öffentliche CoA-Datenbank</h3>
-        <p>Jede freigegebene Lot-Nummer ist auf chromepeps.com direkt verlinkbar, ohne Bestellung.</p>
+      <div class="tl-row current">
+        <div class="tl-q"><span class="dot"></span>Q4 · 2026</div>
+        <div class="tl-t">Öffentliche CoA-Datenbank</div>
+        <div class="tl-d">Jede freigegebene Lot-Nummer ist auf chromepeps.com direkt verlinkbar, ohne Bestellung, ohne Login.</div>
+        <div class="tl-s">in Arbeit ●</div>
       </div>
-      <div class="rm-col reveal current">
-        <div class="rm-tag now" style="background-color: rgb(237, 234, 232); color: rgb(87, 73, 66)">Q4 2026</div>
-        <h3>Endotoxin-Routine-Testing</h3>
-        <p>LAL-Test zusätzlich zur HPLC für jede sensible Charge. Standard wird angehoben.</p>
+      <div class="tl-row future">
+        <div class="tl-q"><span class="dot"></span>Q1 · 2027</div>
+        <div class="tl-t">Endotoxin-Routine-Testing</div>
+        <div class="tl-d">LAL-Test zusätzlich zur HPLC für jede sensible Charge. Standard wird angehoben.</div>
+        <div class="tl-s">geplant</div>
       </div>
-      <div class="rm-col reveal future">
-        <div class="rm-tag next">Q2 2027</div>
-        <h3>ISO-9001 Pilot</h3>
-        <p>Vorbereitung der Qualitätsmanagement-Zertifizierung für den UG-Standort.</p>
-      </div>
+      <div class="tl-row future">
+        <div class="tl-q"><span class="dot"></span>Q3 · 2027</div>
+        <div class="tl-t">ISO-9001 Pilot</div>
+        <div class="tl-d">Vorbereitung der Qualitäts­management-Zertifizierung für den UG-Standort.</div>
+        <div class="tl-s">geplant</div>
       </div>
     </div>
+
   </div>
 </section>
 
-<!-- ========== CTA / KONTAKT ========== -->
-<section class="kontakt" id="kontakt">
-  <div class="kontakt-grain" aria-hidden="true"></div>
-  <div class="ambient-orb orb-3" aria-hidden="true"></div>
+<!-- ========================================================================
+     KONTAKT (light)
+     ==================================================================== -->
+<section class="kontakt hero-ambient" id="kontakt">
+  <div class="subtle-grid"></div>
   <div class="container kontakt-inner">
+
     <div class="kontakt-left reveal">
-      <div class="mono-label gold">10 / KONTAKT</div>
-      <h2 class="kontakt-title">
-        <span class="line">Forschungsfragen,</span>
-        <span class="line chrome">Sortimentsanfragen,</span>
-        <span class="line muted-dark">CoA-Verifikation.</span>
-      </h2>
-      <p class="kontakt-sub">
-        Wir antworten innerhalb eines Werktags, auf Deutsch oder Englisch.
-        Kein Bot, keine Ticket-Warteschleife.
-      </p>
-      <div class="kontakt-actions">
-        <a class="btn-gold large" href="mailto:support@chromepeps.com" data-magnet>
-          <span>support@chromepeps.com</span>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10m0 0L8 3m4 4L8 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="mono-label gold"><span class="dot"></span>07 · KONTAKT</div>
+      <h2>Forschungsfragen.<br/>Sortiments­anfragen.<br/><span class="accent">CoA-Verifikation.</span></h2>
+      <p class="sub">Wir antworten innerhalb eines Werktags, auf Deutsch oder Englisch. Kein Bot, kein Ticket-System.</p>
+      <div class="kontakt-ctas">
+        <a class="btn-gold large" href="mailto:support@chromepeps.com">
+          support@chromepeps.com
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m0 0L8 3m4 4L8 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
-        <a class="btn-ghost-dark large" href="#" data-magnet>
-          <span>FAQ ansehen</span>
-        </a>
+        <a class="btn-ghost large" href="#">FAQ ansehen</a>
       </div>
     </div>
 
-    <div class="kontakt-right reveal">
-      <div class="kontakt-card">
-        <div class="kontakt-card-head">
-          <span class="mono-label gold">FIRMENDATEN</span>
-        </div>
-        <ul class="kontakt-list">
-          <li><span>Rechtsträger</span><b>ChromePeps UG (haftungsbeschränkt)</b></li>
-          <li><span>Sitz</span><b>München, Deutschland</b></li>
-          <li><span>USt-ID</span><b>TODO:self</b></li>
-          <li><span>Handelsregister</span><b>TODO:self</b></li>
-          <li><span>Analytik-Partner</span><b>Janoshik Analytical</b></li>
-          <li><span>Versand-Partner</span><b>DHL</b></li>
-        </ul>
-      </div>
-    </div>
+    <aside class="kontakt-card reveal">
+      <div class="kontakt-card-head">Firmendaten</div>
+      <ul>
+        <li><span>Rechtsträger</span><b>ChromePeps UG (haftungsbeschränkt)</b></li>
+        <li><span>Sitz</span><b>Baden-Württemberg, DE</b></li>
+        <li><span>USt-ID</span><b>TODO:self</b></li>
+        <li><span>HR</span><b>TODO:self</b></li>
+        <li><span>Analytik</span><b>Janoshik Analytical s.r.o.</b></li>
+        <li><span>Versand</span><b>DHL · EU-weit</b></li>
+        <li><span>Klasse</span><b>Research Use Only</b></li>
+      </ul>
+    </aside>
+
   </div>
 
-  </section>
+  
+</section>
+
 
 `;
