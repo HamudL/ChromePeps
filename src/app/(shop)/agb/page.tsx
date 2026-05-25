@@ -101,7 +101,7 @@ export default function AgbPage() {
             Die Lieferung erfolgt, sofern nicht anders vereinbart, an die von
             Ihnen angegebene Lieferadresse. Die Lieferzeit beträgt, sofern beim
             jeweiligen Produkt nicht anders angegeben, innerhalb Deutschlands
-            2–4 Werktage nach Zahlungseingang. Bei Zahlung per Vorkasse beginnt
+            2 bis 4 Werktage nach Zahlungseingang. Bei Zahlung per Vorkasse beginnt
             die Lieferzeit einen Tag nach Erteilung des Zahlungsauftrages an das
             überweisende Kreditinstitut.
           </p>

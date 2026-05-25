@@ -20,9 +20,9 @@ import { GlossarClient } from "./glossar-client";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Glossar — Wissenschaftliche Begriffe A–Z",
+  title: "Glossar: Wissenschaftliche Begriffe A bis Z",
   description:
-    "Begriffe, Akronyme und Methoden — kurz, präzise, nachschlagbar. Live-Suche in Begriff und Definition.",
+    "Begriffe, Akronyme und Methoden, kurz und präzise. Live-Suche in Begriff und Definition.",
   alternates: { canonical: "/wissen/glossar" },
 };
 
@@ -86,9 +86,9 @@ export default async function WissenGlossarPage() {
                 Glossar.
               </h1>
               <p className="mt-5 max-w-[58ch] text-[16px] leading-relaxed text-foreground/85">
-                Begriffe, Akronyme und Methoden — kurz, präzise,
-                nachschlagbar. {terms.length} Einträge, fortlaufend
-                kuratiert. Live-Suche in Begriff und Definition.
+                Begriffe, Akronyme und Methoden, kurz und präzise.
+                {" "}{terms.length} Einträge, fortlaufend kuratiert.
+                Live-Suche in Begriff und Definition.
               </p>
             </div>
             <dl

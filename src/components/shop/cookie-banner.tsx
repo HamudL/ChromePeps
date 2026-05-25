@@ -36,10 +36,11 @@ export function CookieBanner() {
               Cookies &amp; Datenschutz
             </h2>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              Wir verwenden technisch notwendige Cookies für Login, Warenkorb
-              und Checkout. Mit Ihrer Zustimmung setzen wir zudem Google
-              Analytics ein, um unser Angebot zu verbessern. Details finden
-              Sie in unserer{" "}
+              Wir verwenden ausschließlich technisch notwendige Cookies für
+              Login, Warenkorb und Checkout. Falls wir künftig Statistik-
+              oder Marketing-Cookies einsetzen, fragen wir vorher Ihre
+              Einwilligung über dieses Banner ab. Details finden Sie in
+              unserer{" "}
               <Link href="/datenschutz" className="underline">
                 Datenschutzerklärung
               </Link>

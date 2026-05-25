@@ -68,8 +68,8 @@ export function OrderShippedEmail({
       </Text>
 
       <Text className="text-sm leading-6 text-neutral-700">
-        gute Nachricht &ndash; wir haben Ihre Bestellung heute verpackt und an
-        den Versanddienstleister &uuml;bergeben. Sie sollte in den n&auml;chsten
+        gute Nachricht: wir haben Ihre Bestellung heute verpackt und an den
+        Versanddienstleister &uuml;bergeben. Sie sollte in den n&auml;chsten
         Tagen bei Ihnen eintreffen.
       </Text>
 

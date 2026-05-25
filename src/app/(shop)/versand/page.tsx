@@ -52,10 +52,10 @@ export default async function VersandPage() {
             <div>
               <h3 className="font-semibold">Lieferzeit</h3>
               <p className="text-muted-foreground">
-                2–4 Werktage innerhalb Deutschlands
+                2 bis 4 Werktage innerhalb Deutschlands
               </p>
               <p className="text-muted-foreground">
-                3–7 Werktage EU-Ausland
+                3 bis 7 Werktage EU-Ausland
               </p>
             </div>
           </div>
@@ -89,8 +89,8 @@ export default async function VersandPage() {
           <h2 className="text-lg font-semibold">Lieferzeit</h2>
           <p>
             Die Lieferzeit beträgt, sofern beim jeweiligen Produkt nicht anders
-            angegeben, innerhalb Deutschlands 2–4 Werktage nach Zahlungseingang;
-            für EU-Lieferungen rechnen Sie bitte mit 3–7 Werktagen. Bei Zahlung
+            angegeben, innerhalb Deutschlands 2 bis 4 Werktage nach Zahlungseingang;
+            für EU-Lieferungen rechnen Sie bitte mit 3 bis 7 Werktagen. Bei Zahlung
             per Vorkasse beginnt die Lieferzeit einen Tag nach Erteilung des
             Zahlungsauftrages an das überweisende Kreditinstitut. Bei Zahlung
             per Kreditkarte oder Stripe-Zahlungsdienst erfolgt der Versand
@@ -166,7 +166,7 @@ export default async function VersandPage() {
           <p>
             Bitte prüfen Sie den Zustand der Sendung unmittelbar nach Erhalt
             und lagern Sie die Produkte gemäß den Angaben auf dem jeweiligen
-            Produktblatt (typischerweise bei –20 °C).
+            Produktblatt (typischerweise bei minus 20 °C).
           </p>
         </section>
 

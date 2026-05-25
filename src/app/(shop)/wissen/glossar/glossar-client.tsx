@@ -70,7 +70,7 @@ export function GlossarClient({ terms }: Props) {
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder='Begriff suchen — z. B. „HPLC"  oder  „Lyophilisat"'
+            placeholder='Begriff suchen, z. B. „HPLC"  oder  „Lyophilisat"'
             className="input-search"
             aria-label="Glossar durchsuchen"
           />
@@ -197,7 +197,7 @@ export function GlossarClient({ terms }: Props) {
         <div className="max-w-[920px] mx-auto">
           <Callout type="info" title="Mitwirken">
             Begriff fehlt oder Definition zu knapp? Schreibt an{" "}
-            <a href="mailto:labs@chromepeps.com">labs@chromepeps.com</a> — wir
+            <a href="mailto:labs@chromepeps.com">labs@chromepeps.com</a>. Wir
             kuratieren das Glossar laufend mit der wissenschaftlichen
             Community.
           </Callout>

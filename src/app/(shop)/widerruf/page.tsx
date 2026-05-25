@@ -124,10 +124,10 @@ export default function WiderrufPage() {
             </li>
           </ul>
           <p className="mt-2 italic text-muted-foreground">
-            [TODO: Prüfen lassen, ob unsere versiegelten Peptidprodukte unter
-            den Hygieneausschluss nach § 312g Abs. 2 Nr. 3 BGB fallen — in dem
-            Fall kann das Widerrufsrecht nach Öffnung der Versiegelung
-            vorzeitig erlöschen.]
+            [TODO: Anwaltlich prüfen lassen, ob unsere versiegelten
+            Peptidprodukte unter den Hygieneausschluss nach § 312g Abs. 2 Nr. 3
+            BGB fallen. Gegebenenfalls erlischt das Widerrufsrecht nach
+            Öffnung der Versiegelung vorzeitig.]
           </p>
         </section>
 

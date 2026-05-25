@@ -335,7 +335,7 @@ export function VariantBuyPanel({
         ) : (
           <>
             <ShoppingCart className="h-5 w-5" />
-            In den Warenkorb — {formatPrice(effectivePrice * quantity)}
+            In den Warenkorb · {formatPrice(effectivePrice * quantity)}
           </>
         )}
       </Button>

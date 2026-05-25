@@ -37,7 +37,7 @@ export async function generateMetadata({
 
   let title = "Produkte";
   let description =
-    "Durchstöbern Sie unseren Katalog hochwertiger Forschungspeptide — laborgeprüfte Reinheit und umfassende Analysezertifikate.";
+    "Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit. Jede Charge wird mit Analysezertifikat ausgeliefert.";
   let canonical = "/products";
 
   if (categorySlug) {
@@ -484,7 +484,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <p className="text-muted-foreground max-w-md mb-6 leading-relaxed">
               {hasActiveFilters
                 ? "Versuchen Sie, Ihre Suche oder Filter anzupassen."
-                : "Schauen Sie bald wieder vorbei — neue Produkte sind in Vorbereitung."}
+                : "Schauen Sie bald wieder vorbei. Neue Produkte sind in Vorbereitung."}
             </p>
             {hasActiveFilters && (
               <Button asChild variant="outline">

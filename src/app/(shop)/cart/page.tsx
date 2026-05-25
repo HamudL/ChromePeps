@@ -241,7 +241,7 @@ export default function CartPage() {
 
               {!isFreeShipping && (
                 <p className="text-xs text-muted-foreground">
-                  Endgültige Versandkosten je nach Lieferland im Checkout —
+                  Endgültige Versandkosten je nach Lieferland im Checkout.
                   EU-weit kostenlos ab{" "}
                   {formatPrice(FREE_SHIPPING_THRESHOLD_CENTS)}.
                 </p>

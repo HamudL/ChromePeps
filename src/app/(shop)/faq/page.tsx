@@ -16,7 +16,7 @@ import { faqPageJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "FAQ — Häufige Fragen",
+  title: "FAQ: Häufige Fragen",
   description: `Antworten auf häufig gestellte Fragen zu Bestellungen, Versand, Zahlung und Produkten bei ${APP_NAME}.`,
   robots: { index: true, follow: true },
 };

@@ -22,9 +22,9 @@ import { WissenSearchBox } from "@/components/wissen/search-box";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Wissen — Forschung verstehen",
+  title: "Wissen: Forschung verstehen",
   description:
-    "Methodik, Wirkstoffklassen, Lab Practice. Lesematerial für Forscher, Lab-Manager und Studierende — geschrieben in der Sprache, die in der Auswertung gebraucht wird.",
+    "Methodik, Wirkstoffklassen, Lab Practice. Lesematerial für Forscher, Lab-Manager und Studierende, geschrieben in der Sprache, die in der Auswertung gebraucht wird.",
   alternates: {
     canonical: "/wissen",
   },
@@ -70,7 +70,7 @@ export default async function WissenHubPage() {
           </h1>
           <p className="mt-6 text-[17px] md:text-[19px] text-muted-foreground leading-relaxed max-w-[58ch]">
             Methodik, Wirkstoffklassen, Lab Practice. Lesematerial für
-            Forscher, Lab-Manager und Studierende — geschrieben in der
+            Forscher, Lab-Manager und Studierende, geschrieben in der
             Sprache, die in der Auswertung gebraucht wird, nicht im
             Marketing-Deck.
           </p>
@@ -155,7 +155,7 @@ export default async function WissenHubPage() {
                 </h2>
               </div>
               <p className="hidden md:block text-[14px] text-muted-foreground max-w-[36ch] text-right">
-                Schwerpunkte mit redaktioneller Tiefe — Einstieg in die
+                Schwerpunkte mit redaktioneller Tiefe; Einstieg in die
                 wichtigsten Forschungsbereiche.
               </p>
             </div>
