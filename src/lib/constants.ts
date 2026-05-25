@@ -1,6 +1,6 @@
 export const APP_NAME = "ChromePeps";
 export const APP_DESCRIPTION =
-  "Premium research peptides with verified purity. For laboratory and research use only.";
+  "Forschungspeptide mit unabhängig verifizierter Reinheit. Lieferung ausschließlich als Referenzmaterial für die In-vitro-Forschung; nicht zur Anwendung am Menschen oder Tier bestimmt.";
 
 export const CURRENCY = "eur" as const;
 export const CURRENCY_SYMBOL = "\u20AC";
@@ -116,7 +116,7 @@ export const SELLER_DETAILS = {
 export const TAX_RATE = 0.19;
 
 export const RESEARCH_DISCLAIMER =
-  "All products are sold strictly as reference materials for in-vitro research and laboratory use only. They are not intended for human or animal consumption, nor for any therapeutic, diagnostic, or medicinal purpose. By purchasing, you confirm that you are a qualified researcher or laboratory professional.";
+  "Alle Produkte werden ausschließlich als Referenzmaterialien für die In-vitro-Forschung und den Laborgebrauch abgegeben. Sie sind nicht zum Konsum durch Menschen oder Tiere bestimmt und nicht für therapeutische, diagnostische oder medizinische Zwecke. Mit der Bestellung bestätigen Sie, dass Sie in einem Forschungs- oder Laborkontext tätig sind und die Substanzen ausschließlich zu diesem Zweck verwenden.";
 
 // ---- Email configuration ----
 // These are read at runtime on the server only. Keep the fallbacks safe for
