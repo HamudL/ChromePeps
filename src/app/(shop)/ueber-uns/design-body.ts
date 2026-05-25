@@ -132,14 +132,14 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
   <div class="ticker" aria-hidden="true">
     <div class="ticker-track">
       <span>HPLC ≥ 98%</span><span>·</span>
-      <span>JANOSHIK LABS — INDEPENDENT</span><span>·</span>
+      <span>JANOSHIK LABS · INDEPENDENT</span><span>·</span>
       <span>COA PER ORDER</span><span>·</span>
       <span>COLD CHAIN</span><span>·</span>
       <span>GDPR · DSGVO</span><span>·</span>
       <span>RESEARCH USE ONLY</span><span>·</span>
       <span>LOT-TRACED · END TO END</span><span>·</span>
       <span>HPLC ≥ 98%</span><span>·</span>
-      <span>JANOSHIK LABS — INDEPENDENT</span><span>·</span>
+      <span>JANOSHIK LABS · INDEPENDENT</span><span>·</span>
       <span>COA PER ORDER</span><span>·</span>
       <span>COLD CHAIN</span><span>·</span>
       <span>GDPR · DSGVO</span><span>·</span>
@@ -159,7 +159,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
       <div class="manifest-text reveal">
         <p class="lede">
           Wir bauen ChromePeps für Forschende, die ein <em>Chromatogramm</em> lesen
-          können  und für alle, die es lernen wollen.
+          können, und für alle, die es lernen wollen.
         </p>
         <p>
           Der Markt für Forschungspeptide ist gefüllt mit Anbietern, die das Wort
@@ -169,7 +169,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
         <p>
           Diese Daten gehören nicht uns. Sie gehören in jede Bestellung, in jede
           E-Mail, in jeden öffentlich verifizierbaren Janoshik-Eintrag. Transparenz
-          ist die teuerste Marketing-Strategie — und die einzige, die unter HPLC
+          ist die teuerste Marketing-Strategie und die einzige, die unter HPLC
           standhält.
         </p>
       </div>
@@ -177,11 +177,11 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
         <ul class="meta-list">
           <li><span class="k">Gegründet</span><span class="v">TODO:self</span></li>
           <li><span class="k">Rechtsform</span><span class="v">UG (haftungsbeschränkt)</span></li>
-          <li><span class="k">Sitz</span><span class="v">BaWü, DE</span></li>
+          <li><span class="k">Sitz</span><span class="v">München, DE</span></li>
           <li><span class="k">Lagerung</span><span class="v">TODO:self</span></li>
           <li><span class="k">Analytik</span><span class="v">Janoshik Labs · HPLC/MS</span></li>
           <li><span class="k">Versand</span><span class="v">DE + EU · ~24 h Handling</span></li>
-          <li><span class="k">Zahlung</span><span class="v">Stripe · SEPA · Crypto</span></li>
+          <li><span class="k">Zahlung</span><span class="v">Stripe · SEPA</span></li>
           <li><span class="k">Klasse</span><span class="v">Research Use Only</span></li>
         </ul>
       </aside>
@@ -221,7 +221,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
             Eingangs­wiegung, Sichtprüfung der Lyophilisat-Struktur, eindeutige
             Lot-Nummer und Foto-Dokumentation. Die Charge geht in den
             −24 °C-Quarantäne-Schrank, bevor sie überhaupt einen Schritt
-            weiter im Prozess macht  jede Bewegung ist ab Tag 1 mit der
+            weiter im Prozess macht. Jede Bewegung ist ab Tag 1 mit der
             Lot-ID verknüpft.
           </p>
           <dl class="panel-data">
@@ -254,7 +254,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
           <p>
             Reinheit ≥ 98 %, Identität bestätigt. Erst dann verlässt die Charge das
             Lager. Versand in neutraler, isolierter Verpackung. Das passende CoA
-            wird mit der Bestätigungs E-Mail mitgesendet, automatisiert, ohne Anfrage.
+            wird automatisch mit der Bestätigungs-E-Mail versendet, ohne Anfrage.
           </p>
           <dl class="panel-data">
             <div><dt>Handling</dt><dd>≤ 24 h ab Eingang</dd></div>
@@ -274,7 +274,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
             nicht für Werbung.
           </p>
           <dl class="panel-data">
-            <div><dt>Klasse</dt><dd>RUO · §6 GMP-nicht</dd></div>
+            <div><dt>Klasse</dt><dd>RUO, kein GMP-Status</dd></div>
             <div><dt>Beratung</dt><dd>technisch, keine medizinische</dd></div>
             <div><dt>Datenschutz</dt><dd>DSGVO · cookieless</dd></div>
           </dl>
@@ -289,7 +289,7 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
   <div class="container">
     <header class="section-head reveal">
       <div class="mono-label gold">06 / DER PROZESS</div>
-      <h2 class="section-title">Vom Eingang zum Etikett — in vier verifizierten Schritten.</h2>
+      <h2 class="section-title">Vom Eingang zum Etikett, in vier verifizierten Schritten.</h2>
       <p class="section-sub">Keine Abkürzungen. Keine Ausnahmen. Keine „Sonderchargen".</p>
     </header>
 
@@ -510,12 +510,12 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
       <div class="rm-col reveal">
         <div class="rm-tag done" style="background-color: rgb(253, 244, 216)">Q3 2026 ·</div>
         <h3>Öffentliche CoA-Datenbank</h3>
-        <p>Jede freigegebene Lot-Nummer ist auf chromepeps.com direkt verlinkbar — ohne Bestellung.</p>
+        <p>Jede freigegebene Lot-Nummer ist auf chromepeps.com direkt verlinkbar, ohne Bestellung.</p>
       </div>
       <div class="rm-col reveal current">
         <div class="rm-tag now" style="background-color: rgb(237, 234, 232); color: rgb(87, 73, 66)">Q4 2026</div>
         <h3>Endotoxin-Routine-Testing</h3>
-        <p>LAL-Test zusätzlich zur HPLC für jede sensible Charge — Standard wird angehoben.</p>
+        <p>LAL-Test zusätzlich zur HPLC für jede sensible Charge. Standard wird angehoben.</p>
       </div>
       <div class="rm-col reveal future">
         <div class="rm-tag next">Q2 2027</div>
@@ -540,12 +540,12 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
         <span class="line muted-dark">CoA-Verifikation.</span>
       </h2>
       <p class="kontakt-sub">
-        Wir antworten innerhalb von 24 Werktagsstunden, auf Deutsch oder Englisch.
+        Wir antworten innerhalb eines Werktags, auf Deutsch oder Englisch.
         Kein Bot, keine Ticket-Warteschleife.
       </p>
       <div class="kontakt-actions">
-        <a class="btn-gold large" href="mailto:hello@chromepeps.com" data-magnet>
-          <span>hello@chromepeps.com</span>
+        <a class="btn-gold large" href="mailto:support@chromepeps.com" data-magnet>
+          <span>support@chromepeps.com</span>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10m0 0L8 3m4 4L8 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
         <a class="btn-ghost-dark large" href="#" data-magnet>
@@ -562,10 +562,10 @@ export const DESIGN_BODY_HTML = `<!-- ========== NAV ========== -->
         <ul class="kontakt-list">
           <li><span>Rechtsträger</span><b>ChromePeps UG (haftungsbeschränkt)</b></li>
           <li><span>Sitz</span><b>München, Deutschland</b></li>
-          <li><span>USt-ID</span><b>DE 3xx xxx xxx</b></li>
-          <li><span>Handelsregister</span><b>AG München HRB ····</b></li>
+          <li><span>USt-ID</span><b>TODO:self</b></li>
+          <li><span>Handelsregister</span><b>TODO:self</b></li>
           <li><span>Analytik-Partner</span><b>Janoshik Analytical</b></li>
-          <li><span>Versand-Partner</span><b>DHL · UPS</b></li>
+          <li><span>Versand-Partner</span><b>DHL</b></li>
         </ul>
       </div>
     </div>

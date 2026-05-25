@@ -37,7 +37,7 @@ import "./ueber-uns.css";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: `Über uns — ${APP_NAME}`,
+  title: `Über uns | ${APP_NAME}`,
   description: `${APP_NAME} ist ein deutsches Labor-Supply für Forschungspeptide. Jede Charge wird durch Janoshik Labs per HPLC analysiert, bevor sie das Lager verlässt.`,
   robots: { index: true, follow: true },
 };
@@ -109,10 +109,10 @@ function applyPlaceholders(html: string, data: UeberUnsData): string {
   } else {
     out = out.replaceAll(
       'data-count="{{CHARGEN_COUNT}}" data-decimals="0">0',
-      ">—",
+      ">n. v.",
     );
     // safety net falls noch ein Token rumliegt
-    out = out.replaceAll("{{CHARGEN_COUNT}}", "—");
+    out = out.replaceAll("{{CHARGEN_COUNT}}", "n. v.");
   }
 
   // HPLC-Showcase: echte COA oder konsistente Demo-Werte
