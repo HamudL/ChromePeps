@@ -6,7 +6,7 @@ import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
 
 export const runtime = "edge";
 
-export const alt = `${APP_NAME} — Premium Research Peptides`;
+export const alt = `${APP_NAME}: Forschungspeptide mit unabhängig geprüfter Reinheit`;
 export const size = {
   width: 1200,
   height: 630,
@@ -79,7 +79,7 @@ export default function OpenGraphImage() {
             maxWidth: 1000,
           }}
         >
-          Premium Research Peptides
+          Forschungspeptide, HPLC-geprüft.
         </div>
 
         {/* Subtitle */}

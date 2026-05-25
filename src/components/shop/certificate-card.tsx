@@ -48,7 +48,7 @@ export function CertificateCard({
 }: CertificateCardProps) {
   const [flipped, setFlipped] = useState(false);
   const purityDisplay =
-    typeof purity === "number" ? purity.toFixed(2) : "—";
+    typeof purity === "number" ? purity.toFixed(2) : "n. v.";
   const hasPdf = typeof pdfUrl === "string" && pdfUrl.length > 0;
 
   return (

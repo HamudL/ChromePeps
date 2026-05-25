@@ -533,7 +533,7 @@ function HeroWithParticles() {
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto">
-            Premium-Forschungspeptide. Laborgeprüfte Reinheit.
+            Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 pointer-events-auto">
