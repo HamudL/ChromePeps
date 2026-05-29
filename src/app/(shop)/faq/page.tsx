@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { APP_NAME } from "@/lib/constants";
 import { db } from "@/lib/db";
-import { faqPageJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
+import { faqPageJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 
 /**
  * /faq — Live-FAQ-Seite. Liest FAQCategories + FAQItems aus der DB
@@ -48,12 +48,12 @@ export default async function FAQPage() {
     <div className="container max-w-3xl py-12">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(faqSchema) }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbSchema),
+          __html: safeJsonLd(breadcrumbSchema),
         }}
       />
 

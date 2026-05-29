@@ -8,6 +8,24 @@ import {
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 /**
+ * Sicheres Serialisieren von JSON-LD für `dangerouslySetInnerHTML`.
+ *
+ * `JSON.stringify` escaped `<`/`>` NICHT — ein Admin-gepflegter Wert
+ * (Produktname, Wissens-Titel, Beschreibung) mit der Sequenz
+ * `</script><script>…` könnte sonst aus dem `<script type=ld+json>`-Block
+ * ausbrechen und beliebiges JS ausführen (stored XSS). Wir escapen die
+ * kritischen Zeichen als Unicode-Escapes; JSON-(LD)-Parser dekodieren sie
+ * korrekt, das für Google gerenderte Markup bleibt unverändert. U+2028/
+ * U+2029 sind in JS-Strings illegale Zeilentrenner und werden mit escaped.
+ */
+export function safeJsonLd(obj: unknown): string {
+  return JSON.stringify(obj)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
+/**
  * Organization structured data for the site operator.
  * Rendered once in the root layout so Google can surface brand info.
  */

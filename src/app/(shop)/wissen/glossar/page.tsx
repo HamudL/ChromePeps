@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
-import { breadcrumbJsonLd } from "@/lib/json-ld";
+import { breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 import { GlossarClient } from "./glossar-client";
 
 /**
@@ -54,7 +54,7 @@ export default async function WissenGlossarPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbSchema),
+          __html: safeJsonLd(breadcrumbSchema),
         }}
       />
 

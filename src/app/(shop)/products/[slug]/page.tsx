@@ -18,7 +18,7 @@ import {
 import { db } from "@/lib/db";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
-import { productJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
+import { productJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 import { ReviewSection } from "@/components/shop/review-section";
 import { ReviewList, type ReviewListItem } from "@/components/shop/review-list";
 import { StarRating } from "@/components/shop/star-rating";
@@ -266,11 +266,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       <ProductViewTracker product={product} />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(productSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }}
       />
 
       {/* ── PDP Hero (Apotheke) ──

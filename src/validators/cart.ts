@@ -12,13 +12,18 @@ export const updateCartItemSchema = z.object({
 });
 
 export const syncCartSchema = z.object({
-  items: z.array(
-    z.object({
-      productId: z.string().cuid(),
-      variantId: z.string().cuid().nullable().default(null),
-      quantity: z.number().int().min(1).max(99),
-    })
-  ),
+  // .max(100): Cap gegen Memory-/DB-DoS über überlange Cart-Payloads.
+  // Reale Warenkörbe liegen weit darunter; addToCart cappt zusätzlich die
+  // Menge pro Position auf 99.
+  items: z
+    .array(
+      z.object({
+        productId: z.string().cuid(),
+        variantId: z.string().cuid().nullable().default(null),
+        quantity: z.number().int().min(1).max(99),
+      })
+    )
+    .max(100, "Zu viele Positionen im Warenkorb"),
 });
 
 export type AddToCartInput = z.infer<typeof addToCartSchema>;

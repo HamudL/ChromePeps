@@ -12,7 +12,7 @@ import { CoverPlaceholder } from "@/components/wissen/cover-placeholder";
 import { MetaLine } from "@/components/wissen/meta-line";
 import { TocList } from "@/components/wissen/toc-list";
 import { extractToc } from "@/lib/wissen/extract-toc";
-import { articleJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
+import { articleJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 
 /**
  * /wissen/[slug] — Wissens-Artikel-Detailseite.
@@ -118,12 +118,12 @@ export default async function WissenArticlePage({ params }: Props) {
     <article>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(articleSchema) }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbSchema),
+          __html: safeJsonLd(breadcrumbSchema),
         }}
       />
       <BlogPostViewTracker slug={post.slug} />
