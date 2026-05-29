@@ -103,7 +103,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
 USER nextjs
 EXPOSE 3000
 
+# Liveness-Probe gegen /api/health/live (gepufferte JSON-Antwort, kein
+# React-Streaming) statt gegen /. Vorher triggerte der wget-Abbruch auf der
+# gestreamten Startseite ~1000×/Tag den harmlosen Node-Webstreams-Fehler
+# `transformAlgorithm is not a function` in Sentry. /api/health/live ist
+# bewusst DB-/Redis-frei, damit ein kurzer DB-Hänger keine Neustart-Schleife
+# auslöst (Readiness läuft separat über /api/health).
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health/live || exit 1
 
 CMD ["node", "server.js"]
