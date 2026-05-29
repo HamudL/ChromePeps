@@ -108,7 +108,7 @@ docker compose up -d --force-recreate app nginx
 # Wait for app to become healthy
 log "Waiting for app to become healthy..."
 for i in $(seq 1 30); do
-  if docker compose exec -T app wget -q --spider http://127.0.0.1:3000/ 2>/dev/null; then
+  if docker compose exec -T app wget -q --spider http://127.0.0.1:3000/api/health/live 2>/dev/null; then
     log "App is healthy after ${i}s"
     break
   fi
