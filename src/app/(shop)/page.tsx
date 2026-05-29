@@ -37,6 +37,7 @@ import { HeroLogo } from "./hero-logo";
 import { PeptideNetwork } from "@/components/shop/peptide-network";
 import { TrustBar } from "@/components/shop/trust-bar";
 import { LiveMetrics } from "@/components/shop/live-metrics";
+import { RecentlyViewed } from "@/components/shop/recently-viewed";
 
 async function getBestsellers(): Promise<ProductCardData[]> {
   const cached = await cacheGet<ProductCardData[]>(HOMEPAGE_CACHE.BESTSELLERS);
@@ -405,7 +406,7 @@ export default async function HomePage() {
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
                   Bestseller
                 </h2>
-                <Button asChild variant="outline" size="sm" className="hidden sm:flex gap-1.5 border-white/20 text-white hover:bg-white/10">
+                <Button asChild variant="outline" size="sm" className="hidden sm:flex gap-1.5 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
                   <Link href="/products">
                     Alle Produkte <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -422,13 +423,17 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-8 text-center sm:hidden">
-              <Button asChild variant="outline" className="border-white/20 text-white hover:bg-white/10">
+              <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
                 <Link href="/products">Alle Produkte</Link>
               </Button>
             </div>
           </div>
         </section>
       )}
+
+      {/* ── Zuletzt angesehen (client-island, blendet sich bei leerem
+          Store / SSR selbst aus) ── */}
+      <RecentlyViewed />
 
       {/* ── Disclaimer ── */}
       <section className="border-t">

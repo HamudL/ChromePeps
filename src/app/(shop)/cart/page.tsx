@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, ShoppingCart } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, ShoppingCart, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -239,12 +239,47 @@ export default function CartPage() {
                 </span>
               </div>
 
-              {!isFreeShipping && (
-                <p className="text-xs text-muted-foreground">
-                  Endgültige Versandkosten je nach Lieferland im Checkout.
-                  EU-weit kostenlos ab{" "}
-                  {formatPrice(FREE_SHIPPING_THRESHOLD_CENTS)}.
+              {isFreeShipping ? (
+                <p className="flex items-center gap-1.5 text-xs font-medium text-green-600">
+                  <Check className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  Gratisversand freigeschaltet
                 </p>
+              ) : (
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground">
+                    Noch{" "}
+                    <span className="font-semibold text-foreground">
+                      {formatPrice(FREE_SHIPPING_THRESHOLD_CENTS - subtotal)}
+                    </span>{" "}
+                    bis zum Gratisversand.
+                  </p>
+                  <div
+                    className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                    role="progressbar"
+                    aria-valuenow={Math.min(
+                      100,
+                      Math.round((subtotal / FREE_SHIPPING_THRESHOLD_CENTS) * 100),
+                    )}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Fortschritt bis zum Gratisversand"
+                  >
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.round(
+                            (subtotal / FREE_SHIPPING_THRESHOLD_CENTS) * 100,
+                          ),
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Endgültige Versandkosten je nach Lieferland im Checkout.
+                  </p>
+                </div>
               )}
 
               <Separator />

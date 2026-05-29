@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 interface HeaderMobileMenuProps {
   links: ReadonlyArray<{ href: string; label: string }>;
@@ -17,6 +18,7 @@ interface HeaderMobileMenuProps {
  */
 export function HeaderMobileMenu({ links }: HeaderMobileMenuProps) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -26,17 +28,31 @@ export function HeaderMobileMenu({ links }: HeaderMobileMenuProps) {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-72">
+        {/* Radix-Dialog braucht einen zugänglichen Namen — ohne Title
+            warnt Radix und der Screenreader bekommt keinen Dialog-Namen. */}
+        <SheetTitle className="sr-only">Hauptmenü</SheetTitle>
         <nav aria-label="Hauptmenü" className="flex flex-col gap-4 mt-8">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="text-lg font-medium hover:text-primary transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {links.map((link) => {
+            const active =
+              link.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                aria-current={active ? "page" : undefined}
+                className={
+                  active
+                    ? "text-lg font-semibold text-primary"
+                    : "text-lg font-medium hover:text-primary transition-colors"
+                }
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
       </SheetContent>
     </Sheet>

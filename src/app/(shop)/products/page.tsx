@@ -387,6 +387,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   product={product}
                   index={(page - 1) * ITEMS_PER_PAGE + idx + 1}
                   total={total}
+                  priority={idx < 4}
                 />
               ))}
             </div>

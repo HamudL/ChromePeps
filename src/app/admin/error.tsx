@@ -7,6 +7,7 @@
  * fallback if this boundary itself fails.
  */
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export default function AdminError({
   reset: () => void;
 }) {
   useEffect(() => {
+    Sentry.captureException(error);
     console.error("[AdminError]", error.message, error.stack);
   }, [error]);
 

@@ -11,8 +11,13 @@ interface WishlistButtonProps {
 }
 
 export function WishlistButton({ productId, className }: WishlistButtonProps) {
-  const { isWishlisted, toggle } = useWishlistStore();
-  const active = isWishlisted(productId);
+  // Zustand v5 + React 19: NUR Einzel-Property-Selektoren (kein Objekt-
+  // Destructuring) — sonst abonniert jede der 12-20 Karten den ganzen
+  // Store und re-rendert bei jeder ids-Änderung (Error #185-Risiko).
+  // `active` selektiert ein Primitive (boolean) → re-rendert nur, wenn
+  // sich GENAU dieses Produkt ändert.
+  const toggle = useWishlistStore((s) => s.toggle);
+  const active = useWishlistStore((s) => s.ids.has(productId));
 
   return (
     <Button

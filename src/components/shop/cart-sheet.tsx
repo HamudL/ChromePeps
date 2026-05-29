@@ -86,6 +86,11 @@ export function CartSheet() {
           </div>
         ) : (
           <>
+            {/* Free-Shipping-Fortschritt — zeigt direkt im Kaufmoment, wie
+                viel bis zum Gratisversand fehlt (AOV-Hebel). Schwelle &
+                Subtotal kommen aus derselben Quelle wie die Receipt-Werte. */}
+            <FreeShippingProgress subtotal={totalPrice} />
+
             {/* Items list */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
               <div className="space-y-4">
@@ -296,5 +301,48 @@ function IncludedItem({ children }: { children: React.ReactNode }) {
       <Check className="h-3 w-3 text-primary shrink-0" strokeWidth={3} />
       {children}
     </li>
+  );
+}
+
+function FreeShippingProgress({ subtotal }: { subtotal: number }) {
+  const reached = subtotal >= FREE_SHIPPING_THRESHOLD_CENTS;
+  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - subtotal);
+  const pct = Math.min(
+    100,
+    Math.round((subtotal / FREE_SHIPPING_THRESHOLD_CENTS) * 100),
+  );
+
+  return (
+    <div className="border-b px-6 py-3">
+      {reached ? (
+        <p className="flex items-center gap-2 font-mono text-[11px] font-medium tracking-[0.04em] text-[hsl(140_45%_34%)]">
+          <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} aria-hidden />
+          Gratisversand freigeschaltet
+        </p>
+      ) : (
+        <>
+          <p className="mb-1.5 font-mono text-[11px] tracking-[0.04em] text-muted-foreground">
+            Noch{" "}
+            <span className="font-semibold text-foreground tabular-nums">
+              {formatPrice(remaining)}
+            </span>{" "}
+            bis zum Gratisversand
+          </p>
+          <div
+            className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Fortschritt bis zum Gratisversand"
+          >
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </>
+      )}
+    </div>
   );
 }

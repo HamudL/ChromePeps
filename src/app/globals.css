@@ -15,7 +15,11 @@
     --popover-foreground: 20 14% 10%;
 
     --primary: 45 92% 41%;
-    --primary-foreground: 0 0% 100%;
+    /* WCAG-Fix (Option A): dunkles Ink statt Weiß auf Gold.
+       Weißer Text auf Gold lag bei nur 2,62:1 (1.4.3 AA verfehlt) —
+       dunkles Ink ergibt ~6,7:1 und sieht apotheken-edler aus. Das
+       .dark-Theme nutzt ohnehin schon dunkles primary-foreground. */
+    --primary-foreground: 20 14% 10%;
 
     --secondary: 30 10% 92%;
     --secondary-foreground: 20 14% 10%;
@@ -1103,4 +1107,26 @@
 .faq-answer strong {
   font-weight: 600;
   color: hsl(var(--foreground));
+}
+
+/* ============================================================
+ * Globaler prefers-reduced-motion Catch-All
+ * ------------------------------------------------------------
+ * Die JS-Animationen (3D-Logo, PeptideNetwork, Tilt, RevealController)
+ * prüfen reduced-motion bereits einzeln. Dieser Block fängt zusätzlich
+ * die rein per CSS laufenden Endlos-Animationen ab — vor allem
+ * .chrome-text (chromeFlow infinite auf jedem Logo/Heading),
+ * .hero-ambient-Drift und .animate-fade-in — damit Nutzer mit aktivierter
+ * OS-Einstellung "Bewegung reduzieren" keine Dauerbewegung mehr sehen.
+ * Greift ausschließlich bei gesetzter Einstellung; im Normalfall null
+ * Effekt. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

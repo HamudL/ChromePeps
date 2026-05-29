@@ -335,6 +335,7 @@ export default async function CategoryLandingPage({
                   product={product}
                   index={(page - 1) * pageSize + idx + 1}
                   total={total}
+                  priority={idx < 4}
                 />
               ))}
             </div>

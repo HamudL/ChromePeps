@@ -37,6 +37,15 @@ yarn-error.log*
 # previously tracked by mistake; see the security remediation commit.
 .claude/settings.local.json
 
+# Claude Code temporäre Agenten-Worktrees + Lock — nie committen.
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+
+# Lokale Arbeits-/Audit-/Handoff-Notizen — bleiben lokal, nicht ins Repo.
+/AUDIT_REPORT_*.md
+/HANDOFF_*.md
+/CLAUDE_DESIGN_PROMPT*.md
+
 # vercel
 .vercel
 

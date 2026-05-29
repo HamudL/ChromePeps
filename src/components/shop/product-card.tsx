@@ -36,9 +36,21 @@ interface ProductCardProps {
    * Gesamt-Anzahl im aktuellen Listing (für den Index-Nenner).
    */
   total?: number;
+  /**
+   * LCP-Hint: die erste(n) Reihe(n) eines Listings setzen priority=true,
+   * damit das Produktbild sofort über den Preload-Scanner geladen wird
+   * (statt lazy nach dem Layout). Default false — alle übrigen Karten
+   * bleiben lazy, damit nur das tatsächliche LCP-Bild bevorzugt lädt.
+   */
+  priority?: boolean;
 }
 
-export function ProductCard({ product, index, total }: ProductCardProps) {
+export function ProductCard({
+  product,
+  index,
+  total,
+  priority = false,
+}: ProductCardProps) {
   const isOutOfStock = product.stock <= 0;
   const hasDiscount =
     product.compareAtPriceInCents &&
@@ -109,11 +121,19 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
       />
 
       {/* Head: Kategorie + Index + Wishlist */}
-      <div className="relative mb-6 flex items-center justify-between font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
-        <span className="text-primary font-semibold">
-          {product.category.name}
-        </span>
-        <div className="flex items-center gap-2">
+      <div className="relative mb-6 flex items-center justify-between gap-2 font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-primary font-semibold">
+            {product.category.name}
+          </span>
+          {product.isBestseller && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border px-1.5 py-0.5 text-[9px] font-bold tracking-[0.12em] text-foreground">
+              <span aria-hidden className="h-1 w-1 rounded-full bg-primary" />
+              Bestseller
+            </span>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           {indexLabel && <span>{indexLabel}</span>}
           <WishlistCardSlot productId={product.id} />
         </div>
@@ -133,6 +153,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
               src={image.url}
               alt={image.alt ?? product.name}
               fill
+              priority={priority}
               className="object-contain transition-transform duration-500 ease-out group-hover:scale-[1.04]"
               sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
             />
@@ -198,6 +219,9 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
               "font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary",
               "opacity-0 translate-x-2 transition-all duration-250",
               "group-hover:opacity-100 group-hover:translate-x-0",
+              // Tastatur-Fokus: Karte ist der Link — bei Fokus den CTA
+              // sichtbar machen, sonst liegt der Fokus auf unsichtbarem Text.
+              "group-focus-within:opacity-100 group-focus-within:translate-x-0",
             )}
           >
             Ansehen →
@@ -223,7 +247,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
  */
 function WishlistCardSlot({ productId }: { productId: string }) {
   return (
-    <div className="opacity-70 transition-opacity group-hover:opacity-100">
+    <div className="opacity-70 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
       <WishlistButton
         productId={productId}
         className="h-9 w-9 bg-transparent hover:bg-muted"

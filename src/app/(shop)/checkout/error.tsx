@@ -7,6 +7,7 @@
  * without losing their cart contents.
  */
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import { ShieldAlert, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,9 @@ export default function CheckoutError({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Checkout ist der geschäftskritischste Pfad — Crashes hier müssen
+    // im Sentry-Dashboard auftauchen, nicht still verschwinden.
+    Sentry.captureException(error);
     console.error("[CheckoutError]", error.message, error.stack);
   }, [error]);
 
