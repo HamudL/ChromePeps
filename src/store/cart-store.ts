@@ -5,6 +5,10 @@ import type { CartItemLocal } from "@/types";
 interface CartState {
   items: CartItemLocal[];
   isOpen: boolean;
+  // Im Warenkorb hinterlegter Gutscheincode. Bewusst ADDITIV und NICHT
+  // Teil des Item-Sync-/Payload-Pfads (PUT /api/cart) — nur ein UI-Hint,
+  // der an der Kasse vorbefüllt wird. Server-Validierung bleibt im Checkout.
+  promoCode: string | null;
 
   // Actions
   addItem: (item: CartItemLocal) => void;
@@ -16,6 +20,7 @@ interface CartState {
   ) => void;
   clearCart: () => void;
   setItems: (items: CartItemLocal[]) => void;
+  setPromoCode: (code: string | null) => void;
   toggleCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -30,6 +35,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      promoCode: null,
 
       addItem: (item) =>
         set((state) => {
@@ -77,9 +83,11 @@ export const useCartStore = create<CartState>()(
           };
         }),
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], promoCode: null }),
 
       setItems: (items) => set({ items }),
+
+      setPromoCode: (code) => set({ promoCode: code }),
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       openCart: () => set({ isOpen: true }),
@@ -96,7 +104,10 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "chromepeps-cart",
-      partialize: (state) => ({ items: state.items }),
+      partialize: (state) => ({
+        items: state.items,
+        promoCode: state.promoCode,
+      }),
     }
   )
 );

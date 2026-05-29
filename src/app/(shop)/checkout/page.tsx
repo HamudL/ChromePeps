@@ -127,8 +127,13 @@ export default function CheckoutPage() {
     company: "",
   });
 
-  // Promo code
-  const [promoInput, setPromoInput] = useState("");
+  // Promo code — im Warenkorb hinterlegten Code beim Mount vorbefüllen,
+  // damit der Kunde ihn nicht zweimal eingibt (aus dem localStorage-
+  // persistierten Cart-Store). Die eigentliche Einlösung/Validierung
+  // bleibt unverändert über handleApplyPromo hier im Checkout.
+  const [promoInput, setPromoInput] = useState(
+    () => useCartStore.getState().promoCode ?? "",
+  );
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [appliedPromo, setAppliedPromo] = useState<{
@@ -512,12 +517,17 @@ export default function CheckoutPage() {
       : baseShippingPreview;
   const total = subtotalAfterDiscount + shipping;
 
+  // Gemeinsame disabled-Bedingung für den Haupt-Pay-Button UND die
+  // Mobile-Sticky-Bar — eine Quelle, damit beide nie auseinanderlaufen.
+  const payDisabled =
+    checkoutLoading || items.length === 0 || (!isGuest && !selectedAddressId);
+
   const updateFormField = (field: string, value: string | boolean) => {
     setAddressForm((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 pt-8 pb-28 lg:pb-8">
       <div className="mb-8">
         <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-strong">
           Sichere Kasse
@@ -1169,15 +1179,7 @@ export default function CheckoutPage() {
                 className="w-full"
                 size="lg"
                 onClick={handleCheckout}
-                disabled={
-                  checkoutLoading ||
-                  items.length === 0 ||
-                  // For authenticated users: a saved address must
-                  // be picked. Guests fill the inline form instead
-                  // (validated inside handleCheckout via
-                  // buildGuestPayload).
-                  (!isGuest && !selectedAddressId)
-                }
+                disabled={payDisabled}
               >
                 {checkoutLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1296,6 +1298,35 @@ export default function CheckoutPage() {
               </Button>
             </CardContent>
           </Card>
+        </div>
+      </div>
+
+      {/* Mobile-Sticky-Checkout-Bar — Gesamtbetrag + CTA immer sichtbar,
+          ohne zur Order-Summary am Seitenende scrollen zu müssen (nur <lg).
+          Nutzt denselben handleCheckout + payDisabled wie der Haupt-Button. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/85 lg:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <div className="leading-tight">
+            <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+              Gesamt
+            </p>
+            <p className="text-lg font-bold tabular-nums">{formatPrice(total)}</p>
+          </div>
+          <Button
+            size="lg"
+            className="flex-1"
+            onClick={handleCheckout}
+            disabled={payDisabled}
+          >
+            {checkoutLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : paymentMethod === "STRIPE" ? (
+              <CreditCard className="mr-2 h-4 w-4" />
+            ) : (
+              <Building2 className="mr-2 h-4 w-4" />
+            )}
+            {paymentMethod === "STRIPE" ? "Bezahlen" : "Bestellen"}
+          </Button>
         </div>
       </div>
     </div>

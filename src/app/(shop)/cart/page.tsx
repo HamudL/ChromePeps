@@ -13,6 +13,8 @@ import {
   FREE_SHIPPING_THRESHOLD_CENTS,
   STANDARD_SHIPPING_CENTS,
 } from "@/lib/order/calculate-totals";
+import { CartCrossSell } from "@/components/shop/cart-cross-sell";
+import { CartPromoInput } from "@/components/shop/cart-promo-input";
 
 export default function CartPage() {
   const [mounted, setMounted] = useState(false);
@@ -293,6 +295,10 @@ export default function CartPage() {
 
               <Separator />
 
+              <CartPromoInput />
+
+              <Separator />
+
               <div className="flex items-baseline justify-between">
                 <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                   Gesamt
@@ -316,6 +322,8 @@ export default function CartPage() {
           </Card>
         </div>
       </div>
+
+      <CartCrossSell />
     </div>
   );
 }

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, PackageSearch } from "lucide-react";
+import { PackageSearch } from "lucide-react";
 import { db } from "@/lib/db";
 import { ITEMS_PER_PAGE, CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
 import { cacheGet, cacheSet } from "@/lib/redis";
 import { ProductCard } from "@/components/shop/product-card";
 import { ApothekeShopHero } from "@/components/shop/apotheke-shop-hero";
 import { ShopFilterBar } from "@/components/shop/shop-filter-bar";
+import { PaginationNav } from "@/components/shop/pagination-nav";
 import { Button } from "@/components/ui/button";
 import {
   productCardSelect,
@@ -340,16 +341,19 @@ export default async function CategoryLandingPage({
               ))}
             </div>
 
-            {totalPages > 1 && (
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                basePath={basePath}
-                sort={sort}
-                inStock={inStock}
-                minPurity={minPurity}
-              />
-            )}
+            <PaginationNav
+              currentPage={page}
+              totalPages={totalPages}
+              buildHref={(p) => {
+                const params = new URLSearchParams();
+                if (sort !== "newest") params.set("sort", sort);
+                if (inStock) params.set("inStock", "true");
+                if (minPurity != null) params.set("minPurity", String(minPurity));
+                if (p > 1) params.set("page", String(p));
+                const qs = params.toString();
+                return qs ? `${basePath}?${qs}` : basePath;
+              }}
+            />
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 md:py-32 text-center">
@@ -373,87 +377,6 @@ export default async function CategoryLandingPage({
   );
 }
 
-function Pagination({
-  page,
-  totalPages,
-  basePath,
-  sort,
-  inStock,
-  minPurity,
-}: {
-  page: number;
-  totalPages: number;
-  basePath: string;
-  sort: string;
-  inStock: boolean;
-  minPurity: number | null;
-}) {
-  const buildUrl = (target: number) => {
-    const params = new URLSearchParams();
-    if (sort !== "newest") params.set("sort", sort);
-    if (inStock) params.set("inStock", "true");
-    if (minPurity != null) params.set("minPurity", String(minPurity));
-    if (target > 1) params.set("page", String(target));
-    const qs = params.toString();
-    return qs ? `${basePath}?${qs}` : basePath;
-  };
-
-  return (
-    <nav
-      className="mt-14 flex items-center justify-center gap-6 border-t border-border pt-8"
-      aria-label="Pagination"
-    >
-      {page > 1 ? (
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <Link href={buildUrl(page - 1)}>
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Zurück
-          </Link>
-        </Button>
-      ) : (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled
-          className="gap-2 text-muted-foreground/40"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Zurück
-        </Button>
-      )}
-      <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground tabular-nums">
-        Seite {page}
-        <span className="mx-2 text-muted-foreground/40">/</span>
-        {totalPages}
-      </span>
-      {page < totalPages ? (
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <Link href={buildUrl(page + 1)}>
-            Weiter
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </Button>
-      ) : (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled
-          className="gap-2 text-muted-foreground/40"
-        >
-          Weiter
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Button>
-      )}
-    </nav>
-  );
-}
+// Pagination wird jetzt zentral über <PaginationNav> gerendert
+// (src/components/shop/pagination-nav.tsx) — numerisch + konsistent mit
+// /products und /wissen.
