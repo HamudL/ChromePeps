@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, PackageSearch } from "lucide-react";
+import { PackageSearch } from "lucide-react";
 import { db } from "@/lib/db";
 import { ITEMS_PER_PAGE, CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
 import { cacheGet, cacheSet } from "@/lib/redis";
 import { ProductCard } from "@/components/shop/product-card";
 import { ApothekeShopHero } from "@/components/shop/apotheke-shop-hero";
 import { ShopFilterBar } from "@/components/shop/shop-filter-bar";
+import { PaginationNav } from "@/components/shop/pagination-nav";
 import { Button } from "@/components/ui/button";
 import {
   productCardSelect,
@@ -387,93 +388,28 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   product={product}
                   index={(page - 1) * ITEMS_PER_PAGE + idx + 1}
                   total={total}
+                  priority={idx < 4}
                 />
               ))}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <nav
-                className="mt-14 flex items-center justify-center gap-6 border-t border-border pt-8"
-                aria-label="Pagination"
-              >
-                {page > 1 ? (
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <Link
-                      href={buildPageUrl(
-                        {
-                          search,
-                          category,
-                          sort: sort === "newest" ? undefined : sort,
-                          inStock: inStock ? "true" : undefined,
-                          minPurity: minPurity != null ? String(minPurity) : undefined,
-                        },
-                        page - 1
-                      )}
-                    >
-                      <ArrowLeft className="h-3.5 w-3.5" />
-                      Zurück
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled
-                    className="gap-2 text-muted-foreground/40"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                    Zurück
-                  </Button>
-                )}
-
-                <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground tabular-nums">
-                  Seite {page}
-                  <span className="mx-2 text-muted-foreground/40">/</span>
-                  {totalPages}
-                </span>
-
-                {page < totalPages ? (
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <Link
-                      href={buildPageUrl(
-                        {
-                          search,
-                          category,
-                          sort: sort === "newest" ? undefined : sort,
-                          inStock: inStock ? "true" : undefined,
-                          minPurity: minPurity != null ? String(minPurity) : undefined,
-                        },
-                        page + 1
-                      )}
-                    >
-                      Weiter
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled
-                    className="gap-2 text-muted-foreground/40"
-                  >
-                    Weiter
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </nav>
-            )}
+            {/* Pagination — numerisch (1 … 4 [5] 6 … N) */}
+            <PaginationNav
+              currentPage={page}
+              totalPages={totalPages}
+              buildHref={(p) =>
+                buildPageUrl(
+                  {
+                    search,
+                    category,
+                    sort: sort === "newest" ? undefined : sort,
+                    inStock: inStock ? "true" : undefined,
+                    minPurity: minPurity != null ? String(minPurity) : undefined,
+                  },
+                  p,
+                )
+              }
+            />
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 md:py-32 text-center">

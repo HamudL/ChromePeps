@@ -36,7 +36,7 @@ export function AnnouncementBar() {
 
   return (
     <div
-      className={`relative bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 text-zinc-200 text-center text-xs py-1.5 px-8 transition-all duration-300 ease-out overflow-hidden ${
+      className={`relative bg-gradient-to-r from-ink via-[hsl(20_10%_12%)] to-ink text-ink-foreground text-center text-xs py-1.5 px-8 transition-all duration-300 ease-out overflow-hidden ${
         closing ? "max-h-0 opacity-0 py-0" : "max-h-12 opacity-100"
       }`}
     >

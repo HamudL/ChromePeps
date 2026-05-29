@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,20 @@ export function HeaderCartButton() {
   const openCart = useCartStore((s) => s.openCart);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Kurzer Scale-Pop, sobald sich die Anzahl ändert — macht das
+  // Hinzufügen sichtbar spürbar. `key={bump}` remountet das Badge und
+  // spielt die Pop-Animation erneut ab. prefers-reduced-motion wird vom
+  // globalen Catch-All in globals.css neutralisiert.
+  const [bump, setBump] = useState(0);
+  const prev = useRef(totalItems);
+  useEffect(() => {
+    if (totalItems !== prev.current) {
+      const increased = totalItems > prev.current;
+      prev.current = totalItems;
+      if (increased) setBump((b) => b + 1);
+    }
+  }, [totalItems]);
+
   return (
     <Button
       variant="ghost"
@@ -27,7 +42,10 @@ export function HeaderCartButton() {
     >
       <ShoppingCart className="h-5 w-5" />
       {totalItems > 0 && (
-        <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]">
+        <Badge
+          key={bump}
+          className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-[10px] animate-pop"
+        >
           {totalItems}
         </Badge>
       )}

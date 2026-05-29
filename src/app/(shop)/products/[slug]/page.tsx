@@ -35,6 +35,7 @@ import {
   SequenceCopyBlock,
 } from "./product-client";
 import { ProductViewTracker } from "@/components/shop/product-view-tracker";
+import { RecentlyViewed } from "@/components/shop/recently-viewed";
 import { FadeUp } from "../../home-animations";
 
 interface ProductPageProps {
@@ -500,7 +501,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   <span className="text-muted-foreground/40">·</span>
                   <div className="flex items-center gap-1.5">
                     <Truck className="h-3.5 w-3.5 text-primary" />
-                    <span>Versand innerhalb 24h</span>
+                    <span>Schneller Versand aus Deutschland</span>
                   </div>
                   <span className="text-muted-foreground/40">·</span>
                   <div className="flex items-center gap-1.5">
@@ -721,6 +722,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </div>
         </section>
       )}
+
+      {/* ── Zuletzt angesehen (client-island, blendet sich bei leerem
+          Store / SSR selbst aus; filtert das aktuelle Produkt heraus) ── */}
+      <RecentlyViewed currentProductId={product.id} />
 
       {/* ── Research Disclaimer ── */}
       <section className="border-t">

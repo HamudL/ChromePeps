@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
+
 /**
  * Page-level error boundary — catches errors in page components.
  * In development, shows full error message + stack trace for debugging.
@@ -15,6 +18,12 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    // Client-Render-Crashes landen sonst nur in der Browser-Konsole des
+    // Users — onRequestError fängt nur server-seitige Throws.
+    Sentry.captureException(error);
+  }, [error]);
+
   console.error("[PageError]", error.message, error.stack);
 
   return (
