@@ -158,19 +158,16 @@ export default async function UeberUnsPage() {
 
   return (
     <>
-      {/* Design nutzt drei Google Fonts. JSX-<link> wird von Next 15
-          automatisch in den <head> gehoben + dedupliziert. */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossOrigin="anonymous"
-      />
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Comfortaa:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap"
-      />
-
+      {/*
+        DM Sans / Comfortaa / DM Mono werden bereits im Root-Layout via
+        `next/font/google` self-hostet geladen und über die CSS-Variablen
+        --font-sans, --font-display, --font-mono an die ueber-uns.css
+        weitergereicht. Der frühere zusätzliche <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?...">-Block ist dadurch
+        redundant — er erzwang einen render-blocking CSS-Roundtrip nach
+        Google + extra Font-Binaries und triggerte die @next/next/no-
+        page-custom-font Lint-Warnung. Entfernt.
+      */}
       <div
         className="ueber-uns-design"
         // Scoped CSS-Wrapper. dangerouslySetInnerHTML ist sicher: das HTML

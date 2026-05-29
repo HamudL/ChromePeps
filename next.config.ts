@@ -77,6 +77,74 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: csp,
           },
+          // Frühes Anwerfen der TLS-Handshakes für Drittanbieter-Origins,
+          // bevor der HTML-Parser bei den Script-Tags ankommt. Spart auf
+          // Cold-Visits ~100-300ms LCP-Anteil (TCP+TLS+DNS für analytics +
+          // Sentry-Tunnel + hCaptcha).
+          {
+            key: "Link",
+            value: [
+              "<https://analytics.chromepeps.com>; rel=preconnect",
+              "<https://hcaptcha.com>; rel=preconnect",
+              "<https://res.cloudinary.com>; rel=preconnect; crossorigin",
+            ].join(", "),
+          },
+        ],
+      },
+      // Next.js Image-Optimizer-Output: lange immutable-Cache,
+      // unterstützt Browser- und CDN-Caches.
+      {
+        source: "/_next/image(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // Statische public/-Assets (Bilder, Vial-Frames, Fonts). Per
+      // Default liefert Next sie mit Cache-Control: public,max-age=0.
+      // Datei-Pfade enthalten keine Content-Hashes, daher 1 Tag
+      // browser-cache + stale-while-revalidate für 7 Tage — Update
+      // landet trotzdem schnell live, repeat-visits sparen Roundtrips.
+      {
+        source: "/ueber-uns/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
+      },
+      {
+        source: "/products/:path*.png",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
+      },
+      {
+        source: "/products/:path*.jpg",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
+      },
+      {
+        source: "/products/:path*.webp",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=86400, stale-while-revalidate=604800",
+          },
         ],
       },
     ];
@@ -108,10 +176,50 @@ const nextConfig: NextConfig = {
       "./node_modules/@prisma/engines/**/*",
     ],
   },
+  // Unterdrücke Workspace-Root-Warnung — wir haben einen zweiten
+  // lockfile außerhalb der Repo (C:\Users\HamudL\package-lock.json),
+  // den Next sonst als Root rät und Trace-Pfade kaputt macht.
+  outputFileTracingRoot: __dirname,
+  // Eliminiert console.* in Production-Bundles (außer error/warn).
+  // Spart ein paar KB und unterbindet versehentliches Debug-Leak.
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    // optimizePackageImports rewrites barrel imports so unused exports
+    // tree-shake correctly. Largest impact bei lucide-react (>1000 Icons,
+    // wir nutzen ~30) und Radix-Modulen (jedes ihrer Index-Files
+    // re-exportiert die ganze Suite). Trifft direkt den 184 kB shared
+    // chunk und die Per-Page Sizes.
+    optimizePackageImports: [
+      "lucide-react",
+      "@radix-ui/react-alert-dialog",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-label",
+      "@radix-ui/react-select",
+      "@radix-ui/react-separator",
+      "@radix-ui/react-slot",
+      "@radix-ui/react-tabs",
+      "date-fns",
+      "recharts",
+      "@react-pdf/renderer",
+      "@react-email/components",
+      "sonner",
+    ],
+    // Server-Side React-Komponenten optimiert kompilieren — schneller
+    // RSC-Build, kleinere RSC-Payloads.
+    optimizeServerReact: true,
+    // Macht prefetch von Links granularer — verhindert dass beim Hover
+    // auf ein Link sofort die volle RSC-Payload kommt.
+    scrollRestoration: true,
   },
   output: "standalone",
 };
@@ -142,4 +250,26 @@ export default withSentryConfig(withBundleAnalyzer(nextConfig), {
 
   // Be quiet in local builds; CI/VPS build sets CI=1 so logs surface there.
   silent: !process.env.CI,
+
+  // Bundle-Größe optimieren: deaktiviert Sentry-Features die wir nicht
+  // nutzen, schlankerer Client-Bundle. Replay/Debug-Builder ziehen den
+  // SDK-Footprint hoch — wir tracen Errors, keine Session-Replays.
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
+
+  // Webpack-Optionen — Sentry hat sie aus der Top-Level-Config in einen
+  // eigenen Namespace verschoben (Deprecation-Warnings sonst).
+  webpack: {
+    // React-Komponenten-Annotation aus. Macht das HTML messbar größer
+    // und ist nur für tiefere Sentry-React-Debugging-Features nötig.
+    reactComponentAnnotation: { enabled: false },
+    // Tree-shake `logger.*`-Aufrufe in Production.
+    treeshake: { removeDebugLogging: true },
+    // Vercel-Monitors auto-detection aus (wir sind nicht auf Vercel).
+    automaticVercelMonitors: false,
+  },
 });

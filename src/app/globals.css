@@ -233,6 +233,36 @@
     animation: fadeIn 0.3s ease-out both;
   }
 
+  /* ===== Reveal-Up (FadeUp-Replacement) ====================================
+   * Ersatz für die alte Client-Component-basierte FadeUp. Die ContenT-
+   * Komponente rendert reines HTML mit Klasse `reveal-up`; ein einziger
+   * globaler IntersectionObserver (siehe RevealController) setzt `.in` auf
+   * Elemente sobald sie in den Viewport rollen. Above-the-fold wird sofort
+   * gesetzt, ohne Wait auf Scroll.
+   *
+   * Vorher: 16+ FadeUp-Instanzen pro Homepage = 16 Client-Components, 16
+   * useEffects, 16 IntersectionObserver, 16 setTimeouts. Jetzt: 0
+   * Hydration-Cost für die Animation selbst, 1 globaler IO. */
+  .reveal-up {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.5s ease-out var(--fade-delay, 0s),
+      transform 0.5s ease-out var(--fade-delay, 0s);
+    will-change: opacity, transform;
+  }
+  .reveal-up.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-up {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
   /* ===== Animations Demo Page ===== */
   @keyframes animDemoDrift1 {
     0%, 100% { transform: translate(0, 0); }

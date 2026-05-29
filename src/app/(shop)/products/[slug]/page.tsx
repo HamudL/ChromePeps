@@ -56,11 +56,20 @@ async function getProduct(slug: string): Promise<ProductWithDetails | null> {
       category: true,
       variants: { where: { isActive: true }, orderBy: { priceInCents: "asc" } },
       reviews: {
-        orderBy: { createdAt: "desc" },
-        take: REVIEWS_INITIAL_TAKE,
-        include: {
+        // Nur die Felder die ReviewList tatsächlich rendert. include zog
+        // sonst userId, isVerified, updatedAt, productId mit — bei
+        // populären Produkten halbiert das den SSR-Payload.
+        select: {
+          id: true,
+          rating: true,
+          title: true,
+          body: true,
+          createdAt: true,
+          isVerified: true,
           user: { select: { name: true, image: true } },
         },
+        orderBy: { createdAt: "desc" },
+        take: REVIEWS_INITIAL_TAKE,
       },
     },
   });

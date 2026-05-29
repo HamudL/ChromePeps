@@ -132,11 +132,34 @@ async function getLiveMetrics(): Promise<LiveMetricsResult> {
 }
 
 export default async function HomePage() {
-  const [bestsellers, categories, liveMetrics] = await Promise.all([
-    getBestsellers(),
-    getCategories(),
-    getLiveMetrics(),
-  ]);
+  // Promise.allSettled statt Promise.all: ein Failure (z. B. Redis-Down,
+  // Postgres-Query timeout auf der Aggregate-Query) darf die Homepage
+  // nicht komplett killen — Best-effort-Render mit den verfügbaren
+  // Sektionen statt 500-Page. Siehe Handoff "Promise.all koppelt
+  // Failures".
+  const [bestsellersResult, categoriesResult, liveMetricsResult] =
+    await Promise.allSettled([
+      getBestsellers(),
+      getCategories(),
+      getLiveMetrics(),
+    ]);
+  const bestsellers: ProductCardData[] =
+    bestsellersResult.status === "fulfilled" ? bestsellersResult.value : [];
+  const categories: HomepageCategory[] =
+    categoriesResult.status === "fulfilled" ? categoriesResult.value : [];
+  const liveMetrics: LiveMetricsResult =
+    liveMetricsResult.status === "fulfilled"
+      ? liveMetricsResult.value
+      : { batchCount: 0, avgPurity: null };
+  if (bestsellersResult.status === "rejected") {
+    console.error("[home] bestsellers failed", bestsellersResult.reason);
+  }
+  if (categoriesResult.status === "rejected") {
+    console.error("[home] categories failed", categoriesResult.reason);
+  }
+  if (liveMetricsResult.status === "rejected") {
+    console.error("[home] live-metrics failed", liveMetricsResult.reason);
+  }
 
   // Metrics-Kacheln mit echten Zahlen befüllen. Zahlen <= 0 bzw. null
   // (z.B. noch keine COA eingepflegt) werden nicht als "0 Chargen getestet"

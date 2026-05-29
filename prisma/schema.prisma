@@ -199,6 +199,13 @@ model Product {
   //   sortOrder), aber für die typische Customer-Reihenfolge
   //   schneller.
   @@index([isActive, categoryId, sortOrder])
+  // Bestseller-Listing der Homepage:
+  //   WHERE isActive=true AND isBestseller=true
+  //   ORDER BY sortOrder ASC, createdAt DESC LIMIT 4
+  // → ohne Index Sequential Scan über alle Produkte. Bei 1k+ Produkten
+  //   spürbar (~10-30 ms), bei Cache-Miss-Spikes auf Homepage
+  //   summiert sich das.
+  @@index([isActive, isBestseller, sortOrder])
   @@map("products")
 }
 

@@ -32,7 +32,19 @@ export async function GET(
         category: true,
         variants: { where: { isActive: true }, orderBy: { priceInCents: "asc" } },
         reviews: {
-          include: { user: { select: { name: true, image: true } } },
+          // Public-Detail-API: nur die Felder die das Frontend in der
+          // Review-Liste rendert. Volles include zog userId, isVerified,
+          // updatedAt, productId mit — bei 500-Reviews-Produkten 5×
+          // bandwidth.
+          select: {
+            id: true,
+            rating: true,
+            title: true,
+            body: true,
+            createdAt: true,
+            isVerified: true,
+            user: { select: { name: true, image: true } },
+          },
           orderBy: { createdAt: "desc" },
           take: 10,
         },
@@ -72,7 +84,15 @@ export async function GET(
         },
       },
       reviews: {
-        include: { user: { select: { name: true, image: true } } },
+        select: {
+          id: true,
+          rating: true,
+          title: true,
+          body: true,
+          createdAt: true,
+          isVerified: true,
+          user: { select: { name: true, image: true } },
+        },
         orderBy: { createdAt: "desc" },
         take: 10,
       },
