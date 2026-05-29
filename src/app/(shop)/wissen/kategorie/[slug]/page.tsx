@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { db } from "@/lib/db";
 import { ArticleCard, type ArticleCardData } from "@/components/wissen/article-card";
-import { breadcrumbJsonLd } from "@/lib/json-ld";
+import { breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 
 /**
  * /wissen/kategorie/[slug] — Magazinstil-Liste pro Kategorie.
@@ -100,7 +100,7 @@ export default async function WissenCategoryPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbSchema),
+          __html: safeJsonLd(breadcrumbSchema),
         }}
       />
 

@@ -6,13 +6,24 @@ import { auth } from "@/lib/auth";
 import { updateProductSchema } from "@/validators/product";
 import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
 import { slugify } from "@/lib/utils";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 
 // GET /api/products/[slug] — public (cached) or admin (uncached, includes inactive)
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+
+  // Rate-Limit pro IP — nicht-existente Slugs erzeugen sonst beliebig viele
+  // Cache-Misses + DB-Hits (inkl. reviews-Subquery).
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await rateLimit(`product-detail:${ip}`, {
+    maxRequests: 60,
+    windowMs: 60_000,
+  });
+  if (!rl.success) return rateLimitExceeded(rl);
 
   // Admin users can view inactive products (needed for edit page)
   const session = await auth();

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
-import { localBusinessJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
+import { localBusinessJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "Kontakt",
@@ -25,13 +25,13 @@ export default function KontaktPage() {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(localBusiness),
+            __html: safeJsonLd(localBusiness),
           }}
         />
       )}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }}
       />
       <h1 className="text-3xl font-bold tracking-tight mb-2">Kontakt</h1>
       <p className="text-sm text-muted-foreground mb-8">

@@ -26,6 +26,14 @@ const listReviewsSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await rateLimit(`reviews-get:${ip}`, {
+    maxRequests: 60,
+    windowMs: 60_000,
+  });
+  if (!rl.success) return rateLimitExceeded(rl);
+
   const url = req.nextUrl;
   const parsed = listReviewsSchema.safeParse({
     productId: url.searchParams.get("productId") ?? "",

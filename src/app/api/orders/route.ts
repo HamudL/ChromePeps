@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 
 // GET /api/orders — user's orders (paginated)
 export async function GET(req: NextRequest) {
@@ -11,6 +12,12 @@ export async function GET(req: NextRequest) {
       { status: 401 }
     );
   }
+
+  const rl = await rateLimit(`orders-get:${session.user.id}`, {
+    maxRequests: 60,
+    windowMs: 60_000,
+  });
+  if (!rl.success) return rateLimitExceeded(rl);
 
   const page = parseInt(req.nextUrl.searchParams.get("page") ?? "1");
   const pageSize = 10;

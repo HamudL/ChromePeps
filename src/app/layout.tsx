@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Comfortaa, DM_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
-import { organizationJsonLd, websiteJsonLd } from "@/lib/json-ld";
+import { organizationJsonLd, websiteJsonLd, safeJsonLd } from "@/lib/json-ld";
 import "./globals.css";
 
 // === Schrift-Stack: „Soft Bio-Pharma"-Palette ===
@@ -110,11 +110,11 @@ export default function RootLayout({
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(organizationSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(websiteSchema) }}
         />
       </head>
       <body

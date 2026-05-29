@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import {
   verifyTotpCode,
   generateRecoveryCodes,
@@ -35,6 +36,13 @@ export async function POST(req: NextRequest) {
       { status: 401 },
     );
   }
+
+  // Brute-Force-Schutz für die TOTP-Code-Eingabe (6-stelliger Code).
+  const limit = await rateLimit(`2fa-verify:${session.user.id}`, {
+    maxRequests: 5,
+    windowMs: 5 * 60 * 1000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
