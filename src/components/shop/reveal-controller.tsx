@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 /**
  * Globaler IntersectionObserver für alle `.reveal-up`-Elemente auf der
@@ -16,6 +17,13 @@ import { useEffect } from "react";
  *   keine IO-Arbeit.
  */
 export function RevealController() {
+  // Bei JEDEM Routenwechsel neu scannen: Das (shop)-Layout (und damit
+  // dieser Controller) bleibt bei client-seitiger Navigation gemountet.
+  // Ohne pathname-Dependency lief der Effect nur EINMAL beim ersten Mount —
+  // die .reveal-up-Elemente neu aufgerufener Seiten (z.B. die Produkt-
+  // detailseite beim Klick aus dem Listing) wurden dann nie beobachtet und
+  // blieben dauerhaft auf opacity:0 (unsichtbarer Seiteninhalt).
+  const pathname = usePathname();
   useEffect(() => {
     const nodes = document.querySelectorAll<HTMLElement>(".reveal-up");
     if (nodes.length === 0) return;
@@ -57,7 +65,7 @@ export function RevealController() {
     pending.forEach((n) => io.observe(n));
 
     return () => io.disconnect();
-  }, []);
+  }, [pathname]);
 
   return null;
 }
