@@ -406,7 +406,7 @@
 }
 .btn-ghost:hover {
   border-color: hsl(var(--foreground));
-  background: hsl(40 20% 96%);
+  background: hsl(var(--accent));
 }
 
 .btn-ink {
@@ -425,12 +425,12 @@
   cursor: pointer;
 }
 .btn-ink:hover {
-  color: hsl(45 92% 24%);
+  color: hsl(var(--primary-strong));
 }
 
 .input-search {
   width: 100%;
-  background: white;
+  background: hsl(var(--background));
   border: 1px solid hsl(var(--border));
   border-radius: 4px;
   padding: 14px 16px 14px 46px;
@@ -459,7 +459,7 @@
   padding: 7px 14px;
   border-radius: 999px;
   border: 1px solid hsl(var(--border));
-  background: white;
+  background: hsl(var(--card));
   color: hsl(var(--foreground));
   font-weight: 500;
   transition: all 180ms;
@@ -471,7 +471,7 @@
 }
 .pill.active {
   border-color: hsl(var(--primary));
-  background: hsl(45 60% 97%);
+  background: hsl(var(--accent));
   color: hsl(var(--primary-strong));
 }
 .pill .count {
@@ -492,7 +492,7 @@
  * mit dezent-getöntem Background. Sechs Varianten + dark-Variante. */
 .cover-ph {
   position: relative;
-  background: var(--chrome-100, #eef1f6);
+  background: hsl(var(--card));
   overflow: hidden;
 }
 .cover-ph::before {
@@ -740,7 +740,7 @@
   transition: all 140ms;
 }
 .letter-link:hover {
-  background: hsl(40 20% 94%);
+  background: hsl(var(--accent));
   color: hsl(var(--foreground));
 }
 .letter-link.active {
@@ -781,7 +781,7 @@
   margin: 0;
   font-size: 15px;
   line-height: 1.6;
-  color: hsl(20 8% 28%);
+  color: hsl(var(--muted-foreground));
 }
 @media (max-width: 768px) {
   .glossary-entry {
@@ -806,7 +806,7 @@
   cursor: pointer;
 }
 .pagination-num:hover {
-  background: hsl(40 20% 94%);
+  background: hsl(var(--accent));
   color: hsl(var(--foreground));
 }
 .pagination-num.active {
@@ -825,7 +825,7 @@
   font-size: 14.5px;
   line-height: 1.6;
   border-left: 2px solid;
-  background: hsl(40 20% 96%);
+  background: hsl(var(--muted));
 }
 .callout p {
   margin: 0;
@@ -846,14 +846,14 @@
 }
 .callout-note {
   border-color: hsl(var(--primary));
-  background: hsl(45 60% 96%);
+  background: hsl(var(--accent));
 }
 .callout-note strong.callout-title {
   color: hsl(var(--primary-strong));
 }
 .callout-warn {
   border-color: hsl(20 70% 45%);
-  background: hsl(20 50% 96%);
+  background: hsl(var(--muted));
 }
 .callout-warn strong.callout-title {
   color: hsl(20 70% 38%);
@@ -966,7 +966,7 @@
   font-style: normal;
   font-size: 22px;
   line-height: 1.45;
-  color: hsl(20 14% 16%);
+  color: hsl(var(--foreground));
   letter-spacing: -0.005em;
 }
 .prose blockquote p {
@@ -985,11 +985,11 @@
 .prose code {
   font-family: var(--font-mono);
   font-size: 0.86em;
-  background: var(--chrome-100, #eef1f6);
+  background: hsl(var(--muted));
   padding: 1px 6px;
   border-radius: 3px;
-  border: 1px solid var(--chrome-200, #dde3ed);
-  color: hsl(20 14% 14%);
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
 }
 .prose pre {
   background: hsl(var(--ink));
@@ -1113,11 +1113,11 @@
 .faq-answer code {
   font-family: var(--font-mono);
   font-size: 0.86em;
-  background: var(--chrome-100, #eef1f6);
+  background: hsl(var(--muted));
   padding: 1px 5px;
   border-radius: 3px;
-  border: 1px solid var(--chrome-200, #dde3ed);
-  color: hsl(20 14% 14%);
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
 }
 .faq-answer strong {
   font-weight: 600;

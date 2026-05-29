@@ -208,7 +208,7 @@ export default async function WissenCategoryPage({
               type="search"
               placeholder={`In ${category.name} suchen…`}
               disabled
-              className="w-full bg-white border border-border rounded-sm py-2 pl-9 pr-3 text-[13px] font-sans focus:border-primary focus:outline-none disabled:opacity-50"
+              className="w-full bg-background border border-border rounded-sm py-2 pl-9 pr-3 text-[13px] font-sans focus:border-primary focus:outline-none disabled:opacity-50"
               title="Suche kommt in einer eigenen Iteration."
             />
           </div>

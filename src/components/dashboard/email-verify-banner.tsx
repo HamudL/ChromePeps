@@ -70,7 +70,7 @@ export function EmailVerifyBanner({ email }: { email: string }) {
           type="button"
           size="sm"
           variant="outline"
-          className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
+          className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200 dark:hover:bg-amber-900/40"
           onClick={handleResend}
           disabled={state === "loading"}
         >

@@ -230,7 +230,7 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
                     )}
                   </div>
 
-                  <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                  <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-200">
                     <p className="font-medium">Wichtig</p>
                     <p className="mt-1">
                       Bitte verwenden Sie Ihre Bestellnummer als
