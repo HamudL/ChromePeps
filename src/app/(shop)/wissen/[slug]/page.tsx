@@ -244,7 +244,7 @@ export default async function WissenArticlePage({ params }: Props) {
 
           {/* Mobile TOC accordion */}
           {toc.length > 0 && (
-            <details className="lg:hidden border border-border rounded-sm bg-white">
+            <details className="lg:hidden border border-border rounded-sm bg-card">
               <summary
                 className="cursor-pointer flex items-center justify-between px-4 py-3 mono-tag text-foreground"
                 style={{ fontSize: 11 }}

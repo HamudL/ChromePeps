@@ -15,8 +15,8 @@ interface Props {
 }
 
 const VARIANTS: Record<NonNullable<Props["color"]>, string> = {
-  default: "border-border bg-white text-foreground/85",
-  gold: "border-primary bg-amber-50/80 text-amber-700",
+  default: "border-border bg-card text-foreground/85",
+  gold: "border-primary bg-amber-50/80 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400",
   ink: "border-primary/50 bg-transparent text-primary",
   solid: "bg-primary text-ink border-primary",
 };

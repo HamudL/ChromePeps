@@ -138,7 +138,7 @@ export function WissenSearchBox() {
       )}
 
       {open && result && (
-        <div className="absolute z-40 left-0 right-0 mt-2 max-h-[480px] overflow-y-auto rounded-md border border-border bg-white shadow-xl">
+        <div className="absolute z-40 left-0 right-0 mt-2 max-h-[480px] overflow-y-auto rounded-md border border-border bg-card shadow-xl">
           {loading && (
             <p className="p-4 text-xs text-muted-foreground">Suche läuft…</p>
           )}

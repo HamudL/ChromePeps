@@ -102,6 +102,14 @@ export default function RootLayout({
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
+        {/* Dark-Mode: setzt .dark VOR First Paint (kein FOUC). Default Light —
+            .dark nur wenn der Nutzer es per Toggle gewählt hat (localStorage). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}",
+          }}
+        />
         {/* Plausible Analytics — cookieless, DSGVO-konform, no consent needed */}
         <script
           defer

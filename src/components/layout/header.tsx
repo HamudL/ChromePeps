@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { HeaderMobileMenu } from "./header-mobile-menu";
 import { HeaderBrand } from "./header-brand";
 import { HeaderSearch } from "./header-search";
+import { ThemeToggle } from "./theme-toggle";
 import { HeaderCartButton } from "./header-cart-button";
 import { HeaderUserMenu } from "./header-user-menu";
 
@@ -64,6 +65,7 @@ export async function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <HeaderSearch />
           <HeaderCartButton />
 

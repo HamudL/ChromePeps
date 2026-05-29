@@ -165,7 +165,7 @@ export default async function WissenHubPage() {
                 <Link
                   key={c.slug}
                   href={`/wissen/kategorie/${c.slug}`}
-                  className="group block p-6 border border-border rounded-sm bg-white hover:border-foreground transition-colors"
+                  className="group block p-6 border border-border rounded-sm bg-card hover:border-foreground transition-colors"
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <span

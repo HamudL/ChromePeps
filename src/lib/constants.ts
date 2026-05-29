@@ -27,13 +27,13 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
 };
 
 export const ORDER_STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  PROCESSING: "bg-blue-100 text-blue-800",
-  SHIPPED: "bg-purple-100 text-purple-800",
-  DELIVERED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-800",
-  REFUNDED: "bg-gray-100 text-gray-800",
-  ARCHIVED: "bg-zinc-100 text-zinc-500",
+  PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300",
+  PROCESSING: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
+  SHIPPED: "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300",
+  DELIVERED: "bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300",
+  CANCELLED: "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300",
+  REFUNDED: "bg-gray-100 text-gray-800 dark:bg-gray-800/60 dark:text-gray-300",
+  ARCHIVED: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400",
 };
 
 export const CACHE_KEYS = {
