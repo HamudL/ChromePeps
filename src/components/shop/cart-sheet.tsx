@@ -272,7 +272,7 @@ function ReceiptRow({
       <span
         className={
           positive
-            ? "text-[hsl(140_50%_35%)] font-medium"
+            ? "text-success font-medium"
             : "text-foreground tabular-nums"
         }
       >
@@ -315,7 +315,7 @@ function FreeShippingProgress({ subtotal }: { subtotal: number }) {
   return (
     <div className="border-b px-6 py-3">
       {reached ? (
-        <p className="flex items-center gap-2 font-mono text-[11px] font-medium tracking-[0.04em] text-[hsl(140_45%_34%)]">
+        <p className="flex items-center gap-2 font-mono text-[11px] font-medium tracking-[0.04em] text-success">
           <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} aria-hidden />
           Gratisversand freigeschaltet
         </p>

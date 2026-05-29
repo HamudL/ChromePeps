@@ -26,6 +26,13 @@ const config: Config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          // Dunkleres (light) bzw. helleres (dark) Gold für lesbaren
+          // GOLD-TEXT auf Hintergrund — siehe --primary-strong in globals.css.
+          strong: "hsl(var(--primary-strong))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -90,11 +97,17 @@ const config: Config = {
         shimmer: {
           "100%": { transform: "translateX(100%)" },
         },
+        pop: {
+          "0%": { transform: "scale(0.5)", opacity: "0.4" },
+          "60%": { transform: "scale(1.15)" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s infinite",
+        pop: "pop 0.3s ease-out",
       },
       fontFamily: {
         // Semantische Namen — Schrift-Stack ist „Soft Bio-Pharma"

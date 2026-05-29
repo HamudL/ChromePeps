@@ -475,7 +475,7 @@ export default function CheckoutPage() {
           <div className="mx-auto h-24 w-24 rounded-full bg-muted flex items-center justify-center">
             <ShoppingBag className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h1 className="text-3xl font-bold">Ihr Warenkorb ist leer</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-[-0.02em]">Ihr Warenkorb ist leer</h1>
           <p className="text-muted-foreground">
             Legen Sie Produkte in den Warenkorb, bevor Sie zur Kasse gehen.
           </p>
@@ -518,7 +518,14 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Kasse</h1>
+      <div className="mb-8">
+        <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-strong">
+          Sichere Kasse
+        </p>
+        <h1 className="font-display text-3xl font-semibold leading-none tracking-[-0.02em] md:text-4xl">
+          Kasse
+        </h1>
+      </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column - Address & Payment */}
@@ -1033,13 +1040,13 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {appliedPromo ? (
-                <div className="flex items-center justify-between rounded-md border border-green-200 bg-green-50 p-3">
+                <div className="flex items-center justify-between rounded-md border border-success/30 bg-success/10 p-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-success" />
                     <span className="font-mono font-medium">
                       {appliedPromo.code}
                     </span>
-                    <span className="text-green-700">
+                    <span className="text-success">
                       &minus;{formatPrice(appliedPromo.discountAmount)}
                     </span>
                   </div>
@@ -1189,7 +1196,9 @@ export default function CheckoutPage() {
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardHeader>
-              <CardTitle>Bestellübersicht</CardTitle>
+              <CardTitle className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                Bestellübersicht
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Items List */}
@@ -1243,10 +1252,10 @@ export default function CheckoutPage() {
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-green-600">
+                    <span className="text-success">
                       Rabatt ({appliedPromo?.code})
                     </span>
-                    <span className="text-green-600 font-medium">
+                    <span className="text-success font-medium">
                       &minus;{formatPrice(discount)}
                     </span>
                   </div>
@@ -1255,7 +1264,7 @@ export default function CheckoutPage() {
                   <span className="text-muted-foreground">Versand</span>
                   <span>
                     {shipping === 0 ? (
-                      <span className="text-green-600 font-medium">Kostenlos</span>
+                      <span className="text-success font-medium">Kostenlos</span>
                     ) : (
                       formatPrice(shipping)
                     )}
@@ -1265,9 +1274,13 @@ export default function CheckoutPage() {
 
               <Separator />
 
-              <div className="flex justify-between font-semibold text-lg">
-                <span>Gesamt</span>
-                <span>{formatPrice(total)}</span>
+              <div className="flex items-baseline justify-between">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                  Gesamt
+                </span>
+                <span className="text-2xl font-bold tabular-nums tracking-tight">
+                  {formatPrice(total)}
+                </span>
               </div>
               <p className="text-xs text-muted-foreground">
                 Alle Preise inkl. 19% MwSt.

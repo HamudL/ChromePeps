@@ -62,7 +62,7 @@ export default function CartPage() {
           <div className="mx-auto h-24 w-24 rounded-full bg-muted flex items-center justify-center">
             <ShoppingBag className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h1 className="text-3xl font-bold">Ihr Warenkorb ist leer</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-[-0.02em]">Ihr Warenkorb ist leer</h1>
           <p className="text-muted-foreground">
             Sie haben noch keine Produkte in Ihren Warenkorb gelegt.
             Entdecken Sie unser Sortiment an hochwertigen Research Peptides.
@@ -80,8 +80,15 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Warenkorb</h1>
+      <div className="mb-8 flex items-end justify-between gap-6 border-b border-border pb-5">
+        <div>
+          <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-strong">
+            Warenkorb · {items.reduce((s, i) => s + i.quantity, 0)} Artikel
+          </p>
+          <h1 className="font-display text-3xl font-semibold leading-none tracking-[-0.02em] md:text-4xl">
+            Warenkorb
+          </h1>
+        </div>
         <Button
           variant="ghost"
           size="sm"
@@ -218,7 +225,9 @@ export default function CartPage() {
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardHeader>
-              <CardTitle>Bestellübersicht</CardTitle>
+              <CardTitle className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                Bestellübersicht
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
@@ -232,7 +241,7 @@ export default function CartPage() {
                 <span className="text-muted-foreground">Versandkosten</span>
                 <span>
                   {isFreeShipping ? (
-                    <span className="text-green-600 font-medium">Kostenlos</span>
+                    <span className="text-success font-medium">Kostenlos</span>
                   ) : (
                     <>ab {formatPrice(shipping)}</>
                   )}
@@ -240,7 +249,7 @@ export default function CartPage() {
               </div>
 
               {isFreeShipping ? (
-                <p className="flex items-center gap-1.5 text-xs font-medium text-green-600">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-success">
                   <Check className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   Gratisversand freigeschaltet
                 </p>
@@ -284,9 +293,11 @@ export default function CartPage() {
 
               <Separator />
 
-              <div className="flex justify-between font-semibold text-lg">
-                <span>Gesamt</span>
-                <span>
+              <div className="flex items-baseline justify-between">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                  Gesamt
+                </span>
+                <span className="text-2xl font-bold tabular-nums tracking-tight">
                   {isFreeShipping ? formatPrice(total) : <>ab {formatPrice(total)}</>}
                 </span>
               </div>
