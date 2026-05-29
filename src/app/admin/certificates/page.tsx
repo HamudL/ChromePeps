@@ -124,7 +124,10 @@ export default function AdminCertificatesPage() {
   const loadData = useCallback(async () => {
     try {
       const [certsRes, prodsRes] = await Promise.all([
-        fetch("/api/admin/certificates"),
+        // Admin-Listing zieht initial bis zu 500 COAs (Hard-Cap des
+        // Endpoints). Bei größerem Bestand: Pagination-UI nachrüsten,
+        // bis dahin der Default-Pfad.
+        fetch("/api/admin/certificates?limit=500"),
         fetch("/api/products?pageSize=100"),
       ]);
       const certsJson = await certsRes.json();

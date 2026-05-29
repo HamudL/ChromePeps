@@ -1,29 +1,24 @@
-"use client";
-
 /**
  * ProductCard — Apotheke/Rx (Prescription Label) Stil
  *
- * Weiße Karte mit perforierten Dashed-Linien oben/unten (wie auf einem
- * Medikamenten-Etikett). Oben: Kategorie (gold) + Katalog-Nummer
- * "NNN / Total". Mitte: Produktbild oder Vial-Fallback mit Lot-Label-
- * Overlay. Name (h3). Spec-Rows (Menge, Reinheit, Lot) — Reinheit + Lot
- * aus der neuesten COA, sonst ausgeblendet. Preis + "Ansehen →" CTA
- * (reveal on hover).
+ * Server-Component (keine `"use client"` directive). Vorher zog jedes Card-
+ * Render Zustand (Cart-Store) + Toast in den Client-Bundle und zwang React
+ * dazu, jede der 12-20 Karten eines Listings einzeln zu hydraten — Hydration
+ * Cost auf /products / /products/category messbar.
  *
- * Props-Signatur unverändert zur vorigen Version, damit Call-Sites
+ * Jetzt: SSR-only HTML mit zwei Client-Islands (WishlistButton, AddButton).
+ * Wenn der User nicht hovert / nichts klickt, läuft NULL Client-JS in der
+ * Card.
+ *
+ * Props-Signatur unverändert zur vorigen Version, damit alle Call-Sites
  * (Homepage Bestsellers, Related Products, Wishlist, Katalog) ohne
- * Anpassung weiterlaufen. Cart-Store-Wiring + WishlistButton bleiben
- * erhalten; Quick-Add erscheint auf Hover als schmaler Button im CTA-
- * Bereich (nur bei Produkten ohne Varianten — Varianten erzwingen den
- * Weg über die Detailseite).
+ * Anpassung weiterlaufen.
  */
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
-import { toast } from "sonner";
-import { useCartStore } from "@/store/cart-store";
 import { WishlistButton } from "@/components/shop/wishlist-button";
+import { ProductCardAddButton } from "@/components/shop/product-card-add-button";
 import { formatPrice, cn } from "@/lib/utils";
 import type { ProductCardData } from "@/types";
 
@@ -44,9 +39,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, index, total }: ProductCardProps) {
-  const addItem = useCartStore((s) => s.addItem);
-  const openCart = useCartStore((s) => s.openCart);
-
   const isOutOfStock = product.stock <= 0;
   const hasDiscount =
     product.compareAtPriceInCents &&
@@ -68,25 +60,6 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
   const latestCoa = product.certificates[0];
   const coaPurity = latestCoa?.purity ?? null;
   const coaLot = latestCoa?.batchNumber ?? null;
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isOutOfStock) return;
-    addItem({
-      productId: product.id,
-      variantId: null,
-      quantity: 1,
-      name: product.name,
-      variantName: null,
-      priceInCents: product.priceInCents,
-      image: image?.url ?? null,
-      slug: product.slug,
-      stock: product.stock,
-    });
-    openCart();
-    toast.success(`${product.name} zum Warenkorb hinzugefügt`);
-  };
 
   const indexLabel =
     typeof index === "number" && typeof total === "number"
@@ -112,7 +85,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
         "transition-all duration-300 ease-out",
         "hover:border-foreground hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-24px_hsl(20_14%_10%/0.2)]",
         "animate-fade-in",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
       )}
     >
       {/* Perforierte Linien — typische "Prescription Label"-Optik.
@@ -142,15 +115,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
         </span>
         <div className="flex items-center gap-2">
           {indexLabel && <span>{indexLabel}</span>}
-          <div
-            className="opacity-70 transition-opacity group-hover:opacity-100"
-            onClick={(e) => e.preventDefault()}
-          >
-            <WishlistButton
-              productId={product.id}
-              className="h-9 w-9 bg-transparent hover:bg-muted"
-            />
-          </div>
+          <WishlistCardSlot productId={product.id} />
         </div>
       </div>
 
@@ -158,7 +123,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
           Kein Lot-Label-Overlay mehr (die Lot-Nummer steht weiter unten
           in der Spec-Row). object-contain, damit vom User geplante
           freigestellte Vial-Bilder nicht beschnitten werden. Hintergrund
-          bewusst reines bg-card (wei\u00df auf hellem Thema) ohne Gradient,
+          bewusst reines bg-card (weiß auf hellem Thema) ohne Gradient,
           damit eine transparente Vial optisch ohne grauen Rahmen "floated"
           und nicht mehr in einer Box sitzt. */}
       <div className="relative mx-auto mb-6 h-[200px] w-full max-w-[252px]">
@@ -195,9 +160,7 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
 
       {/* Spec-Rows — nur gerenderte Zeilen, die auch Daten haben */}
       <dl className="relative mt-3 space-y-2">
-        {product.weight && (
-          <SpecRow k="Menge" v={product.weight} />
-        )}
+        {product.weight && <SpecRow k="Menge" v={product.weight} />}
         {coaPurity != null && (
           <SpecRow k="Reinheit" v={`${coaPurity.toFixed(2)}%`} gold />
         )}
@@ -219,28 +182,22 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
 
         {/* Quick-Add nur bei Variant-freien, verfügbaren Produkten.
             Slides in on hover, replaces the text-CTA to keep row layout
-            stable. */}
+            stable. Client-Island — der Rest der Card ist SSR-only. */}
         {!isOutOfStock && !hasVariants ? (
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            aria-label={`${product.name} in den Warenkorb`}
-            className={cn(
-              "inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary",
-              "opacity-0 translate-x-2 transition-all duration-250",
-              "group-hover:opacity-100 group-hover:translate-x-0",
-              "hover:text-primary/80"
-            )}
-          >
-            <ShoppingCart className="h-3 w-3" />
-            Add
-          </button>
+          <ProductCardAddButton
+            productId={product.id}
+            name={product.name}
+            slug={product.slug}
+            priceInCents={product.priceInCents}
+            stock={product.stock}
+            image={image?.url ?? null}
+          />
         ) : (
           <span
             className={cn(
               "font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary",
               "opacity-0 translate-x-2 transition-all duration-250",
-              "group-hover:opacity-100 group-hover:translate-x-0"
+              "group-hover:opacity-100 group-hover:translate-x-0",
             )}
           >
             Ansehen →
@@ -251,6 +208,30 @@ export function ProductCard({ product, index, total }: ProductCardProps) {
   );
 }
 
+/**
+ * WishlistButton ist `"use client"` — der Stop-Propagation-Wrap (damit
+ * der Klick nicht zum Link-Navigieren führt) muss aber im Server-Tree
+ * sitzen. Lösung: dünner Server-Wrapper der ein `pointer-events-auto`-
+ * div rendert, der WishlistButton selbst behält sein onClick und
+ * arbeitet ohne expliziten preventDefault — Radix/shadcn-Button macht
+ * das im handleClick. Aber: parent <Link> würde noch immer routen.
+ * Daher hier ein server-renderbares Wrapper-Div mit inline-handler
+ * geht NICHT (handler braucht Client-Boundary).
+ *
+ * Pragmatisch: WishlistButton selbst bringt schon stopPropagation mit
+ * (siehe Quelle); hier nur das visuelle Container-Div ohne JS.
+ */
+function WishlistCardSlot({ productId }: { productId: string }) {
+  return (
+    <div className="opacity-70 transition-opacity group-hover:opacity-100">
+      <WishlistButton
+        productId={productId}
+        className="h-9 w-9 bg-transparent hover:bg-muted"
+      />
+    </div>
+  );
+}
+
 function SpecRow({ k, v, gold }: { k: string; v: string; gold?: boolean }) {
   return (
     <div className="flex items-baseline justify-between font-mono text-[13px]">
@@ -258,7 +239,7 @@ function SpecRow({ k, v, gold }: { k: string; v: string; gold?: boolean }) {
       <span
         className={cn(
           "truncate max-w-[60%] text-right",
-          gold ? "text-primary font-semibold" : "text-foreground"
+          gold ? "text-primary font-semibold" : "text-foreground",
         )}
       >
         {v}

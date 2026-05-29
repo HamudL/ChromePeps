@@ -1,19 +1,22 @@
-"use client";
-
-import { useEffect, useRef, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 /**
  * FadeUp — fade-and-translate on scroll-into-view.
  *
- * Wichtig: Der initial-hidden State (opacity:0 + translateY) wird als
- * INLINE-Style am JSX-Element gesetzt, NICHT erst im useEffect. Früher
- * lief der useEffect erst nach Hydration — dazwischen blitzte der
- * voll sichtbare Content kurz auf, dann setzte useEffect opacity=0
- * (Pop), dann faded der Content ein. Auf above-the-fold Elementen
- * (HeroLogo, Headlines) war das als sichtbares Flimmern wahrnehmbar.
+ * SERVER COMPONENT. Rendert reines HTML mit zwei CSS-Custom-Properties
+ * (`--fade-delay`) und einer Initial-Klasse. Die Animation läuft per CSS
+ * (`@keyframes fadeUpIn`), getriggert durch eine `.fade-in`-Klasse, die
+ * ein einzelner globaler IntersectionObserver auf der ganzen Page setzt
+ * (siehe `<RevealController />` in `(shop)/layout.tsx`).
  *
- * Jetzt: SSR-Output ist bereits unsichtbar. Der useEffect setzt die
- * Transition an und flippt zu opacity:1 — keine visible flash mehr.
+ * Vorher: jede FadeUp-Instanz war ein eigener Client-Component mit
+ *   - eigener useRef
+ *   - eigenem useEffect
+ *   - eigenem IntersectionObserver
+ *   - eigenem setTimeout
+ * Auf der Homepage = ~16 Instances → 16 Hydration-Mount-Cycles, 16
+ * IOs, 16 setTimeouts. Jetzt: 0 Hydration für FadeUp selbst, 1 globaler
+ * IO im Layout, CSS macht den Rest.
  */
 function FadeUp({
   children,
@@ -24,47 +27,13 @@ function FadeUp({
   delay?: number;
   className?: string;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const animateIn = () => {
-      setTimeout(() => {
-        el.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
-        el.style.opacity = "1";
-        el.style.transform = "translateY(0)";
-      }, delay * 1000);
-    };
-
-    // Check if already in viewport (above the fold)
-    const rect = el.getBoundingClientRect();
-    if (rect.top < window.innerHeight && rect.bottom > 0) {
-      animateIn();
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          animateIn();
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [delay]);
+  // `style` setzt nur die per-Instanz-Variable. CSS verwendet sie als
+  // animation-delay-Wert.
+  const style: CSSProperties & { ["--fade-delay"]?: string } =
+    delay > 0 ? { ["--fade-delay"]: `${delay}s` } : {};
 
   return (
-    <div
-      ref={ref}
-      className={className}
-      style={{ opacity: 0, transform: "translateY(24px)" }}
-    >
+    <div className={`reveal-up ${className ?? ""}`} style={style}>
       {children}
     </div>
   );

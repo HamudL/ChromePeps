@@ -1,14 +1,10 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartSheet } from "@/components/shop/cart-sheet";
-import { CookieBanner } from "@/components/shop/cookie-banner";
-import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { ResearchBanner } from "@/components/layout/research-banner";
-import { WishlistInitializer } from "@/components/shop/wishlist-initializer";
-import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { Toaster } from "sonner";
-import { ResearchDisclaimer } from "@/components/shop/research-disclaimer";
-import { MouseSpotlight } from "@/components/shop/mouse-spotlight";
+import { RevealController } from "@/components/shop/reveal-controller";
+import { DeferredShopWidgets } from "@/components/shop/deferred-shop-widgets";
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,17 +16,16 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       >
         Zum Inhalt springen
       </a>
-      <MouseSpotlight />
-      <AnnouncementBar />
       <Header />
       <ResearchBanner />
       <CartSheet />
       <main id="main-content" className="min-h-[calc(100vh-4rem)]">{children}</main>
       <Footer />
-      <CookieBanner />
-      <GoogleAnalytics />
-      <WishlistInitializer />
-      <ResearchDisclaimer />
+      {/* Non-LCP-Widgets — Cookie-Banner, Disclaimer, Analytics, etc.
+          Werden per next/dynamic(ssr:false) in eigene Chunks gesplittet
+          und nach Hydration nachgeladen. Außerhalb des kritischen Pfads. */}
+      <DeferredShopWidgets />
+      <RevealController />
       <Toaster position="bottom-right" richColors closeButton />
     </>
   );

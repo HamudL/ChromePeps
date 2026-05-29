@@ -16,15 +16,42 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const productId = searchParams.get("productId");
 
-  const certificates = await db.certificateOfAnalysis.findMany({
-    where: productId ? { productId } : undefined,
-    orderBy: { testDate: "desc" },
-    include: {
-      product: { select: { id: true, name: true, slug: true } },
+  // Pagination — ohne take liest der Endpoint bei 10k+ COAs mehrere MB
+  // JSON in einem Schwung. Default-Page-Size 100 entspricht der typischen
+  // Admin-Listen-Höhe; Default-Limit hartgecappt bei 500 damit kein
+  // CSV-Export-Aufruf die DB blockiert.
+  const page = Math.max(
+    1,
+    parseInt(searchParams.get("page") ?? "1", 10) || 1,
+  );
+  const limitRaw = parseInt(searchParams.get("limit") ?? "100", 10) || 100;
+  const limit = Math.min(Math.max(limitRaw, 1), 500);
+  const skip = (page - 1) * limit;
+
+  const where = productId ? { productId } : undefined;
+  const [certificates, totalCount] = await Promise.all([
+    db.certificateOfAnalysis.findMany({
+      where,
+      orderBy: { testDate: "desc" },
+      skip,
+      take: limit,
+      include: {
+        product: { select: { id: true, name: true, slug: true } },
+      },
+    }),
+    db.certificateOfAnalysis.count({ where }),
+  ]);
+
+  return NextResponse.json({
+    success: true,
+    data: certificates,
+    pagination: {
+      page,
+      limit,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
     },
   });
-
-  return NextResponse.json({ success: true, data: certificates });
 }
 
 // POST /api/admin/certificates
