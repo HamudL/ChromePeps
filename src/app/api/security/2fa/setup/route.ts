@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import {
   generateTotpSecret,
   buildOtpauthUrl,
+  encryptTotpSecret,
 } from "@/lib/two-factor";
 
 /**
@@ -68,10 +69,12 @@ export async function POST() {
   // Secret schon jetzt persistieren (ohne enabledAt). Falls der User
   // den Browser zumacht bevor er bestätigt, ist nichts kaputt — der
   // nächste Setup-Versuch generiert eh ein neues Secret und
-  // überschreibt diesen "halben" Zustand.
+  // überschreibt diesen "halben" Zustand. In der DB liegt das Secret
+  // verschlüsselt (AES-256-GCM); der Klartext-`secret` geht nur einmal
+  // im Response an den Client (QR-Code + manuelles Abtippen).
   await db.user.update({
     where: { id: user.id },
-    data: { totpSecret: secret, totpEnabledAt: null },
+    data: { totpSecret: encryptTotpSecret(secret), totpEnabledAt: null },
   });
 
   return NextResponse.json({

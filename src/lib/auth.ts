@@ -10,6 +10,8 @@ import { authConfig } from "@/lib/auth.config";
 import {
   verifyTotpCode,
   consumeRecoveryCode,
+  isEncryptedSecret,
+  encryptTotpSecret,
 } from "@/lib/two-factor";
 
 /**
@@ -157,6 +159,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               });
             } else {
               throw new InvalidTwoFactorCodeError();
+            }
+          } else if (!isEncryptedSecret(user.totpSecret)) {
+            // Lazy-Migration: TOTP war gültig, aber das Secret liegt noch
+            // als Klartext-Altbestand vor → beim ersten erfolgreichen Login
+            // at-rest verschlüsseln. Best-effort: Login NIEMALS blockieren,
+            // wenn dieser Write fehlschlägt.
+            try {
+              await db.user.update({
+                where: { id: user.id },
+                data: { totpSecret: encryptTotpSecret(user.totpSecret) },
+              });
+            } catch {
+              /* non-fatal — nächster Login versucht es erneut */
             }
           }
         }

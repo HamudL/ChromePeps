@@ -1,7 +1,12 @@
 import "server-only";
 import { authenticator } from "otplib";
 import bcrypt from "bcryptjs";
-import { randomBytes } from "node:crypto";
+import {
+  randomBytes,
+  scryptSync,
+  createCipheriv,
+  createDecipheriv,
+} from "node:crypto";
 import { APP_NAME } from "@/lib/constants";
 
 /**
@@ -26,6 +31,91 @@ const RECOVERY_CODE_COUNT = 10;
 // Base32-ähnlich (kein 0/O/1/I). 32^8 ≈ 1e12 Möglichkeiten — reichlich.
 const RECOVERY_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
+// ── TOTP-Secret-Verschlüsselung at rest (AES-256-GCM) ───────────────────
+//
+// Das TOTP-Secret ist der "Generalschlüssel" der 2FA: wer es liest, kann
+// beliebig gültige Codes erzeugen. Bisher lag es als Klartext-Base32 in der
+// DB. Es wird jetzt at-rest mit AES-256-GCM verschlüsselt.
+//
+// Key: per scrypt aus AUTH_SECRET abgeleitet — KEIN neues Env-Var nötig.
+// Mit TOTP_ENC_KEY lässt sich optional ein separater, stabiler Schlüssel
+// setzen. WICHTIG: AUTH_SECRET (bzw. TOTP_ENC_KEY) darf nicht rotiert
+// werden, sonst werden bestehende verschlüsselte Secrets unlesbar und
+// betroffene User müssten 2FA neu einrichten. (AUTH_SECRET zu ändern
+// invalidiert ohnehin alle Sessions — es ist bereits ein "do not rotate".)
+//
+// Rückwärtskompatibel (dual-read): Werte OHNE `enc:1:`-Marker gelten als
+// Klartext-Altbestand und werden unverändert zurückgegeben — KEIN
+// bestehender 2FA-User wird ausgesperrt. Migration: encrypt-on-write beim
+// Setup + lazy re-encrypt nach erfolgreichem Login (src/lib/auth.ts).
+const ENC_PREFIX = "enc:1:";
+let cachedKey: Buffer | null = null;
+
+function getEncryptionKey(): Buffer {
+  if (cachedKey) return cachedKey;
+  const material = process.env.TOTP_ENC_KEY || process.env.AUTH_SECRET;
+  if (!material) {
+    throw new Error(
+      "TOTP-Verschlüsselung: weder TOTP_ENC_KEY noch AUTH_SECRET gesetzt.",
+    );
+  }
+  // Fester, app-spezifischer Salt zur Domain-Trennung. Das Schlüssel-
+  // Material (AUTH_SECRET) ist bereits hochentropisch, daher reicht ein
+  // konstanter Salt — er muss nur stabil bleiben.
+  cachedKey = scryptSync(material, "chromepeps:totp:enc:v1", 32);
+  return cachedKey;
+}
+
+/** True, wenn `value` ein von uns verschlüsseltes Secret ist (Marker-Check). */
+export function isEncryptedSecret(value: string): boolean {
+  return typeof value === "string" && value.startsWith(ENC_PREFIX);
+}
+
+/**
+ * Verschlüsselt ein Klartext-TOTP-Secret für die Ablage in der DB.
+ * Format: `enc:1:` + base64( iv(12) || authTag(16) || ciphertext ).
+ */
+export function encryptTotpSecret(plaintext: string): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", getEncryptionKey(), iv);
+  const ciphertext = Buffer.concat([
+    cipher.update(plaintext, "utf8"),
+    cipher.final(),
+  ]);
+  const authTag = cipher.getAuthTag();
+  return (
+    ENC_PREFIX + Buffer.concat([iv, authTag, ciphertext]).toString("base64")
+  );
+}
+
+/**
+ * Entschlüsselt einen aus der DB gelesenen Secret-Wert.
+ *
+ * Dual-read: Werte ohne `enc:1:`-Marker (Klartext-Altbestand) werden
+ * unverändert zurückgegeben. Schlägt die Entschlüsselung eines markierten
+ * Werts fehl (Key rotiert / Daten korrupt), wird "" zurückgegeben, damit
+ * die nachfolgende Code-Prüfung sauber als "ungültig" fehlschlägt, statt
+ * die Route mit einem Throw zu crashen.
+ */
+export function decryptTotpSecret(stored: string): string {
+  if (!isEncryptedSecret(stored)) return stored;
+  try {
+    const raw = Buffer.from(stored.slice(ENC_PREFIX.length), "base64");
+    const iv = raw.subarray(0, 12);
+    const authTag = raw.subarray(12, 28);
+    const ciphertext = raw.subarray(28);
+    const decipher = createDecipheriv("aes-256-gcm", getEncryptionKey(), iv);
+    decipher.setAuthTag(authTag);
+    return Buffer.concat([
+      decipher.update(ciphertext),
+      decipher.final(),
+    ]).toString("utf8");
+  } catch (err) {
+    console.error("[2fa] TOTP-Secret konnte nicht entschlüsselt werden", err);
+    return "";
+  }
+}
+
 export function generateTotpSecret(): string {
   return authenticator.generateSecret();
 }
@@ -40,13 +130,19 @@ export function buildOtpauthUrl(secret: string, accountEmail: string): string {
 }
 
 /**
- * Validiert den TOTP-Code gegen das User-Secret. Nutzt das oben
- * konfigurierte ±1-Step-Window.
+ * Validiert den TOTP-Code gegen das gespeicherte User-Secret. Nutzt das
+ * oben konfigurierte ±1-Step-Window.
+ *
+ * `storedSecret` ist der DB-Wert und darf verschlüsselt (`enc:1:…`) ODER
+ * Klartext-Altbestand sein — `decryptTotpSecret` handhabt beides. Caller
+ * übergeben unverändert `user.totpSecret`.
  */
-export function verifyTotpCode(token: string, secret: string): boolean {
+export function verifyTotpCode(token: string, storedSecret: string): boolean {
   // otplib wirft bei kaputten Tokens (z.B. Buchstaben drin) — lieber
   // try/catch als crash. Failure ist immer "code invalid".
   try {
+    const secret = decryptTotpSecret(storedSecret);
+    if (!secret) return false;
     return authenticator.check(token.trim(), secret);
   } catch {
     return false;
