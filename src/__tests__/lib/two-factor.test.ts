@@ -1,11 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { authenticator } from "otplib";
+// Deterministischer Schlüssel für die Verschlüsselungs-Tests. MUSS gesetzt
+// sein, bevor encrypt/decrypt zum ersten Mal laufen (der abgeleitete Key
+// wird in two-factor.ts modulweit gecached).
+process.env.TOTP_ENC_KEY = "test-totp-enc-key-0123456789abcdef";
+
 import {
   generateTotpSecret,
   buildOtpauthUrl,
   verifyTotpCode,
   generateRecoveryCodes,
   consumeRecoveryCode,
+  encryptTotpSecret,
+  decryptTotpSecret,
+  isEncryptedSecret,
 } from "@/lib/two-factor";
 
 /**
@@ -68,6 +76,55 @@ describe("verifyTotpCode", () => {
     const secret = generateTotpSecret();
     const currentCode = authenticator.generate(secret);
     expect(verifyTotpCode(`  ${currentCode}  `, secret)).toBe(true);
+  });
+
+  it("verifiziert einen Code gegen ein VERSCHLÜSSELTES Secret", () => {
+    const secret = generateTotpSecret();
+    const stored = encryptTotpSecret(secret);
+    const currentCode = authenticator.generate(secret);
+    expect(verifyTotpCode(currentCode, stored)).toBe(true);
+  });
+
+  it("lehnt falschen Code gegen verschlüsseltes Secret ab", () => {
+    const stored = encryptTotpSecret(generateTotpSecret());
+    expect(verifyTotpCode("000000", stored)).toBe(false);
+  });
+});
+
+describe("TOTP-Secret-Verschlüsselung (at rest)", () => {
+  it("Round-Trip: decrypt(encrypt(x)) === x, mit Marker", () => {
+    const secret = generateTotpSecret();
+    const enc = encryptTotpSecret(secret);
+    expect(enc).not.toBe(secret);
+    expect(enc.startsWith("enc:1:")).toBe(true);
+    expect(decryptTotpSecret(enc)).toBe(secret);
+  });
+
+  it("erzeugt pro Call unterschiedliche Ciphertexts (zufälliger IV)", () => {
+    const secret = generateTotpSecret();
+    expect(encryptTotpSecret(secret)).not.toBe(encryptTotpSecret(secret));
+  });
+
+  it("isEncryptedSecret erkennt verschlüsselt vs. Klartext", () => {
+    expect(isEncryptedSecret(encryptTotpSecret("JBSWY3DPEHPK3PXP"))).toBe(true);
+    expect(isEncryptedSecret("JBSWY3DPEHPK3PXP")).toBe(false);
+    expect(isEncryptedSecret("")).toBe(false);
+  });
+
+  it("dual-read: Klartext-Altbestand wird unverändert durchgereicht", () => {
+    const legacy = "JBSWY3DPEHPK3PXP";
+    expect(decryptTotpSecret(legacy)).toBe(legacy);
+  });
+
+  it('gibt "" zurück, wenn ein markierter Wert manipuliert wurde (GCM-Auth)', () => {
+    const enc = encryptTotpSecret(generateTotpSecret());
+    // ein Zeichen im base64-Payload kippen → Auth-Tag passt nicht mehr
+    const chars = enc.split("");
+    const idx = 10; // innerhalb des Payloads (nach dem 6-Zeichen-Marker)
+    chars[idx] = chars[idx] === "A" ? "B" : "A";
+    const tampered = chars.join("");
+    expect(tampered).not.toBe(enc);
+    expect(decryptTotpSecret(tampered)).toBe("");
   });
 });
 
