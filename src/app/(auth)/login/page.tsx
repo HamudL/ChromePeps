@@ -75,22 +75,34 @@ async function credentialSignIn(
   // die Unterscheidung steckt in data.url. Bei Erfolg ist das die callbackUrl,
   // bei Fehler eine /api/auth/signin?error=... URL. res.ok allein reicht also
   // nicht, sonst landet der User bei falschem Passwort einfach auf /.
-  let errorParam: string | null = null;
+  // NextAuth v5 legt die generische Fehlerklasse in `error` ab (bei Credentials
+  // IMMER "CredentialsSignin") und den SPEZIFISCHEN Grund in `code`
+  // (unsere CredentialsSignin-Subklassen setzen z.B. code="TwoFactorRequired"
+  // / "InvalidTwoFactorCode"; ein echtes Falsch-Passwort liefert
+  // code="credentials"). Wir MÜSSEN auf `code` keyen — würden wir nur `error`
+  // lesen, sähe jeder Fall gleich aus ("CredentialsSignin") und der
+  // 2FA-Schritt würde nie erkannt (2FA-User könnten sich nie einloggen).
+  // Fallback auf `error`, falls `code` mal fehlt.
+  let reason: string | null = null;
   try {
-    errorParam = new URL(data.url).searchParams.get("error");
+    const parsed = new URL(data.url);
+    reason = parsed.searchParams.get("code") || parsed.searchParams.get("error");
   } catch {
     /* data.url fehlt oder ist kein gültiges URL — behandeln wie Erfolg, wenn res.ok */
   }
 
-  if (res.ok && !errorParam) {
+  if (res.ok && !reason) {
     return { ok: true, error: null };
   }
 
-  return { ok: false, error: errorParam ?? "CredentialsSignin" };
+  return { ok: false, error: reason ?? "CredentialsSignin" };
 }
 
 function errorMessageFor(code: string): string {
   switch (code) {
+    // NextAuth v5: `code` ist bei Falsch-Passwort "credentials"; "CredentialsSignin"
+    // bleibt als Fallback drin, falls mal nur die generische Klasse durchkommt.
+    case "credentials":
     case "CredentialsSignin":
       return "E-Mail oder Passwort ist falsch.";
     case "AccessDenied":
