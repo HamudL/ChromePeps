@@ -1,4 +1,6 @@
-export const revalidate = 300; // ISR: regenerate every 5 minutes
+// Rendert dynamisch (SSR pro Request): der geteilte (shop)-Header ruft
+// `await auth()` (Cookies) → der ganze (shop)-Baum ist dynamic, ein
+// `revalidate`-Export wäre hier wirkungslos. Siehe (shop)/layout.tsx.
 
 import { notFound } from "next/navigation";
 import Link from "next/link";

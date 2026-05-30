@@ -16,6 +16,14 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       >
         Zum Inhalt springen
       </a>
+      {/* HINWEIS: <Header /> ist eine Server-Component und ruft `await auth()`
+          (liest Cookies). Dadurch wird der GESAMTE (shop)-Baum dynamisch
+          gerendert (SSR pro Request) — auch reine Statik-Seiten wie /impressum
+          erscheinen im Build als `ƒ Dynamic`. Folge: `export const revalidate`
+          auf (shop)-Seiten ist WIRKUNGSLOS (kein statisches ISR). Wer hier
+          echtes ISR will, muss die Session client-seitig holen (useSession),
+          was die bewusste Bundle-Optimierung des Server-Headers rückgängig
+          macht. Verifiziert via Build-Route-Table am 2026-05-30. */}
       <Header />
       <ResearchBanner />
       <CartSheet />
