@@ -20,11 +20,12 @@ import { articleJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
  * 3-Spalten-Layout auf xl+ (TOC links, Body Mitte, Quellen rechts),
  * 2-Spalten auf lg, Mobile mit collapsible TOC oben.
  *
- * ISR 1 h — Artikel ändern sich nach Publish selten, aber Updates
- * (titleEmphasis, BatchInfoCard-Wechsel) sollen ohne Redeploy
- * sichtbar werden.
+ * Rendert dynamisch (SSR pro Request): der geteilte (shop)-Header ist
+ * eine Server-Component mit `await auth()` → liest Cookies → deopted den
+ * ganzen (shop)-Baum auf dynamic (siehe (shop)/layout.tsx). Ein
+ * `revalidate`-Export wäre hier wirkungslos; Artikel-Updates sind durch
+ * das dynamische Rendering ohnehin sofort ohne Redeploy sichtbar.
  */
-export const revalidate = 3600;
 
 interface Props {
   params: Promise<{ slug: string }>;

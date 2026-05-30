@@ -14,8 +14,11 @@ import { breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
  *
  * URL-State: ?sort=neueste|alphabetisch|meistgelesen, ?page=N.
  * "Meistgelesen" ist Stub (kein View-Tracking) und mappt auf "neueste".
+ *
+ * Rendert dynamisch (SSR pro Request): der geteilte (shop)-Header ruft
+ * `await auth()` (Cookies) → der ganze (shop)-Baum ist dynamic, ein
+ * `revalidate`-Export wäre hier wirkungslos. Siehe (shop)/layout.tsx.
  */
-export const revalidate = 600;
 
 const PAGE_SIZE = 10;
 
