@@ -241,8 +241,11 @@ export default async function HomePage() {
         <LiveMetrics metrics={liveMetricsTiles} />
       )}
 
+      {/* ── Übergang hell → dunkel (Progressive Blur) ── */}
+      <div aria-hidden className="section-blur" />
+
       {/* ── Warum ChromePeps? (dark) ── */}
-      <section className="section-dark border-t border-white/5">
+      <section className="section-dark">
         <div className="container py-16 md:py-20">
           <FadeUp>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-center mb-12">
@@ -298,6 +301,9 @@ export default async function HomePage() {
           dark), damit die Vertrauens-Signale thematisch zusammenbleiben
           und der Light/Dark-Rhythmus nicht gebrochen wird. ── */}
       <TrustBar />
+
+      {/* ── Übergang dunkel → hell (Progressive Blur) ── */}
+      <div aria-hidden className="section-blur" />
 
       {/* ── Qualitätsprozess (light) ── */}
       <section className="container py-16 md:py-20">
@@ -399,6 +405,9 @@ export default async function HomePage() {
 
       {/* ── Bestseller ── */}
       {bestsellers.length > 0 && (
+        <>
+        {/* ── Übergang hell → dunkel (Progressive Blur) ── */}
+        <div aria-hidden className="section-blur" />
         <section className="section-dark">
           <div className="container py-16 md:py-20">
             <FadeUp>
@@ -429,6 +438,9 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+        {/* ── Übergang dunkel → hell (Progressive Blur) ── */}
+        <div aria-hidden className="section-blur" />
+        </>
       )}
 
       {/* ── Zuletzt angesehen (client-island, blendet sich bei leerem

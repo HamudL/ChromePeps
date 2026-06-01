@@ -63,7 +63,7 @@ export function CategoryPills({
 }) {
   const isAllActive = !currentCategory;
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+    <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-fade">
       <Link
         href="/products"
         className={cn(chipBase, isAllActive ? chipActive : chipInactive)}
