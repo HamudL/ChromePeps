@@ -1,0 +1,84 @@
+/* Geteilte Primitives + Token-Bridge für die /ueber-uns Sektionen.
+ * Die alte scoped CSS nutzte eigene Vars (--muted-fg, --primary-soft, --ink-fg …).
+ * Hier auf die GLOBALEN Theme-Tokens (globals.css) gebrückt → die Seite
+ * respektiert jetzt Light/Dark. „Ink“-Sektionen bleiben in beiden Themes dunkel. */
+.page {
+  --c-bg: hsl(var(--background));
+  --c-bg2: hsl(40 18% 96%);
+  --c-fg: hsl(var(--foreground));
+  --c-card: hsl(var(--card));
+  --c-border: hsl(var(--border));
+  --c-muted: hsl(var(--muted-foreground));
+  --c-primary: hsl(var(--primary));
+  --c-primary-soft: hsl(var(--primary-strong));
+  --c-primary-bright: hsl(45 92% 55%);
+  --c-primary-tint: hsl(45 92% 41% / 0.1);
+  --c-stamp: hsl(8 60% 38%);
+  --c-ink: hsl(var(--ink));
+  --c-ink-fg: hsl(var(--ink-foreground));
+  --c-ink-muted: hsl(var(--ink-muted));
+  --c-ink-border: hsl(var(--ink-border));
+
+  color: var(--c-fg);
+  background: var(--c-bg);
+}
+:global(.dark) .page {
+  --c-bg2: hsl(20 14% 9%);
+}
+
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+.wide {
+  max-width: 1400px;
+}
+@media (max-width: 640px) {
+  .container {
+    padding: 0 20px;
+  }
+}
+
+/* Gold-Akzent-Inline-Segment in Headlines */
+.accent {
+  color: var(--c-primary);
+}
+
+/* Mono-Label-Modifier (Basis .mono-label kommt global aus globals.css) */
+.gold {
+  color: var(--c-primary);
+}
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  margin-right: 8px;
+  vertical-align: 1px;
+  box-shadow: 0 0 0 2px hsl(45 92% 41% / 0.18);
+}
+.center {
+  justify-content: center;
+  display: inline-flex;
+}
+
+/* Apotheke-Grid für „ink“-Sektionen (global gibt es nur .apo-grid). */
+.gridInk {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 40px, hsl(45 50% 50% / 0.05) 40px 41px),
+    repeating-linear-gradient(90deg, transparent 0 40px, hsl(45 50% 50% / 0.05) 40px 41px);
+}
+/* Absolut positioniertes subtle-grid (Hero/Kontakt). */
+.gridAbs {
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  pointer-events: none;
+}

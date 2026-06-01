@@ -99,7 +99,7 @@ export const BANK_DETAILS = {
  * before going live — the invoice PDF falls back to these values.
  */
 export const SELLER_DETAILS = {
-  companyName: "ChromePeps GmbH",
+  companyName: "ChromePeps UG (haftungsbeschränkt)",
   streetLine1: "[TODO: Straße und Hausnummer]",
   postalCodeCity: "[TODO: PLZ Ort]",
   country: "Deutschland",
