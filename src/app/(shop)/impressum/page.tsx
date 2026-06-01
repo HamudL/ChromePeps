@@ -18,7 +18,7 @@ export default function ImpressumPage() {
         <section>
           <h2 className="text-lg font-semibold">Anbieter</h2>
           <p>
-            <strong>[TODO: Firmenname einfügen, z. B. ChromePeps GmbH]</strong>
+            <strong>[TODO: Firmenname einfügen, z. B. ChromePeps UG (haftungsbeschränkt)]</strong>
             <br />
             [TODO: Straße und Hausnummer]
             <br />

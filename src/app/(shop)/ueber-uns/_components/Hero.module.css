@@ -1,0 +1,140 @@
+.hero {
+  position: relative;
+  background: var(--c-bg);
+}
+
+/* Hero-Eintritts-Choreografie als reine CSS-Animation (statische Klasse →
+ * kein Hydration-Mismatch wie bei JS-getoggeltem .reveal-up above-the-fold).
+ * Gestaffelt via --fade-delay je Element. */
+@keyframes heroEnter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.enter {
+  opacity: 0;
+  animation: heroEnter 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--fade-delay, 0s) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    opacity: 1;
+    animation: none;
+  }
+}
+.grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  pointer-events: none;
+}
+.inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 80px 32px 96px;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 64px;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+.copy {
+  max-width: 640px;
+}
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-bottom: 22px;
+}
+.kicker::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--c-fg);
+}
+.title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(48px, 6.5vw, 92px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--c-fg);
+  margin: 0;
+  white-space: pre-line;
+}
+.sub {
+  margin-top: 24px;
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--c-muted);
+  max-width: 52ch;
+}
+.sub b {
+  color: var(--c-fg);
+  font-weight: 600;
+}
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 36px;
+}
+.meta {
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--c-border);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.metaItem .v {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 36px;
+  line-height: 1;
+  color: var(--c-fg);
+  letter-spacing: -0.01em;
+  font-feature-settings: "tnum" on, "lnum" on;
+}
+.metaItem .v small {
+  font-size: 0.5em;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  color: var(--c-muted);
+  margin-left: 2px;
+  vertical-align: 6px;
+}
+.metaItem .k {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-top: 8px;
+}
+@media (max-width: 1024px) {
+  .inner {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+}
+@media (max-width: 640px) {
+  .inner {
+    padding: 48px 20px 64px;
+  }
+  .meta {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
