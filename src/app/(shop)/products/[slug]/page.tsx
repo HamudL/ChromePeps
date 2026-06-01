@@ -38,6 +38,7 @@ import {
 } from "./product-client";
 import { ProductViewTracker } from "@/components/shop/product-view-tracker";
 import { RecentlyViewed } from "@/components/shop/recently-viewed";
+import { SectionBlur } from "@/components/layout/section-blur";
 import { FadeUp } from "../../home-animations";
 
 interface ProductPageProps {
@@ -612,7 +613,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
       {/* ── Beschreibung (dark) ── */}
       {product.description && (
-        <section className="section-dark border-y border-white/5">
+        <>
+        <SectionBlur />
+        <section className="section-dark">
           <div className="container py-12 md:py-16">
             <div className="max-w-3xl">
               <FadeUp>
@@ -631,6 +634,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             </div>
           </div>
         </section>
+        <SectionBlur />
+        </>
       )}
 
       {/* ── Reviews (light) ── */}
@@ -698,7 +703,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
       {/* ── Related Products (dark) ── */}
       {relatedProducts.length > 0 && (
-        <section className="section-dark border-t border-white/5">
+        <>
+        <SectionBlur />
+        <section className="section-dark">
           <div className="container py-12 md:py-16">
             <FadeUp>
               <div className="mb-10 max-w-2xl">
@@ -723,6 +730,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             </div>
           </div>
         </section>
+        <SectionBlur />
+        </>
       )}
 
       {/* ── Zuletzt angesehen (client-island, blendet sich bei leerem

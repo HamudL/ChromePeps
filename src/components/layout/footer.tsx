@@ -4,8 +4,8 @@ import { NewsletterForm } from "@/components/shop/newsletter-form";
 
 export function Footer() {
   return (
-    <footer className="section-dark border-t border-white/5">
-      <div className="container py-12">
+    <footer className="section-dark">
+      <div className="container pt-16 pb-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 space-y-3">

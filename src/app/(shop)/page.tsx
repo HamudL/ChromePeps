@@ -38,6 +38,7 @@ import { PeptideNetwork } from "@/components/shop/peptide-network";
 import { TrustBar } from "@/components/shop/trust-bar";
 import { LiveMetrics } from "@/components/shop/live-metrics";
 import { RecentlyViewed } from "@/components/shop/recently-viewed";
+import { SectionBlur } from "@/components/layout/section-blur";
 
 async function getBestsellers(): Promise<ProductCardData[]> {
   const cached = await cacheGet<ProductCardData[]>(HOMEPAGE_CACHE.BESTSELLERS);
@@ -242,7 +243,7 @@ export default async function HomePage() {
       )}
 
       {/* ── Übergang hell → dunkel (Progressive Blur) ── */}
-      <div aria-hidden className="section-blur" />
+      <SectionBlur />
 
       {/* ── Warum ChromePeps? (dark) ── */}
       <section className="section-dark">
@@ -303,7 +304,7 @@ export default async function HomePage() {
       <TrustBar />
 
       {/* ── Übergang dunkel → hell (Progressive Blur) ── */}
-      <div aria-hidden className="section-blur" />
+      <SectionBlur />
 
       {/* ── Qualitätsprozess (light) ── */}
       <section className="container py-16 md:py-20">
@@ -407,7 +408,7 @@ export default async function HomePage() {
       {bestsellers.length > 0 && (
         <>
         {/* ── Übergang hell → dunkel (Progressive Blur) ── */}
-        <div aria-hidden className="section-blur" />
+        <SectionBlur />
         <section className="section-dark">
           <div className="container py-16 md:py-20">
             <FadeUp>
@@ -439,7 +440,7 @@ export default async function HomePage() {
           </div>
         </section>
         {/* ── Übergang dunkel → hell (Progressive Blur) ── */}
-        <div aria-hidden className="section-blur" />
+        <SectionBlur />
         </>
       )}
 
