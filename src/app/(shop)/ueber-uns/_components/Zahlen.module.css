@@ -57,7 +57,8 @@
   font-size: clamp(56px, 6vw, 88px);
   line-height: 1;
   letter-spacing: -0.025em;
-  color: var(--c-fg);
+  color: var(--c-primary);
+  text-shadow: 0 0 24px hsl(45 90% 55% / 0.25);
   font-feature-settings: "tnum" on, "lnum" on;
 }
 .v small {

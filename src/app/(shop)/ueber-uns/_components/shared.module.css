@@ -3,8 +3,9 @@
  * Hier auf die GLOBALEN Theme-Tokens (globals.css) gebrückt → die Seite
  * respektiert jetzt Light/Dark. „Ink“-Sektionen bleiben in beiden Themes dunkel. */
 .page {
+  position: relative;
   --c-bg: hsl(var(--background));
-  --c-bg2: hsl(40 18% 96%);
+  --c-bg2: hsl(30 12% 9%);
   --c-fg: hsl(var(--foreground));
   --c-card: hsl(var(--card));
   --c-border: hsl(var(--border));
@@ -22,8 +23,17 @@
   color: var(--c-fg);
   background: var(--c-bg);
 }
-:global(.dark) .page {
-  --c-bg2: hsl(20 14% 9%);
+
+/* Durchgängiges Film-Grain über die ganze Seite (Textur, awwwards-Politur). */
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
 }
 
 .container {

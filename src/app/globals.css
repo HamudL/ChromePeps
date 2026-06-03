@@ -1295,3 +1295,12 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* /ueber-uns (cinematische Brand-Seite) blendet den hellen RUO-Hinweisbanner
+ * aus dem (shop)-Layout NUR auf dieser Route aus — über dem dunklen Hero wirkt
+ * der Streifen deplatziert. Auf allen anderen Shop-Seiten bleibt er als
+ * Pflicht-Disclaimer sichtbar. Der :has()-Guard greift ausschließlich, wenn
+ * die /ueber-uns-Seite (data-ueber-uns) im DOM ist. */
+body:has([data-ueber-uns]) [aria-label="Forschungshinweis"] {
+  display: none;
+}
