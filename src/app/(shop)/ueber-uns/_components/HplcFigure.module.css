@@ -73,11 +73,12 @@
 }
 .trace {
   fill: none;
-  stroke: var(--c-fg);
-  stroke-width: 1.4;
+  stroke: var(--c-primary);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 4px hsl(45 90% 55% / 0.5));
 }
 .traceFill {
-  fill: hsl(45 92% 41% / 0.18);
+  fill: hsl(45 92% 45% / 0.22);
   opacity: 0;
   transition: opacity 0.6s;
 }

@@ -30,9 +30,16 @@
 }
 .stageWrap {
   position: sticky;
-  top: 130px;
+  /* sticky-Box füllt den Viewport unter dem Header und zentriert das Vial
+     vertikal, statt es oben (top:130) anzupinnen. */
+  top: 64px;
+  height: calc(100svh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .stage {
+  width: 100%;
   aspect-ratio: 4 / 5;
   background: var(--c-card);
   border: 1px solid var(--c-border);
@@ -40,8 +47,21 @@
   overflow: hidden;
   position: relative;
   box-shadow:
-    0 1px 2px hsl(20 14% 4% / 0.03),
-    0 24px 48px -16px hsl(20 14% 4% / 0.1);
+    0 1px 2px hsl(20 14% 4% / 0.3),
+    0 24px 48px -16px hsl(20 14% 4% / 0.5);
+}
+.stage::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, hsl(42 90% 50% / 0.16), transparent 62%);
+  filter: blur(30px);
+  pointer-events: none;
+  z-index: 0;
 }
 .gridbg {
   position: absolute;
@@ -153,12 +173,15 @@
 .panels {
   display: flex;
   flex-direction: column;
-  gap: 70vh;
-  padding-top: 8vh;
-  padding-bottom: 28vh;
 }
+/* Jeder Panel füllt eine Viewport-Höhe und zentriert seinen Text vertikal,
+   damit er auf gleicher Höhe wie das sticky-zentrierte Vial einläuft (statt
+   halb oben aus dem Bild zu starten). */
 .panel {
-  min-height: 50vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .panel h3 {
   font-family: var(--font-display);
@@ -216,11 +239,17 @@
   .stageWrap {
     position: relative;
     top: 0;
+    height: auto;
+    display: block;
     max-width: 480px;
     margin: 0 auto;
   }
   .panels {
-    gap: 50vh;
+    gap: 12vh;
     padding-top: 4vh;
+  }
+  .panel {
+    min-height: auto;
+    display: block;
   }
 }

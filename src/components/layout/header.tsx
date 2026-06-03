@@ -32,6 +32,7 @@ const navLinks = [
   { href: "/wissen", label: "Wissen" },
   { href: "/qualitaetskontrolle", label: "Qualität" },
   { href: "/faq", label: "FAQ" },
+  { href: "/ueber-uns", label: "Über uns" },
 ] as const;
 
 export async function Header() {

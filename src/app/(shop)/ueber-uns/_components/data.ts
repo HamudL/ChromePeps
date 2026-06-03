@@ -18,16 +18,48 @@ export const NAV_SECTIONS = [
 
 export const NAV_HEIGHTS = [8, 14, 18, 16, 36, 14, 12, 9] as const;
 
-/** Manifest-Seitenleiste (Firmen-Eckdaten als dl). */
-export const MANIFEST_FACTS: ReadonlyArray<[string, string]> = [
-  ["Gegründet", "2026"],
-  ["Rechtsform", "UG (haftungsbeschränkt)"],
-  ["Sitz", "Baden-Württemberg, DE"],
-  ["Lagerung", "tiefgekühlt · isolierter Schrank"],
-  ["Analytik", "Janoshik Labs · HPLC / MS"],
-  ["Versand", "DE + EU · ~24 h Handling"],
-  ["Zahlung", "Stripe · SEPA · Vorkasse"],
-  ["Klasse", "Research Use Only"],
+/**
+ * Manifest: unsere Grundsätze als echtes Manifest (nummerierte Bekenntnisse,
+ * nicht die früheren Firmen-Eckdaten, die jetzt allein in der Kontakt-Sektion
+ * stehen). Bewusst kurz, deklarativ, RUO-konform: kein Heilversprechen.
+ */
+export interface ManifestTenet {
+  no: string;
+  statement: string;
+  detail: string;
+}
+
+export const MANIFEST_TENETS: ManifestTenet[] = [
+  {
+    no: "01",
+    statement: "Jede Charge trägt ihren Beweis.",
+    detail:
+      "Reinheit per HPLC, Identität per Massenspektrometrie, Lot-Nummer, Datum, Methode. Ohne Datensatz keine Freigabe.",
+  },
+  {
+    no: "02",
+    statement: "Das Labor ist unabhängig.",
+    detail:
+      "Janoshik Analytical misst, nicht wir. Jedes Ergebnis ist öffentlich verifizierbar, nicht von uns nacherzählt.",
+  },
+  {
+    no: "03",
+    statement: "Die Daten gehören dem Kunden.",
+    detail:
+      "Das Chromatogramm liegt jeder Bestellung bei. Transparenz ist bei uns die Voreinstellung, nicht das Upgrade.",
+  },
+  {
+    no: "04",
+    statement: "Wir geben keine Heilversprechen.",
+    detail:
+      "Material der Klasse Research Use Only, nach veröffentlichter Methode. Was damit erforscht wird, ist deine Wissenschaft.",
+  },
+  {
+    no: "05",
+    statement: "Im Zweifel wird gemessen.",
+    detail:
+      "Lieber eine Charge zu viel geprüft als ein Wert zu viel behauptet. Abweichung heißt Reject, nicht Anpassung.",
+  },
 ];
 
 /** Story-Panels (4 Schritte Vial → Charge). `lot` = true → dd nutzt Live-Lot-Nummer. */

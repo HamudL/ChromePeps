@@ -46,30 +46,43 @@ export function ChromNav() {
     let lastActive = -1;
 
     const update = () => {
-      const doc = document.documentElement;
-      const max = Math.max(1, doc.scrollHeight - window.innerHeight);
-      const ratio = Math.min(1, Math.max(0, window.scrollY / max));
-      const x = ratio * W;
+      const vh = window.innerHeight;
+      const scrollY = window.scrollY;
+      const docMax = Math.max(1, document.documentElement.scrollHeight - vh);
+      // Referenzlinie knapp unter Header (64) + Sub-Nav (56): die Sektion,
+      // deren Oberkante diese Linie passiert hat, ist "aktiv".
+      const ref = scrollY + 130;
+      const tops = els.map((el) => (el ? el.getBoundingClientRect().top + scrollY : 0));
+
+      let i = 0;
+      for (let k = 0; k < tops.length; k++) if (tops[k] <= ref) i = k;
+
+      // Fortschritt INNERHALB der aktuellen Sektion → Playhead zwischen den
+      // beiden Peak-x interpolieren, damit "wo du bist" = "wo der Playhead ist".
+      const segStart = tops[i];
+      const segEnd = i < tops.length - 1 ? tops[i + 1] : docMax + vh;
+      const f =
+        segEnd > segStart
+          ? Math.min(1, Math.max(0, (ref - segStart) / (segEnd - segStart)))
+          : 0;
+      const xStart = NAV_SECTIONS[i].peakX;
+      const xEnd = i < NAV_SECTIONS.length - 1 ? NAV_SECTIONS[i + 1].peakX : W;
+      const x = xStart + (xEnd - xStart) * f;
+
       const ph = playheadRef.current;
       if (ph) {
         ph.setAttribute("x1", String(x));
         ph.setAttribute("x2", String(x));
       }
       if (timeRef.current) {
-        const tm = ratio * 10;
+        const tm = (x / W) * 10;
         const m = Math.floor(tm);
         const s = Math.floor((tm - m) * 60);
         timeRef.current.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
       }
-      const mid = window.scrollY + window.innerHeight * 0.35;
-      let idx = 0;
-      for (let i = 0; i < els.length; i++) {
-        const el = els[i];
-        if (el && el.getBoundingClientRect().top + window.scrollY <= mid) idx = i;
-      }
-      if (idx !== lastActive) {
-        lastActive = idx;
-        setActive(idx);
+      if (i !== lastActive) {
+        lastActive = i;
+        setActive(i);
       }
     };
 

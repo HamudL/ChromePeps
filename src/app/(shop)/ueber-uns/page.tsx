@@ -5,7 +5,7 @@ import { safeJsonLd } from "@/lib/json-ld";
 import shared from "./_components/shared.module.css";
 import type { UeberUnsData } from "./_components/types";
 import { ChromNav } from "./_components/ChromNav";
-import { Hero } from "./_components/Hero";
+import { HeroCinematic } from "./_components/HeroCinematic";
 import { Manifest } from "./_components/Manifest";
 import { Story } from "./_components/Story";
 import { Prozess } from "./_components/Prozess";
@@ -16,7 +16,7 @@ import { Kontakt } from "./_components/Kontakt";
 import { PageEnhancements } from "./_components/PageEnhancements";
 
 /**
- * /ueber-uns — Über uns (Brand-Edition, sauberer React-Neuaufbau)
+ * /ueber-uns: Über uns (Brand-Edition, sauberer React-Neuaufbau)
  *
  * Server-Component: holt Live-COA-Daten aus der DB und reicht sie als
  * typisierte Props an die Sektions-Komponenten (ersetzt die frühere
@@ -43,7 +43,7 @@ interface RawData {
 /**
  * Live-Daten aus der DB. Zwei Queries über Promise.allSettled, damit ein
  * fehlschlagender Query die anderen nicht mitreißt. chargenCount + avgPurity
- * aus EINER findMany (distinct/Ø in JS) — ein Failure-Point weniger.
+ * aus EINER findMany (distinct/Ø in JS): ein Failure-Point weniger.
  */
 async function fetchUeberUnsData(): Promise<RawData> {
   const [rowsRes, showcaseRes] = await Promise.allSettled([
@@ -115,13 +115,15 @@ export default async function UeberUnsPage() {
   };
 
   return (
-    <div className={shared.page} data-ueber-uns>
+    // `dark` erzwingt die cinematische Dark-Welt der Seite unabhängig vom
+    // App-Theme-Toggle (App-Dark-Tokens → globale Klassen wie Buttons stimmen).
+    <div className={`${shared.page} dark`} data-ueber-uns>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <ChromNav />
-      <Hero data={data} />
+      <HeroCinematic data={data} />
       <Manifest />
       <Story lotNumber={data.lotNumber} purityComma={data.purityComma} />
       <Prozess />
@@ -130,6 +132,7 @@ export default async function UeberUnsPage() {
       <Roadmap />
       <Kontakt />
       <PageEnhancements />
+      <div className={shared.grain} aria-hidden="true" />
     </div>
   );
 }
