@@ -9,10 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { APP_NAME } from "@/lib/constants";
-
 export const metadata = {
-  title: `E-Mail best\u00e4tigt | ${APP_NAME}`,
+  // Kein "| ChromePeps"-Suffix - kommt vom title-Template des Root-Layouts
+  // (sonst doppelter Brand-Suffix).
+  title: "E-Mail best\u00e4tigt",
 };
 
 export default function VerifyEmailSuccessPage() {

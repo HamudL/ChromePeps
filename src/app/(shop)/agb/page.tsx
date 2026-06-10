@@ -7,7 +7,13 @@ export const metadata: Metadata = {
   description:
     "AGB für den Verkauf von Forschungspeptiden und Laborbedarf durch ChromePeps.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/agb" },
 };
+
+// Tatsächliches Stand-Datum der AGB — bewusst eine Konstante statt
+// new Date(): das Abrufdatum als "Stand" auszugeben ist rechtlich
+// falsch. Bei inhaltlichen Änderungen der AGB manuell aktualisieren!
+const AGB_STAND = "1. Juni 2026";
 
 export default function AgbPage() {
   return (
@@ -16,7 +22,7 @@ export default function AgbPage() {
         Allgemeine Geschäftsbedingungen
       </h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Stand: {new Date().toLocaleDateString("de-DE")}
+        Stand: {AGB_STAND}
       </p>
 
       <div className="space-y-6 text-sm leading-relaxed">

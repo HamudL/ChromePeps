@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Anmelden | ChromePeps",
+  // Kein "| ChromePeps"-Suffix — kommt vom title-Template in (auth)/layout.tsx.
+  title: "Anmelden",
   description:
     "Mit deinem ChromePeps-Konto anmelden — Bestellverlauf, gespeicherte Adressen, COA-Archiv.",
   // Login-Pages NICHT in Suchmaschinen indexieren — kein Seo-Wert,

@@ -56,7 +56,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return {};
 
   return {
-    title: `${product.name} · Analysezertifikate | ChromePeps`,
+    // Kein "| ChromePeps"-Suffix — kommt vom Root-Layout-Template.
+    title: `${product.name} · Analysezertifikate`,
     description: `Drittlabor-verifizierte Analysezertifikate für ${product.name}. ${product.certificates.length} Testergebnisse verfügbar.`,
   };
 }

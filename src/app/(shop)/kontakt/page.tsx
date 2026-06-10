@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   description:
     "Kontaktieren Sie ChromePeps per E-Mail, Telefon oder Post.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/kontakt" },
 };
 
 export default function KontaktPage() {

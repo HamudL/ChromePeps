@@ -14,9 +14,12 @@ import { Button } from "@/components/ui/button";
 import { HplcSpectrum } from "@/components/shop/hplc-spectrum";
 
 export const metadata: Metadata = {
-  title: "Qualitätskontrolle | ChromePeps",
+  // Kein "| ChromePeps"-Suffix — den hängt das title-Template des
+  // Root-Layouts automatisch an (sonst doppelter Brand-Suffix).
+  title: "Qualitätskontrolle",
   description:
     "Unser Qualitätskontrollprozess: Jede Charge wird durch das unabhängige Analyselabor Janoshik auf Reinheit getestet.",
+  alternates: { canonical: "/qualitaetskontrolle" },
 };
 
 const steps = [

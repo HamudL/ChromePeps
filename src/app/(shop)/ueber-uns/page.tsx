@@ -29,9 +29,12 @@ import { PageEnhancements } from "./_components/PageEnhancements";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: `Über uns | ${APP_NAME}`,
+  // Kein "| ChromePeps"-Suffix — den hängt das title-Template des
+  // Root-Layouts automatisch an (sonst doppelter Brand-Suffix).
+  title: "Über uns",
   description: `${APP_NAME} liefert Forschungspeptide nach veröffentlichter Methode. Jede Charge erhält eine Lot-Nummer und ein HPLC-Chromatogramm von Janoshik Analytical: gemessen, nicht versprochen.`,
   robots: { index: true, follow: true },
+  alternates: { canonical: "/ueber-uns" },
 };
 
 interface RawData {

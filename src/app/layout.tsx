@@ -62,9 +62,11 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  alternates: {
-    canonical: "/",
-  },
+  // KEIN globales alternates.canonical hier! Metadata wird in Next.js
+  // vererbt — ein canonical "/" im Root-Layout würde JEDE Seite ohne
+  // eigenes alternates auf die Startseite kanonisieren (Deindexierungs-
+  // Risiko). Canonicals werden pro Seite gesetzt; relative Pfade lösen
+  // gegen metadataBase auf.
   openGraph: {
     type: "website",
     locale: "de_DE",

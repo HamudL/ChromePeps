@@ -8,6 +8,7 @@ export const metadata: Metadata = {
     ? "Informationen zu Zahlungsmöglichkeiten bei ChromePeps: Vorkasse und Kreditkarte via Stripe."
     : "Informationen zu Zahlungsmöglichkeiten bei ChromePeps: Kreditkarte via Stripe.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/zahlung" },
 };
 
 export default function ZahlungPage() {

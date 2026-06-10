@@ -50,7 +50,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPost(slug);
   if (!post || !post.publishedAt) return { title: "Artikel nicht gefunden" };
 
-  const title = post.seoTitle ?? `${post.title} | ChromePeps Wissen`;
+  // Kein "| ChromePeps"-Suffix — den hängt das title-Template des
+  // Root-Layouts automatisch an (sonst doppelter Brand-Suffix).
+  const title = post.seoTitle ?? `${post.title} · Wissen`;
   const description = post.seoDescription ?? post.excerpt;
   return {
     title,

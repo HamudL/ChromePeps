@@ -24,6 +24,8 @@ function staticRoutes(): SitemapEntry[] {
     { url: `${BASE_URL}/products`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE_URL}/wissen`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE_URL}/wissen/glossar`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${BASE_URL}/ueber-uns`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${BASE_URL}/qualitaetskontrolle`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE_URL}/faq`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE_URL}/kontakt`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
     { url: `${BASE_URL}/versand`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
@@ -37,7 +39,7 @@ function staticRoutes(): SitemapEntry[] {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
-    const [products, categories, blogPosts, blogCategories, glossarTerms] =
+    const [products, categories, blogPosts, blogCategories] =
       await Promise.all([
         db.product.findMany({
           where: { isActive: true },
@@ -56,10 +58,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         db.blogCategory.findMany({
           select: { slug: true, updatedAt: true },
           orderBy: { sortOrder: "asc" },
-        }),
-        db.glossarTerm.findMany({
-          select: { slug: true, updatedAt: true },
-          orderBy: { term: "asc" },
         }),
       ]);
 
@@ -91,16 +89,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-    // Glossar-Begriffe als URL-Fragments innerhalb der Glossar-Seite —
-    // ein eigener Crawl-Stop ist nicht sinnvoll, aber Hash-URLs in der
-    // Sitemap helfen Google trotzdem, einzelne Begriffe als Featured
-    // Snippets zu rankings (kanonisch ist die Glossar-Seite).
-    const glossarTermEntries: SitemapEntry[] = glossarTerms.map((t) => ({
-      url: `${BASE_URL}/wissen/glossar#${t.slug}`,
-      lastModified: t.updatedAt,
-      changeFrequency: "monthly" as const,
-      priority: 0.4,
-    }));
+    // Glossar-Begriffe stehen bewusst NICHT mehr in der Sitemap:
+    // URLs mit #fragment sind in Sitemaps unzulässig (Sitemap-Protokoll
+    // erlaubt nur kanonische Voll-URLs; Google ignoriert/bemängelt
+    // Fragment-Einträge). Die Glossar-Seite selbst ist über
+    // staticRoutes() (/wissen/glossar) abgedeckt.
 
     return [
       ...staticRoutes(),
@@ -108,7 +101,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...productEntries,
       ...blogCategoryEntries,
       ...blogPostEntries,
-      ...glossarTermEntries,
     ];
   } catch (error) {
     // If the DB is unreachable at build time, still serve static routes

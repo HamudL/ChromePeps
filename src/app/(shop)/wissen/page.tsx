@@ -50,7 +50,11 @@ export default async function WissenHubPage() {
     }),
   ]);
 
-  const allCount = (featured ? 1 : 0) + recent.length;
+  // Echte Gesamtzahl aller veröffentlichten Posts = Summe der Kategorie-
+  // Counts (categoryId ist im Schema Pflichtfeld, jeder Post hat genau
+  // eine Kategorie). Vorher wurde nur Featured+Recent gezählt — der
+  // "Alle"-Count war damit auf max. 7 gedeckelt.
+  const allCount = categories.reduce((sum, c) => sum + c._count.posts, 0);
 
   return (
     <div className="flex flex-col">

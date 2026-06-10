@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   description:
     "Widerrufsrecht und Widerrufsformular gemäß § 355 BGB und Art. 246a EGBGB.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/widerruf" },
 };
 
 export default function WiderrufPage() {

@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   description:
     "Informationen zu Lieferzeiten, Versandkosten und Lieferländern bei ChromePeps.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/versand" },
 };
 
 // Server-Component — die Tabelle wird beim Build / pro Request aus der

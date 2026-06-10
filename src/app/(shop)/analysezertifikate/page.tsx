@@ -19,7 +19,9 @@ import { AnalysezertifikateSearch } from "./search-client";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Analysezertifikate | ChromePeps",
+  // Kein "| ChromePeps"-Suffix — den hängt das title-Template des
+  // Root-Layouts automatisch an (sonst doppelter Brand-Suffix).
+  title: "Analysezertifikate",
   description:
     "Drittlabor-verifizierte Analysezertifikate für alle ChromePeps-Peptide. Jede Charge wird durch Janoshik unabhängig getestet.",
 };

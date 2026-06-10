@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   description:
     "Informationen zur Verarbeitung personenbezogener Daten gemäß DSGVO.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/datenschutz" },
 };
 
 export default function DatenschutzPage() {
@@ -15,9 +16,11 @@ export default function DatenschutzPage() {
       <h1 className="text-3xl font-bold tracking-tight mb-2">
         Datenschutzerklärung
       </h1>
-      <p className="text-sm text-muted-foreground mb-8">
-        Stand: {new Date().toLocaleDateString("de-DE")}
-      </p>
+      {/* Stand-Datum ist das tatsächliche Datum der letzten inhaltlichen
+          Änderung — bei Anpassungen der Erklärung manuell mitziehen.
+          new Date() (Abrufdatum) würde fälschlich tägliche Aktualität
+          suggerieren. */}
+      <p className="text-sm text-muted-foreground mb-8">Stand: 1. Juni 2026</p>
 
       <div className="space-y-6 text-sm leading-relaxed">
         <section>
