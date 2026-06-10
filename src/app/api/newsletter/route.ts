@@ -36,17 +36,21 @@ export async function POST(req: NextRequest) {
   }
   const { email } = parsed.data;
 
-  // Check if already subscribed and confirmed
+  // Check if already subscribed and confirmed. Abgemeldete Subscriber
+  // (unsubscribedAt gesetzt) fallen bewusst NICHT unter den Early-Return —
+  // die durchlaufen den Upsert unten und bekommen einen frischen
+  // Double-Opt-in (Re-Subscribe).
   const existing = await db.newsletterSubscriber.findUnique({ where: { email } });
-  if (existing?.confirmedAt) {
+  if (existing?.confirmedAt && !existing.unsubscribedAt) {
     // Don't reveal subscription status, just return success
     return NextResponse.json({ success: true });
   }
 
-  // Upsert (re-subscribing resets the token for a new confirmation email)
+  // Upsert (re-subscribing resets the token for a new confirmation email
+  // and clears a previous unsubscribe)
   const subscriber = await db.newsletterSubscriber.upsert({
     where: { email },
-    update: { token: crypto.randomUUID(), confirmedAt: null },
+    update: { token: crypto.randomUUID(), confirmedAt: null, unsubscribedAt: null },
     create: { email },
   });
 

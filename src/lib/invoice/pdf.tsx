@@ -279,24 +279,42 @@ export function InvoiceDocument(props: InvoicePdfInput) {
     placedAt,
     paymentMethod,
     paymentStatus,
+    currency,
     customerName,
     billingAddress,
     items,
     discountInCents,
     shippingInCents,
-    taxInCents,
     totalInCents,
     promoCode,
   } = props;
 
-  // Calculate net amounts for display
+  // Order trägt die Währung lowercase ("eur") — für Intl.NumberFormat und
+  // die Anzeige normalisieren. Vorher wurde das Feld ignoriert und überall
+  // "EUR" hartkodiert gerendert.
+  const currencyCode = (currency || "EUR").toUpperCase();
+  const fmt = (cents: number) => formatPrice(cents, currencyCode);
+
+  // Netto-Ausweis aus den Brutto-Beträgen der Order ableiten.
+  //
+  // Rundungs-Konsistenz: jede Zeile wird einzeln normal gerundet
+  // (gross / 1.19). Die Summe dieser gerundeten Zeilen weicht dadurch ggf.
+  // um wenige Cents von `total - tax` der Order ab — ein Prüfer, der die
+  // ausgewiesenen Zeilen addiert, käme sonst auf einen anderen Nettobetrag
+  // als den ausgewiesenen. Standard-Praxis bei Brutto-Rechnungen mit
+  // Netto-Ausweis: der Nettobetrag ist die Summe der ausgewiesenen Zeilen
+  // (Zwischensumme − Rabatt + Versand) und NUR die MwSt.-Zeile wird als
+  // Differenz zum exakten Brutto-Gesamtbetrag der Order ausgewiesen. So
+  // addiert sich jede Zahl auf dem Dokument exakt auf, und der
+  // Brutto-Betrag bleibt der tatsächlich bezahlte Order-Betrag.
   const netSubtotal = items.reduce(
     (sum, item) => sum + grossToNet(item.unitPriceInCents) * item.quantity,
     0
   );
   const netDiscount = grossToNet(discountInCents);
   const netShipping = grossToNet(shippingInCents);
-  const netTotal = totalInCents - taxInCents;
+  const netTotal = netSubtotal - netDiscount + netShipping;
+  const taxShownInCents = totalInCents - netTotal;
 
   return (
     <Document
@@ -398,10 +416,10 @@ export function InvoiceDocument(props: InvoicePdfInput) {
               <Text style={styles.colSku}>{item.sku}</Text>
               <Text style={styles.colQty}>{item.quantity}</Text>
               <Text style={styles.colUnit}>
-                {formatPrice(netUnit)}
+                {fmt(netUnit)}
               </Text>
               <Text style={styles.colTotal}>
-                {formatPrice(netUnit * item.quantity)}
+                {fmt(netUnit * item.quantity)}
               </Text>
             </View>
           );
@@ -411,18 +429,18 @@ export function InvoiceDocument(props: InvoicePdfInput) {
         <View style={styles.totalsBlock}>
           <View style={styles.totalsRow}>
             <Text>Zwischensumme (netto)</Text>
-            <Text>{formatPrice(netSubtotal)}</Text>
+            <Text>{fmt(netSubtotal)}</Text>
           </View>
           {discountInCents > 0 && (
             <View style={styles.totalsRow}>
               <Text>Rabatt{promoCode ? ` (${promoCode})` : ""}</Text>
-              <Text>-{formatPrice(netDiscount)}</Text>
+              <Text>-{fmt(netDiscount)}</Text>
             </View>
           )}
           {shippingInCents > 0 && (
             <View style={styles.totalsRow}>
               <Text>Versand (netto)</Text>
-              <Text>{formatPrice(netShipping)}</Text>
+              <Text>{fmt(netShipping)}</Text>
             </View>
           )}
           {shippingInCents === 0 && (
@@ -433,21 +451,29 @@ export function InvoiceDocument(props: InvoicePdfInput) {
           )}
           <View style={styles.totalsRow}>
             <Text>Nettobetrag</Text>
-            <Text>{formatPrice(netTotal)}</Text>
+            <Text>{fmt(netTotal)}</Text>
           </View>
+          {/* MwSt. als Differenz Brutto − Netto (s. Kommentar oben) — so
+              stimmt Netto + MwSt. == Brutto auf den Cent. */}
           <View style={styles.totalsRow}>
             <Text>zzgl. MwSt. ({Math.round(TAX_RATE * 100)}%)</Text>
-            <Text>{formatPrice(taxInCents)}</Text>
+            <Text>{fmt(taxShownInCents)}</Text>
           </View>
           <View style={styles.totalsRowGrand}>
             <Text>Gesamtbetrag (brutto)</Text>
-            <Text>{formatPrice(totalInCents)}</Text>
+            <Text>{fmt(totalInCents)}</Text>
           </View>
         </View>
 
         <View style={styles.notice}>
           <Text>
-            {"Alle Betr\u00E4ge in Euro. Rechnungsstellung gem\u00E4\u00DF \u00A7 14 UStG. "}
+            {/* W\u00E4hrung aus der Order statt hartkodiertem "Euro" \u2014 bei
+                abweichender Order-Currency st\u00FCnde sonst eine falsche
+                W\u00E4hrungsangabe auf einem Rechtsdokument. */}
+            {currencyCode === "EUR"
+              ? "Alle Betr\u00E4ge in Euro. "
+              : `Alle Betr\u00E4ge in ${currencyCode}. `}
+            {"Rechnungsstellung gem\u00E4\u00DF \u00A7 14 UStG. "}
             {"Diese Rechnung ist ohne Unterschrift g\u00FCltig. "}
             {"Alle Produkte sind ausschlie\u00DFlich als Referenzmaterialien f\u00FCr die In-vitro-Forschung bestimmt."}
           </Text>

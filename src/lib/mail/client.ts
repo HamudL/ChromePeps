@@ -36,6 +36,11 @@ export interface SendMailInput {
   tag?: string;
   /** File attachments (e.g. COA PDFs). */
   attachments?: SendMailAttachment[];
+  /**
+   * Blind-Copy-Empfänger. Genutzt z.B. vom Inventory-Alert-Cron, damit
+   * mehrere Admin-Adressen nicht gegenseitig im To-Header sichtbar sind.
+   */
+  bcc?: string | string[];
 }
 
 export interface SendMailResult {
@@ -45,11 +50,51 @@ export interface SendMailResult {
   skipped?: boolean;
 }
 
+// Backoff-Stufen für transiente Fehler: 3 Versuche gesamt, Pausen 1 s
+// und 5 s. Kurz genug, dass Request-Handler (z.B. Newsletter-Subscribe,
+// die das Resultat awaiten) nicht in Timeouts laufen, lang genug, dass
+// kurze Resend-Hiccups/Rate-Limits typischerweise vorbei sind.
+const RETRY_DELAYS_MS = [1_000, 5_000];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Entscheidet, ob ein Resend-Fehlerobjekt einen Retry rechtfertigt.
+ *
+ * Transient = Netzwerk/Server-seitig vorübergehend: 429 (Rate-Limit) und
+ * 5xx. 4xx-Validierungsfehler (kaputte Empfängeradresse, fehlendes Feld,
+ * ungültiger API-Key, Quota erschöpft) würden bei jedem Versuch identisch
+ * fehlschlagen — die retryen wir bewusst NICHT, sonst stünde derselbe
+ * Fehler nur dreifach im Log und die Antwortlatenz stiege grundlos.
+ * `statusCode` ist laut SDK-Typ nullable — dann fallen wir auf den
+ * Resend-Fehlernamen zurück.
+ */
+function isTransientResendError(error: {
+  statusCode: number | null;
+  name?: string;
+}): boolean {
+  if (error.statusCode === 429) return true;
+  if (error.statusCode !== null && error.statusCode >= 500) return true;
+  return (
+    error.statusCode === null &&
+    (error.name === "rate_limit_exceeded" ||
+      error.name === "internal_server_error" ||
+      error.name === "application_error")
+  );
+}
+
 /**
  * Sends an email via Resend with graceful failure.
  *
  * Never throws. On failure, logs the error and returns a failed result so
  * callers can decide what to do (typically: log and continue).
+ *
+ * Transiente Fehler (Netzwerk, 429, 5xx) werden bis zu 3-mal mit Backoff
+ * versucht — eine Bestellbestätigung, die an einem einzelnen Resend-Hiccup
+ * scheitert, wäre sonst unwiederbringlich verloren (kein Caller hat eine
+ * Requeue-Mechanik). Validierungsfehler (4xx) brechen sofort ab.
  */
 export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
   const client = getResendClient();
@@ -68,35 +113,68 @@ export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
     process.env.MAIL_FROM ?? "ChromePeps <no-reply@chromepeps.com>";
   const replyTo = process.env.MAIL_REPLY_TO ?? "support@chromepeps.com";
 
-  try {
-    const { data, error } = await client.emails.send({
-      from,
-      to: input.to,
-      subject: input.subject,
-      react: input.react,
-      text: input.text,
-      replyTo,
-      tags: [{ name: "category", value: tag }],
-      attachments: input.attachments?.map((a) => ({
-        filename: a.filename,
-        content: a.content,
-      })),
-    });
+  const maxAttempts = RETRY_DELAYS_MS.length + 1;
+  let lastError = "unknown error";
 
-    if (error) {
-      console.error(`[mail:${tag}] Resend returned error:`, error);
-      return { success: false, error: error.message };
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    // Backoff VOR dem Retry (nicht nach dem letzten Versuch) — der erste
+    // Versuch startet sofort.
+    if (attempt > 1) {
+      await sleep(RETRY_DELAYS_MS[attempt - 2]);
     }
 
-    console.log(
-      `[mail:${tag}] sent id=${data?.id ?? "unknown"} to=${
-        Array.isArray(input.to) ? input.to.join(",") : input.to
-      }`
-    );
-    return { success: true, id: data?.id };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[mail:${tag}] send failed:`, message);
-    return { success: false, error: message };
+    try {
+      const { data, error } = await client.emails.send({
+        from,
+        to: input.to,
+        bcc: input.bcc,
+        subject: input.subject,
+        react: input.react,
+        text: input.text,
+        replyTo,
+        tags: [{ name: "category", value: tag }],
+        attachments: input.attachments?.map((a) => ({
+          filename: a.filename,
+          content: a.content,
+        })),
+      });
+
+      if (error) {
+        lastError = error.message;
+        if (isTransientResendError(error) && attempt < maxAttempts) {
+          console.warn(
+            `[mail:${tag}] transient Resend error (attempt ${attempt}/${maxAttempts}), retrying:`,
+            error
+          );
+          continue;
+        }
+        console.error(`[mail:${tag}] Resend returned error:`, error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(
+        `[mail:${tag}] sent id=${data?.id ?? "unknown"} to=${
+          Array.isArray(input.to) ? input.to.join(",") : input.to
+        }`
+      );
+      return { success: true, id: data?.id };
+    } catch (err) {
+      // Geworfene Fehler sind hier praktisch immer Netzwerk-/Fetch-Probleme
+      // (DNS, Timeout, Connection-Reset) — also transient → Retry.
+      lastError = err instanceof Error ? err.message : String(err);
+      if (attempt < maxAttempts) {
+        console.warn(
+          `[mail:${tag}] send threw (attempt ${attempt}/${maxAttempts}), retrying:`,
+          lastError
+        );
+        continue;
+      }
+    }
   }
+
+  console.error(
+    `[mail:${tag}] send failed after ${maxAttempts} attempts:`,
+    lastError
+  );
+  return { success: false, error: lastError };
 }

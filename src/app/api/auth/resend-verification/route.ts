@@ -66,12 +66,27 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin;
   const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${rawToken}`;
 
-  await sendEmailVerifyEmail({
+  // Mail-Resultat auswerten statt blind Erfolg zu melden: sendMail wirft
+  // nie, liefert aber success=false bei Resend-Fehlern. Vorher bekam der
+  // User "E-Mail versendet" angezeigt, obwohl nichts ankam — und wartete
+  // dann vergeblich auf eine Mail, die nie existierte.
+  const mailResult = await sendEmailVerifyEmail({
     to: user.email,
     name: user.name,
     verifyUrl,
     expiresInHours: 24,
   });
+
+  if (!mailResult.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Die Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.",
+      },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({ success: true });
 }

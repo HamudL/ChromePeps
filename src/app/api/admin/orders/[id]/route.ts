@@ -326,14 +326,28 @@ export async function PATCH(
       // belasten. Früher Exit vor sendOrder*Email-Aufrufen.
       if (fullOrder?.isTestOrder) {
         // noop — status update stays, but we skip transactional mail.
-      } else if (fullOrder?.user?.email) {
-        if (becameShipped) {
+      } else if (fullOrder) {
+        // Empfänger auflösen: Account-Orders über die User-Relation,
+        // Gast-Orders (userId null) über guestEmail/guestName — vorher
+        // gingen Gäste bei Versand-/Liefer-Mails komplett leer aus.
+        const recipientEmail = fullOrder.user?.email ?? fullOrder.guestEmail;
+        const recipientName = fullOrder.user?.name ?? fullOrder.guestName;
+        const isGuest = !fullOrder.user?.email;
+
+        if (recipientEmail && becameShipped) {
           await sendOrderShippedEmail({
-            to: fullOrder.user.email,
-            customerName: fullOrder.user.name,
+            to: recipientEmail,
+            customerName: recipientName,
             orderNumber: fullOrder.orderNumber,
+            // Gäste haben kein Dashboard — sie bekommen den öffentlichen
+            // Order-Status-Link (gleiche URL-Form wie in der
+            // Bestellbestätigung, siehe stripe/webhook + bank-transfer).
             orderUrl: baseUrl
-              ? `${baseUrl}/dashboard/orders/${fullOrder.id}`
+              ? isGuest
+                ? `${baseUrl}/order-status?orderNumber=${encodeURIComponent(
+                    fullOrder.orderNumber
+                  )}&email=${encodeURIComponent(recipientEmail)}`
+                : `${baseUrl}/dashboard/orders/${fullOrder.id}`
               : undefined,
             shippedAt: fullOrder.shippedAt ?? new Date(),
             trackingNumber: fullOrder.trackingNumber,
@@ -359,7 +373,10 @@ export async function PATCH(
           });
         }
 
-        if (becameDelivered) {
+        // Review-Request NUR an eingeloggte Kunden: /api/reviews POST
+        // verlangt Session + Verified-Purchase über die userId — ein Gast
+        // würde dem Link nur in eine Login-Sackgasse folgen.
+        if (becameDelivered && fullOrder.user?.email) {
           // De-dupe by product id — customers don't need multiple review
           // buttons for variants of the same product.
           const seen = new Set<string>();

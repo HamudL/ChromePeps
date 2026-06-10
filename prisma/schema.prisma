@@ -626,6 +626,12 @@ model NewsletterSubscriber {
   email       String    @unique
   token       String    @unique @default(cuid())
   confirmedAt DateTime?
+  // Abmelde-Zeitstempel: null = aktiv, gesetzt = abgemeldet (via
+  // GET /api/newsletter/unsubscribe mit HMAC-Token). Soft-Flag statt
+  // Row-Delete, damit Re-Subscribe und Audit ("wann abgemeldet?")
+  // möglich bleiben. Ein zukünftiger Versand MUSS auf
+  // `unsubscribedAt: null` filtern.
+  unsubscribedAt DateTime?
   createdAt   DateTime  @default(now())
 
   // KEIN @@index([email]) / @@index([token]) — beide bereits @unique.
