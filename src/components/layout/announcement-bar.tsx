@@ -15,7 +15,7 @@ export function AnnouncementBar() {
       return;
     }
 
-    fetch("/api/admin/announcement")
+    fetch("/api/announcement")
       .then((r) => r.json())
       .then((json) => {
         if (json.success && json.data?.enabled && json.data.text) {

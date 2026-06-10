@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { forgotPasswordSchema } from "@/validators/auth";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { generatePasswordResetToken } from "@/lib/password-reset";
 import { sendPasswordResetEmail } from "@/lib/mail/send";
 import { PASSWORD_RESET_TOKEN_TTL_MS } from "@/lib/constants";
@@ -33,10 +34,7 @@ export async function POST(req: NextRequest) {
   if (!emailLimit.success) return rateLimitExceeded(emailLimit);
 
   // Rate limit by IP — 10 requests per 15 minutes
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
+  const ip = getClientIp(req.headers);
   const ipLimit = await rateLimit(`forgot:ip:${ip}`, {
     maxRequests: 10,
     windowMs: 15 * 60_000,

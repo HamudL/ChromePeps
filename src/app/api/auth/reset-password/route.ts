@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { resetPasswordSchema } from "@/validators/auth";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { hashResetToken } from "@/lib/password-reset";
 
 /**
@@ -22,10 +23,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limit by IP — 10 attempts per 15 minutes
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
+  const ip = getClientIp(req.headers);
   const ipLimit = await rateLimit(`reset:ip:${ip}`, {
     maxRequests: 10,
     windowMs: 15 * 60_000,

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { cacheGet, cacheSet, cacheDelPattern } from "@/lib/redis";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import {
   productFilterSchema,
   createProductSchema,
@@ -14,15 +15,20 @@ import type { Prisma } from "@prisma/client";
 
 // GET /api/products — public, cached, filterable
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
+  const ip = getClientIp(req.headers);
   // Two rate-limit layers:
   //   1. A generous overall budget (120/min) — the common case of a user
-  //      browsing and changing filters fits comfortably.
+  //      browsing and changing filters fits comfortably. Namespaced als
+  //      `products:` — die rohe IP als Key würde sich den Redis-Bucket
+  //      mit jedem anderen Endpoint teilen, der denselben Fehler macht.
   //   2. A tighter anti-cache-bust budget (30/min on the same IP keyed by
   //      `products:ip:`) — a malicious client sending many unique filter
   //      combinations can otherwise bypass the Redis cache and force raw
   //      DB hits. The smaller limit kicks in before we ever touch Postgres.
-  const limit = await rateLimit(ip, { maxRequests: 120, windowMs: 60_000 });
+  const limit = await rateLimit(`products:${ip}`, {
+    maxRequests: 120,
+    windowMs: 60_000,
+  });
   if (!limit.success) return rateLimitExceeded(limit);
   const antiCacheBust = await rateLimit(`products:ip:${ip}`, {
     maxRequests: 30,
@@ -149,7 +155,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = await req.json();
+  // Kaputtes JSON → 400 via safeParse statt unbehandelter 500.
+  const body = await req.json().catch(() => null);
   const parsed = createProductSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

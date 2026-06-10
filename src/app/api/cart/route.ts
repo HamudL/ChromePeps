@@ -78,7 +78,8 @@ export async function POST(req: NextRequest) {
   });
   if (!limit.success) return rateLimitExceeded(limit);
 
-  const body = await req.json();
+  // Kaputtes JSON → 400 via safeParse statt unbehandelter 500.
+  const body = await req.json().catch(() => null);
   const parsed = addToCartSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -183,7 +184,15 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  const body = await req.json();
+  // Gleiches Budget wie POST — Quantity-Updates sind genauso billig
+  // auszulösen und schreiben genauso in DB + Cache.
+  const limit = await rateLimit(`cart:${session.user.id}`, {
+    maxRequests: 30,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
+
+  const body = await req.json().catch(() => null);
   const parsed = updateCartItemSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -230,7 +239,15 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  const body = await req.json();
+  // Full-Replace ist der teuerste Cart-Pfad (Batch-Lookups + Transaction)
+  // — eigener, etwas engerer Bucket.
+  const limit = await rateLimit(`cart-sync:${session.user.id}`, {
+    maxRequests: 20,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
+
+  const body = await req.json().catch(() => null);
   const parsed = syncCartSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

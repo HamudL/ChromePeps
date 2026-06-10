@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { redis } from "@/lib/redis";
+import { getClientIp } from "@/lib/client-ip";
 
 /**
  * POST /api/wissen/posts/[slug]/view
@@ -28,8 +29,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   const { slug } = await params;
 
   // Anti-bot: Pro IP pro Slug pro Tag nur einmal zählen.
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anon";
+  const ip = getClientIp(req.headers);
   const lockKey = `wissen:view:${slug}:${ip}`;
 
   let firstView = true;

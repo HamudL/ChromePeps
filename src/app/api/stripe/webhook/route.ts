@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { cacheDel } from "@/lib/redis";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { CACHE_KEYS } from "@/lib/constants";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
@@ -19,8 +20,7 @@ export async function POST(req: NextRequest) {
   // webhook secret could still flood this endpoint until the secret is
   // rotated. The limit is generous (60/min) so Stripe's own retries are
   // never rejected.
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  const ip = forwardedFor?.split(",")[0].trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   const limit = await rateLimit(`stripe-webhook:${ip}`, {
     maxRequests: 60,
     windowMs: 60_000,

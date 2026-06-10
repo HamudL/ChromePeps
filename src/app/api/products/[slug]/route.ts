@@ -7,6 +7,7 @@ import { updateProductSchema } from "@/validators/product";
 import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
 import { slugify } from "@/lib/utils";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 
 // GET /api/products/[slug] — public (cached) or admin (uncached, includes inactive)
 export async function GET(
@@ -17,8 +18,7 @@ export async function GET(
 
   // Rate-Limit pro IP — nicht-existente Slugs erzeugen sonst beliebig viele
   // Cache-Misses + DB-Hits (inkl. reviews-Subquery).
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   const rl = await rateLimit(`product-detail:${ip}`, {
     maxRequests: 60,
     windowMs: 60_000,
@@ -134,7 +134,8 @@ export async function PATCH(
   }
 
   const { slug } = await params;
-  const body = await req.json();
+  // Kaputtes JSON → 400 statt unbehandelter 500.
+  const body = (await req.json().catch(() => null)) ?? {};
 
   const existing = await db.product.findUnique({ where: { slug } });
   if (!existing) {

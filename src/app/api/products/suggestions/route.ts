@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { productCardSelect } from "@/lib/products/card";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import type { ProductCardData } from "@/types";
 
 /**
@@ -19,8 +20,7 @@ const LIMIT = 4;
 const MAX_IDS = 50;
 
 export async function GET(req: NextRequest) {
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   const limit = await rateLimit(`suggestions:${ip}`, {
     maxRequests: 60,
     windowMs: 60_000,

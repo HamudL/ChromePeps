@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCoupon } from "@/lib/stripe-coupon";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { absoluteUrl } from "@/lib/utils";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 import { FREE_SHIPPING_THRESHOLD_CENTS } from "@/lib/order/calculate-totals";
@@ -38,12 +39,13 @@ export async function POST(req: NextRequest) {
   const userId = session?.user?.id ?? null;
   const isGuest = !userId;
 
-  const body = await req.json();
+  // Kaputtes JSON darf keinen 500er werfen — leeres Objekt fällt unten
+  // sauber in die Feld-Validierungen (400er).
+  const body = (await req.json().catch(() => null)) ?? {};
   const promoCode: string | null = body.promoCode ?? null;
 
   // Rate-limit. Per-identity (tight) + per-IP (defense in depth).
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  const ip = forwardedFor?.split(",")[0].trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   const ipLimit = await rateLimit(`stripe:ip:${ip}`, {
     maxRequests: 15,
     windowMs: 60_000,

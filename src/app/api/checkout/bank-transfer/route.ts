@@ -5,6 +5,7 @@ import { generateOrderNumber } from "@/lib/order/generate-order-number";
 import { calculateOrderTotals } from "@/lib/order/calculate-totals";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { cacheDel } from "@/lib/redis";
 import { BANK_TRANSFER_ENABLED, CACHE_KEYS } from "@/lib/constants";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
@@ -84,8 +85,7 @@ export async function POST(req: NextRequest) {
   // depth). For guests the "per identity" key is their email,
   // which an attacker can churn, but the per-IP layer catches
   // that pattern.
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  const ip = forwardedFor?.split(",")[0].trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   const ipLimit = await rateLimit(`bank-transfer:ip:${ip}`, {
     maxRequests: 10,
     windowMs: 60_000,

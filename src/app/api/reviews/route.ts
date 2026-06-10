@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createReviewSchema } from "@/validators/review";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { cacheDel } from "@/lib/redis";
 import { CACHE_KEYS } from "@/lib/constants";
 
@@ -26,8 +27,7 @@ const listReviewsSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   const rl = await rateLimit(`reviews-get:${ip}`, {
     maxRequests: 60,
     windowMs: 60_000,

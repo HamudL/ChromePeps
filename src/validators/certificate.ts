@@ -12,7 +12,21 @@ export const createCertificateSchema = z.object({
   // Versand die richtige Charge per Variante anhängt.
   dosage: z.string().max(20).nullish(),
   reportUrl: z.string().url("Invalid URL").nullish().or(z.literal("")),
-  pdfUrl: z.string().nullish(),
+  // pdfUrl wird in lib/mail/send.ts als Filesystem-Pfad relativ zu
+  // public/ gelesen (COA-Mail-Anhang via readFile). Erlaubt sind daher
+  // nur eigene Upload-Pfade oder externe https-Links; `..`-Segmente
+  // schließen Path-Traversal (z.B. /uploads/../.env) schon bei der
+  // Eingabe hart aus — nicht erst beim Prefix-Check im Mail-Code.
+  pdfUrl: z
+    .string()
+    .refine(
+      (v) =>
+        !v.includes("..") &&
+        (v.startsWith("/uploads/") || v.startsWith("https://")),
+      "pdfUrl muss mit /uploads/ beginnen oder eine https://-URL sein"
+    )
+    .nullish()
+    .or(z.literal("")),
   notes: z.string().max(1000).nullish(),
   isPublished: z.boolean().default(true),
 });

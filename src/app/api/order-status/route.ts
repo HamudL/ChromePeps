@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 
 /**
  * POST /api/order-status
@@ -57,8 +58,7 @@ type OrderStatusResponse = {
 };
 
 export async function POST(req: NextRequest) {
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  const ip = forwardedFor?.split(",")[0].trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   // 10 tries per 5-minute window per IP. Enough for a legitimate
   // user who mis-types their email a few times, tight enough to
   // make enumeration impractical at scale.
@@ -68,7 +68,8 @@ export async function POST(req: NextRequest) {
   });
   if (!limit.success) return rateLimitExceeded(limit);
 
-  const body = await req.json();
+  // Kaputtes JSON → leeres Objekt → 400 unten, statt unbehandelter 500.
+  const body = (await req.json().catch(() => null)) ?? {};
   const rawOrderNumber =
     typeof body.orderNumber === "string" ? body.orderNumber.trim() : "";
   const rawEmail =

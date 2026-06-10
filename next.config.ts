@@ -47,6 +47,9 @@ const nextConfig: NextConfig = {
       "frame-src https://hcaptcha.com https://*.hcaptcha.com",
       "object-src 'none'",
       "base-uri 'self'",
+      // CSP-Pendant zu X-Frame-Options: DENY — moderne Browser werten
+      // frame-ancestors aus und ignorieren XFO, wenn beides gesetzt ist.
+      "frame-ancestors 'none'",
       // form-action erlaubt POST-Submits an die eigene Origin und an
       // accounts.google.com. Letzteres ist nötig weil NextAuth den
       // OAuth-Flow per 302 von /api/auth/signin/google an Google's

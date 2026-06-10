@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { cacheDel } from "@/lib/redis";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { CACHE_KEYS } from "@/lib/constants";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
@@ -23,10 +25,20 @@ import { resolveCartFromStripeSession } from "@/lib/order/resolve-cart-from-stri
  * anyone completing the payment has it).
  */
 export async function POST(req: NextRequest) {
+  // Public Endpoint + ein Stripe-API-Call pro Request — ohne Limit
+  // ließe sich unsere Stripe-API-Quota von außen leerziehen.
+  const ip = getClientIp(req.headers);
+  const limit = await rateLimit(`verify-session:ip:${ip}`, {
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
+
   const userSession = await auth();
   const currentUserId = userSession?.user?.id ?? null;
 
-  const { sessionId } = await req.json();
+  // Kaputtes JSON → 400 "Missing sessionId" statt unbehandelter 500.
+  const { sessionId } = (await req.json().catch(() => null)) ?? {};
   if (!sessionId || typeof sessionId !== "string") {
     return NextResponse.json(
       { success: false, error: "Missing sessionId" },
