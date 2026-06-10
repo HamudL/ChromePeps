@@ -11,6 +11,7 @@
  */
 export const dynamic = "force-dynamic";
 
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Download, ShieldCheck } from "lucide-react";
@@ -32,8 +33,10 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-async function getProductWithCertificates(slug: string) {
-  return db.product.findFirst({
+// React cache(): generateMetadata UND die Page rufen den Loader mit
+// demselben Slug auf — dedupliziert pro Request auf einen Query.
+const getProductWithCertificates = cache(async (slug: string) =>
+  db.product.findFirst({
     where: { slug, isActive: true },
     select: {
       id: true,
@@ -44,8 +47,8 @@ async function getProductWithCertificates(slug: string) {
         orderBy: { testDate: "desc" },
       },
     },
-  });
-}
+  }),
+);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

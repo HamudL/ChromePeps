@@ -2,6 +2,7 @@
 // `await auth()` (Cookies) → der ganze (shop)-Baum ist dynamic, ein
 // `revalidate`-Export wäre hier wirkungslos. Siehe (shop)/layout.tsx.
 
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -52,7 +53,14 @@ interface ProductPageProps {
 // im SSR-Bundle.
 const REVIEWS_INITIAL_TAKE = 20;
 
-async function getProduct(slug: string): Promise<ProductWithDetails | null> {
+// React cache(): generateMetadata UND die Page rufen getProduct mit
+// demselben Slug auf — ohne Memoisierung lief der schwerste Query der
+// Seite (Product + Images + Variants + 20 Reviews) ZWEIMAL pro Request.
+// cache() dedupliziert pro Request (Request-scoped, kein Cross-Request-
+// Leak), der zweite Aufruf bekommt das bereits aufgelöste Ergebnis.
+const getProduct = cache(async function getProduct(
+  slug: string,
+): Promise<ProductWithDetails | null> {
   const product = await db.product.findUnique({
     where: { slug, isActive: true },
     include: {
@@ -79,7 +87,7 @@ async function getProduct(slug: string): Promise<ProductWithDetails | null> {
   });
 
   return product as ProductWithDetails | null;
-}
+});
 
 /**
  * Reviews-Aggregate für die Header-Anzeige. Gleichwertig zum vorherigen

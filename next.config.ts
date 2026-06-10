@@ -110,8 +110,14 @@ const nextConfig: NextConfig = {
       // Datei-Pfade enthalten keine Content-Hashes, daher 1 Tag
       // browser-cache + stale-while-revalidate für 7 Tage — Update
       // landet trotzdem schnell live, repeat-visits sparen Roundtrips.
+      //
+      // Bewusst auf `.webp` eingeschränkt (einziger Asset-Typ unter
+      // public/ueber-uns/): der frühere Matcher `/ueber-uns/:path*`
+      // traf auch die HTML-Route /ueber-uns selbst — Browser hielten
+      // die SEITE 24 h im Cache, Content-Updates kamen bei Repeat-
+      // Visitors erst einen Tag später an.
       {
-        source: "/ueber-uns/:path*",
+        source: "/ueber-uns/:path*.webp",
         headers: [
           {
             key: "Cache-Control",

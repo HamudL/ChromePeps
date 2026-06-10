@@ -275,6 +275,9 @@ export async function PATCH(
   }
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("homepage:*");
+  // Shop-Kategorie-Liste: isActive-Toggle oder Kategorie-Wechsel ändern
+  // ihren Active-Product-Count.
+  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
 
   // Cart-Cache der betroffenen User invalidieren. Der gecachte Cart-
   // Snapshot enthält stock/price/isActive/name/image — alles was sich
@@ -342,6 +345,8 @@ export async function DELETE(
   await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(slug));
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("homepage:*");
+  // Shop-Kategorie-Liste: Hard-Delete senkt ihren Active-Product-Count.
+  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
   if (affectedCarts.length > 0) {
     await Promise.all(
       affectedCarts.map((c) => cacheDel(CACHE_KEYS.CART(c.userId))),

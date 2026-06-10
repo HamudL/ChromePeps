@@ -13,6 +13,7 @@ import {
   getBestsellerProductIds,
 } from "@/lib/products/card";
 import { getFeaturedProductPool } from "@/lib/products/featured";
+import { getShopCategories } from "@/lib/shop/categories";
 import { getShopStats } from "@/lib/shop/stats";
 import type { ProductCardData } from "@/types";
 import type { Prisma } from "@prisma/client";
@@ -79,17 +80,9 @@ export async function generateMetadata({
   };
 }
 
-async function getCategories() {
-  return db.category.findMany({
-    orderBy: { sortOrder: "asc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      _count: { select: { products: { where: { isActive: true } } } },
-    },
-  });
-}
+// getCategories lebt jetzt zentral + Redis-gecacht in
+// @/lib/shop/categories (getShopCategories) — vorher hier ein
+// ungecachter Duplikat-Query pro Visit.
 
 interface GetProductsParams {
   search?: string;
@@ -276,7 +269,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         inStock,
         minPurity,
       }),
-      getCategories(),
+      getShopCategories(),
       getShopStats(),
       // Featured nur auf der Haupt-Listing-Seite (ohne Kategorie-Filter
       // und ohne Suche) — sonst wäre "ein Bestseller" als Eyecatcher

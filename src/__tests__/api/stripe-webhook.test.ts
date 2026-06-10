@@ -76,6 +76,10 @@ vi.mock("@/lib/db", () => ({
 
 vi.mock("@/lib/redis", () => ({
   cacheDel: vi.fn(),
+  // invalidateStockCaches (läuft nach Checkout/Voll-Refund) nutzt
+  // zusätzlich cacheDelPattern — ohne den Stub würde der Handler mit
+  // "No export defined on mock" auf 500 laufen.
+  cacheDelPattern: vi.fn(),
 }));
 
 vi.mock("@/lib/rate-limit", () => ({

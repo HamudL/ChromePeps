@@ -440,6 +440,19 @@ model OrderItem {
   product Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
   variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
 
+  // Postgres legt für FK-Spalten KEINE automatischen Indizes an (anders
+  // als MySQL/InnoDB) — ohne diese drei liefen die Hot-Path-Queries als
+  // Seq-Scan über die gesamte order_items-Tabelle:
+  //  - orderId:   Items-Load pro Order (Detail/Mails) + Cascade-Delete
+  //               einer Order muss alle Kind-Zeilen finden.
+  //  - productId: Bestseller-groupBy (getBestsellerProductIds), Related-
+  //               Products und der Verified-Purchase-Check beim Review-
+  //               Submit filtern alle auf productId; außerdem ON DELETE
+  //               SET NULL beim Produkt-Hard-Delete.
+  //  - variantId: dito für Varianten (SET NULL beim Variant-Delete).
+  @@index([orderId])
+  @@index([productId])
+  @@index([variantId])
   @@map("order_items")
 }
 
@@ -509,7 +522,14 @@ model Review {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
-  @@index([productId])
+  // Review-Pagination auf PDP + /api/reviews:
+  //   WHERE productId=? ORDER BY createdAt DESC LIMIT 20 OFFSET n
+  // → Postgres liest Filter UND Sort direkt aus dem Index, ohne
+  //   Sort-Materialisierung. Der frühere @@index([productId]) ist
+  //   durch das führende productId-Feld vollständig abgedeckt
+  //   (Aggregate/Lookups nutzen das Compound-Prefix) — als eigener
+  //   B-Tree wäre er doppelt, daher entfernt.
+  @@index([productId, createdAt(sort: Desc)])
   @@map("reviews")
 }
 

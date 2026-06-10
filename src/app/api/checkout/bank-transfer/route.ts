@@ -8,6 +8,7 @@ import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import { cacheDel } from "@/lib/redis";
 import { BANK_TRANSFER_ENABLED, CACHE_KEYS } from "@/lib/constants";
+import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { resolveShippingRate } from "@/lib/shipping/rates";
 
@@ -649,6 +650,11 @@ export async function POST(req: NextRequest) {
   if (userId) {
     await cacheDel(CACHE_KEYS.CART(userId));
   }
+  // Stock wurde in der Transaktion dekrementiert → Listing-/Detail-/
+  // Bestseller-Caches invalidieren, sonst zeigt der Shop bis zum TTL-
+  // Ablauf eine veraltete Verfügbarkeit. Fail-safe (Redis-Fehler werden
+  // intern geschluckt) — bricht den Checkout nie.
+  await invalidateStockCaches();
 
   // Fire-and-forget: Mail-Send (mit COA-PDF-Attachments aus dem Filesystem
   // + Resend-API-Call) blockt die HTTP-Response NICHT. Der User klickt

@@ -272,12 +272,56 @@ export function ChromeLogo3D() {
 
       renderer.render(scene, camera);
     };
-    animate();
+
+    /* ── Loop-Gating: Render nur, wenn das Logo sichtbar ist ──
+       Der Loop ist teuer (Vertex-Displacement über die komplette
+       TextGeometry + computeVertexNormals pro Frame). Ohne Gating lief
+       er weiter, sobald der User unter den Hero gescrollt oder den Tab
+       gewechselt hat — Dauerlast auf CPU/GPU für ein unsichtbares
+       Element. IntersectionObserver + visibilitychange pausieren den
+       rAF-Loop (gleicher Mechanismus wie PeptideNetwork). Der Hero-
+       Swap in hero-logo.tsx (StaticLogo ↔ WebGL) bleibt unberührt —
+       wir mounten nichts um, nur der interne Loop stoppt/startet.
+       THREE.Clock zählt während der Pause weiter — unkritisch, weil
+       die Animation rein zeit-parametrisch ist (sin/noise über t,
+       keine Integration); beim Resume springt nur die Phase. */
+    let isLooping = false;
+    let isVisible = true;
+    const startLoop = () => {
+      if (isLooping || disposed) return;
+      isLooping = true;
+      animId = requestAnimationFrame(animate);
+    };
+    const stopLoop = () => {
+      if (!isLooping) return;
+      isLooping = false;
+      cancelAnimationFrame(animId);
+    };
+
+    startLoop();
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible && !document.hidden) startLoop();
+        else stopLoop();
+      },
+      { rootMargin: "100px" },
+    );
+    io.observe(container);
+
+    const onVisibilityChange = () => {
+      if (document.hidden) stopLoop();
+      else if (isVisible) startLoop();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     /* ── Cleanup ── */
     return () => {
       disposed = true;
-      cancelAnimationFrame(animId);
+      stopLoop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("resize", onResize);
       renderer.dispose();

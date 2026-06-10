@@ -39,6 +39,8 @@ export async function PATCH(
   });
 
   await cacheDel(CACHE_KEYS.CATEGORIES);
+  // Shop-Variante der Kategorie-Liste (FilterBar) mit invalidieren.
+  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("homepage:*");
 
@@ -74,6 +76,8 @@ export async function DELETE(
   await db.category.delete({ where: { id } });
 
   await cacheDel(CACHE_KEYS.CATEGORIES);
+  // Shop-Variante der Kategorie-Liste (FilterBar) mit invalidieren.
+  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
   await cacheDelPattern("homepage:*");
 
   return NextResponse.json({ success: true });

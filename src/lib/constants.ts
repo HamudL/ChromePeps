@@ -40,6 +40,13 @@ export const CACHE_KEYS = {
   PRODUCTS_LIST: "products:list",
   PRODUCT_DETAIL: (slug: string) => `products:detail:${slug}`,
   CATEGORIES: "categories:all",
+  // Shop-Variante der Kategorie-Liste (FilterBar auf /products +
+  // Kategorie-Landingpages). Gleiche Tabelle wie CATEGORIES, aber
+  // anderes Shape: zählt nur AKTIVE Produkte pro Kategorie. Eigener
+  // Key, weil CATEGORIES bereits vom Admin-Endpoint mit dem Admin-
+  // Shape (Count über ALLE Produkte) belegt ist — ein geteilter Key
+  // würde die beiden Shapes gegenseitig vergiften.
+  CATEGORIES_SHOP: "categories:shop",
   CART: (userId: string) => `cart:${userId}`,
   STATS: "admin:stats",
   PROMOS: "promos:all",

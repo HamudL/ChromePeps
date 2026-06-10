@@ -6,6 +6,7 @@ import { cacheDel } from "@/lib/redis";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import { CACHE_KEYS } from "@/lib/constants";
+import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
 import { resolveCartFromStripeSession } from "@/lib/order/resolve-cart-from-stripe";
@@ -190,6 +191,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (userId) {
     await cacheDel(CACHE_KEYS.CART(userId));
   }
+  // createOrderFromStripeSession hat den Stock dekrementiert → Listing-/
+  // Detail-/Bestseller-Caches invalidieren, sonst zeigt der Shop bis zum
+  // TTL-Ablauf eine veraltete Verfügbarkeit. Fail-safe (Redis-Fehler
+  // werden intern geschluckt) — lässt den Webhook nie auf 500 laufen.
+  await invalidateStockCaches();
 
   // Fire-and-forget: Mail-Send blockt den Webhook NICHT. Stripe hat ein
   // 30-s-Timeout; bei großen COA-Anhängen (PDFs vom Filesystem) + Resend-
@@ -406,4 +412,12 @@ async function handleRefund(charge: Stripe.Charge) {
       }),
     );
   });
+
+  // Stock-Restore macht ggf. ein "Ausverkauft"-Produkt wieder verfügbar —
+  // ohne Invalidierung sähe der Shop das erst nach TTL-Ablauf. Nur nötig,
+  // wenn tatsächlich restauriert wurde (Teil-Refunds/Replays returnen
+  // oben früher). Fail-safe — bricht den Webhook nie.
+  if (shouldRestoreStock) {
+    await invalidateStockCaches();
+  }
 }

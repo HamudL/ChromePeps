@@ -71,6 +71,15 @@ export function ArticleLivePreview(props: ArticleLivePreviewProps) {
   } = props;
 
   const toc = useMemo(() => extractToc(contentMdx), [contentMdx]);
+  // Element-Memo für den teuersten Teil des Previews: react-markdown
+  // parst bei jedem Render neu. Identische Element-Referenz lässt React
+  // den kompletten Body-Subtree beim Reconcile überspringen — Tippen in
+  // Titel/Excerpt/SEO-Feldern reparst den Markdown-Body damit nicht
+  // mehr mit (der Body selbst kommt vom Parent bereits debounced).
+  const body = useMemo(
+    () => (contentMdx ? <ArticleBody markdown={contentMdx} /> : null),
+    [contentMdx],
+  );
   const dateLabel = publishedAt
     ? formatDate(publishedAt)
     : "(noch nicht veröffentlicht)";
@@ -213,9 +222,7 @@ export function ArticleLivePreview(props: ArticleLivePreviewProps) {
             className="prose"
             style={{ maxWidth: "680px", margin: "0 auto" }}
           >
-            {contentMdx ? (
-              <ArticleBody markdown={contentMdx} />
-            ) : (
+            {body ?? (
               <p className="text-muted-foreground italic">
                 (Body — schreibe links in Markdown, hier siehst du das
                 Ergebnis.)

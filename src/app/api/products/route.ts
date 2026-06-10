@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { cacheGet, cacheSet, cacheDelPattern } from "@/lib/redis";
+import { cacheGet, cacheSet, cacheDel, cacheDelPattern } from "@/lib/redis";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import {
@@ -210,6 +210,9 @@ export async function POST(req: NextRequest) {
   // auf der Startseite sichtbar sein, sonst verwirrt es den Admin
   // bei Stichproben.
   await cacheDelPattern("homepage:*");
+  // Shop-Kategorie-Liste: ihr Active-Product-Count ändert sich durch
+  // ein neues Produkt.
+  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
   revalidatePath("/products");
 
   return NextResponse.json({ success: true, data: product }, { status: 201 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 import { updateOrderStatusSchema } from "@/validators/order";
 import {
   sendOrderShippedEmail,
@@ -183,6 +184,33 @@ export async function PATCH(
       break;
   }
 
+  // Restore stock on cancellation — nur unter strengen Bedingungen:
+  //  1) Test-Orders haben nie Stock dekrementiert (siehe
+  //     /api/admin/orders/test) → dürfen auch nichts re-incrementen
+  //     (sonst phantom inventory pro gecancelter Test-Order).
+  //  2) Stock wird bei JEDER echten Order schon bei der Erstellung
+  //     dekrementiert — Stripe-Orders entstehen direkt als
+  //     PROCESSING, Vorkasse-Orders als PENDING (Reservierung bis
+  //     Zahlungseingang). Cancel aus PENDING/PROCESSING/SHIPPED muss
+  //     daher restauren. NICHT aus DELIVERED (Ware beim Kunden) und
+  //     nicht aus terminalen Status (CANCELLED/REFUNDED/ARCHIVED —
+  //     dort ist der Bestand bereits zurückgebucht).
+  //  3) stockRestoredAt schützt zusätzlich gegen Doppel-Restore bei
+  //     Status-Flapping (CANCELLED → PROCESSING → CANCELLED) und
+  //     gegen Refund-nach-Cancel (Webhook prüft dasselbe Feld).
+  //  4) `.catch(() => {})` bleibt, falls product/variant
+  //     hard-deleted wurde.
+  // Vor die Transaction gehoben (alle Inputs sind Pre-TX-State), damit
+  // dieselbe Bedingung nach dem Commit die Cache-Invalidierung steuert.
+  const stockWasDecremented = (
+    ["PENDING", "PROCESSING", "SHIPPED"] as const
+  ).includes(existing.status as "PENDING" | "PROCESSING" | "SHIPPED");
+  const willRestoreStock =
+    parsed.data.status === "CANCELLED" &&
+    stockWasDecremented &&
+    !existing.isTestOrder &&
+    !existing.stockRestoredAt;
+
   const order = await db.$transaction(async (tx) => {
     const updated = await tx.order.update({
       where: { id },
@@ -198,31 +226,7 @@ export async function PATCH(
       },
     });
 
-    // Restore stock on cancellation — nur unter strengen Bedingungen:
-    //  1) Test-Orders haben nie Stock dekrementiert (siehe
-    //     /api/admin/orders/test) → dürfen auch nichts re-incrementen
-    //     (sonst phantom inventory pro gecancelter Test-Order).
-    //  2) Stock wird bei JEDER echten Order schon bei der Erstellung
-    //     dekrementiert — Stripe-Orders entstehen direkt als
-    //     PROCESSING, Vorkasse-Orders als PENDING (Reservierung bis
-    //     Zahlungseingang). Cancel aus PENDING/PROCESSING/SHIPPED muss
-    //     daher restauren. NICHT aus DELIVERED (Ware beim Kunden) und
-    //     nicht aus terminalen Status (CANCELLED/REFUNDED/ARCHIVED —
-    //     dort ist der Bestand bereits zurückgebucht).
-    //  3) stockRestoredAt schützt zusätzlich gegen Doppel-Restore bei
-    //     Status-Flapping (CANCELLED → PROCESSING → CANCELLED) und
-    //     gegen Refund-nach-Cancel (Webhook prüft dasselbe Feld).
-    //  4) `.catch(() => {})` bleibt, falls product/variant
-    //     hard-deleted wurde.
-    const stockWasDecremented = (
-      ["PENDING", "PROCESSING", "SHIPPED"] as const
-    ).includes(existing.status as "PENDING" | "PROCESSING" | "SHIPPED");
-    if (
-      parsed.data.status === "CANCELLED" &&
-      stockWasDecremented &&
-      !existing.isTestOrder &&
-      !existing.stockRestoredAt
-    ) {
+    if (willRestoreStock) {
       await tx.order.update({
         where: { id },
         data: { stockRestoredAt: new Date() },
@@ -289,6 +293,14 @@ export async function PATCH(
 
     return updated;
   });
+
+  // Stock-Restore macht ggf. ein "Ausverkauft"-Produkt wieder verfügbar —
+  // ohne Invalidierung sähe der Shop das erst nach TTL-Ablauf. Fail-safe
+  // (Redis-Fehler werden intern geschluckt) — der Status-Update ist zu
+  // diesem Zeitpunkt bereits committed und bleibt es auch.
+  if (willRestoreStock) {
+    await invalidateStockCaches();
+  }
 
   // Transactional mails — trigger on legitimate forward transitions only.
   // Never block on mail failures; the status update is already committed.

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PackageSearch } from "lucide-react";
@@ -13,6 +14,7 @@ import {
   productCardSelect,
   getBestsellerProductIds,
 } from "@/lib/products/card";
+import { getShopCategories } from "@/lib/shop/categories";
 import { getCategoryStats } from "@/lib/shop/stats";
 import { formatPrice } from "@/lib/utils";
 import type { ProductCardData } from "@/types";
@@ -78,8 +80,11 @@ interface CategoryPageProps {
   }>;
 }
 
-async function getCategoryBySlug(slug: string) {
-  return db.category.findUnique({
+// React cache(): generateMetadata UND die Page laden dieselbe Kategorie-
+// Zeile — ohne Memoisierung zwei identische Queries pro Request. cache()
+// dedupliziert request-scoped auf einen.
+const getCategoryBySlug = cache(async (slug: string) =>
+  db.category.findUnique({
     where: { slug },
     select: {
       id: true,
@@ -87,20 +92,12 @@ async function getCategoryBySlug(slug: string) {
       slug: true,
       description: true,
     },
-  });
-}
+  }),
+);
 
-async function getAllCategories() {
-  return db.category.findMany({
-    orderBy: { sortOrder: "asc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      _count: { select: { products: { where: { isActive: true } } } },
-    },
-  });
-}
+// getAllCategories lebt jetzt zentral + Redis-gecacht in
+// @/lib/shop/categories (getShopCategories) — vorher hier ein
+// ungecachter Duplikat-Query pro Visit.
 
 export async function generateMetadata({
   params,
@@ -183,7 +180,8 @@ export default async function CategoryLandingPage({
   // Cache-Hit-Pfad für die teure Listing-Triplette. Bei Cache-Miss
   // läuft der echte Postgres-Read und wird für CACHE_TTL.PRODUCTS_LIST
   // Sekunden gespeichert; Invalidierung übernehmen die Admin-Writes
-  // via cacheDelPattern("products:list*").
+  // und Stock-Änderungen (Checkout/Refund/Cancel) via
+  // cacheDelPattern("products:list:*").
   const listingCacheKey = buildCategoryListingKey({
     slug,
     sort,
@@ -193,11 +191,13 @@ export default async function CategoryLandingPage({
   });
   const cachedListing = await cacheGet<CategoryListingCache>(listingCacheKey);
 
-  // Begleitende Reads (allCategories für Index-Anzeige, stats für
-  // Header-Reihe) sind günstig und werden bewusst NICHT gecacht —
-  // dadurch fühlt sich der "Neueste Charge"-Wert frischer an.
+  // Begleitende Reads: stats (Header-Reihe) bleibt bewusst UNgecacht —
+  // dadurch fühlt sich der "Neueste Charge"-Wert frischer an. Die
+  // Kategorie-Liste dagegen kommt jetzt aus dem geteilten Redis-Cache
+  // (getShopCategories) — sie ändert sich nur bei Admin-Writes und lief
+  // vorher als Duplikat-Query auf jedem Listing-Hit mit.
   const [allCategories, stats] = await Promise.all([
-    getAllCategories(),
+    getShopCategories(),
     getCategoryStats(category.id),
   ]);
 
