@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { CreditCard, Landmark, Shield, CheckCircle2 } from "lucide-react";
-import { BANK_DETAILS } from "@/lib/constants";
+import { BANK_DETAILS, BANK_TRANSFER_ENABLED } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Zahlungsmethoden",
-  description:
-    "Informationen zu Zahlungsmöglichkeiten bei ChromePeps: Vorkasse und Kreditkarte via Stripe.",
+  description: BANK_TRANSFER_ENABLED
+    ? "Informationen zu Zahlungsmöglichkeiten bei ChromePeps: Vorkasse und Kreditkarte via Stripe."
+    : "Informationen zu Zahlungsmöglichkeiten bei ChromePeps: Kreditkarte via Stripe.",
   robots: { index: true, follow: true },
 };
 
@@ -20,17 +21,19 @@ export default function ZahlungPage() {
       </p>
 
       <div className="space-y-6 text-sm leading-relaxed">
-        <div className="grid sm:grid-cols-2 gap-4 mb-6">
-          <div className="border rounded-lg p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Landmark className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Vorkasse / Überweisung</h3>
+        <div className={`grid gap-4 mb-6 ${BANK_TRANSFER_ENABLED ? "sm:grid-cols-2" : ""}`}>
+          {BANK_TRANSFER_ENABLED && (
+            <div className="border rounded-lg p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Landmark className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold">Vorkasse / Überweisung</h3>
+              </div>
+              <p className="text-muted-foreground">
+                Überweisen Sie den Rechnungsbetrag auf unser Bankkonto. Versand
+                erfolgt nach Zahlungseingang.
+              </p>
             </div>
-            <p className="text-muted-foreground">
-              Überweisen Sie den Rechnungsbetrag auf unser Bankkonto. Versand
-              erfolgt nach Zahlungseingang.
-            </p>
-          </div>
+          )}
           <div className="border rounded-lg p-5">
             <div className="flex items-center gap-2 mb-2">
               <CreditCard className="h-5 w-5 text-primary" />
@@ -43,29 +46,31 @@ export default function ZahlungPage() {
           </div>
         </div>
 
-        <section>
-          <h2 className="text-lg font-semibold">Vorkasse per Banküberweisung</h2>
-          <p>
-            Bei Wahl der Zahlungsart Vorkasse senden wir Ihnen unmittelbar nach
-            Bestellabschluss eine Auftragsbestätigung mit unseren Bankdaten. Die
-            Ware wird versendet, sobald der Rechnungsbetrag vollständig auf
-            unserem Konto eingegangen ist. Bitte geben Sie bei der Überweisung
-            Ihre Bestellnummer als Verwendungszweck an, damit wir die Zahlung
-            schnell zuordnen können.
-          </p>
-          <div className="mt-4 p-4 border rounded-lg bg-muted/30">
-            <p className="font-medium mb-1">Unsere Bankverbindung</p>
-            <p className="text-muted-foreground">
-              Kontoinhaber: {BANK_DETAILS.accountHolder}
-              <br />
-              IBAN: {BANK_DETAILS.iban}
-              <br />
-              BIC: {BANK_DETAILS.bic}
-              <br />
-              Bank: {BANK_DETAILS.bankName}
+        {BANK_TRANSFER_ENABLED && (
+          <section>
+            <h2 className="text-lg font-semibold">Vorkasse per Banküberweisung</h2>
+            <p>
+              Bei Wahl der Zahlungsart Vorkasse senden wir Ihnen unmittelbar nach
+              Bestellabschluss eine Auftragsbestätigung mit unseren Bankdaten. Die
+              Ware wird versendet, sobald der Rechnungsbetrag vollständig auf
+              unserem Konto eingegangen ist. Bitte geben Sie bei der Überweisung
+              Ihre Bestellnummer als Verwendungszweck an, damit wir die Zahlung
+              schnell zuordnen können.
             </p>
-          </div>
-        </section>
+            <div className="mt-4 p-4 border rounded-lg bg-muted/30">
+              <p className="font-medium mb-1">Unsere Bankverbindung</p>
+              <p className="text-muted-foreground">
+                Kontoinhaber: {BANK_DETAILS.accountHolder}
+                <br />
+                IBAN: {BANK_DETAILS.iban}
+                <br />
+                BIC: {BANK_DETAILS.bic}
+                <br />
+                Bank: {BANK_DETAILS.bankName}
+              </p>
+            </div>
+          </section>
+        )}
 
         <section>
           <h2 className="text-lg font-semibold">Kreditkarte über Stripe</h2>

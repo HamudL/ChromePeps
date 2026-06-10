@@ -105,14 +105,17 @@ export async function sendOrderConfirmationEmail(
       totalInCents: input.totalInCents,
       paymentMethod: input.paymentMethod,
       shippingAddress: input.shippingAddress,
-      bankDetails: isBank
-        ? {
-            accountHolder: BANK_DETAILS.accountHolder,
-            iban: BANK_DETAILS.iban,
-            bic: BANK_DETAILS.bic,
-            bankName: BANK_DETAILS.bankName,
-          }
-        : undefined,
+      // Bankdaten nur mitsenden, wenn tatsächlich eine Bankverbindung
+      // konfiguriert ist — sonst stünden leere Felder in der Mail.
+      bankDetails:
+        isBank && BANK_DETAILS.iban
+          ? {
+              accountHolder: BANK_DETAILS.accountHolder,
+              iban: BANK_DETAILS.iban,
+              bic: BANK_DETAILS.bic,
+              bankName: BANK_DETAILS.bankName,
+            }
+          : undefined,
       hasCoaAttachments: attachments.length > 0,
     }),
   });

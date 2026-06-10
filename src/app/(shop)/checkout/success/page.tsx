@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/store/cart-store";
-import { APP_NAME, BANK_DETAILS } from "@/lib/constants";
+import { APP_NAME, BANK_DETAILS, BANK_TRANSFER_ENABLED } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 
 interface SuccessPageProps {
@@ -173,33 +173,50 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
 
                     <Separator />
 
-                    {/* Bank info rows */}
-                    <BankDetailRow
-                      label="Kontoinhaber"
-                      value={BANK_DETAILS.accountHolder}
-                      onCopy={() => copyToClipboard(BANK_DETAILS.accountHolder, "holder")}
-                      copied={copiedField === "holder"}
-                    />
-                    <BankDetailRow
-                      label="IBAN"
-                      value={BANK_DETAILS.iban}
-                      onCopy={() => copyToClipboard(BANK_DETAILS.iban, "iban")}
-                      copied={copiedField === "iban"}
-                      mono
-                    />
-                    <BankDetailRow
-                      label="BIC / SWIFT"
-                      value={BANK_DETAILS.bic}
-                      onCopy={() => copyToClipboard(BANK_DETAILS.bic, "bic")}
-                      copied={copiedField === "bic"}
-                      mono
-                    />
-                    <BankDetailRow
-                      label="Bank"
-                      value={BANK_DETAILS.bankName}
-                      onCopy={() => copyToClipboard(BANK_DETAILS.bankName, "bank")}
-                      copied={copiedField === "bank"}
-                    />
+                    {/* Bank info rows — nur rendern, wenn eine echte
+                        Bankverbindung konfiguriert ist. Alt-Bestellungen
+                        (Vorkasse deaktiviert) bekommen den Support-Hinweis. */}
+                    {BANK_TRANSFER_ENABLED ? (
+                      <>
+                        <BankDetailRow
+                          label="Kontoinhaber"
+                          value={BANK_DETAILS.accountHolder}
+                          onCopy={() => copyToClipboard(BANK_DETAILS.accountHolder, "holder")}
+                          copied={copiedField === "holder"}
+                        />
+                        <BankDetailRow
+                          label="IBAN"
+                          value={BANK_DETAILS.iban}
+                          onCopy={() => copyToClipboard(BANK_DETAILS.iban, "iban")}
+                          copied={copiedField === "iban"}
+                          mono
+                        />
+                        <BankDetailRow
+                          label="BIC / SWIFT"
+                          value={BANK_DETAILS.bic}
+                          onCopy={() => copyToClipboard(BANK_DETAILS.bic, "bic")}
+                          copied={copiedField === "bic"}
+                          mono
+                        />
+                        <BankDetailRow
+                          label="Bank"
+                          value={BANK_DETAILS.bankName}
+                          onCopy={() => copyToClipboard(BANK_DETAILS.bankName, "bank")}
+                          copied={copiedField === "bank"}
+                        />
+                      </>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Unsere Bankverbindung erhalten Sie vom Support unter{" "}
+                        <a
+                          href="mailto:support@chromepeps.com"
+                          className="underline"
+                        >
+                          support@chromepeps.com
+                        </a>
+                        . Bitte geben Sie dabei Ihre Bestellnummer an.
+                      </p>
+                    )}
 
                     <Separator />
 

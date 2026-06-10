@@ -41,7 +41,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/store/cart-store";
 import { CountrySelect } from "@/components/shop/country-select";
 import { formatPrice } from "@/lib/utils";
-import { BANK_DETAILS } from "@/lib/constants";
+import { BANK_DETAILS, BANK_TRANSFER_ENABLED } from "@/lib/constants";
 import {
   FREE_SHIPPING_THRESHOLD_CENTS,
   STANDARD_SHIPPING_CENTS,
@@ -1110,8 +1110,9 @@ export default function CheckoutPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Payment method toggle */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Payment method toggle — Vorkasse erscheint nur, wenn sie
+                  aktiviert UND eine echte Bankverbindung hinterlegt ist. */}
+              <div className={`grid gap-3 ${BANK_TRANSFER_ENABLED ? "grid-cols-2" : "grid-cols-1"}`}>
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("STRIPE")}
@@ -1127,21 +1128,23 @@ export default function CheckoutPage() {
                   </span>
                   <span className="text-xs text-muted-foreground">via Stripe</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("BANK_TRANSFER")}
-                  className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
-                    paymentMethod === "BANK_TRANSFER"
-                      ? "border-primary bg-primary/5"
-                      : "border-muted hover:border-muted-foreground/30"
-                  }`}
-                >
-                  <Building2 className={`h-6 w-6 ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : "text-muted-foreground"}`} />
-                  <span className={`text-sm font-medium ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : ""}`}>
-                    Banküberweisung
-                  </span>
-                  <span className="text-xs text-muted-foreground">Vorkasse</span>
-                </button>
+                {BANK_TRANSFER_ENABLED && (
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("BANK_TRANSFER")}
+                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
+                      paymentMethod === "BANK_TRANSFER"
+                        ? "border-primary bg-primary/5"
+                        : "border-muted hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <Building2 className={`h-6 w-6 ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className={`text-sm font-medium ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : ""}`}>
+                      Banküberweisung
+                    </span>
+                    <span className="text-xs text-muted-foreground">Vorkasse</span>
+                  </button>
+                )}
               </div>
 
               {paymentMethod === "STRIPE" ? (

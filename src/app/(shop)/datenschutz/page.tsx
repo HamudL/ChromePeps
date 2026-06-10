@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung",
@@ -104,13 +105,17 @@ export default function DatenschutzPage() {
             .
           </p>
 
-          <h3 className="font-medium mt-3">3.4 Zahlung per Vorkasse</h3>
-          <p>
-            Bei Wahl der Zahlungsart Vorkasse übermitteln wir Ihre
-            Bestellinformationen an unsere Bank zur Zuordnung der Zahlung. Die
-            Kontodaten sehen Sie im Bestellprozess sowie in der
-            Bestellbestätigung.
-          </p>
+          {BANK_TRANSFER_ENABLED && (
+            <>
+              <h3 className="font-medium mt-3">3.4 Zahlung per Vorkasse</h3>
+              <p>
+                Bei Wahl der Zahlungsart Vorkasse übermitteln wir Ihre
+                Bestellinformationen an unsere Bank zur Zuordnung der Zahlung.
+                Die Kontodaten sehen Sie im Bestellprozess sowie in der
+                Bestellbestätigung.
+              </p>
+            </>
+          )}
 
           <h3 className="font-medium mt-3">3.5 Kundenkonto und Session</h3>
           <p>

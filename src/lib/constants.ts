@@ -84,12 +84,24 @@ export const HOMEPAGE_CACHE_TTL = {
   METRICS: 300,
 } as const;
 
+// Bankverbindung für Vorkasse — kommt ausschließlich aus der Umgebung.
+// Hier stand früher eine Beispiel-IBAN hartkodiert, an die echte Kunden
+// überwiesen hätten. NEXT_PUBLIC_, weil Checkout/Success Client-Components
+// sind und die Daten ohnehin kundensichtbar (keine Secrets).
 export const BANK_DETAILS = {
-  accountHolder: "ChromePeps GmbH",
-  iban: "DE89 3704 0044 0532 0130 00",
-  bic: "COBADEFFXXX",
-  bankName: "Commerzbank",
+  accountHolder: process.env.NEXT_PUBLIC_BANK_ACCOUNT_HOLDER ?? "",
+  iban: process.env.NEXT_PUBLIC_BANK_IBAN ?? "",
+  bic: process.env.NEXT_PUBLIC_BANK_BIC ?? "",
+  bankName: process.env.NEXT_PUBLIC_BANK_NAME ?? "",
 } as const;
+
+// Vorkasse ist nur buchbar, wenn sie explizit aktiviert wurde UND eine
+// Bankverbindung hinterlegt ist — verhindert, dass die Zahlungsart je
+// wieder ohne echte Kontodaten live geht. Server-seitig erzwungen in
+// /api/checkout/bank-transfer, client-seitig im Checkout ausgeblendet.
+export const BANK_TRANSFER_ENABLED =
+  process.env.NEXT_PUBLIC_BANK_TRANSFER_ENABLED === "true" &&
+  BANK_DETAILS.iban.length > 0;
 
 /**
  * Seller data for invoices and official documents.

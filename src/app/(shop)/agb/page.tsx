@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Allgemeine Geschäftsbedingungen",
@@ -101,19 +102,36 @@ export default function AgbPage() {
             Die Lieferung erfolgt, sofern nicht anders vereinbart, an die von
             Ihnen angegebene Lieferadresse. Die Lieferzeit beträgt, sofern beim
             jeweiligen Produkt nicht anders angegeben, innerhalb Deutschlands
-            2 bis 4 Werktage nach Zahlungseingang. Bei Zahlung per Vorkasse beginnt
-            die Lieferzeit einen Tag nach Erteilung des Zahlungsauftrages an das
-            überweisende Kreditinstitut.
+            2 bis 4 Werktage nach Zahlungseingang.
+            {BANK_TRANSFER_ENABLED && (
+              <>
+                {" "}
+                Bei Zahlung per Vorkasse beginnt die Lieferzeit einen Tag nach
+                Erteilung des Zahlungsauftrages an das überweisende
+                Kreditinstitut.
+              </>
+            )}
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold">§ 7 Zahlung</h2>
           <p>
-            Die Bezahlung erfolgt wahlweise per Vorkasse (Banküberweisung) oder
-            über den Zahlungsdienstleister Stripe (Kreditkarte). Bei Vorkasse
-            teilen wir Ihnen unsere Bankverbindung in der Auftragsbestätigung
-            mit; die Ware wird nach Eingang des Rechnungsbetrages versandt.
+            {BANK_TRANSFER_ENABLED ? (
+              <>
+                Die Bezahlung erfolgt wahlweise per Vorkasse (Banküberweisung)
+                oder über den Zahlungsdienstleister Stripe (Kreditkarte). Bei
+                Vorkasse teilen wir Ihnen unsere Bankverbindung in der
+                Auftragsbestätigung mit; die Ware wird nach Eingang des
+                Rechnungsbetrages versandt.
+              </>
+            ) : (
+              <>
+                Die Bezahlung erfolgt über den Zahlungsdienstleister Stripe
+                (Kredit-/Debitkarte). Die Ware wird nach erfolgreicher
+                Zahlungsfreigabe versandt.
+              </>
+            )}{" "}
             Weitere Informationen finden Sie auf der{" "}
             <Link href="/zahlung" className="underline">
               Seite &bdquo;Zahlung&ldquo;

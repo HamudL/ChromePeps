@@ -6,7 +6,7 @@ import { calculateOrderTotals } from "@/lib/order/calculate-totals";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { cacheDel } from "@/lib/redis";
-import { CACHE_KEYS } from "@/lib/constants";
+import { BANK_TRANSFER_ENABLED, CACHE_KEYS } from "@/lib/constants";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { resolveShippingRate } from "@/lib/shipping/rates";
 
@@ -34,12 +34,51 @@ import { resolveShippingRate } from "@/lib/shipping/rates";
  * the current Product/ProductVariant rows).
  */
 export async function POST(req: NextRequest) {
+  // Server-seitige Durchsetzung des Vorkasse-Schalters: Das Ausblenden im
+  // Checkout-UI allein würde direkte POSTs nicht stoppen.
+  if (!BANK_TRANSFER_ENABLED) {
+    return NextResponse.json(
+      { success: false, error: "Vorkasse ist derzeit nicht verfügbar." },
+      { status: 403 }
+    );
+  }
+
   const session = await auth();
   const userId = session?.user?.id ?? null;
   const isGuest = !userId;
 
-  const body = await req.json();
-  const promoCode: string | null = body.promoCode ?? null;
+  // Body-Shape wie dokumentiert (Modus A/B). Die Felder werden unten
+  // weiterhin einzeln zur Laufzeit validiert — der Typ spiegelt nur den
+  // Zustand NACH erfolgreicher Validierung wider.
+  type BankTransferBody = {
+    promoCode?: unknown;
+    guestEmail?: unknown;
+    guestName?: unknown;
+    shippingAddress?: {
+      firstName: string;
+      lastName: string;
+      street: string;
+      city: string;
+      postalCode: string;
+      country: string;
+      street2?: unknown;
+      company?: unknown;
+      phone?: unknown;
+    } | null;
+    items?: Array<{ productId: unknown; variantId?: unknown; quantity: unknown }>;
+    shippingAddressId?: unknown;
+  };
+  let body: BankTransferBody;
+  try {
+    body = (await req.json()) as BankTransferBody;
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Ungültiger Request-Body." },
+      { status: 400 }
+    );
+  }
+  const promoCode: string | null =
+    typeof body.promoCode === "string" && body.promoCode ? body.promoCode : null;
 
   // Rate-limiting — per identity (tighter) + per IP (defense in
   // depth). For guests the "per identity" key is their email,

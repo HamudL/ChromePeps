@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Truck, Clock, Package, Globe } from "lucide-react";
 import { getActiveShippingRates } from "@/lib/shipping/rates";
 import { formatPrice } from "@/lib/utils";
+import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Versand & Lieferung",
@@ -90,11 +91,17 @@ export default async function VersandPage() {
           <p>
             Die Lieferzeit beträgt, sofern beim jeweiligen Produkt nicht anders
             angegeben, innerhalb Deutschlands 2 bis 4 Werktage nach Zahlungseingang;
-            für EU-Lieferungen rechnen Sie bitte mit 3 bis 7 Werktagen. Bei Zahlung
-            per Vorkasse beginnt die Lieferzeit einen Tag nach Erteilung des
-            Zahlungsauftrages an das überweisende Kreditinstitut. Bei Zahlung
-            per Kreditkarte oder Stripe-Zahlungsdienst erfolgt der Versand
-            unmittelbar nach erfolgreicher Zahlungsfreigabe.
+            für EU-Lieferungen rechnen Sie bitte mit 3 bis 7 Werktagen.
+            {BANK_TRANSFER_ENABLED && (
+              <>
+                {" "}
+                Bei Zahlung per Vorkasse beginnt die Lieferzeit einen Tag nach
+                Erteilung des Zahlungsauftrages an das überweisende
+                Kreditinstitut.
+              </>
+            )}{" "}
+            Bei Zahlung per Kreditkarte oder Stripe-Zahlungsdienst erfolgt der
+            Versand unmittelbar nach erfolgreicher Zahlungsfreigabe.
           </p>
         </section>
 
