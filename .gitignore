@@ -48,6 +48,15 @@ yarn-error.log*
 /HANDOFF_*.md
 /CLAUDE_DESIGN_PROMPT*.md
 
+# Sensible Geschäftsdokumente & lokale Arbeits-Assets — dürfen NIE ins Repo.
+# Produkte-Dokumente enthält u.a. Gesellschaftsvertrag und interne Unterlagen;
+# assets/ und logo-concepts/ sind lokale Design-Quellen; public/products ist
+# Generator-Output von scripts/generate-product-images.ts.
+/Produkte-Dokumente/
+/assets/
+/logo-concepts/
+/public/products/
+
 # vercel
 .vercel
 
