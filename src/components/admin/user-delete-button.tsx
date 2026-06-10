@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 interface UserDeleteButtonProps {
@@ -21,12 +22,16 @@ export function UserDeleteButton({ userId, isSelf }: UserDeleteButtonProps) {
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "DELETE",
       });
-      const json = await res.json();
-      if (json.success) {
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
         router.refresh();
+      } else {
+        // Fehler sichtbar machen statt still zu verschlucken — sonst
+        // sieht der Admin nur, dass die Row "einfach nicht verschwindet".
+        toast.error(json?.error ?? "Benutzer konnte nicht gelöscht werden.");
       }
     } catch {
-      // silently fail
+      toast.error("Netzwerkfehler — Benutzer wurde nicht gelöscht.");
     }
     setDeleting(false);
     setConfirming(false);

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -47,13 +48,18 @@ export function UserRoleSelect({
         body: JSON.stringify({ role: newRole }),
       });
 
-      const json = await res.json();
-      if (json.success) {
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
         setRole(newRole);
         router.refresh();
+      } else {
+        // Fehler sichtbar machen statt still zu verschlucken — das
+        // Select zeigt weiter den alten `role`-State (kontrolliert),
+        // der Admin erfährt aber, WARUM nichts passiert ist.
+        toast.error(json?.error ?? "Rollenwechsel fehlgeschlagen.");
       }
     } catch {
-      // silently fail
+      toast.error("Netzwerkfehler — Rolle wurde nicht geändert.");
     }
     setLoading(false);
   }

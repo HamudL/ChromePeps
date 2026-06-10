@@ -90,6 +90,17 @@ export function ArticleLivePreview(props: ArticleLivePreviewProps) {
   const titleParts = renderTitleWithEmphasis(title, titleEmphasis);
   const authorName = author?.name ?? "Autor wählen…";
 
+  // coverImage ist freier Admin-Text — nur lokale Pfade ("/...", aber
+  // nicht protokoll-relative "//host") oder https-URLs als <img src>
+  // durchlassen, damit javascript:- o. ä. Schemata nie im DOM landen.
+  // Alles andere fällt auf den CoverPlaceholder zurück.
+  const safeCoverImage =
+    coverImage &&
+    ((coverImage.startsWith("/") && !coverImage.startsWith("//")) ||
+      coverImage.startsWith("https://"))
+      ? coverImage
+      : null;
+
   return (
     <article className="bg-background">
       {/* Header */}
@@ -173,10 +184,10 @@ export function ArticleLivePreview(props: ArticleLivePreviewProps) {
 
         {/* Cover */}
         <div className="container pb-10">
-          {coverImage ? (
+          {safeCoverImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={coverImage}
+              src={safeCoverImage}
               alt={title}
               className="w-full rounded-sm"
               style={{ aspectRatio: "21/9", objectFit: "cover" }}

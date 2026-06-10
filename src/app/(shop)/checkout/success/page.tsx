@@ -65,13 +65,21 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
     setMounted(true);
   }, []);
 
-  // Clear cart once — only if we arrived via a real checkout (has session_id or orderId)
+  // Cart NICHT mehr rein URL-getriggert leeren: jeder Aufruf von
+  // /checkout/success?... (Bookmark, Reload, fremder Link) hat vorher
+  // den lokalen Warenkorb gelöscht. Stattdessen:
+  //  - Stripe: erst NACH erfolgreicher verify-session-Antwort (siehe
+  //    Effect unten) — eine erfundene session_id leert nichts mehr.
+  //  - Vorkasse: orderId UND orderNumber müssen vorhanden sein — die
+  //    hängt nur der Checkout selbst nach erfolgreicher Order-Anlage
+  //    an die URL. (Eine stille Server-Verifikation gibt es für Gäste
+  //    nicht: /api/order-status verlangt zusätzlich die E-Mail.)
   useEffect(() => {
-    if (!clearedRef.current && (sessionId || params.orderId)) {
+    if (!clearedRef.current && isBankTransfer && params.orderId && orderNumber) {
       clearedRef.current = true;
       clearCart();
     }
-  }, [clearCart, sessionId, params.orderId]);
+  }, [clearCart, isBankTransfer, params.orderId, orderNumber]);
 
   // For Stripe payments: verify session and create order if webhook hasn't
   useEffect(() => {
@@ -91,6 +99,12 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
             orderId: json.data.orderId,
             orderNumber: json.data.orderNumber,
           });
+          // Erst jetzt ist die Zahlung serverseitig bestätigt — der
+          // lokale Cart darf geleert werden.
+          if (!clearedRef.current) {
+            clearedRef.current = true;
+            clearCart();
+          }
         }
       } catch {
         // Silent — order may still be created by webhook
@@ -98,7 +112,7 @@ export default function CheckoutSuccessPage({ searchParams }: SuccessPageProps) 
         setVerifying(false);
       }
     })();
-  }, [sessionId]);
+  }, [sessionId, clearCart]);
 
   const copyToClipboard = async (text: string, field: string) => {
     try {

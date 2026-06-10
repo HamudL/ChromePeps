@@ -34,9 +34,11 @@ export function ProductCardAddButton({
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
 
-  function handleAddToCart(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  // Kein preventDefault/stopPropagation mehr nötig: der Button liegt in
+  // der ProductCard nicht mehr IM Link, sondern als Geschwister mit
+  // z-10 über dem Karten-Link-Overlay — Klicks erreichen den Link gar
+  // nicht erst.
+  function handleAddToCart() {
     addItem({
       productId,
       variantId: null,
@@ -59,9 +61,16 @@ export function ProductCardAddButton({
       aria-label={`${name} in den Warenkorb`}
       className={cn(
         "inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary",
+        // z-10 hebt den Button über das Karten-Link-Overlay (z-[1]),
+        // sonst würde jeder Klick die Produktseite öffnen.
+        "relative z-10",
         "opacity-0 translate-x-2 transition-all duration-250",
         "group-hover:opacity-100 group-hover:translate-x-0",
         "hover:text-primary/80",
+        // Tastatur-Fokus: Button sichtbar machen, sobald er selbst oder
+        // der Karten-Link fokussiert ist — sonst läge der Fokus auf
+        // unsichtbarem Text (analog zum "Ansehen →"-Fallback).
+        "group-focus-within:opacity-100 group-focus-within:translate-x-0",
       )}
     >
       <ShoppingCart className="h-3 w-3" />

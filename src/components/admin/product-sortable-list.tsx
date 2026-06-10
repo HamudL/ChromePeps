@@ -53,7 +53,8 @@ interface Props {
  *  - @dnd-kit bewegt die Row visuell
  *  - onDragEnd → arrayMove + sofort optimistic update der lokalen
  *    Liste (kein Flicker), parallel POST an /api/admin/products/reorder
- *  - Bei API-Fehler: Toast + Reload für sauberen Server-State
+ *  - Bei API-Fehler: Toast + Rollback auf den Snapshot von unmittelbar
+ *    vor dem optimistischen Update (= letzter bestätigter Stand)
  *  - Bei Erfolg: leiser Toast + router.refresh, damit beim nächsten
  *    Request der frische Cache-State gezogen wird
  *
@@ -87,6 +88,13 @@ export function ProductSortableList({ products: initial }: Props) {
 
     const reordered = arrayMove(items, oldIndex, newIndex);
 
+    // Snapshot UNMITTELBAR vor dem optimistischen Update. Wichtig:
+    // NICHT auf das `initial`-Prop zurückrollen — das ist der Stand vom
+    // ersten Render und nach einem früheren erfolgreichen Reorder
+    // veraltet; ein Fehler würde dann auch die bereits gespeicherte
+    // Sortierung optisch verwerfen.
+    const snapshot = items;
+
     // Optimistic update — UI bewegt sich sofort, kein Wait auf Network.
     setItems(reordered);
     setSaving(true);
@@ -110,9 +118,10 @@ export function ProductSortableList({ products: initial }: Props) {
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Reorder fehlgeschlagen");
-      // Rollback durch Reload — Server ist die Quelle der Wahrheit.
-      router.refresh();
-      setItems(initial);
+      // Exakt auf den Stand vor dem optimistischen Update zurückrollen.
+      // (router.refresh() würde den lokalen useState ohnehin nicht
+      // zurücksetzen — der Snapshot ist die verlässliche Quelle.)
+      setItems(snapshot);
     } finally {
       setSaving(false);
     }

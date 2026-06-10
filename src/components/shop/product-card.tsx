@@ -84,8 +84,7 @@ export function ProductCard({
       : formatPrice(minPrice);
 
   return (
-    <Link
-      href={`/products/${product.slug}`}
+    <div
       className={cn(
         "group relative flex flex-col",
         "bg-card border border-border rounded-sm",
@@ -97,9 +96,23 @@ export function ProductCard({
         "transition-all duration-300 ease-out",
         "hover:border-foreground hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-24px_hsl(20_14%_10%/0.2)]",
         "animate-fade-in",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
       )}
     >
+      {/* Karten-Link als unsichtbares Overlay über der GESAMTEN Karte.
+          Vorher war die ganze Karte ein <Link> mit <button>-Kindern —
+          interaktiv-in-interaktiv ist invalides HTML und macht den
+          Accessibility-Tree für Screenreader unbrauchbar. Jetzt sind
+          Link und Action-Buttons Geschwister: das Overlay (z-[1]) fängt
+          Klicks auf die Kartenfläche, die Buttons liegen mit z-10
+          DARÜBER und brauchen keine preventDefault/stopPropagation-
+          Hacks mehr. Tab-Reihenfolge bleibt: Link → Wishlist → Add. */}
+      <Link
+        href={`/products/${product.slug}`}
+        className="absolute inset-0 z-[1] rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <span className="sr-only">{product.name}</span>
+      </Link>
+
       {/* Perforierte Linien — typische "Prescription Label"-Optik.
           Top liegt bei ~10px, Bottom bei ~10px — genug Abstand zum
           Padding, damit sie als dekorative Fuge lesen, nicht als Border. */}
@@ -228,26 +241,19 @@ export function ProductCard({
           </span>
         )}
       </div>
-    </Link>
+    </div>
   );
 }
 
 /**
- * WishlistButton ist `"use client"` — der Stop-Propagation-Wrap (damit
- * der Klick nicht zum Link-Navigieren führt) muss aber im Server-Tree
- * sitzen. Lösung: dünner Server-Wrapper der ein `pointer-events-auto`-
- * div rendert, der WishlistButton selbst behält sein onClick und
- * arbeitet ohne expliziten preventDefault — Radix/shadcn-Button macht
- * das im handleClick. Aber: parent <Link> würde noch immer routen.
- * Daher hier ein server-renderbares Wrapper-Div mit inline-handler
- * geht NICHT (handler braucht Client-Boundary).
- *
- * Pragmatisch: WishlistButton selbst bringt schon stopPropagation mit
- * (siehe Quelle); hier nur das visuelle Container-Div ohne JS.
+ * Dünner Server-Wrapper um den `"use client"`-WishlistButton. Das
+ * `z-10` hebt den Button über das Karten-Link-Overlay (z-[1]), damit
+ * Klicks beim Button landen statt zu navigieren — der frühere
+ * preventDefault/stopPropagation-Hack im Button entfällt dadurch.
  */
 function WishlistCardSlot({ productId }: { productId: string }) {
   return (
-    <div className="opacity-70 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+    <div className="relative z-10 opacity-70 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
       <WishlistButton
         productId={productId}
         className="h-9 w-9 bg-transparent hover:bg-muted"

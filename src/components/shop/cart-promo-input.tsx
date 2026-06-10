@@ -52,16 +52,17 @@ export function CartPromoInput() {
         setDiscount(json.data?.discountAmount ?? null);
         setInput("");
       } else {
-        const msg: string =
-          json.error ?? "Code konnte nicht eingelöst werden.";
         // Gast ohne E-Mail: Code ist nicht ungültig, es fehlt nur die
         // Identität (kommt an der Kasse). Also merken + dort einlösen.
-        if (/e-?mail|einloggen/i.test(msg)) {
+        // Erkennung über den strukturierten errorCode des Endpoints —
+        // vorher wurde die deutsche Fehlermeldung per Regex geraten,
+        // was bei jeder Textänderung still gebrochen wäre.
+        if (json.errorCode === "GUEST_EMAIL_REQUIRED") {
           setPromoCode(code);
           setDiscount(null);
           setInput("");
         } else {
-          setError(msg);
+          setError(json.error ?? "Code konnte nicht eingelöst werden.");
         }
       }
     } catch {

@@ -157,6 +157,13 @@ export function CartSheet() {
                           size="icon"
                           className="h-9 w-9"
                           aria-label={`Menge von ${item.name} erhöhen`}
+                          // Plus deaktivieren, sobald der beim Hinzufügen
+                          // bekannte Lagerbestand erreicht ist — vorher
+                          // ließ sich beliebig hochklicken und erst der
+                          // Checkout hat abgelehnt. (Alt-Items aus dem
+                          // persistierten Cart ohne stock-Feld bleiben
+                          // bedienbar: undefined-Vergleich ist false.)
+                          disabled={item.quantity >= item.stock}
                           onClick={() =>
                             updateQuantity(
                               item.productId,

@@ -81,14 +81,28 @@ export function ImageUpload({ images, onChange }: ImageUploadProps) {
 
   return (
     <div className="space-y-4">
-      {/* Drop zone */}
+      {/* Drop zone — als role="button" + tabIndex auch per Tastatur
+          bedienbar (vorher nur Klick): Enter/Space öffnen den
+          Datei-Dialog, Fokusring analog zu den bestehenden Buttons. */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Bilder hochladen: Dateien auswählen oder hierher ziehen"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            // preventDefault, damit Space die Seite nicht scrollt.
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
         className={cn(
           "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+          // Sichtbarer Fokusring — gleiche Klassen wie ui/button.tsx.
+          "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           dragOver
             ? "border-primary bg-primary/5"
             : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"

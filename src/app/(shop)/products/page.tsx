@@ -58,7 +58,9 @@ export async function generateMetadata({
     }
   } else if (search) {
     title = `Suche: ${search}`;
-    description = `Suchergebnisse für "${search}" im ChromePeps-Katalog.`;
+    // Gleiche typografischen Anführungszeichen wie im sichtbaren
+    // Seitentext (heroSubline) — kein Mix aus „…“ und "...".
+    description = `Suchergebnisse für „${search}“ im ChromePeps-Katalog.`;
   }
 
   return {
@@ -324,7 +326,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   );
 
   const heroSubline = search
-    ? `${total} Treffer für „${search}".`
+    ? `${total} Treffer für „${search}“.`
     : "Jede Charge HPLC‑geprüft bei Janoshik Labs. CoA‑PDF und Lot‑Nummer zu jeder Bestellung per E‑Mail.";
 
   return (
