@@ -78,6 +78,20 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # --- COPY ORDER MATTERS ---
 # 1. Full node_modules FIRST (for Prisma CLI, migrate, seed, ts-node)
+#
+# BEWUSSTER TRADE-OFF (Image-Größe vs. Deploy-Sicherheit): Das Image schleppt
+# die kompletten node_modules inkl. devDependencies mit, obwohl Next.js
+# standalone (Schritt 2) eigentlich reichen würde. Grund: deploy.sh führt vor
+# jedem Cutover `npx prisma migrate deploy` + `npx prisma db push` IN DIESEM
+# IMAGE aus, und `prisma db seed` braucht ts-node + tsconfig — `prisma`,
+# `ts-node` und `typescript` sind devDependencies. Ein `npm ci --omit=dev`
+# würde genau diese CLIs entfernen; `npx` würde sie dann beim Deploy ad-hoc
+# aus dem Netz nachinstallieren (Versions-Drift, Deploy-Bruch bei Registry-
+# Ausfall). Bekannte Projekt-Falle: Prisma-Engines im standalone-Output
+# (siehe outputFileTracingIncludes in next.config.ts).
+# Sicherer zukünftiger Umbau (separater PR, nicht hier): prisma/ts-node nach
+# dependencies verschieben ODER Migrations über ein dediziertes Migrate-Image
+# laufen lassen, dann hier auf reines standalone-Layout umstellen.
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # 2. Standalone output SECOND — its traced node_modules overwrites/merges

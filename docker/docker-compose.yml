@@ -13,8 +13,14 @@ services:
     memswap_limit: 768m
     env_file:
       - ../.env
+    # SECURITY (H13): Loopback-only. nginx erreicht die App über das interne
+    # Compose-Netz (upstream "app:3000" in nginx/nginx.conf) und braucht das
+    # Host-Publishing nicht. Ohne 127.0.0.1-Bindung wäre Port 3000 direkt aus
+    # dem Internet erreichbar (Docker schreibt iptables-Regeln VOR den
+    # UFW-Regeln → UFW schützt published Ports nicht). Das Binding bleibt nur
+    # fürs lokale Debugging auf dem VPS (curl 127.0.0.1:3000) erhalten.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - uploads:/app/public/uploads
     depends_on:
@@ -27,11 +33,18 @@ services:
     image: postgres:16-alpine
     container_name: chromepeps-db
     restart: unless-stopped
-    env_file:
-      - ../.env
+    # SECURITY: Kein env_file mehr — das lud ALLE App-Secrets (Stripe, Auth,
+    # Resend, …) in den Postgres-Container (Blast-Radius bei Container-
+    # Kompromittierung). Postgres braucht nur seine drei POSTGRES_*-Werte.
+    # ${POSTGRES_PASSWORD} wird von deploy.sh/rollback.sh via `set -a;
+    # source ../.env` in die Shell exportiert, bevor docker compose läuft.
+    # Bei manuellen Aufrufen ohne sourcen: vorher `set -a; source ../.env;
+    # set +a` (nur für die ERSTE Initialisierung des pgdata-Volumes nötig —
+    # ein bereits initialisiertes Volume ignoriert POSTGRES_*-Variablen).
     environment:
       POSTGRES_DB: chromepeps
       POSTGRES_USER: chromepeps
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

@@ -1,3 +1,6 @@
+# Build-Kontext-Ausschlüsse. WICHTIG: CI baut mit context "." (Repo-Root,
+# siehe .github/workflows/ci-deploy.yml) — nur DIESE Datei wirkt. Eine
+# .dockerignore neben dem Dockerfile (docker/) wird bei Root-Kontext ignoriert.
 node_modules
 .next
 .git
@@ -9,3 +12,16 @@ node_modules
 .vscode/
 .idea/
 .claude/
+.github/
+# Compose/Deploy-Tooling — wird im Image nicht gebraucht (nur auf dem VPS).
+docker/
+# Test-Artefakte
+coverage/
+playwright-report/
+test-results/
+# Lokale Asset-/Doku-Ordner (untracked, teils groß) — würden lokale Builds
+# aufblähen; im CI-Checkout existieren sie ohnehin nicht.
+Produkte-Dokumente/
+assets/
+logo-concepts/
+public/products/

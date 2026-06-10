@@ -63,9 +63,13 @@ docker tag chromepeps:previous ghcr.io/hamudl/chromepeps:latest
 log "[1/3] previous → latest re-tagged"
 
 # 4. App-Container neu starten mit dem alten Image.
-#    --force-recreate stellt sicher dass das neue (alte) Image gepullt wird.
+#    WICHTIG: --pull never! Die compose-Datei hat `pull_policy: always`
+#    (richtig fürs normale Deploy), aber hier würde ein erneuter Pull das
+#    soeben re-getaggte :latest sofort wieder mit dem kaputten Remote-Image
+#    überschreiben — der Rollback wäre ein No-op. `--pull never` (Compose
+#    v2.13+) übersteuert die pull_policy und erzwingt das lokale Image.
 log "[2/3] Restarting app container with previous image..."
-docker compose up -d --force-recreate app
+docker compose up -d --pull never --force-recreate app
 
 # 5. Health-Check.
 log "[3/3] Waiting for app to become healthy..."

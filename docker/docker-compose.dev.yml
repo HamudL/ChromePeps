@@ -9,8 +9,10 @@ services:
       POSTGRES_DB: chromepeps
       POSTGRES_USER: chromepeps
       POSTGRES_PASSWORD: chromepeps_secret
+    # Loopback-only: Dev-DB mit Default-Passwort darf nie auf 0.0.0.0 lauschen
+    # (z.B. im Hotel-/Office-LAN sonst von außen erreichbar).
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -23,8 +25,9 @@ services:
     image: redis:7-alpine
     container_name: chromepeps-redis
     restart: unless-stopped
+    # Loopback-only — ungeschütztes Redis gehört nicht ins lokale Netz.
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redisdata:/data
     healthcheck:
