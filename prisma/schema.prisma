@@ -28,11 +28,10 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // === 2FA / TOTP ============================================
-  // `totpSecret` hält den Base32-kodierten Secret-Wert (otplib).
-  // Nicht verschlüsselt at-rest — die DB ist die Trust-Boundary,
-  // wer DB-Zugriff hat kann eh alle Sessions beenden / Passwörter
-  // resetten. Encryption-at-rest wäre Defense-in-Depth, aber für
-  // Soft-2FA bewusst ausgespart (KISS).
+  // `totpSecret` hält das TOTP-Secret — seit Phase 3 AES-256-GCM-
+  // verschlüsselt at-rest (siehe src/lib/two-factor.ts); Klartext-
+  // Altbestände werden beim ersten erfolgreichen Login lazy migriert
+  // (authorize() in src/lib/auth.ts).
   // `totpEnabledAt` ist null solange 2FA nicht aktiv ist. Sobald
   // der User die erste TOTP-Code-Bestätigung im Setup-Flow
   // erfolgreich liefert, wird der Timestamp gesetzt.
@@ -44,6 +43,15 @@ model User {
   totpSecret        String?
   totpEnabledAt     DateTime?
   totpRecoveryCodes String[]  @default([])
+
+  // Session-Versioning für JWT-Invalidierung: Passwort-Reset, Passwort-
+  // Wechsel und 2FA-Aktivierung inkrementieren diesen Zähler. Der JWT
+  // trägt die Version vom Sign-In-Zeitpunkt; der session-Callback
+  // vergleicht gegen die DB (Redis-gecacht, 60s) und verwirft Tokens
+  // mit alter Version. Ohne das blieben gestohlene Session-Cookies nach
+  // einem Passwort-Reset unbegrenzt gültig (JWT-Strategy hat keine
+  // serverseitigen Sessions zum Löschen).
+  sessionVersion    Int       @default(0)
 
   accounts      Account[]
   sessions      Session[]

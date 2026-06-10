@@ -31,13 +31,55 @@ local ttl = redis.call('PTTL', KEYS[1])
 return {n, ttl}
 `;
 
+// In-Memory-Fallback für Redis-Ausfälle. Vorher war der Limiter komplett
+// fail-open — ein Redis-Outage schaltete ALLE Brute-Force-/Enumeration-
+// Schutzmechanismen (Login, 2FA, forgot-password, order-status, checkout)
+// gleichzeitig ab, also genau im Stress-/Angriffsszenario. Der Map-basierte
+// Fallback gilt nur pro Prozess (kein Cross-Container-Sharing) und ist
+// damit schwächer als Redis, aber unendlich viel besser als "kein Limit".
+// Memory-Bound: Einträge verfallen per windowMs; ein Sweep bei jedem
+// Zugriff hält die Map klein (max. ein paar tausend aktive Keys).
+const memoryBuckets = new Map<string, { count: number; resetAt: number }>();
+let lastSweep = 0;
+
+function memoryRateLimit(
+  key: string,
+  config: RateLimitConfig
+): RateLimitResult {
+  const now = Date.now();
+
+  // Opportunistischer Sweep (max. 1×/10s): abgelaufene Buckets räumen.
+  if (now - lastSweep > 10_000) {
+    lastSweep = now;
+    for (const [k, v] of memoryBuckets) {
+      if (v.resetAt <= now) memoryBuckets.delete(k);
+    }
+  }
+
+  const existing = memoryBuckets.get(key);
+  if (!existing || existing.resetAt <= now) {
+    memoryBuckets.set(key, { count: 1, resetAt: now + config.windowMs });
+    return {
+      success: true,
+      remaining: config.maxRequests - 1,
+      reset: config.windowMs,
+    };
+  }
+
+  existing.count += 1;
+  return {
+    success: existing.count <= config.maxRequests,
+    remaining: Math.max(0, config.maxRequests - existing.count),
+    reset: Math.max(0, existing.resetAt - now),
+  };
+}
+
 export async function rateLimit(
   identifier: string,
   config: RateLimitConfig = { maxRequests: 60, windowMs: 60_000 }
 ): Promise<RateLimitResult> {
+  const key = `rate_limit:${identifier}`;
   try {
-    const key = `rate_limit:${identifier}`;
-
     const result = (await redis.eval(
       RATE_LIMIT_LUA,
       1, // KEYS count
@@ -57,9 +99,11 @@ export async function rateLimit(
       reset,
     };
   } catch (err) {
-    console.error("[RateLimit] Redis error, allowing request:", (err as Error).message);
-    // Graceful fallback: allow the request if Redis is unavailable
-    return { success: true, remaining: config.maxRequests, reset: config.windowMs };
+    console.error(
+      "[RateLimit] Redis error, falling back to in-memory limiter:",
+      (err as Error).message
+    );
+    return memoryRateLimit(key, config);
   }
 }
 

@@ -26,6 +26,42 @@ class TwoFactorRequiredError extends CredentialsSignin {
 class InvalidTwoFactorCodeError extends CredentialsSignin {
   code = "InvalidTwoFactorCode";
 }
+class RateLimitedError extends CredentialsSignin {
+  code = "RateLimited";
+}
+class CaptchaRequiredError extends CredentialsSignin {
+  code = "CaptchaRequired";
+}
+
+// Vorberechneter bcrypt-Hash (cost 12) für Timing-Angleichung: Wenn die
+// E-Mail unbekannt ist, vergleichen wir trotzdem gegen diesen Dummy,
+// damit "User existiert" und "User existiert nicht" dieselbe Antwortzeit
+// haben (sonst User-Enumeration über die ~250ms bcrypt-Differenz).
+const DUMMY_BCRYPT_HASH =
+  "$2b$12$C63VRTmd/r4a9kPzGQNu5.B4vm3NVaM7JjDnltcgdXA3JKH/lDBvO";
+
+const LOGIN_FAIL_TTL_SECONDS = 600;
+const CAPTCHA_THRESHOLD = 2;
+
+/**
+ * Server-seitiger Login-Failure-Counter. Spiegelt die Logik der
+ * Server-Action `recordLoginFailure` — aber HIER, im authorize(), ist
+ * sie nicht umgehbar: Ein direkter POST an /api/auth/callback/
+ * credentials traf früher nie einen Zähler, weil das Inkrementieren
+ * dem Client überlassen war.
+ */
+async function recordAuthFailure(email: string): Promise<void> {
+  try {
+    const { redis } = await import("@/lib/redis");
+    const key = `login-fail:${email.toLowerCase()}`;
+    const count = await redis.incr(key);
+    if (count === 1) {
+      await redis.expire(key, LOGIN_FAIL_TTL_SECONDS);
+    }
+  } catch {
+    /* Redis down — die Rate-Limits (mit In-Memory-Fallback) greifen trotzdem */
+  }
+}
 
 // IMPORTANT: do NOT statically import `@/lib/redis` at the top of this
 // file. This module is transitively imported by code that runs on the
@@ -47,7 +83,7 @@ const SESSION_USER_TTL_SECONDS = 60;
 type CachedSessionUser = {
   // Wrapping in an object lets us distinguish "uncached" (cacheGet -> null)
   // from "cached as deleted" (cacheGet -> { row: null }).
-  row: { id: string; role: Role } | null;
+  row: { id: string; role: Role; sessionVersion: number } | null;
 };
 
 declare module "next-auth" {
@@ -63,6 +99,9 @@ declare module "next-auth" {
 
   interface User {
     role: Role;
+    // Optional, weil OAuth-Adapter-User sie erst nach dem DB-Read
+    // tragen; fehlende Werte werden als 0 interpretiert.
+    sessionVersion?: number;
   }
 }
 
@@ -70,6 +109,31 @@ declare module "next-auth" {
   interface JWT {
     id: string;
     role: Role;
+    // Session-Version zum Sign-In-Zeitpunkt (siehe schema.prisma).
+    sv?: number;
+  }
+}
+
+/**
+ * Invalidiert alle bestehenden JWT-Sessions eines Users: inkrementiert
+ * users.sessionVersion und räumt den Redis-Session-Cache, damit die
+ * Änderung sofort greift (nicht erst nach TTL-Ablauf). Aufzurufen nach
+ * Passwort-Reset, Passwort-Wechsel und 2FA-Aktivierung — der Token des
+ * Angreifers (oder ein gestohlener Cookie) trägt danach eine alte
+ * Version und wird vom session-Callback verworfen. Der LEGITIME Caller
+ * muss sich danach ebenfalls neu anmelden (bewusst: das ist das
+ * Standard-Verhalten "nach Passwortänderung überall ausgeloggt").
+ */
+export async function invalidateUserSessions(userId: string): Promise<void> {
+  await db.user.update({
+    where: { id: userId },
+    data: { sessionVersion: { increment: 1 } },
+  });
+  try {
+    const { cacheDel } = await import("@/lib/redis");
+    await cacheDel(`auth:session-user:v2:${userId}`);
+  } catch {
+    /* Cache-TTL (60s) räumt notfalls auf */
   }
 }
 
@@ -103,23 +167,94 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // tatsächlich 2FA aktiviert hat. Akzeptiert TOTP-Code (6
         // Ziffern) ODER Recovery-Code (XXXX-XXXX).
         totpCode: { label: "TOTP", type: "text" },
+        // hCaptcha-Token — Pflicht sobald der Failure-Counter den
+        // Threshold erreicht hat (server-enforced, s.u.).
+        captchaToken: { label: "Captcha", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
+        const emailKey = parsed.data.email.toLowerCase();
+
+        // ====== Server-seitige Brute-Force-Abwehr ======
+        // Rate-Limit, Captcha und Failure-Counter liefen früher NUR in
+        // der Server-Action checkLoginRateLimit, die der Login-Screen
+        // VOR dem signIn aufrief — ein direkter POST an
+        // /api/auth/callback/credentials umging alles. Deshalb läuft
+        // die komplette Abwehr jetzt hier im authorize() selbst; die
+        // Server-Action bleibt nur als UX-Schicht (Captcha-Einblendung
+        // ohne verbrauchten Login-Versuch).
+        // Dynamic imports: dieses authorize läuft ausschließlich in
+        // Node (die Edge-Config in auth.config.ts hat einen No-Op) —
+        // aber statische Top-Level-Imports von ioredis würden im
+        // Edge-Bundle landen. Siehe Kommentar am Dateianfang.
+        const { rateLimit } = await import("@/lib/rate-limit");
+        const { getClientIp } = await import("@/lib/client-ip");
+
+        const ip = getClientIp(request?.headers ?? null);
+        const [emailLimit, ipLimit] = await Promise.all([
+          // Pro E-Mail: 10 Aufrufe / 5 min. Eigener Key, damit die
+          // UX-Action mit ihrem `login:`-Key nicht doppelt zählt.
+          // 10 statt 5, weil ein 2FA-Login zwei authorize()-Durchläufe
+          // braucht (Stufe 1 wirft TwoFactorRequired, Stufe 2 prüft den
+          // Code) — effektiv bleiben ~5 echte Versuche.
+          rateLimit(`login:authz:${emailKey}`, {
+            maxRequests: 10,
+            windowMs: 300_000,
+          }),
+          // Pro IP: großzügiger (Shared-NAT), fängt Email-Rotation.
+          rateLimit(`login:authz-ip:${ip}`, {
+            maxRequests: 30,
+            windowMs: 300_000,
+          }),
+        ]);
+        if (!emailLimit.success || !ipLimit.success) {
+          throw new RateLimitedError();
+        }
+
+        // Captcha ab CAPTCHA_THRESHOLD Fehlversuchen — server-enforced.
+        let failCount = 0;
+        try {
+          const { redis } = await import("@/lib/redis");
+          const raw = await redis.get(`login-fail:${emailKey}`);
+          failCount = raw ? parseInt(raw, 10) || 0 : 0;
+        } catch {
+          /* Redis down → Captcha-Stufe entfällt; Limits oben greifen */
+        }
+        if (failCount >= CAPTCHA_THRESHOLD) {
+          const captchaToken =
+            typeof credentials?.captchaToken === "string"
+              ? credentials.captchaToken
+              : "";
+          const { verifyHCaptcha } = await import("@/lib/hcaptcha");
+          const captchaOk = captchaToken
+            ? await verifyHCaptcha(captchaToken)
+            : false;
+          if (!captchaOk) {
+            throw new CaptchaRequiredError();
+          }
+        }
 
         const user = await db.user.findUnique({
           where: { email: parsed.data.email },
         });
 
-        if (!user?.passwordHash) return null;
+        if (!user?.passwordHash) {
+          // Timing-Angleichung gegen User-Enumeration: auch für
+          // unbekannte E-Mails einen bcrypt-Vergleich bezahlen.
+          await bcrypt.compare(parsed.data.password, DUMMY_BCRYPT_HASH);
+          return null;
+        }
 
         const isValid = await bcrypt.compare(
           parsed.data.password,
           user.passwordHash
         );
 
-        if (!isValid) return null;
+        if (!isValid) {
+          await recordAuthFailure(emailKey);
+          return null;
+        }
 
         // 2FA-Check NUR wenn der User es aktiviert hat. Soft-Mode:
         // Admins ohne 2FA dürfen weiter rein (separater Banner +
@@ -137,6 +272,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             throw new TwoFactorRequiredError();
           }
 
+          // 2FA-Drosselung: Ein 6-stelliger TOTP-Code hat nur 10^6
+          // Kombinationen und Codes sind ±90s gültig — ohne Limit war
+          // er bei bekanntem Passwort online durchprobierbar. 5
+          // Versuche / 5 min pro User-Konto.
+          const totpLimit = await rateLimit(`2fa:${user.id}`, {
+            maxRequests: 5,
+            windowMs: 300_000,
+          });
+          if (!totpLimit.success) {
+            throw new RateLimitedError();
+          }
+
           // Erst TOTP versuchen (häufigster Fall). Fallback auf
           // Recovery-Code wenn TOTP nicht passt UND der Input
           // nach Recovery-Code aussieht (8 chars, optional Dash).
@@ -151,6 +298,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 user.totpRecoveryCodes,
               );
               if (!newCodes) {
+                await recordAuthFailure(emailKey);
                 throw new InvalidTwoFactorCodeError();
               }
               await db.user.update({
@@ -158,6 +306,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 data: { totpRecoveryCodes: newCodes },
               });
             } else {
+              await recordAuthFailure(emailKey);
               throw new InvalidTwoFactorCodeError();
             }
           } else if (!isEncryptedSecret(user.totpSecret)) {
@@ -182,6 +331,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           image: user.image,
           role: user.role,
+          // Wandert via jwt-Callback als `sv` in den Token — Grundlage
+          // der Session-Invalidierung nach Credential-Änderungen.
+          sessionVersion: user.sessionVersion,
         };
       },
     }),
@@ -242,15 +394,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // of this file. This callback runs in Node only; middleware uses
         // authConfig directly and never reaches this code path.
         const { cacheGet, cacheSet } = await import("@/lib/redis");
-        const cacheKey = `auth:session-user:${token.id}`;
+        // Key-Version v2: Cache-Shape trägt jetzt sessionVersion —
+        // Alt-Einträge ohne das Feld dürfen nicht gelesen werden.
+        const cacheKey = `auth:session-user:v2:${token.id}`;
         let cached = await cacheGet<CachedSessionUser>(cacheKey);
         if (cached === null) {
           const row = await db.user.findUnique({
             where: { id: token.id as string },
-            select: { id: true, role: true },
+            select: { id: true, role: true, sessionVersion: true },
           });
           cached = { row };
           await cacheSet(cacheKey, cached, SESSION_USER_TTL_SECONDS);
+        }
+        // Session-Versioning: Tokens, die VOR einem Passwort-Reset/
+        // -Wechsel oder einer 2FA-Aktivierung ausgestellt wurden,
+        // tragen eine ältere Version und werden verworfen. Tokens ohne
+        // sv-Claim (Bestands-Sessions vor diesem Deploy) zählen als
+        // Version 0 — das entspricht ihrem tatsächlichen Ausstellungs-
+        // stand und vermeidet einen Massen-Logout beim Rollout.
+        const tokenVersion = typeof token.sv === "number" ? token.sv : 0;
+        if (cached.row && cached.row.sessionVersion !== tokenVersion) {
+          cached = { row: null };
         }
         if (!cached.row) {
           // User wurde in der DB gelöscht (oder DB wurde gewiped).

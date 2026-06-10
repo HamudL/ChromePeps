@@ -81,6 +81,10 @@ export const authConfig = {
         // picked up globally by TypeScript, so we don't need a
         // type assertion here.
         token.role = user.role;
+        // Session-Version zum Sign-In-Zeitpunkt. OAuth-Adapter-User
+        // tragen das Feld direkt aus der DB-Row; Credentials liefert
+        // es explizit aus authorize(). Fallback 0 = Initialwert.
+        token.sv = user.sessionVersion ?? 0;
       }
       return token;
     },

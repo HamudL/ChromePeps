@@ -62,11 +62,14 @@ export async function POST(req: NextRequest) {
   const newHash = await bcrypt.hash(parsed.data.password, 12);
 
   // Update password and mark token used in a single transaction so a
-  // race can't let the token be replayed.
+  // race can't let the token be replayed. sessionVersion-Increment
+  // invalidiert alle bestehenden JWT-Sessions: Genau das ist der
+  // Sinn eines Passwort-Resets nach Account-Kompromittierung \u2014 ein
+  // Angreifer mit gestohlenem Session-Cookie behielt sonst Zugriff.
   await db.$transaction([
     db.user.update({
       where: { id: user.id },
-      data: { passwordHash: newHash },
+      data: { passwordHash: newHash, sessionVersion: { increment: 1 } },
     }),
     db.passwordResetToken.update({
       where: { id: tokenRecord.id },
@@ -78,6 +81,15 @@ export async function POST(req: NextRequest) {
       data: { usedAt: new Date() },
     }),
   ]);
+
+  // Session-Cache r\u00e4umen, damit die Invalidierung sofort greift
+  // (nicht erst nach Ablauf der 60s-Cache-TTL).
+  try {
+    const { cacheDel } = await import("@/lib/redis");
+    await cacheDel(`auth:session-user:v2:${user.id}`);
+  } catch {
+    /* TTL r\u00e4umt notfalls auf */
+  }
 
   return NextResponse.json({
     success: true,

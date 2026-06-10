@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/card";
 import {
   checkLoginRateLimit,
-  recordLoginFailure,
 } from "@/app/(auth)/actions/auth-actions";
 import { APP_NAME } from "@/lib/constants";
 import { GoogleSignInButton } from "@/components/auth/google-signin-button";
@@ -45,6 +44,7 @@ async function credentialSignIn(
   email: string,
   password: string,
   totpCode?: string,
+  captchaToken?: string,
 ) {
   // 1. Get CSRF token (required by NextAuth)
   const csrfRes = await fetch("/api/auth/csrf");
@@ -59,6 +59,9 @@ async function credentialSignIn(
     callbackUrl: window.location.origin,
   };
   if (totpCode) body.totpCode = totpCode;
+  // Captcha-Token mitschicken — authorize() verlangt ihn server-seitig,
+  // sobald der Failure-Counter den Threshold erreicht hat.
+  if (captchaToken) body.captchaToken = captchaToken;
 
   const res = await fetch("/api/auth/callback/credentials", {
     method: "POST",
@@ -111,6 +114,10 @@ function errorMessageFor(code: string): string {
       return "Server-Konfigurationsfehler. Bitte später erneut versuchen.";
     case "InvalidTwoFactorCode":
       return "Der eingegebene 2FA-Code ist ungültig oder abgelaufen.";
+    case "RateLimited":
+      return "Zu viele Versuche. Bitte in ein paar Minuten erneut versuchen.";
+    case "CaptchaRequired":
+      return "Bitte zuerst das Captcha lösen.";
     default:
       return "Anmeldung fehlgeschlagen. Bitte erneut versuchen.";
   }
@@ -180,6 +187,7 @@ export default function LoginPage() {
         email,
         password,
         pendingCredentials ? totpCode : undefined,
+        captchaToken || undefined,
       );
 
       if (result.ok) {
@@ -190,11 +198,19 @@ export default function LoginPage() {
         // einblenden. Kein Error-Banner: das ist ein erwarteter Step.
         setPendingCredentials({ email, password });
         setTotpCode("");
+      } else if (result.error === "CaptchaRequired") {
+        // Server-seitig erzwungen (authorize) — Widget einblenden und
+        // neuen Token verlangen. Kein Failure-Recording: der Versuch
+        // wurde gar nicht erst gegen das Passwort geprüft.
+        setCaptchaRequired(true);
+        captchaResetRef.current?.resetCaptcha();
+        setCaptchaToken("");
+        setError(errorMessageFor("CaptchaRequired"));
       } else {
         setError(errorMessageFor(result.error ?? "CredentialsSignin"));
-        // Failure-Counter erhöhen → eventuell zeigt der nächste
-        // Submit-Versuch das Captcha. Fire-and-forget.
-        void recordLoginFailure(email);
+        // Failure-Counting passiert seit der Server-Härtung im
+        // authorize() selbst (nicht mehr umgehbar) — der frühere
+        // Client-Aufruf recordLoginFailure() würde doppelt zählen.
         // Bei InvalidTwoFactorCode bleiben wir in Stufe 2, damit der
         // User nochmal eingeben kann.
         if (result.error !== "InvalidTwoFactorCode") {
