@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { cacheDel } from "@/lib/redis";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
-import { CACHE_KEYS } from "@/lib/constants";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
 import { resolveCartFromStripeSession } from "@/lib/order/resolve-cart-from-stripe";
@@ -156,10 +154,6 @@ export async function POST(req: NextRequest) {
       });
       return { order: created, wasCreated: true };
     });
-
-    if (sessionUserId) {
-      await cacheDel(CACHE_KEYS.CART(sessionUserId));
-    }
 
     // Send confirmation email only when this path actually created
     // the order, so we don't duplicate when webhook + verify-session

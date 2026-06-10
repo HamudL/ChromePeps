@@ -6,8 +6,7 @@ import { calculateOrderTotals } from "@/lib/order/calculate-totals";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
-import { cacheDel } from "@/lib/redis";
-import { BANK_TRANSFER_ENABLED, CACHE_KEYS } from "@/lib/constants";
+import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
 import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { resolveShippingRate } from "@/lib/shipping/rates";
@@ -647,9 +646,6 @@ export async function POST(req: NextRequest) {
     throw err;
   }
 
-  if (userId) {
-    await cacheDel(CACHE_KEYS.CART(userId));
-  }
   // Stock wurde in der Transaktion dekrementiert → Listing-/Detail-/
   // Bestseller-Caches invalidieren, sonst zeigt der Shop bis zum TTL-
   // Ablauf eine veraltete Verfügbarkeit. Fail-safe (Redis-Fehler werden

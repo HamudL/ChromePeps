@@ -57,6 +57,11 @@ yarn-error.log*
 /logo-concepts/
 /public/products/
 
+# Lokale Ops-Tools mit Server-Details (Hosts, Cron-/Secrets-Handling) —
+# bleiben untracked, damit `git add .` sie nie erfasst.
+/scripts/audit-prod-state.py
+/scripts/setup-cron-and-secrets.py
+
 # vercel
 .vercel
 

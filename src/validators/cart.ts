@@ -1,16 +1,10 @@
 import { z } from "zod";
 
-export const addToCartSchema = z.object({
-  productId: z.string().cuid("Invalid product"),
-  variantId: z.string().cuid("Invalid variant").nullable().default(null),
-  quantity: z.number().int().min(1, "Quantity must be at least 1").max(99),
-});
-
-export const updateCartItemSchema = z.object({
-  itemId: z.string().cuid("Invalid cart item"),
-  quantity: z.number().int().min(0, "Quantity cannot be negative").max(99),
-});
-
+// Einziges Cart-Schema: /api/cart hat nur noch den PUT-Sync-Handler
+// (Client-Cart lebt im Zustand-Store; siehe Doc-Kommentar in
+// src/app/api/cart/route.ts). Die Schemas der entfernten GET/POST/
+// PATCH-Handler (addToCartSchema, updateCartItemSchema) wurden mit
+// den Handlern entfernt.
 export const syncCartSchema = z.object({
   // .max(100): Cap gegen Memory-/DB-DoS über überlange Cart-Payloads.
   // Reale Warenkörbe liegen weit darunter; addToCart cappt zusätzlich die
@@ -26,6 +20,4 @@ export const syncCartSchema = z.object({
     .max(100, "Zu viele Positionen im Warenkorb"),
 });
 
-export type AddToCartInput = z.infer<typeof addToCartSchema>;
-export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;
 export type SyncCartInput = z.infer<typeof syncCartSchema>;

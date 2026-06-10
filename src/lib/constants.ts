@@ -47,7 +47,6 @@ export const CACHE_KEYS = {
   // Shape (Count über ALLE Produkte) belegt ist — ein geteilter Key
   // würde die beiden Shapes gegenseitig vergiften.
   CATEGORIES_SHOP: "categories:shop",
-  CART: (userId: string) => `cart:${userId}`,
   STATS: "admin:stats",
   PROMOS: "promos:all",
   // Top-N Bestseller-Produkt-IDs (Set serialisiert als Array). Wird auf
@@ -61,7 +60,6 @@ export const CACHE_TTL = {
   PRODUCTS_LIST: 60,
   PRODUCT_DETAIL: 120,
   CATEGORIES: 300,
-  CART: 3600,
   STATS: 30,
   PROMOS: 60,
   // Bestseller-Liste ändert sich basierend auf Orders. 5 min ist

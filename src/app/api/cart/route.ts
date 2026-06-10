@@ -1,233 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { cacheGet, cacheSet, cacheDel } from "@/lib/redis";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
-import {
-  addToCartSchema,
-  updateCartItemSchema,
-  syncCartSchema,
-} from "@/validators/cart";
-import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
+import { syncCartSchema } from "@/validators/cart";
 
-// GET /api/cart — get user's server-side cart
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function GET(_req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  const userId = session.user.id;
-  const cacheKey = CACHE_KEYS.CART(userId);
-  const cached = await cacheGet(cacheKey);
-  if (cached) {
-    return NextResponse.json({ success: true, data: cached });
-  }
-
-  const cart = await db.cart.findUnique({
-    where: { userId },
-    include: {
-      items: {
-        include: {
-          product: {
-            select: {
-              name: true,
-              slug: true,
-              priceInCents: true,
-              stock: true,
-              isActive: true,
-              images: { select: { url: true }, take: 1 },
-            },
-          },
-          variant: {
-            select: {
-              name: true,
-              priceInCents: true,
-              stock: true,
-              isActive: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const data = cart ?? { items: [] };
-  await cacheSet(cacheKey, data, CACHE_TTL.CART);
-
-  return NextResponse.json({ success: true, data });
-}
-
-// POST /api/cart — add item to cart
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  const limit = await rateLimit(`cart:${session.user.id}`, {
-    maxRequests: 30,
-    windowMs: 60_000,
-  });
-  if (!limit.success) return rateLimitExceeded(limit);
-
-  // Kaputtes JSON → 400 via safeParse statt unbehandelter 500.
-  const body = await req.json().catch(() => null);
-  const parsed = addToCartSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { success: false, error: parsed.error.errors[0].message },
-      { status: 400 }
-    );
-  }
-
-  const { productId, variantId, quantity } = parsed.data;
-
-  // Validate product exists and is in stock
-  const product = await db.product.findUnique({
-    where: { id: productId, isActive: true },
-  });
-  if (!product) {
-    return NextResponse.json(
-      { success: false, error: "Product not found" },
-      { status: 404 }
-    );
-  }
-
-  if (variantId) {
-    const variant = await db.productVariant.findUnique({
-      where: { id: variantId, isActive: true },
-    });
-    if (!variant) {
-      return NextResponse.json(
-        { success: false, error: "Variant not found" },
-        { status: 404 }
-      );
-    }
-    // Varianten-Mixing abwehren: Die Variante muss zum angegebenen
-    // Produkt gehören — sonst landet ein teures Produkt mit dem Preis
-    // einer Fremd-Variante im Cart und später in der Order.
-    if (variant.productId !== productId) {
-      return NextResponse.json(
-        { success: false, error: "Variant does not belong to this product" },
-        { status: 400 }
-      );
-    }
-    if (variant.stock < quantity) {
-      return NextResponse.json(
-        { success: false, error: "Insufficient stock" },
-        { status: 400 }
-      );
-    }
-  } else if (product.stock < quantity) {
-    return NextResponse.json(
-      { success: false, error: "Insufficient stock" },
-      { status: 400 }
-    );
-  }
-
-  const userId = session.user.id;
-
-  // Upsert cart
-  const cart = await db.cart.upsert({
-    where: { userId },
-    create: { userId },
-    update: {},
-  });
-
-  // Upsert cart item — use findFirst for null variantId since
-  // PostgreSQL unique constraints don't enforce uniqueness on NULLs
-  const existingItem = variantId
-    ? await db.cartItem.findUnique({
-        where: {
-          cartId_productId_variantId: {
-            cartId: cart.id,
-            productId,
-            variantId,
-          },
-        },
-      })
-    : await db.cartItem.findFirst({
-        where: { cartId: cart.id, productId, variantId: null },
-      });
-
-  if (existingItem) {
-    await db.cartItem.update({
-      where: { id: existingItem.id },
-      data: { quantity: Math.min(existingItem.quantity + quantity, 99) },
-    });
-  } else {
-    await db.cartItem.create({
-      data: { cartId: cart.id, productId, variantId, quantity },
-    });
-  }
-
-  await cacheDel(CACHE_KEYS.CART(userId));
-
-  return NextResponse.json({ success: true }, { status: 201 });
-}
-
-// PATCH /api/cart — update item quantity
-export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  // Gleiches Budget wie POST — Quantity-Updates sind genauso billig
-  // auszulösen und schreiben genauso in DB + Cache.
-  const limit = await rateLimit(`cart:${session.user.id}`, {
-    maxRequests: 30,
-    windowMs: 60_000,
-  });
-  if (!limit.success) return rateLimitExceeded(limit);
-
-  const body = await req.json().catch(() => null);
-  const parsed = updateCartItemSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { success: false, error: parsed.error.errors[0].message },
-      { status: 400 }
-    );
-  }
-
-  const { itemId, quantity } = parsed.data;
-
-  const item = await db.cartItem.findUnique({
-    where: { id: itemId },
-    include: { cart: true },
-  });
-
-  if (!item || item.cart.userId !== session.user.id) {
-    return NextResponse.json(
-      { success: false, error: "Cart item not found" },
-      { status: 404 }
-    );
-  }
-
-  if (quantity === 0) {
-    await db.cartItem.delete({ where: { id: itemId } });
-  } else {
-    await db.cartItem.update({
-      where: { id: itemId },
-      data: { quantity },
-    });
-  }
-
-  await cacheDel(CACHE_KEYS.CART(session.user.id));
-
-  return NextResponse.json({ success: true });
-}
+/**
+ * /api/cart — bewusst NUR ein PUT-Handler.
+ *
+ * Der Warenkorb lebt clientseitig im Zustand-Store (localStorage-persistiert,
+ * src/store/cart-store.ts); alle Cart-Mutationen (add/remove/update) passieren
+ * dort ohne Server-Roundtrip. Der Server braucht den Cart nur EINMAL: beim
+ * Checkout synct die Checkout-Page (syncCartToServer) den kompletten Client-
+ * Cart per PUT als Full-Replace in die DB, damit Stripe-/Vorkasse-Routen
+ * server-validierte Items vorfinden.
+ *
+ * Die früheren GET/POST/PATCH-Handler (Server-Cart lesen, Item hinzufügen,
+ * Menge ändern) hatten keinerlei Aufrufer mehr und wurden entfernt. Mit GET
+ * verschwand auch der einzige Leser UND Schreiber des Redis-Cart-Caches
+ * (CACHE_KEYS.CART) — der Cache wurde deshalb komplett ausgebaut, inklusive
+ * aller cacheDel-Invalidierungen in den Order-/Produkt-Routen, die nur noch
+ * einen nie existierenden Key gelöscht hätten.
+ */
 
 // PUT /api/cart — sync client cart to server (full replace)
 export async function PUT(req: NextRequest) {
@@ -344,8 +137,6 @@ export async function PUT(req: NextRequest) {
         ]
       : []),
   ]);
-
-  await cacheDel(CACHE_KEYS.CART(userId));
 
   return NextResponse.json({ success: true });
 }

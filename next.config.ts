@@ -226,8 +226,8 @@ const nextConfig: NextConfig = {
     // Server-Side React-Komponenten optimiert kompilieren — schneller
     // RSC-Build, kleinere RSC-Payloads.
     optimizeServerReact: true,
-    // Macht prefetch von Links granularer — verhindert dass beim Hover
-    // auf ein Link sofort die volle RSC-Payload kommt.
+    // Stellt die Scroll-Position bei Browser-Back/Forward-Navigation
+    // wieder her (hat nichts mit Link-Prefetching zu tun).
     scrollRestoration: true,
   },
   output: "standalone",

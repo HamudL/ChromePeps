@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { cacheDel } from "@/lib/redis";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
-import { CACHE_KEYS } from "@/lib/constants";
 import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
@@ -188,9 +186,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return order.id;
   });
 
-  if (userId) {
-    await cacheDel(CACHE_KEYS.CART(userId));
-  }
   // createOrderFromStripeSession hat den Stock dekrementiert → Listing-/
   // Detail-/Bestseller-Caches invalidieren, sonst zeigt der Shop bis zum
   // TTL-Ablauf eine veraltete Verfügbarkeit. Fail-safe (Redis-Fehler

@@ -197,23 +197,3 @@ export function SortSelect({
     </Select>
   );
 }
-
-/**
- * Legacy-Wrapper — einige ältere Seiten importieren <ProductFilters />.
- * Bleibt für Abwärtskompatibilität; der neue Shop-Bereich bindet
- * CategoryPills + SortSelect direkt in der FilterBar ein.
- */
-export function ProductFilters({ categories }: { categories: Category[] }) {
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category") ?? undefined;
-
-  return (
-    <div className="flex flex-col gap-4">
-      <CategoryPills
-        categories={categories}
-        currentCategory={currentCategory}
-      />
-      <SortSelect />
-    </div>
-  );
-}
