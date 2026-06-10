@@ -146,16 +146,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // imports that and middleware runs in Edge Runtime.
   ...authConfig,
 
-  // KNOWN LIMITATION: Type cast required due to a version skew between
-  // next-auth@5.0.0-beta.25 and @auth/prisma-adapter's expected @auth/core
-  // version. Both packages ship their own copy of @auth/core, and TS sees the
-  // adapter's `Adapter` type as incompatible with next-auth's. The runtime
-  // contract is identical — only the branded types differ. Revisit this cast
-  // when next-auth reaches GA or when @auth/prisma-adapter aligns with the
-  // beta. Until then, `as unknown as never` would also work but `as any`
-  // matches how upstream examples paper over the same issue.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adapter: PrismaAdapter(db) as any,
+  // Seit next-auth@beta.31 + @auth/prisma-adapter@2.11.2 pinnen beide
+  // Pakete dieselbe @auth/core-Version (0.41.2) — der frühere
+  // `as any`-Cast gegen den Branded-Type-Skew ist nicht mehr nötig.
+  adapter: PrismaAdapter(db),
 
   providers: [
     Credentials({
