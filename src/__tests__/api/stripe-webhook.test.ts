@@ -212,7 +212,7 @@ describe("Stripe Webhook · Handler-Dispatch", () => {
     expect(noteArg).toMatch(/Card declined/);
   });
 
-  it("ruft handleRefund bei charge.refunded und restored Stock", async () => {
+  it("ruft handleRefund bei VOLL-Refund: REFUNDED + Stock-Restore + Marker", async () => {
     constructEventMock.mockReturnValue({
       id: "evt_refund_99",
       type: "charge.refunded",
@@ -220,11 +220,17 @@ describe("Stripe Webhook · Handler-Dispatch", () => {
         object: {
           id: "ch_test_123",
           payment_intent: "pi_refunded_999",
+          amount: 10_000,
+          amount_refunded: 10_000,
         },
       },
     });
     orderFindUnique.mockResolvedValue({
       id: "ord_99",
+      status: "PROCESSING",
+      paymentStatus: "SUCCEEDED",
+      stockRestoredAt: null,
+      isTestOrder: false,
       items: [
         { productId: "prod_1", variantId: null, quantity: 2 },
         { productId: "prod_2", variantId: "var_x", quantity: 1 },
@@ -235,10 +241,14 @@ describe("Stripe Webhook · Handler-Dispatch", () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     expect(transaction).toHaveBeenCalledTimes(1);
-    // Order auf REFUNDED setzen
+    // Order auf REFUNDED setzen + Doppel-Restore-Marker
     expect(orderUpdate).toHaveBeenCalledWith({
       where: { id: "ord_99" },
-      data: { status: "REFUNDED", paymentStatus: "REFUNDED" },
+      data: {
+        status: "REFUNDED",
+        paymentStatus: "REFUNDED",
+        stockRestoredAt: expect.any(Date),
+      },
     });
     // OrderEvent „REFUNDED"
     expect(orderEventCreate).toHaveBeenCalledWith(
@@ -255,6 +265,111 @@ describe("Stripe Webhook · Handler-Dispatch", () => {
       where: { id: "var_x" },
       data: { stock: { increment: 1 } },
     });
+  });
+
+  it("TEIL-Refund: Status bleibt, KEIN Stock-Restore, nur Paper-Trail", async () => {
+    constructEventMock.mockReturnValue({
+      id: "evt_refund_partial",
+      type: "charge.refunded",
+      data: {
+        object: {
+          id: "ch_test_456",
+          payment_intent: "pi_partial_1",
+          amount: 20_000,
+          amount_refunded: 500,
+        },
+      },
+    });
+    orderFindUnique.mockResolvedValue({
+      id: "ord_partial",
+      status: "PROCESSING",
+      paymentStatus: "SUCCEEDED",
+      stockRestoredAt: null,
+      isTestOrder: false,
+      items: [{ productId: "prod_1", variantId: null, quantity: 4 }],
+    });
+
+    const req = makeRequest("{}");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    // Kein Status-Kipp, kein Restore
+    expect(transaction).not.toHaveBeenCalled();
+    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(productUpdate).not.toHaveBeenCalled();
+    // Aber ein OrderEvent mit dem Teil-Betrag
+    expect(orderEventCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "PROCESSING",
+          note: expect.stringContaining("Teil-Erstattung"),
+        }),
+      }),
+    );
+  });
+
+  it("Voll-Refund nach Admin-Cancel: Status-Update OHNE zweiten Stock-Restore", async () => {
+    constructEventMock.mockReturnValue({
+      id: "evt_refund_after_cancel",
+      type: "charge.refunded",
+      data: {
+        object: {
+          id: "ch_test_789",
+          payment_intent: "pi_cancelled_1",
+          amount: 5_000,
+          amount_refunded: 5_000,
+        },
+      },
+    });
+    orderFindUnique.mockResolvedValue({
+      id: "ord_cancelled",
+      status: "CANCELLED",
+      paymentStatus: "SUCCEEDED",
+      // Admin-Cancel hat den Bestand bereits zurückgebucht:
+      stockRestoredAt: new Date("2026-06-01T10:00:00Z"),
+      isTestOrder: false,
+      items: [{ productId: "prod_1", variantId: null, quantity: 2 }],
+    });
+
+    const req = makeRequest("{}");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(orderUpdate).toHaveBeenCalledWith({
+      where: { id: "ord_cancelled" },
+      data: { status: "REFUNDED", paymentStatus: "REFUNDED" },
+    });
+    // KEIN zweiter Restore (Phantom-Inventar-Schutz)
+    expect(productUpdate).not.toHaveBeenCalled();
+    expect(productVariantUpdate).not.toHaveBeenCalled();
+  });
+
+  it("Voll-Refund auf bereits REFUNDED Order ist ein No-Op (Webhook-Replay)", async () => {
+    constructEventMock.mockReturnValue({
+      id: "evt_refund_replay",
+      type: "charge.refunded",
+      data: {
+        object: {
+          id: "ch_replay",
+          payment_intent: "pi_replay_1",
+          amount: 5_000,
+          amount_refunded: 5_000,
+        },
+      },
+    });
+    orderFindUnique.mockResolvedValue({
+      id: "ord_done",
+      status: "REFUNDED",
+      paymentStatus: "REFUNDED",
+      stockRestoredAt: new Date("2026-06-01T10:00:00Z"),
+      isTestOrder: false,
+      items: [{ productId: "prod_1", variantId: null, quantity: 2 }],
+    });
+
+    const req = makeRequest("{}");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(transaction).not.toHaveBeenCalled();
+    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(orderEventCreate).not.toHaveBeenCalled();
   });
 
   it("ignoriert charge.refunded ohne payment_intent (no-op)", async () => {

@@ -342,6 +342,12 @@ model Order {
   // verzögert via /api/cron/review-requests). Idempotenz-Schutz
   // gegen Doppel-Mails. Siehe AUDIT_REPORT_v3 §3.2.
   reviewRequestedAt     DateTime?
+  // Wird gesetzt, sobald der Lagerbestand dieser Order zurückgebucht
+  // wurde (Admin-Cancel oder Stripe-Voll-Refund). Schützt gegen
+  // Doppel-Restore: Refund nach Cancel, Status-Flapping
+  // (CANCELLED → PROCESSING → CANCELLED) und Webhook-Replays würden
+  // sonst Phantom-Inventar erzeugen. null = Bestand ist noch "draußen".
+  stockRestoredAt       DateTime?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
@@ -555,10 +561,18 @@ model PromoUsage {
   user  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   order Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  @@index([promoId])
+  // "Einmal pro Käufer" auf DB-Ebene erzwingen. Vorher war das nur ein
+  // check-then-create im Applikationscode — zwei parallele Checkouts
+  // desselben Users/Gasts konnten denselben Code doppelt einlösen.
+  // Postgres behandelt NULLs in Uniques als distinct, daher stören sich
+  // die beiden Constraints nicht gegenseitig (Auth-Rows haben
+  // guestEmail=null, Gast-Rows userId=null).
+  // Die Uniques ersetzen die früheren @@index([promoId]) und
+  // @@index([promoId, guestEmail]) — ihr führendes promoId-Feld deckt
+  // dieselben Lookups ab, ein zusätzlicher B-Tree wäre doppelt.
+  @@unique([promoId, userId])
+  @@unique([promoId, guestEmail])
   @@index([userId])
-  // Guest "once per email per promo" check lookup.
-  @@index([promoId, guestEmail])
   @@map("promo_usages")
 }
 

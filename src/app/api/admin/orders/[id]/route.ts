@@ -202,22 +202,31 @@ export async function PATCH(
     //  1) Test-Orders haben nie Stock dekrementiert (siehe
     //     /api/admin/orders/test) → dürfen auch nichts re-incrementen
     //     (sonst phantom inventory pro gecancelter Test-Order).
-    //  2) Stock wurde nur bei echten Kauf-Status-Übergängen
-    //     (PROCESSING / SHIPPED) dekrementiert. Transitions wie
-    //     ARCHIVED → CANCELLED oder DELIVERED → CANCELLED würden
-    //     ohne diesen Guard doppelt oder fälschlich re-incrementen
-    //     (ARCHIVED hatte meist schon einen restore hinter sich,
-    //     DELIVERED ist die Ware bereits beim Kunden).
-    //  3) `.catch(() => {})` bleibt, falls product/variant
+    //  2) Stock wird bei JEDER echten Order schon bei der Erstellung
+    //     dekrementiert — Stripe-Orders entstehen direkt als
+    //     PROCESSING, Vorkasse-Orders als PENDING (Reservierung bis
+    //     Zahlungseingang). Cancel aus PENDING/PROCESSING/SHIPPED muss
+    //     daher restauren. NICHT aus DELIVERED (Ware beim Kunden) und
+    //     nicht aus terminalen Status (CANCELLED/REFUNDED/ARCHIVED —
+    //     dort ist der Bestand bereits zurückgebucht).
+    //  3) stockRestoredAt schützt zusätzlich gegen Doppel-Restore bei
+    //     Status-Flapping (CANCELLED → PROCESSING → CANCELLED) und
+    //     gegen Refund-nach-Cancel (Webhook prüft dasselbe Feld).
+    //  4) `.catch(() => {})` bleibt, falls product/variant
     //     hard-deleted wurde.
     const stockWasDecremented = (
-      ["PROCESSING", "SHIPPED"] as const
-    ).includes(existing.status as "PROCESSING" | "SHIPPED");
+      ["PENDING", "PROCESSING", "SHIPPED"] as const
+    ).includes(existing.status as "PENDING" | "PROCESSING" | "SHIPPED");
     if (
       parsed.data.status === "CANCELLED" &&
       stockWasDecremented &&
-      !existing.isTestOrder
+      !existing.isTestOrder &&
+      !existing.stockRestoredAt
     ) {
+      await tx.order.update({
+        where: { id },
+        data: { stockRestoredAt: new Date() },
+      });
       // Stock-Restore parallelisieren: zwar führt Postgres bei einer
       // interactive transaction die Statements seriell auf derselben
       // Connection aus, der Client-Side-Overhead (Statement-Encoding,
@@ -246,6 +255,36 @@ export async function PATCH(
           return Promise.resolve();
         }),
       );
+    }
+
+    // Promo-Kontingent freigeben, wenn eine UNBEZAHLTE Vorkasse-Order
+    // gecancelt wird: die Einlösung wurde bei Bestellaufgabe reserviert,
+    // ohne dass je Geld floss — sonst bliebe der Code für den Käufer
+    // dauerhaft verbrannt und das globale maxUses-Budget verbraucht.
+    // Bezahlte Orders behalten ihre Einlösung (Rabatt wurde gewährt).
+    if (
+      parsed.data.status === "CANCELLED" &&
+      existing.paymentMethod === "BANK_TRANSFER" &&
+      existing.paymentStatus === "PENDING"
+    ) {
+      const usage = await tx.promoUsage.findUnique({
+        where: { orderId: id },
+        select: { id: true, promoId: true },
+      });
+      if (usage) {
+        await tx.promoUsage.delete({ where: { id: usage.id } });
+        await tx.promoCode.updateMany({
+          where: { id: usage.promoId, usedCount: { gt: 0 } },
+          data: { usedCount: { decrement: 1 } },
+        });
+        await tx.orderEvent.create({
+          data: {
+            orderId: id,
+            status: "CANCELLED",
+            note: "Promo-Einlösung freigegeben (Vorkasse-Order ohne Zahlungseingang storniert).",
+          },
+        });
+      }
     }
 
     return updated;

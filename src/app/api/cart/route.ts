@@ -110,6 +110,15 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
+    // Varianten-Mixing abwehren: Die Variante muss zum angegebenen
+    // Produkt gehören — sonst landet ein teures Produkt mit dem Preis
+    // einer Fremd-Variante im Cart und später in der Order.
+    if (variant.productId !== productId) {
+      return NextResponse.json(
+        { success: false, error: "Variant does not belong to this product" },
+        { status: 400 }
+      );
+    }
     if (variant.stock < quantity) {
       return NextResponse.json(
         { success: false, error: "Insufficient stock" },
@@ -260,7 +269,7 @@ export async function PUT(req: NextRequest) {
     variantIds.length > 0
       ? db.productVariant.findMany({
           where: { id: { in: variantIds }, isActive: true },
-          select: { id: true, stock: true },
+          select: { id: true, productId: true, stock: true },
         })
       : Promise.resolve([]),
   ]);
@@ -275,6 +284,9 @@ export async function PUT(req: NextRequest) {
     if (item.variantId) {
       const variant = variantMap.get(item.variantId);
       if (!variant) return []; // skip invalid / inactive variants
+      // Varianten-Mixing abwehren — Fremd-Varianten still droppen,
+      // konsistent mit dem Silent-Drop-Verhalten dieses Sync-Endpoints.
+      if (variant.productId !== item.productId) return [];
       const quantity = Math.min(item.quantity, 99, variant.stock);
       if (quantity <= 0) return [];
       return [

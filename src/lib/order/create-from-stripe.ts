@@ -184,11 +184,49 @@ export async function createOrderFromStripeSession(
 
   // Delegate the math to the shared pure helper so Stripe, bank-transfer,
   // and the verify-session fallback all produce byte-identical totals.
-  const totals = calculateOrderTotals({
+  let totals = calculateOrderTotals({
     subtotalInCents,
     discountInCents: rawDiscount,
     baseShippingInCents,
   });
+
+  // Reconcile gegen Stripe: amount_total ist, was der Kunde WIRKLICH
+  // bezahlt hat. Unsere Neuberechnung kann davon abweichen, wenn sich
+  // zwischen Session-Erstellung und Webhook Preise/Versandtarife
+  // geändert haben. Rechnung und USt-Ausweis müssen dem kassierten
+  // Betrag folgen, nicht dem aktuellen Katalogpreis — sonst weist die
+  // §14-UStG-Rechnung einen anderen Betrag aus als die Kreditkarte.
+  let reconcileNote: string | null = null;
+  const paidTotal = stripeSession.amount_total;
+  if (typeof paidTotal === "number" && paidTotal !== totals.totalInCents) {
+    const paidDiscount =
+      stripeSession.total_details?.amount_discount ?? totals.discountInCents;
+    // Versand steckt je nach Session-Alter im Line-Item (legacy) oder in
+    // shipping_options (amount_shipping). Wir übernehmen amount_shipping
+    // nur, wenn Stripe es kennt UND es nicht 0-bei-Legacy ist.
+    const paidShipping =
+      stripeSession.total_details &&
+      typeof stripeSession.total_details.amount_shipping === "number" &&
+      stripeSession.total_details.amount_shipping > 0
+        ? stripeSession.total_details.amount_shipping
+        : totals.shippingInCents;
+    const taxInCents = Math.round(paidTotal - paidTotal / 1.19);
+    reconcileNote =
+      `[Reconcile] Stripe-Charge (${(paidTotal / 100).toFixed(2)} €) wich von der ` +
+      `Neuberechnung (${(totals.totalInCents / 100).toFixed(2)} €) ab — ` +
+      `Order übernimmt die tatsächlich kassierten Stripe-Beträge.`;
+    console.warn(
+      `[order] total mismatch for session ${stripeSession.id}: ` +
+        `computed=${totals.totalInCents} paid=${paidTotal} — using Stripe amounts`
+    );
+    totals = {
+      subtotalInCents: totals.subtotalInCents,
+      discountInCents: paidDiscount,
+      shippingInCents: paidShipping,
+      totalInCents: paidTotal,
+      taxInCents,
+    };
+  }
 
   const order = await tx.order.create({
     data: {
@@ -220,6 +258,7 @@ export async function createOrderFromStripeSession(
               ? `Payment confirmed via Stripe (Promo: ${promoCodeStr})`
               : "Payment confirmed via Stripe",
             recoveryNote,
+            reconcileNote,
           ]
             .filter(Boolean)
             .join(" — "),
@@ -228,31 +267,56 @@ export async function createOrderFromStripeSession(
     },
   });
 
-  // Record promo usage and bump the global counter. This keeps the
-  // per-code quota honest across concurrent checkouts because the
-  // increment runs inside the same transaction as the order creation.
-  // For guest orders, the usage row is keyed by guestEmail instead
-  // of userId so the "one use per buyer" rule still applies.
+  // Record promo usage and bump the global counter. Die DB-Uniques
+  // @@unique([promoId, userId]) / @@unique([promoId, guestEmail]) sind
+  // der harte Race-Guard. Da das Geld zu diesem Zeitpunkt bereits MIT
+  // Rabatt kassiert ist, darf eine bereits vorhandene Einlösung die
+  // Order nicht scheitern lassen: Pre-Check in der Transaktion → bei
+  // vorhandener Row nur Paper-Trail statt zweiter Einlösung. (Kein
+  // try/catch um den create: ein P2002 ist ein Postgres-Fehler und
+  // würde die gesamte Transaktion poisonen. Der verbleibende echte
+  // Gleichzeitigkeits-Rest heilt über den Stripe-Webhook-Retry: die
+  // abgebrochene Transaktion wird wiederholt und sieht dann die Row.)
   if (promoId) {
-    await tx.promoUsage.create({
-      data: {
-        promoId,
-        userId,
-        guestEmail: userId ? null : guestEmail ?? null,
-        orderId: order.id,
-        discountAmount: totals.discountInCents,
-      },
+    const existingUsage = await tx.promoUsage.findFirst({
+      where: userId
+        ? { promoId, userId }
+        : { promoId, guestEmail: guestEmail ?? "" },
+      select: { id: true },
     });
-    await tx.promoCode.update({
-      where: { id: promoId },
-      data: { usedCount: { increment: 1 } },
-    });
+    if (!existingUsage) {
+      await tx.promoUsage.create({
+        data: {
+          promoId,
+          userId,
+          guestEmail: userId ? null : guestEmail ?? null,
+          orderId: order.id,
+          discountAmount: totals.discountInCents,
+        },
+      });
+      await tx.promoCode.update({
+        where: { id: promoId },
+        data: { usedCount: { increment: 1 } },
+      });
+    } else {
+      await tx.orderEvent.create({
+        data: {
+          orderId: order.id,
+          status: "PROCESSING",
+          note: `Promo "${promoCodeStr}" war bereits durch einen parallelen Checkout eingelöst — Rabatt blieb bestehen (bereits kassiert), aber keine zweite Einlösung gezählt.`,
+        },
+      });
+    }
   }
 
-  // Decrement stock atomically, rejecting underflow. Using updateMany with
-  // a `stock >= qty` guard in the WHERE clause is the Prisma-friendly way
-  // to express "CAS update" — if the row doesn't match, updated.count is
-  // zero and we throw, aborting the whole transaction.
+  // Decrement stock atomically via CAS (`stock >= qty` in the WHERE).
+  // WICHTIG: Bei CAS-Fehlschlag wird NICHT mehr geworfen. Das Geld ist
+  // zu diesem Zeitpunkt bereits kassiert — ein Throw ließ den Webhook
+  // mit 500 antworten, Stripe retried endlos und es entstand NIE eine
+  // Order (Geld ohne Bestellung). Stattdessen: Order entsteht immer,
+  // der Bestand wird auf 0 geklemmt und der Übersell landet sichtbar
+  // als OrderEvent + Error-Log für den Admin.
+  const oversold: string[] = [];
   for (const item of cart.items) {
     if (item.variantId) {
       const updated = await tx.productVariant.updateMany({
@@ -260,7 +324,13 @@ export async function createOrderFromStripeSession(
         data: { stock: { decrement: item.quantity } },
       });
       if (updated.count === 0) {
-        throw new Error(`Insufficient stock for variant ${item.variantId}`);
+        oversold.push(
+          `${item.product.name}${item.variant ? ` (${item.variant.name})` : ""} ×${item.quantity}`
+        );
+        await tx.productVariant.updateMany({
+          where: { id: item.variantId },
+          data: { stock: 0 },
+        });
       }
     } else {
       const updated = await tx.product.updateMany({
@@ -268,9 +338,25 @@ export async function createOrderFromStripeSession(
         data: { stock: { decrement: item.quantity } },
       });
       if (updated.count === 0) {
-        throw new Error(`Insufficient stock for product ${item.productId}`);
+        oversold.push(`${item.product.name} ×${item.quantity}`);
+        await tx.product.updateMany({
+          where: { id: item.productId },
+          data: { stock: 0 },
+        });
       }
     }
+  }
+  if (oversold.length > 0) {
+    console.error(
+      `[order] OVERSOLD on paid order ${order.orderNumber}: ${oversold.join(", ")} — manual fulfillment check required`
+    );
+    await tx.orderEvent.create({
+      data: {
+        orderId: order.id,
+        status: "PROCESSING",
+        note: `⚠ Übersell: Für ${oversold.join(", ")} reichte der Lagerbestand beim Zahlungseingang nicht mehr aus. Zahlung ist kassiert — bitte Bestand/Erfüllbarkeit prüfen (ggf. nachbestellen oder erstatten).`,
+      },
+    });
   }
 
   // Clear the user's cart inside the transaction so a crash between order

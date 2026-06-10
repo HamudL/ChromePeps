@@ -323,48 +323,87 @@ async function handleRefund(charge: Stripe.Charge) {
     where: { stripePaymentIntentId: paymentIntentId },
     include: { items: true },
   });
+  if (!order) return;
 
-  if (order) {
-    await db.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: order.id },
-        data: { status: "REFUNDED", paymentStatus: "REFUNDED" },
-      });
+  // `charge.refunded` feuert bei Stripe auch für TEIL-Refunds. Ein
+  // 5-€-Teilrefund darf weder die Order auf REFUNDED kippen noch den
+  // vollen Warenbestand zurückbuchen — sonst entsteht Phantom-Inventar
+  // und der Order-Status lügt. Voll vs. teilweise unterscheidet
+  // amount_refunded (kumulativ) vs. amount.
+  const isFullRefund = charge.amount_refunded >= charge.amount;
+  const fmtEur = (cents: number) => `${(cents / 100).toFixed(2)} €`;
 
-      await tx.orderEvent.create({
-        data: {
-          orderId: order.id,
-          status: "REFUNDED",
-          note: "Refund processed via Stripe",
-        },
-      });
-
-      // Restore stock (skip if product/variant has been hard-deleted).
-      // Promise.all parallelisiert den Client-Side-Encode-Overhead, was
-      // bei größeren Refunds (mehrere Items) Latenz spart. Postgres
-      // führt die einzelnen Updates innerhalb der TX trotzdem seriell
-      // aus — die catch-Isolation pro Update bleibt erhalten.
-      await Promise.all(
-        order.items.map((item) => {
-          if (item.variantId) {
-            return tx.productVariant
-              .update({
-                where: { id: item.variantId },
-                data: { stock: { increment: item.quantity } },
-              })
-              .catch(() => {});
-          }
-          if (item.productId) {
-            return tx.product
-              .update({
-                where: { id: item.productId },
-                data: { stock: { increment: item.quantity } },
-              })
-              .catch(() => {});
-          }
-          return Promise.resolve();
-        }),
-      );
+  if (!isFullRefund) {
+    await db.orderEvent.create({
+      data: {
+        orderId: order.id,
+        status: order.status,
+        note: `Teil-Erstattung via Stripe: ${fmtEur(charge.amount_refunded)} von ${fmtEur(charge.amount)} erstattet — Status und Bestand unverändert.`,
+      },
     });
+    return;
   }
+
+  // Idempotenz: Stripe kann das Event erneut zustellen (z.B. nach dem
+  // Lösch-Pfad im Error-Handler) — eine bereits voll erstattete Order
+  // nicht nochmal anfassen.
+  if (order.status === "REFUNDED" && order.paymentStatus === "REFUNDED") {
+    return;
+  }
+
+  // Bestand nur zurückbuchen, wenn er für diese Order noch "draußen"
+  // ist: Ein Admin-Cancel hat ggf. schon restauriert (stockRestoredAt
+  // gesetzt) — Refund nach Cancel würde sonst doppelt inkrementieren.
+  // Test-Orders haben nie Bestand dekrementiert.
+  const shouldRestoreStock = !order.stockRestoredAt && !order.isTestOrder;
+
+  await db.$transaction(async (tx) => {
+    await tx.order.update({
+      where: { id: order.id },
+      data: {
+        status: "REFUNDED",
+        paymentStatus: "REFUNDED",
+        ...(shouldRestoreStock ? { stockRestoredAt: new Date() } : {}),
+      },
+    });
+
+    await tx.orderEvent.create({
+      data: {
+        orderId: order.id,
+        status: "REFUNDED",
+        note: shouldRestoreStock
+          ? `Voll-Erstattung via Stripe (${fmtEur(charge.amount_refunded)}) — Bestand zurückgebucht.`
+          : `Voll-Erstattung via Stripe (${fmtEur(charge.amount_refunded)}) — Bestand war bereits zurückgebucht.`,
+      },
+    });
+
+    if (!shouldRestoreStock) return;
+
+    // Restore stock (skip if product/variant has been hard-deleted).
+    // Promise.all parallelisiert den Client-Side-Encode-Overhead, was
+    // bei größeren Refunds (mehrere Items) Latenz spart. Postgres
+    // führt die einzelnen Updates innerhalb der TX trotzdem seriell
+    // aus — die catch-Isolation pro Update bleibt erhalten.
+    await Promise.all(
+      order.items.map((item) => {
+        if (item.variantId) {
+          return tx.productVariant
+            .update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            })
+            .catch(() => {});
+        }
+        if (item.productId) {
+          return tx.product
+            .update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+            })
+            .catch(() => {});
+        }
+        return Promise.resolve();
+      }),
+    );
+  });
 }

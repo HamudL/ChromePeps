@@ -158,6 +158,7 @@ export async function POST(req: NextRequest) {
             where: { id: { in: variantIds }, isActive: true },
             select: {
               id: true,
+              productId: true,
               name: true,
               priceInCents: true,
               stock: true,
@@ -206,6 +207,18 @@ export async function POST(req: NextRequest) {
           {
             success: false,
             error: "Die gewählte Variante ist nicht mehr verfügbar.",
+          },
+          { status: 400 }
+        );
+      }
+      // Varianten-Mixing abwehren: Variante muss zum Produkt gehören —
+      // sonst ließe sich ein teures Produkt zum Preis der Billig-
+      // Variante eines anderen Produkts bepreisen.
+      if (variant && variant.productId !== pid) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Die gewählte Variante gehört nicht zu diesem Produkt.",
           },
           { status: 400 }
         );
@@ -343,6 +356,7 @@ export async function POST(req: NextRequest) {
             },
             variant: {
               select: {
+                productId: true,
                 name: true,
                 priceInCents: true,
                 stock: true,
@@ -379,6 +393,17 @@ export async function POST(req: NextRequest) {
             {
               success: false,
               error: `Variant "${item.variant?.name ?? "unknown"}" is no longer available`,
+            },
+            { status: 400 }
+          );
+        }
+        // Defense-in-depth gegen Varianten-Mixing (Cart-Rows könnten vor
+        // dem Fix in /api/cart mit Fremd-Varianten angelegt worden sein).
+        if (item.variant.productId !== item.productId) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Warenkorb-Eintrag für "${item.product.name}" ist ungültig — bitte Artikel entfernen und erneut hinzufügen.`,
             },
             { status: 400 }
           );
@@ -522,24 +547,27 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  if (shippingCost > 0) {
-    lineItems.push({
-      price_data: {
-        currency: "eur",
-        product_data: {
-          name: "Shipping",
-          images: [],
-        },
-        unit_amount: shippingCost,
-      },
-      quantity: 1,
-    });
-  }
-
+  // Versand als ECHTE Stripe-Versandoption statt als Line-Item.
+  // Kritisch für Promo-Codes: Stripe-Coupons (percent_off UND amount_off)
+  // wirken auf die Line-Item-Summe — ein "Shipping"-Line-Item wurde von
+  // Prozent-Coupons mitrabattiert, während unsere Order-Berechnung den
+  // Rabatt nur auf die Zwischensumme anwendet. Ergebnis: Stripe kassierte
+  // weniger als Order/Rechnung auswiesen (falscher USt-Ausweis).
+  // shipping_options sind von Coupons ausgenommen → Charge == Order.
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
     line_items: lineItems,
+    shipping_options: [
+      {
+        shipping_rate_data: {
+          type: "fixed_amount",
+          fixed_amount: { amount: shippingCost, currency: "eur" },
+          display_name:
+            shippingCost === 0 ? "Kostenloser Versand" : "Versand",
+        },
+      },
+    ],
     ...(stripeCouponId && {
       discounts: [{ coupon: stripeCouponId }],
     }),
