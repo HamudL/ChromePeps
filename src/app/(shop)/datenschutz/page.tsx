@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
+import {
+  BANK_TRANSFER_ENABLED,
+  SELLER_DETAILS,
+  SELLER_DETAILS_INCOMPLETE,
+} from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung",
@@ -20,19 +24,27 @@ export default function DatenschutzPage() {
           Änderung — bei Anpassungen der Erklärung manuell mitziehen.
           new Date() (Abrufdatum) würde fälschlich tägliche Aktualität
           suggerieren. */}
-      <p className="text-sm text-muted-foreground mb-8">Stand: 1. Juni 2026</p>
+      <p className="text-sm text-muted-foreground mb-8">Stand: 10. Juni 2026</p>
 
       <div className="space-y-6 text-sm leading-relaxed">
         <section>
           <h2 className="text-lg font-semibold">
             1. Verantwortlicher im Sinne der Datenschutzgesetze
           </h2>
+          {/* Verantwortlicher kommt zentral aus SELLER_DETAILS (env-basiert) —
+              identisch mit Impressum und Rechnungs-PDF. */}
           <p>
-            [TODO: Firmenname]
+            {SELLER_DETAILS.companyName}
             <br />
-            [TODO: Straße, PLZ Ort]
+            {SELLER_DETAILS.streetLine1}, {SELLER_DETAILS.postalCodeCity}
             <br />
-            E-Mail: [TODO: kontakt@chromepeps.com]
+            E-Mail:{" "}
+            <a
+              href={`mailto:${SELLER_DETAILS.email}`}
+              className="underline"
+            >
+              {SELLER_DETAILS.email}
+            </a>
           </p>
           <p className="mt-2">
             Weitere Angaben entnehmen Sie bitte unserem{" "}
@@ -130,8 +142,15 @@ export default function DatenschutzPage() {
           </p>
         </section>
 
+        {/* Abschnitt 4 muss zur tatsächlichen Technik passen: GA4 wird im
+            Shop-Layout consent-gated geladen (components/analytics/
+            google-analytics.tsx rendert erst nach "Akzeptieren" im Cookie-
+            Banner), Plausible läuft cookielos im Root-Layout. Die frühere
+            Aussage "Statistik derzeit nicht im Einsatz" war falsch. */}
         <section>
-          <h2 className="text-lg font-semibold">4. Cookies</h2>
+          <h2 className="text-lg font-semibold">
+            4. Cookies und Statistik
+          </h2>
           <p>
             Unsere Website verwendet Cookies. Cookies sind kleine Textdateien,
             die auf Ihrem Endgerät gespeichert werden. Wir unterscheiden:
@@ -142,11 +161,24 @@ export default function DatenschutzPage() {
               Login, Warenkorb und Checkout (§ 25 Abs. 2 Nr. 2 TTDSG).
             </li>
             <li>
-              <strong>Statistik und Marketing:</strong> derzeit nicht im
-              Einsatz. Sollten wir künftig Analyse-Tools einsetzen, holen wir
-              vorher Ihre Einwilligung über das Cookie-Banner ein.
+              <strong>Statistik (Google Analytics 4):</strong> wird
+              ausschließlich geladen, wenn Sie über das Cookie-Banner
+              eingewilligt haben (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1
+              TTDSG). Anbieter: Google Ireland Limited, Gordon House, Barrow
+              Street, Dublin 4, Irland. Die IP-Adresse wird dabei anonymisiert.
+              Bei Ablehnung wird Google Analytics nicht geladen; eine erteilte
+              Einwilligung können Sie jederzeit mit Wirkung für die Zukunft
+              widerrufen, indem Sie die Cookies dieser Website löschen.
             </li>
           </ul>
+          <p className="mt-2">
+            Zusätzlich setzen wir eine selbst gehostete, cookielose
+            Reichweitenmessung (Plausible Analytics) ein. Sie speichert keine
+            Cookies, bildet keine personenbezogenen Profile und erfasst keine
+            seitenübergreifenden Identifier. Rechtsgrundlage: Art. 6 Abs. 1
+            lit. f DSGVO (berechtigtes Interesse an einer datensparsamen
+            Reichweitenanalyse).
+          </p>
         </section>
 
         <section>
@@ -168,8 +200,14 @@ export default function DatenschutzPage() {
             </li>
           </ul>
           <p className="mt-2">
-            Zur Ausübung Ihrer Rechte genügt eine formlose Nachricht an
-            [TODO: datenschutz@chromepeps.com]. Ferner haben Sie das Recht, sich
+            Zur Ausübung Ihrer Rechte genügt eine formlose Nachricht an{" "}
+            <a
+              href={`mailto:${SELLER_DETAILS.email}`}
+              className="underline"
+            >
+              {SELLER_DETAILS.email}
+            </a>
+            . Ferner haben Sie das Recht, sich
             bei einer Datenschutzaufsichtsbehörde über die Verarbeitung Ihrer
             personenbezogenen Daten zu beschweren (Art. 77 DSGVO).
           </p>
@@ -197,13 +235,18 @@ export default function DatenschutzPage() {
           </p>
         </section>
 
-        <div className="mt-10 p-4 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg text-xs text-yellow-900 dark:text-yellow-200">
-          <strong>Hinweis an den Seitenbetreiber:</strong> Alle mit{" "}
-          <code>[TODO: …]</code> markierten Felder müssen vor Live-Schaltung
-          durch echte Daten ersetzt werden. Bei Einbindung weiterer Dienste
-          (Sentry, Plausible, Newsletter, etc.) muss diese Datenschutzerklärung
-          ergänzt werden.
-        </div>
+        {/* Hinweisbox nur solange noch Platzhalter sichtbar sind — sobald
+            alle SELLER_*-Variablen gesetzt sind, verschwindet sie von selbst. */}
+        {SELLER_DETAILS_INCOMPLETE && (
+          <div className="mt-10 p-4 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg text-xs text-yellow-900 dark:text-yellow-200">
+            <strong>Hinweis an den Seitenbetreiber:</strong> Felder mit{" "}
+            <code>[TODO: …]</code> kommen zentral aus den{" "}
+            <code>SELLER_*</code>-Umgebungsvariablen (siehe .env.example) und
+            müssen vor Live-Schaltung gesetzt werden. Bei Einbindung weiterer
+            Dienste (Sentry, Newsletter, etc.) muss diese Datenschutzerklärung
+            ergänzt werden.
+          </div>
+        )}
       </div>
     </div>
   );

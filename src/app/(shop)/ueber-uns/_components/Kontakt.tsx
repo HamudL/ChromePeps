@@ -1,8 +1,22 @@
+import { SELLER_DETAILS } from "@/lib/constants";
 import { KONTAKT_FACTS, SUPPORT_EMAIL } from "./data";
 import shared from "./shared.module.css";
 import styles from "./Kontakt.module.css";
 
 export function Kontakt() {
+  // USt-ID/HR kommen zentral aus SELLER_DETAILS (env-basiert) statt als
+  // "TODO:self"-Hardcode in data.ts. Die Ersetzung passiert bewusst HIER
+  // (Server-Component) und nicht in data.ts: data.ts wird auch von
+  // Client-Komponenten importiert, und SELLER_*-Variablen existieren nur
+  // server-seitig (kein NEXT_PUBLIC_).
+  const facts: ReadonlyArray<[string, string]> = KONTAKT_FACTS.map(
+    ([k, v]): [string, string] => {
+      if (k === "USt-ID") return [k, SELLER_DETAILS.vatId];
+      if (k === "HR") return [k, SELLER_DETAILS.registerNumber];
+      return [k, v];
+    }
+  );
+
   return (
     <section className={`hero-ambient ${styles.kontakt}`} id="kontakt">
       <div className={`subtle-grid ${shared.gridAbs}`} />
@@ -45,7 +59,7 @@ export function Kontakt() {
         <aside className={`reveal-up ${styles.card}`}>
           <div className={styles.cardHead}>Firmendaten</div>
           <ul>
-            {KONTAKT_FACTS.map(([k, v]) => (
+            {facts.map(([k, v]) => (
               <li key={k}>
                 <span>{k}</span>
                 <b>{v}</b>

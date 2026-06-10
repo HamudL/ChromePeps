@@ -3,31 +3,41 @@
 /**
  * Idea 07 — HPLC Chromatogram as ambient hero accent
  *
- * Meant for the /qualitaetskontrolle hero. Canvas-based, self-sizing, pauses
- * when off-screen. Renders a clean dark panel with an animated curve that
- * draws in on first view, a highlighted main peak with retention-time
- * callout, and a subtle time-axis.
+ * Canvas-based, self-sizing, pauses when off-screen. Renders a clean dark
+ * panel with an animated curve that draws in on first view, a highlighted
+ * main peak with retention-time callout, and a subtle time-axis.
  *
- * The component is a self-contained panel; compose it beside your headline
- * in a two-column hero. Unlike PeptideNetwork it does NOT skip on mobile —
- * a chromatogram is the entire point of the Qualität page.
+ * Aktuell NICHT eingebunden: Die Komponente rendert nur noch mit echten
+ * Messdaten (purity/retentionMinutes/lot als Pflicht-Input, sonst `null`).
+ * Im /qualitaetskontrolle-Hero stand sie früher mit erfundenen Default-
+ * Werten — dort wurde sie entfernt, bis echte Chargen-Messdaten (inkl.
+ * Retentionszeit, die es im COA-Modell nicht gibt) verfügbar sind.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface HplcSpectrumProps {
+  /** Echte HPLC-Reinheit der gezeigten Charge \u2014 ohne Wert rendert nichts. */
   purity?: number;
+  /** Echte Retentionszeit des Haupt-Peaks in Minuten. */
   retentionMinutes?: number;
+  /** Echte Lot-Nummer der Charge. */
   lot?: string;
   className?: string;
   height?: number;
 }
 
+/**
+ * WICHTIG: Hier standen fr\u00fcher Default-Werte (99.24 % / 6.48 min /
+ * Lot CP-2411-BPC), die wie eine echte Janoshik-Messung aussahen, aber
+ * erfunden waren. Ohne echte Messdaten rendert die Komponente jetzt
+ * `null` \u2014 niemals Demo-Werte als Messung ausgeben.
+ */
 export function HplcSpectrum({
-  purity = 99.24,
-  retentionMinutes = 6.48,
-  lot = "CP\u20112411\u2011BPC",
+  purity,
+  retentionMinutes,
+  lot,
   className,
   height = 360,
 }: HplcSpectrumProps) {
@@ -42,6 +52,9 @@ export function HplcSpectrum({
   }, []);
 
   useEffect(() => {
+    // Spiegelt den Render-Guard unten: ohne echte Messdaten existiert kein
+    // Canvas — und TypeScript braucht das Narrowing für retentionMinutes.
+    if (purity == null || retentionMinutes == null || lot == null) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -211,7 +224,13 @@ export function HplcSpectrum({
       io.disconnect();
       window.removeEventListener("resize", onResize);
     };
-  }, [reducedMotion, retentionMinutes]);
+  }, [reducedMotion, purity, retentionMinutes, lot]);
+
+  // Guard NACH den Hooks (rules-of-hooks): ohne echte Messdaten wird kein
+  // Chromatogramm gerendert — Demo-/Fallback-Werte gibt es nicht mehr.
+  if (purity == null || retentionMinutes == null || lot == null) {
+    return null;
+  }
 
   return (
     <div

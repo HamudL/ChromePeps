@@ -87,22 +87,42 @@ async function fetchUeberUnsData(): Promise<RawData> {
   return { chargenCount, avgPurity, showcase };
 }
 
-/** Rohdaten → Anzeige-fertiges UeberUnsData (DE-Formatierung, konsistente Demo-Fallbacks). */
+/** Testdatum kompakt für den "PASSED"-Stempel der HPLC-Figure, z. B. "22 · MÄR · 25". */
+function toStampDate(d: Date): string {
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = d
+    .toLocaleDateString("de-DE", { month: "short" })
+    .replace(".", "")
+    .toUpperCase();
+  const year = String(d.getFullYear() % 100).padStart(2, "0");
+  return `${day} · ${month} · ${year}`;
+}
+
+/**
+ * Rohdaten → Anzeige-fertiges UeberUnsData (DE-Formatierung).
+ *
+ * BEWUSST keine Demo-Fallbacks mehr: Hier wurden früher bei leerer DB
+ * erfundene Chargen-/Reinheitswerte ("CS-re10-0322" / "99,41" /
+ * "22. März 2025") als echte Messung ausgegeben. Ohne veröffentlichte COA
+ * bleiben die Showcase-Felder jetzt null — Hero-Lot-Tag, Story-Annotations
+ * und Labor-Chromatogramm blenden sich dann aus statt Werte zu faken.
+ */
 function toDisplayData(raw: RawData): UeberUnsData {
   return {
     chargenCount: raw.chargenCount,
     avgPurity: raw.avgPurity,
-    lotNumber: raw.showcase?.batchNumber ?? "CS-re10-0322",
+    lotNumber: raw.showcase?.batchNumber ?? null,
     purityComma: raw.showcase
       ? raw.showcase.purity.toFixed(2).replace(".", ",")
-      : "99,41",
+      : null,
     testDate: raw.showcase
       ? raw.showcase.testDate.toLocaleDateString("de-DE", {
           day: "2-digit",
           month: "long",
           year: "numeric",
         })
-      : "22. März 2025",
+      : null,
+    testDateStamp: raw.showcase ? toStampDate(raw.showcase.testDate) : null,
   };
 }
 

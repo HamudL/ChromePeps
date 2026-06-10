@@ -20,8 +20,11 @@ export function Story({
   lotNumber,
   purityComma,
 }: {
-  lotNumber: string;
-  purityComma: string;
+  // null = keine veröffentlichte COA in der DB. Die Annotationen zeigen
+  // dann prozess-ehrliche Texte ohne erfundene Messwerte; die 4er-
+  // Annotation-Struktur bleibt erhalten (Scroll-Scrub zählt Indizes).
+  lotNumber: string | null;
+  purityComma: string | null;
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const vialRef = useRef<HTMLImageElement>(null);
@@ -147,13 +150,29 @@ export function Story({
               <span className={`${styles.annot} ${styles.right} ${styles.a2}`} data-show="2">
                 <span className={styles.ln} />
                 <span>
-                  <b>HPLC {purityComma} %</b> · Janoshik
+                  {purityComma ? (
+                    <>
+                      <b>HPLC {purityComma} %</b> · Janoshik
+                    </>
+                  ) : (
+                    <>
+                      <b>HPLC-geprüft</b> · Janoshik
+                    </>
+                  )}
                 </span>
               </span>
               <span className={`${styles.annot} ${styles.left} ${styles.a3}`} data-show="3">
                 <span className={styles.ln} />
                 <span>
-                  <b>{lotNumber}</b> · −24 °C
+                  {lotNumber ? (
+                    <>
+                      <b>{lotNumber}</b> · −24 °C
+                    </>
+                  ) : (
+                    <>
+                      <b>−24 °C</b> · Tiefkühl-Lagerung
+                    </>
+                  )}
                 </span>
               </span>
               <span className={`${styles.annot} ${styles.right} ${styles.a4}`} data-show="4">
@@ -197,7 +216,8 @@ export function Story({
                   {panel.facts.map((f) => (
                     <div key={f.dt}>
                       <dt>{f.dt}</dt>
-                      <dd>{f.lot ? lotNumber : f.dd}</dd>
+                      {/* Ohne echte COA keinen Lot-Wert erfinden — "—". */}
+                      <dd>{f.lot ? lotNumber ?? "—" : f.dd}</dd>
                     </div>
                   ))}
                 </dl>

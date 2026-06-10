@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import {
+  SELLER_DETAILS,
+  SELLER_DETAILS_INCOMPLETE,
+} from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Impressum",
@@ -16,32 +20,41 @@ export default function ImpressumPage() {
       </p>
 
       <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6 text-sm leading-relaxed">
+        {/* Alle Anbieter-Angaben kommen zentral aus SELLER_DETAILS
+            (env-basiert, src/lib/constants.ts) — Rechnungs-PDF, Kontakt-
+            und Rechtsseiten zeigen damit garantiert dieselben Daten. */}
         <section>
           <h2 className="text-lg font-semibold">Anbieter</h2>
           <p>
-            <strong>[TODO: Firmenname einfügen, z. B. ChromePeps UG (haftungsbeschränkt)]</strong>
+            <strong>{SELLER_DETAILS.companyName}</strong>
             <br />
-            [TODO: Straße und Hausnummer]
+            {SELLER_DETAILS.streetLine1}
             <br />
-            [TODO: PLZ Ort]
+            {SELLER_DETAILS.postalCodeCity}
             <br />
-            Deutschland
+            {SELLER_DETAILS.country}
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold">Vertreten durch</h2>
           <p>
-            Geschäftsführer: [TODO: Vor- und Nachname des Geschäftsführers]
+            Geschäftsführer: {SELLER_DETAILS.managingDirector}
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold">Kontakt</h2>
           <p>
-            Telefon: [TODO: Telefonnummer]
+            Telefon: {SELLER_DETAILS.phone}
             <br />
-            E-Mail: [TODO: kontakt@chromepeps.com]
+            E-Mail:{" "}
+            <a
+              href={`mailto:${SELLER_DETAILS.email}`}
+              className="underline"
+            >
+              {SELLER_DETAILS.email}
+            </a>
           </p>
         </section>
 
@@ -50,9 +63,9 @@ export default function ImpressumPage() {
           <p>
             Eintragung im Handelsregister.
             <br />
-            Registergericht: [TODO: Amtsgericht, z. B. Amtsgericht Berlin (Charlottenburg)]
+            Registergericht: {SELLER_DETAILS.registerCourt}
             <br />
-            Registernummer: [TODO: HRB XXXXXX]
+            Registernummer: {SELLER_DETAILS.registerNumber}
           </p>
         </section>
 
@@ -61,7 +74,7 @@ export default function ImpressumPage() {
           <p>
             Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:
             <br />
-            [TODO: DE XXXXXXXXX]
+            {SELLER_DETAILS.vatId}
           </p>
         </section>
 
@@ -70,9 +83,11 @@ export default function ImpressumPage() {
             Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV
           </h2>
           <p>
-            [TODO: Vor- und Nachname]
+            {SELLER_DETAILS.managingDirector}
             <br />
-            [TODO: Anschrift wie oben]
+            {SELLER_DETAILS.streetLine1}
+            <br />
+            {SELLER_DETAILS.postalCodeCity}
           </p>
         </section>
 
@@ -133,12 +148,17 @@ export default function ImpressumPage() {
           </p>
         </section>
 
-        <div className="mt-10 p-4 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg text-xs text-yellow-900 dark:text-yellow-200">
-          <strong>Hinweis an den Seitenbetreiber:</strong> Alle mit{" "}
-          <code>[TODO: …]</code> markierten Felder müssen vor Live-Schaltung
-          durch echte Daten ersetzt werden. Solange Platzhalter sichtbar sind,
-          ist die Seite nicht rechtssicher.
-        </div>
+        {/* Hinweisbox nur solange noch Platzhalter sichtbar sind — sobald
+            alle SELLER_*-Variablen gesetzt sind, verschwindet sie von selbst. */}
+        {SELLER_DETAILS_INCOMPLETE && (
+          <div className="mt-10 p-4 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg text-xs text-yellow-900 dark:text-yellow-200">
+            <strong>Hinweis an den Seitenbetreiber:</strong> Felder mit{" "}
+            <code>[TODO: …]</code> kommen zentral aus den{" "}
+            <code>SELLER_*</code>-Umgebungsvariablen (siehe .env.example) und
+            müssen vor Live-Schaltung gesetzt werden. Solange Platzhalter
+            sichtbar sind, ist die Seite nicht rechtssicher.
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { SELLER_DETAILS } from "@/lib/constants";
 import { localBusinessJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
@@ -46,12 +47,14 @@ export default function KontaktPage() {
             <Mail className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">E-Mail</h3>
           </div>
+          {/* E-Mail kommt zentral aus SELLER_DETAILS — vorher stand hier
+              ein kaputter mailto-Link mit "[TODO: …]"-Adresse. */}
           <p className="text-muted-foreground text-sm">
             <a
-              href="mailto:[TODO: kontakt@chromepeps.com]"
+              href={`mailto:${SELLER_DETAILS.email}`}
               className="underline"
             >
-              [TODO: kontakt@chromepeps.com]
+              {SELLER_DETAILS.email}
             </a>
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -65,7 +68,7 @@ export default function KontaktPage() {
             <h3 className="font-semibold">Telefon</h3>
           </div>
           <p className="text-muted-foreground text-sm">
-            [TODO: +49 XXX XXXXXXX]
+            {SELLER_DETAILS.phone}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Mo bis Fr, 9:00 bis 17:00 Uhr
@@ -78,11 +81,11 @@ export default function KontaktPage() {
             <h3 className="font-semibold">Postanschrift</h3>
           </div>
           <p className="text-muted-foreground text-sm">
-            [TODO: Firmenname]
+            {SELLER_DETAILS.companyName}
             <br />
-            [TODO: Straße und Hausnummer]
+            {SELLER_DETAILS.streetLine1}
             <br />
-            [TODO: PLZ Ort]
+            {SELLER_DETAILS.postalCodeCity}
           </p>
         </div>
 

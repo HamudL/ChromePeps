@@ -7,9 +7,11 @@
  * Light-mode section — matches the existing container rhythm between the
  * dark trust bar and the dark "Warum" block.
  *
- * The server component fetching the numbers (Prisma queries for COA count,
- * avg purity over the last 12 months, delivered orders) passes them in as
- * props. Defaults shown here are placeholders for isolated stories/tests.
+ * `metrics` ist bewusst ein Pflicht-Prop OHNE Default: hier standen früher
+ * erfundene DEFAULTS (247 Chargen, 99,12 %, 12.480 Bestellungen), die bei
+ * leerer DB als echte Messwerte gerendert wurden. Die Zahlen kommen
+ * ausschließlich vom Server (Homepage: COA-Aggregate aus Prisma); ohne
+ * echte Werte rendert die Komponente nichts.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -23,30 +25,12 @@ interface Metric {
 }
 
 interface LiveMetricsProps {
-  metrics?: Metric[];
+  metrics: Metric[];
 }
 
-const DEFAULTS: Metric[] = [
-  {
-    target: 247,
-    label: "Chargen · getestet",
-    sub: "Stand April 2026",
-  },
-  {
-    target: 99.12,
-    suffix: "%",
-    decimals: 2,
-    label: "Ø Reinheit · 12 Monate",
-    sub: "HPLC · Janoshik Labs",
-  },
-  {
-    target: 12_480,
-    label: "Ausgelieferte Bestellungen",
-    sub: "seit 2023",
-  },
-];
-
-export function LiveMetrics({ metrics = DEFAULTS }: LiveMetricsProps) {
+export function LiveMetrics({ metrics }: LiveMetricsProps) {
+  // Keine fabrizierten Zahlen: ohne echte Werte verschwindet die Section
+  // komplett (die Homepage rendert sie ohnehin nur bei vorhandenen Tiles).
   if (metrics.length === 0) return null;
   return (
     <section className="border-y bg-background">

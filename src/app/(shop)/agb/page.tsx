@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
+import { BANK_TRANSFER_ENABLED, SELLER_DETAILS } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Allgemeine Geschäftsbedingungen",
@@ -43,9 +43,12 @@ export default function AgbPage() {
 
         <section>
           <h2 className="text-lg font-semibold">§ 2 Vertragspartner</h2>
+          {/* Vertragspartner kommt zentral aus SELLER_DETAILS (env-basiert) —
+              identisch mit Impressum und Rechnungs-PDF. */}
           <p>
-            Der Kaufvertrag kommt zustande mit [TODO: Firmenname], [TODO:
-            Anschrift]. Weitere Informationen zu uns finden Sie im{" "}
+            Der Kaufvertrag kommt zustande mit {SELLER_DETAILS.companyName},{" "}
+            {SELLER_DETAILS.streetLine1}, {SELLER_DETAILS.postalCodeCity}.
+            Weitere Informationen zu uns finden Sie im{" "}
             <Link href="/impressum" className="underline">
               Impressum
             </Link>
@@ -187,7 +190,10 @@ export default function AgbPage() {
             insoweit, als nicht der gewährte Schutz durch zwingende
             Bestimmungen des Rechts des Staates, in dem der Verbraucher seinen
             gewöhnlichen Aufenthalt hat, entzogen wird. Für Streitigkeiten mit
-            Unternehmern ist Gerichtsstand [TODO: Sitz der Gesellschaft].
+            {/* Kein eigenes SELLER-Feld für den Gerichtsstand — die übliche
+                Vorlagen-Formulierung "Sitz der Gesellschaft" ersetzt den
+                früheren [TODO]-Platzhalter, ohne Daten zu erfinden. */}{" "}
+            Unternehmern ist Gerichtsstand der Sitz der Gesellschaft.
           </p>
         </section>
 
@@ -212,8 +218,8 @@ export default function AgbPage() {
         <div className="mt-10 p-4 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg text-xs text-yellow-900 dark:text-yellow-200">
           <strong>Hinweis:</strong> Dieser Text ist eine Vorlage und sollte vor
           Live-Schaltung durch einen Anwalt geprüft und an die tatsächlichen
-          Geschäftsprozesse angepasst werden. Alle mit{" "}
-          <code>[TODO: …]</code> markierten Stellen sind zu befüllen.
+          Geschäftsprozesse angepasst werden. Die Anbieterdaten kommen zentral
+          aus den <code>SELLER_*</code>-Umgebungsvariablen (siehe .env.example).
         </div>
       </div>
     </div>

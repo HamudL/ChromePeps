@@ -111,25 +111,49 @@ export const BANK_TRANSFER_ENABLED =
   BANK_DETAILS.iban.length > 0;
 
 /**
- * Seller data for invoices and official documents.
+ * Verkäufer-/Impressumsdaten — die EINE Quelle für Impressum, Datenschutz,
+ * AGB, Widerruf, Kontakt-Seite, JSON-LD und das Rechnungs-PDF.
  *
- * NOTE: These fields must be kept in sync with the Impressum page. The
- * placeholder values here will be replaced with the real company data
- * before going live — the invoice PDF falls back to these values.
+ * Env-basiert (SELLER_*), damit der Betreiber vor Live-Schaltung nur die
+ * .env füllen muss statt fünf Rechtsseiten zu editieren. Solange ein Wert
+ * fehlt, bleibt der bisherige "[TODO: …]"-Platzhalter sichtbar — daran
+ * erkennen Konsumenten (z. B. lib/json-ld.ts, die Betreiber-Hinweisboxen)
+ * automatisch, dass die Daten noch unvollständig sind.
+ *
+ * Bewusst `||` statt `??`: eine aus .env.example kopierte, noch leere
+ * Variable (SELLER_STREET="") ist definiert, aber nicht gepflegt — sie
+ * soll den Platzhalter zeigen, nicht einen leeren String ins Impressum
+ * rendern.
+ *
+ * KEIN NEXT_PUBLIC_ nötig: alle Konsumenten sind Server-Components bzw.
+ * server-only (Rechnungs-PDF) — die Werte landen im gerenderten HTML,
+ * nicht im Client-Bundle. Falls SELLER_DETAILS je in einer "use client"-
+ * Datei gebraucht wird, müssen die betroffenen Felder auf NEXT_PUBLIC_
+ * umgestellt werden, sonst greift im Browser immer der Fallback.
  */
 export const SELLER_DETAILS = {
-  companyName: "ChromePeps UG (haftungsbeschränkt)",
-  streetLine1: "[TODO: Straße und Hausnummer]",
-  postalCodeCity: "[TODO: PLZ Ort]",
-  country: "Deutschland",
-  email: "support@chromepeps.com",
-  phone: "[TODO: Telefonnummer]",
-  vatId: "[TODO: DE XXXXXXXXX]",
-  taxId: "[TODO: Steuernummer]",
-  registerCourt: "[TODO: Amtsgericht]",
-  registerNumber: "[TODO: HRB XXXXXX]",
-  managingDirector: "[TODO: Geschäftsführer]",
+  companyName:
+    process.env.SELLER_COMPANY_NAME || "ChromePeps UG (haftungsbeschränkt)",
+  streetLine1: process.env.SELLER_STREET || "[TODO: Straße und Hausnummer]",
+  postalCodeCity: process.env.SELLER_POSTAL_CITY || "[TODO: PLZ Ort]",
+  country: process.env.SELLER_COUNTRY || "Deutschland",
+  email: process.env.SELLER_EMAIL || "support@chromepeps.com",
+  phone: process.env.SELLER_PHONE || "[TODO: Telefonnummer]",
+  vatId: process.env.SELLER_VAT_ID || "[TODO: DE XXXXXXXXX]",
+  taxId: process.env.SELLER_TAX_ID || "[TODO: Steuernummer]",
+  registerCourt: process.env.SELLER_REGISTER_COURT || "[TODO: Amtsgericht]",
+  registerNumber: process.env.SELLER_REGISTER_NUMBER || "[TODO: HRB XXXXXX]",
+  managingDirector:
+    process.env.SELLER_MANAGING_DIRECTOR || "[TODO: Geschäftsführer]",
 } as const;
+
+// True, solange mindestens ein Verkäufer-Feld noch ein "[TODO: …]"-
+// Platzhalter ist. Die Rechtsseiten blenden damit ihre Betreiber-
+// Warnhinweise automatisch aus, sobald alle SELLER_*-Variablen gepflegt
+// sind — kein manuelles Entfernen der Hinweisboxen nötig.
+export const SELLER_DETAILS_INCOMPLETE = Object.values(SELLER_DETAILS).some(
+  (v) => v.includes("[TODO")
+);
 
 // German statutory VAT rate (19%) used for invoices and checkout math.
 export const TAX_RATE = 0.19;
