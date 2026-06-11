@@ -30,6 +30,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
+        // Maschinenlesbarer Code: der Warenkorb-Client unterscheidet
+        // damit "Identität fehlt (Gast ohne E-Mail — Code an der Kasse
+        // einlösen)" von "Code ungültig", statt die deutsche
+        // Fehlermeldung per Regex zu interpretieren.
+        errorCode: "GUEST_EMAIL_REQUIRED",
         error:
           "Bitte eine E-Mail angeben oder einloggen, um einen Promo-Code einzulösen.",
       },

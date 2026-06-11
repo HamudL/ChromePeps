@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 
 /** GET /api/wishlist — returns current user's wishlist product IDs */
 export async function GET() {
@@ -30,7 +31,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = await req.json();
+  const limit = await rateLimit(`wishlist:${session.user.id}`, {
+    maxRequests: 30,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
+
+  // Kaputtes JSON → 400 unten ("productId required") statt 500.
+  const body = (await req.json().catch(() => null)) ?? {};
   const productId = typeof body.productId === "string" ? body.productId : null;
   if (!productId) {
     return NextResponse.json(

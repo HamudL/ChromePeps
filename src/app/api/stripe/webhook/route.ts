@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { cacheDel } from "@/lib/redis";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
-import { CACHE_KEYS } from "@/lib/constants";
+import { getClientIp } from "@/lib/client-ip";
+import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
 import { resolveCartFromStripeSession } from "@/lib/order/resolve-cart-from-stripe";
@@ -19,8 +19,7 @@ export async function POST(req: NextRequest) {
   // webhook secret could still flood this endpoint until the secret is
   // rotated. The limit is generous (60/min) so Stripe's own retries are
   // never rejected.
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  const ip = forwardedFor?.split(",")[0].trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   const limit = await rateLimit(`stripe-webhook:${ip}`, {
     maxRequests: 60,
     windowMs: 60_000,
@@ -187,9 +186,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return order.id;
   });
 
-  if (userId) {
-    await cacheDel(CACHE_KEYS.CART(userId));
-  }
+  // createOrderFromStripeSession hat den Stock dekrementiert → Listing-/
+  // Detail-/Bestseller-Caches invalidieren, sonst zeigt der Shop bis zum
+  // TTL-Ablauf eine veraltete Verfügbarkeit. Fail-safe (Redis-Fehler
+  // werden intern geschluckt) — lässt den Webhook nie auf 500 laufen.
+  await invalidateStockCaches();
 
   // Fire-and-forget: Mail-Send blockt den Webhook NICHT. Stripe hat ein
   // 30-s-Timeout; bei großen COA-Anhängen (PDFs vom Filesystem) + Resend-
@@ -323,48 +324,103 @@ async function handleRefund(charge: Stripe.Charge) {
     where: { stripePaymentIntentId: paymentIntentId },
     include: { items: true },
   });
+  if (!order) return;
 
-  if (order) {
-    await db.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: order.id },
-        data: { status: "REFUNDED", paymentStatus: "REFUNDED" },
-      });
+  // `charge.refunded` feuert bei Stripe auch für TEIL-Refunds. Ein
+  // 5-€-Teilrefund darf weder die Order auf REFUNDED kippen noch den
+  // vollen Warenbestand zurückbuchen — sonst entsteht Phantom-Inventar
+  // und der Order-Status lügt. Voll vs. teilweise unterscheidet
+  // amount_refunded (kumulativ) vs. amount.
+  const isFullRefund = charge.amount_refunded >= charge.amount;
+  const fmtEur = (cents: number) => `${(cents / 100).toFixed(2)} €`;
 
-      await tx.orderEvent.create({
-        data: {
-          orderId: order.id,
-          status: "REFUNDED",
-          note: "Refund processed via Stripe",
-        },
-      });
-
-      // Restore stock (skip if product/variant has been hard-deleted).
-      // Promise.all parallelisiert den Client-Side-Encode-Overhead, was
-      // bei größeren Refunds (mehrere Items) Latenz spart. Postgres
-      // führt die einzelnen Updates innerhalb der TX trotzdem seriell
-      // aus — die catch-Isolation pro Update bleibt erhalten.
-      await Promise.all(
-        order.items.map((item) => {
-          if (item.variantId) {
-            return tx.productVariant
-              .update({
-                where: { id: item.variantId },
-                data: { stock: { increment: item.quantity } },
-              })
-              .catch(() => {});
-          }
-          if (item.productId) {
-            return tx.product
-              .update({
-                where: { id: item.productId },
-                data: { stock: { increment: item.quantity } },
-              })
-              .catch(() => {});
-          }
-          return Promise.resolve();
-        }),
-      );
+  if (!isFullRefund) {
+    await db.orderEvent.create({
+      data: {
+        orderId: order.id,
+        status: order.status,
+        note: `Teil-Erstattung via Stripe: ${fmtEur(charge.amount_refunded)} von ${fmtEur(charge.amount)} erstattet — Status und Bestand unverändert.`,
+      },
     });
+    return;
+  }
+
+  // Idempotenz: Stripe kann das Event erneut zustellen (z.B. nach dem
+  // Lösch-Pfad im Error-Handler) — eine bereits voll erstattete Order
+  // nicht nochmal anfassen.
+  if (order.status === "REFUNDED" && order.paymentStatus === "REFUNDED") {
+    return;
+  }
+
+  // Bestand nur zurückbuchen, wenn er für diese Order noch "draußen"
+  // ist: Ein Admin-Cancel hat ggf. schon restauriert (stockRestoredAt
+  // gesetzt) — Refund nach Cancel würde sonst doppelt inkrementieren.
+  // Test-Orders haben nie Bestand dekrementiert. DELIVERED-Orders
+  // restaurieren ebenfalls NICHT automatisch (gleiche Policy wie der
+  // Admin-Cancel): die Ware liegt beim Kunden — ein Kulanz-Refund ohne
+  // Warenrücksendung würde sonst Bestand erzeugen, der physisch nie
+  // zurückkommt. Bei echter Retoure bucht der Admin manuell nach.
+  const alreadyDelivered = order.status === "DELIVERED";
+  const shouldRestoreStock =
+    !order.stockRestoredAt && !order.isTestOrder && !alreadyDelivered;
+
+  await db.$transaction(async (tx) => {
+    await tx.order.update({
+      where: { id: order.id },
+      data: {
+        status: "REFUNDED",
+        paymentStatus: "REFUNDED",
+        ...(shouldRestoreStock ? { stockRestoredAt: new Date() } : {}),
+      },
+    });
+
+    await tx.orderEvent.create({
+      data: {
+        orderId: order.id,
+        status: "REFUNDED",
+        note: shouldRestoreStock
+          ? `Voll-Erstattung via Stripe (${fmtEur(charge.amount_refunded)}) — Bestand zurückgebucht.`
+          : alreadyDelivered && !order.stockRestoredAt
+            ? `Voll-Erstattung via Stripe (${fmtEur(charge.amount_refunded)}) — Bestand NICHT zurückgebucht (Ware ausgeliefert; bei Retoure manuell nachbuchen).`
+            : `Voll-Erstattung via Stripe (${fmtEur(charge.amount_refunded)}) — Bestand war bereits zurückgebucht.`,
+      },
+    });
+
+    if (!shouldRestoreStock) return;
+
+    // Restore stock (skip if product/variant has been hard-deleted).
+    // Promise.all parallelisiert den Client-Side-Encode-Overhead, was
+    // bei größeren Refunds (mehrere Items) Latenz spart. Postgres
+    // führt die einzelnen Updates innerhalb der TX trotzdem seriell
+    // aus — die catch-Isolation pro Update bleibt erhalten.
+    await Promise.all(
+      order.items.map((item) => {
+        if (item.variantId) {
+          return tx.productVariant
+            .update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            })
+            .catch(() => {});
+        }
+        if (item.productId) {
+          return tx.product
+            .update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+            })
+            .catch(() => {});
+        }
+        return Promise.resolve();
+      }),
+    );
+  });
+
+  // Stock-Restore macht ggf. ein "Ausverkauft"-Produkt wieder verfügbar —
+  // ohne Invalidierung sähe der Shop das erst nach TTL-Ablauf. Nur nötig,
+  // wenn tatsächlich restauriert wurde (Teil-Refunds/Replays returnen
+  // oben früher). Fail-safe — bricht den Webhook nie.
+  if (shouldRestoreStock) {
+    await invalidateStockCaches();
   }
 }

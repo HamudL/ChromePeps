@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   title: "FAQ: Häufige Fragen",
   description: `Antworten auf häufig gestellte Fragen zu Bestellungen, Versand, Zahlung und Produkten bei ${APP_NAME}.`,
   robots: { index: true, follow: true },
+  alternates: { canonical: "/faq" },
 };
 
 export default async function FAQPage() {

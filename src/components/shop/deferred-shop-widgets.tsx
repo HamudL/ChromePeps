@@ -13,7 +13,7 @@ import dynamic from "next/dynamic";
  * jeder (shop)-Route die direkte Bundle-Aufnahme aus dem Layout-Chunk.
  *
  * Wenn ein Widget Daten lädt (z. B. AnnouncementBar fetcht
- * /api/admin/announcement), passiert das weiterhin synchron im
+ * /api/announcement), passiert das weiterhin synchron im
  * Browser — nur das JS dafür kommt out-of-critical-path.
  */
 const CookieBanner = dynamic(

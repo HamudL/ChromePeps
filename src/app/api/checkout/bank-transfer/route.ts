@@ -5,8 +5,9 @@ import { generateOrderNumber } from "@/lib/order/generate-order-number";
 import { calculateOrderTotals } from "@/lib/order/calculate-totals";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
-import { cacheDel } from "@/lib/redis";
-import { CACHE_KEYS } from "@/lib/constants";
+import { getClientIp } from "@/lib/client-ip";
+import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
+import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { resolveShippingRate } from "@/lib/shipping/rates";
 
@@ -34,19 +35,57 @@ import { resolveShippingRate } from "@/lib/shipping/rates";
  * the current Product/ProductVariant rows).
  */
 export async function POST(req: NextRequest) {
+  // Server-seitige Durchsetzung des Vorkasse-Schalters: Das Ausblenden im
+  // Checkout-UI allein würde direkte POSTs nicht stoppen.
+  if (!BANK_TRANSFER_ENABLED) {
+    return NextResponse.json(
+      { success: false, error: "Vorkasse ist derzeit nicht verfügbar." },
+      { status: 403 }
+    );
+  }
+
   const session = await auth();
   const userId = session?.user?.id ?? null;
   const isGuest = !userId;
 
-  const body = await req.json();
-  const promoCode: string | null = body.promoCode ?? null;
+  // Body-Shape wie dokumentiert (Modus A/B). Die Felder werden unten
+  // weiterhin einzeln zur Laufzeit validiert — der Typ spiegelt nur den
+  // Zustand NACH erfolgreicher Validierung wider.
+  type BankTransferBody = {
+    promoCode?: unknown;
+    guestEmail?: unknown;
+    guestName?: unknown;
+    shippingAddress?: {
+      firstName: string;
+      lastName: string;
+      street: string;
+      city: string;
+      postalCode: string;
+      country: string;
+      street2?: unknown;
+      company?: unknown;
+      phone?: unknown;
+    } | null;
+    items?: Array<{ productId: unknown; variantId?: unknown; quantity: unknown }>;
+    shippingAddressId?: unknown;
+  };
+  let body: BankTransferBody;
+  try {
+    body = (await req.json()) as BankTransferBody;
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Ungültiger Request-Body." },
+      { status: 400 }
+    );
+  }
+  const promoCode: string | null =
+    typeof body.promoCode === "string" && body.promoCode ? body.promoCode : null;
 
   // Rate-limiting — per identity (tighter) + per IP (defense in
   // depth). For guests the "per identity" key is their email,
   // which an attacker can churn, but the per-IP layer catches
   // that pattern.
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  const ip = forwardedFor?.split(",")[0].trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   const ipLimit = await rateLimit(`bank-transfer:ip:${ip}`, {
     maxRequests: 10,
     windowMs: 60_000,
@@ -187,6 +226,7 @@ export async function POST(req: NextRequest) {
             where: { id: { in: variantIds }, isActive: true },
             select: {
               id: true,
+              productId: true,
               name: true,
               sku: true,
               priceInCents: true,
@@ -225,6 +265,16 @@ export async function POST(req: NextRequest) {
           {
             success: false,
             error: "Die gewählte Variante ist nicht mehr verfügbar.",
+          },
+          { status: 400 }
+        );
+      }
+      // Varianten-Mixing abwehren: Variante muss zum Produkt gehören.
+      if (variant && variant.productId !== pid) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Die gewählte Variante gehört nicht zu diesem Produkt.",
           },
           { status: 400 }
         );
@@ -345,7 +395,13 @@ export async function POST(req: NextRequest) {
               select: { name: true, priceInCents: true, stock: true, sku: true },
             },
             variant: {
-              select: { name: true, priceInCents: true, stock: true, sku: true },
+              select: {
+                productId: true,
+                name: true,
+                priceInCents: true,
+                stock: true,
+                sku: true,
+              },
             },
           },
         },
@@ -361,6 +417,16 @@ export async function POST(req: NextRequest) {
 
     orderItems = [];
     for (const item of cart.items) {
+      // Defense-in-depth gegen Varianten-Mixing in Alt-Cart-Rows.
+      if (item.variant && item.variant.productId !== item.productId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Warenkorb-Eintrag für "${item.product.name}" ist ungültig — bitte Artikel entfernen und erneut hinzufügen.`,
+          },
+          { status: 400 }
+        );
+      }
       const price = item.variant?.priceInCents ?? item.product.priceInCents;
       const sku = item.variant?.sku ?? item.product.sku;
       subtotalInCents += price * item.quantity;
@@ -399,6 +465,7 @@ export async function POST(req: NextRequest) {
   // /api/promos/validate as a defense-in-depth second check here.
   let discountInCents = 0;
   let validatedPromoId: string | null = null;
+  let validatedPromoMaxUses: number | null = null;
   let promoCodeStr: string | null = null;
 
   if (promoCode) {
@@ -420,6 +487,7 @@ export async function POST(req: NextRequest) {
       });
       if (check.applicable) {
         validatedPromoId = promo.id;
+        validatedPromoMaxUses = promo.maxUses;
         promoCodeStr = promo.code;
         discountInCents = check.discountInCents;
       }
@@ -448,7 +516,13 @@ export async function POST(req: NextRequest) {
 
   // Create order in a transaction — atomic across order + promo
   // usage + stock decrement + (for auth users) cart clear.
-  const order = await db.$transaction(async (tx) => {
+  // Anders als beim Stripe-Webhook ist hier noch KEIN Geld geflossen:
+  // Abbruch (Promo erschöpft / doppelt, Stock weg) ist die korrekte
+  // Antwort und wird unten auf saubere 4xx-Responses gemappt statt
+  // als unbehandelter 500 zu enden.
+  let order;
+  try {
+    order = await db.$transaction(async (tx) => {
     const newOrder = await tx.order.create({
       data: {
         orderNumber: generateOrderNumber(),
@@ -477,8 +551,10 @@ export async function POST(req: NextRequest) {
     });
 
     // Record promo usage — keyed by userId for auth, by guestEmail
-    // for guests. Either way the "one redemption per buyer" check
-    // can look it up next time.
+    // for guests. Die DB-Uniques (promoId,userId)/(promoId,guestEmail)
+    // fangen Doppel-Einlösungen unter Nebenläufigkeit (P2002 → 400
+    // unten); das usedCount-CAS erzwingt das globale maxUses-Limit,
+    // das vorher nur check-then-increment war.
     if (validatedPromoId) {
       await tx.promoUsage.create({
         data: {
@@ -489,10 +565,18 @@ export async function POST(req: NextRequest) {
           discountAmount: totals.discountInCents,
         },
       });
-      await tx.promoCode.update({
-        where: { id: validatedPromoId },
+      const bumped = await tx.promoCode.updateMany({
+        where: {
+          id: validatedPromoId,
+          ...(validatedPromoMaxUses !== null
+            ? { usedCount: { lt: validatedPromoMaxUses } }
+            : {}),
+        },
         data: { usedCount: { increment: 1 } },
       });
+      if (bumped.count === 0) {
+        throw new Error("PROMO_EXHAUSTED");
+      }
     }
 
     // Decrement stock (with validation to prevent negative stock).
@@ -503,7 +587,7 @@ export async function POST(req: NextRequest) {
           data: { stock: { decrement: item.quantity } },
         });
         if (updated.count === 0) {
-          throw new Error(`Insufficient stock for variant ${item.variantId}`);
+          throw new Error("INSUFFICIENT_STOCK");
         }
       } else {
         const updated = await tx.product.updateMany({
@@ -511,7 +595,7 @@ export async function POST(req: NextRequest) {
           data: { stock: { decrement: item.quantity } },
         });
         if (updated.count === 0) {
-          throw new Error(`Insufficient stock for product ${item.productId}`);
+          throw new Error("INSUFFICIENT_STOCK");
         }
       }
     }
@@ -525,10 +609,50 @@ export async function POST(req: NextRequest) {
 
     return newOrder;
   });
-
-  if (userId) {
-    await cacheDel(CACHE_KEYS.CART(userId));
+  } catch (err) {
+    const isPrismaUniqueError =
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      (err as { code: string }).code === "P2002";
+    if (isPrismaUniqueError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Dieser Promo-Code wurde bereits eingelöst.",
+        },
+        { status: 400 }
+      );
+    }
+    if (err instanceof Error && err.message === "PROMO_EXHAUSTED") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Dieser Promo-Code ist leider ausgeschöpft.",
+        },
+        { status: 400 }
+      );
+    }
+    if (err instanceof Error && err.message === "INSUFFICIENT_STOCK") {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Ein Artikel ist soeben ausverkauft worden. Bitte Warenkorb aktualisieren.",
+        },
+        { status: 409 }
+      );
+    }
+    throw err;
   }
+
+  // Stock wurde in der Transaktion dekrementiert → Listing-/Detail-/
+  // Bestseller-Caches invalidieren, sonst zeigt der Shop bis zum TTL-
+  // Ablauf eine veraltete Verfügbarkeit. Fail-safe UND bewusst NICHT
+  // awaited: die Pattern-Deletes scannen den Redis-Keyspace — der
+  // Kunde soll auf seine Bestellbestätigung nicht warten, bis die
+  // Cache-Hygiene durch ist.
+  void invalidateStockCaches();
 
   // Fire-and-forget: Mail-Send (mit COA-PDF-Attachments aus dem Filesystem
   // + Resend-API-Call) blockt die HTTP-Response NICHT. Der User klickt

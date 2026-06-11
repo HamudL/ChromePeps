@@ -223,7 +223,10 @@ export const ROADMAP_ROWS: RoadmapRow[] = [
   { quarter: "Q3 · 2027", title: "ISO-9001 Pilot", desc: "Vorbereitung der Qualitäts­management-Zertifizierung für den UG-Standort.", status: "geplant", state: "future" },
 ];
 
-/** Kontakt-Firmendaten (Reihenfolge wie im Original; USt-ID/HR bleiben vom Betreiber zu füllen). */
+/** Kontakt-Firmendaten (Reihenfolge wie im Original). Die "TODO:self"-Werte
+ *  für USt-ID/HR sind nur Marker — Kontakt.tsx (Server-Component) ersetzt sie
+ *  beim Rendern durch SELLER_DETAILS (env-basiert). Nicht hier importieren:
+ *  data.ts wird auch von Client-Komponenten geladen, wo SELLER_*-Env fehlt. */
 export const KONTAKT_FACTS: ReadonlyArray<[string, string]> = [
   ["Rechtsträger", "ChromePeps UG (haftungsbeschränkt)"],
   ["Sitz", "Baden-Württemberg, DE"],

@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { getClientIp } from "@/lib/client-ip";
 
 /**
  * Schreibt eine AdminAuditLog-Zeile. Best-effort: wenn der DB-Write
@@ -42,13 +43,11 @@ export async function writeAuditLog(
     const actor = session?.user;
 
     const userAgent = req?.headers.get("user-agent") ?? null;
-    // X-Forwarded-For kann eine Liste sein ("client, proxy1, proxy2") —
-    // erste IP ist der echte Client.
-    const ipHeader =
-      req?.headers.get("x-forwarded-for") ??
-      req?.headers.get("x-real-ip") ??
-      null;
-    const ipAddress = ipHeader?.split(",")[0]?.trim() ?? null;
+    // Zentrale spoofing-resistente IP-Ermittlung (x-real-ip bzw. letzter
+    // XFF-Hop). "unknown" mappen wir auf DB-NULL — die Spalte ist nullable
+    // und soll "nicht ermittelbar" weiterhin als NULL ausweisen.
+    const clientIp = getClientIp(req?.headers);
+    const ipAddress = clientIp === "unknown" ? null : clientIp;
 
     await db.adminAuditLog.create({
       data: {

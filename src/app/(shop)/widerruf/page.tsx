@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { SELLER_DETAILS } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Widerrufsbelehrung",
   description:
     "Widerrufsrecht und Widerrufsformular gemäß § 355 BGB und Art. 246a EGBGB.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/widerruf" },
 };
 
 export default function WiderrufPage() {
@@ -30,16 +32,24 @@ export default function WiderrufPage() {
           <p className="mt-2">
             Um Ihr Widerrufsrecht auszuüben, müssen Sie uns
           </p>
+          {/* Widerrufsadressat kommt zentral aus SELLER_DETAILS (env-basiert) —
+              identisch mit Impressum und Rechnungs-PDF. */}
           <p className="mt-1 pl-4">
-            [TODO: Firmenname]
+            {SELLER_DETAILS.companyName}
             <br />
-            [TODO: Straße und Hausnummer]
+            {SELLER_DETAILS.streetLine1}
             <br />
-            [TODO: PLZ Ort]
+            {SELLER_DETAILS.postalCodeCity}
             <br />
-            Telefon: [TODO: Telefonnummer]
+            Telefon: {SELLER_DETAILS.phone}
             <br />
-            E-Mail: [TODO: widerruf@chromepeps.com]
+            E-Mail:{" "}
+            <a
+              href={`mailto:${SELLER_DETAILS.email}`}
+              className="underline"
+            >
+              {SELLER_DETAILS.email}
+            </a>
           </p>
           <p className="mt-2">
             mittels einer eindeutigen Erklärung (z. B. ein mit der Post
@@ -141,11 +151,11 @@ export default function WiderrufPage() {
             <p>
               An
               <br />
-              [TODO: Firmenname]
+              {SELLER_DETAILS.companyName}
               <br />
-              [TODO: Anschrift]
+              {SELLER_DETAILS.streetLine1}, {SELLER_DETAILS.postalCodeCity}
               <br />
-              E-Mail: [TODO: widerruf@chromepeps.com]
+              E-Mail: {SELLER_DETAILS.email}
             </p>
             <p>
               Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen

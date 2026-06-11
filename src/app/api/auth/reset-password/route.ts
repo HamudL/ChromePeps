@@ -3,7 +3,9 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { resetPasswordSchema } from "@/validators/auth";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { hashResetToken } from "@/lib/password-reset";
+import { purgeSessionUserCache } from "@/lib/auth";
 
 /**
  * POST /api/auth/reset-password
@@ -22,10 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limit by IP — 10 attempts per 15 minutes
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
+  const ip = getClientIp(req.headers);
   const ipLimit = await rateLimit(`reset:ip:${ip}`, {
     maxRequests: 10,
     windowMs: 15 * 60_000,
@@ -62,11 +61,14 @@ export async function POST(req: NextRequest) {
   const newHash = await bcrypt.hash(parsed.data.password, 12);
 
   // Update password and mark token used in a single transaction so a
-  // race can't let the token be replayed.
+  // race can't let the token be replayed. sessionVersion-Increment
+  // invalidiert alle bestehenden JWT-Sessions: Genau das ist der
+  // Sinn eines Passwort-Resets nach Account-Kompromittierung \u2014 ein
+  // Angreifer mit gestohlenem Session-Cookie behielt sonst Zugriff.
   await db.$transaction([
     db.user.update({
       where: { id: user.id },
-      data: { passwordHash: newHash },
+      data: { passwordHash: newHash, sessionVersion: { increment: 1 } },
     }),
     db.passwordResetToken.update({
       where: { id: tokenRecord.id },
@@ -78,6 +80,11 @@ export async function POST(req: NextRequest) {
       data: { usedAt: new Date() },
     }),
   ]);
+
+  // Session-Cache r\u00e4umen, damit die Invalidierung sofort greift (nicht
+  // erst nach Ablauf der 60s-Cache-TTL). Zentraler Helper \u2014 Key-Format
+  // lebt ausschlie\u00dflich in src/lib/auth.ts.
+  await purgeSessionUserCache(user.id);
 
   return NextResponse.json({
     success: true,

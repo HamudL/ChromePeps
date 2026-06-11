@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Neues Passwort setzen | ChromePeps",
+  // Kein "| ChromePeps"-Suffix — kommt vom title-Template in (auth)/layout.tsx.
+  title: "Neues Passwort setzen",
   description: "Setze dein neues ChromePeps-Passwort.",
   robots: { index: false, follow: false },
 };

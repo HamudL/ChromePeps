@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomBytes } from "crypto";
@@ -71,6 +72,14 @@ export async function POST(req: NextRequest) {
       { status: 403 }
     );
   }
+
+  // Uploads schreiben aufs Filesystem — auch ein (kompromittiertes)
+  // Admin-Konto soll die Disk nicht ungebremst volllaufen lassen.
+  const limit = await rateLimit(`upload:${session.user.id}`, {
+    maxRequests: 20,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   // `?as=coa` schaltet COA-Modus ein: Bilder werden in PDF gewrapped,
   // PDFs werden 1:1 in /uploads/certificates abgelegt. Default-Mode

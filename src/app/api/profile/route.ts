@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { auth, invalidateUserSessions } from "@/lib/auth";
 import { updateProfileSchema, changePasswordSchema } from "@/validators/auth";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
+import { generateEmailVerifyToken } from "@/lib/email-verify";
+import { sendEmailVerifyEmail } from "@/lib/mail/send";
+import { EMAIL_VERIFY_TOKEN_TTL_MS } from "@/lib/constants";
 
 // GET /api/profile
 export async function GET() {
@@ -64,11 +67,23 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
+  // Ändert sich die E-Mail wirklich? (Vorher: jeder PATCH mit email-Feld
+  // behielt den alten emailVerified-Status — die neue Adresse war nie
+  // verifiziert, galt aber als verifiziert.) Ein findMany beantwortet
+  // "aktuelle E-Mail?" UND "neue Adresse vergeben?" in EINEM Roundtrip.
+  let emailChanged = false;
   if (parsed.data.email) {
-    const existing = await db.user.findFirst({
-      where: { email: parsed.data.email, NOT: { id: session.user.id } },
+    const rows = await db.user.findMany({
+      where: {
+        OR: [{ id: session.user.id }, { email: parsed.data.email }],
+      },
+      select: { id: true, email: true },
     });
-    if (existing) {
+    const current = rows.find((r) => r.id === session.user.id);
+    const conflict = rows.find((r) => r.id !== session.user.id);
+    emailChanged = !!current && current.email !== parsed.data.email;
+
+    if (emailChanged && conflict) {
       return NextResponse.json(
         { success: false, error: "Email already in use" },
         { status: 409 }
@@ -78,9 +93,48 @@ export async function PATCH(req: NextRequest) {
 
   const user = await db.user.update({
     where: { id: session.user.id },
-    data: parsed.data,
+    data: {
+      ...parsed.data,
+      // Neue Adresse ist unverifiziert, bis der Bestätigungs-Link
+      // geklickt wurde.
+      ...(emailChanged ? { emailVerified: null } : {}),
+    },
     select: { id: true, name: true, email: true, image: true, role: true },
   });
+
+  // Verifizierungs-Mail an die NEUE Adresse — fire-and-forget, der
+  // Profil-Update selbst ist bereits committed.
+  if (emailChanged && user.email) {
+    try {
+      const { rawToken, tokenHash } = generateEmailVerifyToken();
+      await db.verificationToken.create({
+        data: {
+          identifier: user.email,
+          token: tokenHash,
+          expires: new Date(Date.now() + EMAIL_VERIFY_TOKEN_TTL_MS),
+        },
+      });
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+      if (baseUrl) {
+        void sendEmailVerifyEmail({
+          to: user.email,
+          name: user.name,
+          verifyUrl: `${baseUrl}/api/auth/verify-email?token=${rawToken}`,
+          expiresInHours: 24,
+        }).catch((err) =>
+          console.error(
+            "[profile] verify mail after email change failed:",
+            err instanceof Error ? err.message : err
+          )
+        );
+      }
+    } catch (err) {
+      console.error(
+        "[profile] email change verify step failed:",
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
 
   return NextResponse.json({ success: true, data: user });
 }
@@ -138,6 +192,11 @@ export async function PUT(req: NextRequest) {
     where: { id: session.user.id },
     data: { passwordHash: newHash },
   });
+
+  // Alle bestehenden Sessions invalidieren (inkl. der des Aufrufers —
+  // bewusst: "nach Passwortänderung überall ausgeloggt"). Ein Angreifer
+  // mit gestohlenem Cookie verliert damit den Zugriff.
+  await invalidateUserSessions(session.user.id);
 
   return NextResponse.json({ success: true });
 }

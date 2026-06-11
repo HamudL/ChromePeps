@@ -17,7 +17,7 @@ import { checkCronAuth } from "@/lib/cron-auth";
  * wird die Order NICHT geflaggt → nächster Run versucht's nochmal.
  *
  * Trigger via VPS-Crontab täglich um 9 Uhr:
- *   0 9 * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
+ *   0 9 * * * curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" \
  *     https://chromepeps.com/api/cron/review-requests
  *
  * Backup-Pfad: bei DELIVERED-Status-Wechsel im Admin-UI wird die Mail
@@ -38,7 +38,40 @@ const DELAY_DAYS = 7;
 // den Mail-Provider rate-limited oder die Funktion timed out.
 const BATCH_LIMIT = 50;
 
-export async function GET(req: NextRequest) {
+/**
+ * Markiert eine dauerhaft unverarbeitbare Order als "Review-Mail
+ * behandelt". Ohne den Marker bliebe so eine Order als ältester Kandidat
+ * für immer vorn im `take(BATCH_LIMIT)`-Fenster (sortiert nach
+ * deliveredAt asc) und würde alle jüngeren Orders dahinter blockieren —
+ * Head-of-Line-Blocking. Der OrderEvent-Eintrag dokumentiert den Grund
+ * für den Admin. Best-effort: ein DB-Fehler hier darf den Run nicht
+ * abbrechen, der nächste Lauf probiert es dann erneut.
+ */
+async function markReviewSkipped(orderId: string, reason: string): Promise<void> {
+  try {
+    await db.order.update({
+      where: { id: orderId },
+      data: { reviewRequestedAt: new Date() },
+    });
+    await db.orderEvent.create({
+      data: {
+        orderId,
+        status: "DELIVERED",
+        note: `Review-Mail übersprungen: ${reason}`,
+      },
+    });
+  } catch (err) {
+    console.warn(
+      `[cron/review-requests] skip-marker failed for order ${orderId}:`,
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
+// POST ist der primäre Handler: der Endpoint hat Side-Effects (Mails,
+// reviewRequestedAt-Marker) — per HTTP-Semantik gehört das nicht hinter
+// ein GET, das Prefetcher/Crawler gefahrlos aufrufen dürfen.
+export async function POST(req: NextRequest) {
   const authResult = checkCronAuth(req);
   if (authResult) return authResult;
 
@@ -76,7 +109,10 @@ export async function GET(req: NextRequest) {
   const errors: string[] = [];
 
   for (const order of candidates) {
+    // Dauerhaft unverarbeitbar (User gelöscht/ohne E-Mail) → Marker setzen,
+    // sonst blockiert die Order das Fenster für immer (s. markReviewSkipped).
     if (!order.user?.email) {
+      await markReviewSkipped(order.id, "kein User bzw. keine E-Mail-Adresse");
       skipped++;
       continue;
     }
@@ -103,7 +139,13 @@ export async function GET(req: NextRequest) {
         };
       });
 
+    // Auch dauerhaft: ohne ein einziges Item mit productId (Produkte
+    // hard-deleted → SET NULL) gibt es nie etwas zu bewerten.
     if (products.length === 0) {
+      await markReviewSkipped(
+        order.id,
+        "keine bewertbaren Produkte (Produkte gelöscht)",
+      );
       skipped++;
       continue;
     }
@@ -143,5 +185,12 @@ export async function GET(req: NextRequest) {
       errors: errors.slice(0, 10),
     },
   });
+}
+
+// GET bleibt nur als Alias für die bestehende VPS-Crontab (curl ohne
+// -X POST sendet GET). Sobald die Crontab auf POST umgestellt ist, kann
+// dieser Export ersatzlos entfallen.
+export async function GET(req: NextRequest) {
+  return POST(req);
 }
 

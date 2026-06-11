@@ -6,10 +6,15 @@ on:
   pull_request:
     branches: [main]
 
-# Prevent parallel deploys — only one deploy at a time
+# Concurrency pro Ref:
+#  - Pushes auf main teilen sich die Gruppe "...-refs/heads/main" → Deploys
+#    bleiben strikt serialisiert (queuen, werden NIE mittendrin gecancelt).
+#  - Jeder PR bekommt seine eigene Gruppe → PRs blockieren weder einander
+#    noch den Deploy. Veraltete PR-Läufe (neuer Push auf denselben PR)
+#    werden gecancelt, um Runner zu sparen.
 concurrency:
-  group: deploy
-  cancel-in-progress: false
+  group: ci-deploy-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   REGISTRY: ghcr.io
@@ -34,6 +39,13 @@ jobs:
       - run: npx prisma generate
       - run: npm run lint
       - run: npx tsc --noEmit
+
+      # Nicht-blockierend: meldet bekannte CVEs in Prod-Dependencies im Log,
+      # ohne PRs/Deploys an (oft nicht sofort fixbaren) Advisories scheitern
+      # zu lassen. Bewusst nur --omit=dev: devDeps laufen nie in Produktion.
+      - name: npm audit (prod deps, non-blocking)
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
 
   # ──────────────────────────────────────────────
   # 2. Unit & Component Tests
@@ -116,8 +128,9 @@ jobs:
       STRIPE_SECRET_KEY: sk_test_dummy
       STRIPE_WEBHOOK_SECRET: whsec_dummy
       RESEND_API_KEY: re_dummy
-      MAIL_FROM_ADDRESS: noreply@example.com
-      MAIL_FROM_NAME: ChromePeps
+      # src/lib/mail/client.ts liest MAIL_FROM (+ optional MAIL_REPLY_TO) —
+      # die früheren MAIL_FROM_ADDRESS/MAIL_FROM_NAME existieren im Code nicht.
+      MAIL_FROM: "ChromePeps <noreply@example.com>"
       CRON_SECRET: dummy
       CI: "true"
     steps:
@@ -142,6 +155,41 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # ──────────────────────────────────────────────
+  # 3b. Docker-Build-Check (nur PRs, ohne Push)
+  # ──────────────────────────────────────────────
+  # Vorher lief der Docker-Build erst NACH dem Merge auf main — ein PR
+  # konnte den Build brechen (Dockerfile, prisma generate, next build im
+  # Container) und das fiel erst beim Deploy-Lauf auf. Dieser Job baut das
+  # Image auf PRs mit identischem Kontext/Dockerfile, pusht aber nichts.
+  # Sentry-Build-Args fehlen bewusst: das Dockerfile behandelt fehlende
+  # Tokens als No-op (kein Source-Map-Upload) — so funktioniert der Job
+  # auch für Fork-PRs ohne Secret-Zugriff.
+  docker-build-check:
+    needs: lint-and-typecheck
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: false
+          tags: chromepeps:pr-check
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_APP_URL=https://chromepeps.com
 
   # ──────────────────────────────────────────────
   # 4. Build Docker image + push to GHCR

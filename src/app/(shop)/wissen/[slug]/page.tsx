@@ -1,6 +1,8 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
 import { ArticleCard, type ArticleCardData } from "@/components/wissen/article-card";
@@ -31,15 +33,26 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+// React cache(): generateMetadata und die Page liefen vorher als ZWEI
+// separate Queries auf dieselbe blog_posts-Zeile (Metadata mit schlankem
+// select, Page mit vollem include). Ein gemeinsamer Loader mit cache()
+// dedupliziert pro Request auf EINEN Query — die Metadata liest ihre
+// Felder einfach aus der ohnehin geladenen vollen Zeile.
+const getPost = cache(async (slug: string) =>
+  db.blogPost.findUnique({
+    where: { slug },
+    include: { category: true, author: true },
+  }),
+);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await db.blogPost.findUnique({
-    where: { slug },
-    select: { title: true, excerpt: true, seoTitle: true, seoDescription: true, coverImage: true, publishedAt: true },
-  });
+  const post = await getPost(slug);
   if (!post || !post.publishedAt) return { title: "Artikel nicht gefunden" };
 
-  const title = post.seoTitle ?? `${post.title} | ChromePeps Wissen`;
+  // Kein "| ChromePeps"-Suffix — den hängt das title-Template des
+  // Root-Layouts automatisch an (sonst doppelter Brand-Suffix).
+  const title = post.seoTitle ?? `${post.title} · Wissen`;
   const description = post.seoDescription ?? post.excerpt;
   return {
     title,
@@ -62,10 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function WissenArticlePage({ params }: Props) {
   const { slug } = await params;
-  const post = await db.blogPost.findUnique({
-    where: { slug },
-    include: { category: true, author: true },
-  });
+  const post = await getPost(slug);
   if (!post || !post.publishedAt) notFound();
 
   // Verwandte Posts: gleiche Kategorie, ohne den aktuellen, max 3.
@@ -211,13 +221,28 @@ export default async function WissenArticlePage({ params }: Props) {
         {/* Cover */}
         <div className="container pb-10">
           {post.coverImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={post.coverImage}
-              alt={post.title}
-              className="w-full rounded-sm"
-              style={{ aspectRatio: "21/9", objectFit: "cover" }}
-            />
+            // next/image statt raw <img>: das Cover ist das LCP-Element
+            // des Artikels — der Optimizer liefert AVIF/WebP in der
+            // passenden Breite statt des Original-Uploads (oft >1 MB).
+            // `priority` lädt eager + setzt fetchpriority="high" + Preload-
+            // Hint. Cover-URLs kommen aus /api/upload und sind lokale
+            // "/uploads/…"-Pfade (Seed-Altbestände: Cloudinary/Unsplash,
+            // beide bereits in images.remotePatterns) — keine Config-
+            // Änderung nötig. sizes: Container ist auf 1400px gedeckelt
+            // (2rem Padding → ~1336px Bildbreite).
+            <div
+              className="relative w-full overflow-hidden rounded-sm"
+              style={{ aspectRatio: "21/9" }}
+            >
+              <Image
+                src={post.coverImage}
+                alt={post.title}
+                fill
+                priority
+                sizes="(min-width: 1400px) 1336px, 100vw"
+                className="object-cover"
+              />
+            </div>
           ) : (
             <CoverPlaceholder
               variant="v3"

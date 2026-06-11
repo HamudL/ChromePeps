@@ -20,13 +20,17 @@ import { checkCronAuth } from "@/lib/cron-auth";
  * versendet — Admin bekommt nur dann Alerts wenn was zu tun ist.
  *
  * Trigger via VPS-Crontab täglich um 8 Uhr:
- *   0 8 * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
+ *   0 8 * * * curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" \
  *     https://chromepeps.com/api/cron/inventory-alerts
  *
  * AUDIT_REPORT_v3 §4.8.
  */
 
-export async function GET(req: NextRequest) {
+// POST ist der primäre Handler: der Endpoint hat Side-Effects (Mail-
+// Versand) — per HTTP-Semantik gehört das nicht hinter ein GET, das
+// Prefetcher/Crawler/Monitoring-Tools gefahrlos aufrufen dürfen.
+// (Die Cron-Auth schützt zwar, aber die Methode soll die Semantik tragen.)
+export async function POST(req: NextRequest) {
   const authResult = checkCronAuth(req);
   if (authResult) return authResult;
 
@@ -113,8 +117,13 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  // Erster Admin ins To, alle weiteren als BCC — vorher standen sämtliche
+  // Admin-Adressen sichtbar nebeneinander im To-Header und jeder Empfänger
+  // sah die privaten Adressen der anderen.
+  const [primaryRecipient, ...bccRecipients] = recipients;
   const result = await sendInventoryAlertEmail({
-    to: recipients,
+    to: primaryRecipient,
+    bcc: bccRecipients.length > 0 ? bccRecipients : undefined,
     items,
   });
 
@@ -127,5 +136,12 @@ export async function GET(req: NextRequest) {
       ...(result.success ? {} : { error: result.error }),
     },
   });
+}
+
+// GET bleibt nur als Alias für die bestehende VPS-Crontab (curl ohne
+// -X POST sendet GET). Sobald die Crontab auf POST umgestellt ist, kann
+// dieser Export ersatzlos entfallen.
+export async function GET(req: NextRequest) {
+  return POST(req);
 }
 

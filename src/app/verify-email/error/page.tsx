@@ -9,10 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { APP_NAME } from "@/lib/constants";
-
 export const metadata = {
-  title: `Best\u00e4tigung fehlgeschlagen | ${APP_NAME}`,
+  // Kein "| ChromePeps"-Suffix - kommt vom title-Template des Root-Layouts
+  // (sonst doppelter Brand-Suffix).
+  title: "Best\u00e4tigung fehlgeschlagen",
 };
 
 const REASON_MESSAGES: Record<string, string> = {

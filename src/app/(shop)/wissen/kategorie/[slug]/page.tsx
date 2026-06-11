@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -29,14 +30,18 @@ interface Props {
   searchParams: Promise<{ sort?: string; page?: string }>;
 }
 
+// React cache(): generateMetadata und die Page liefen vorher als zwei
+// separate Queries auf dieselbe blog_categories-Zeile. Gemeinsamer
+// Loader + cache() dedupliziert pro Request auf einen Query.
+const getCategoryBySlug = cache(async (slug: string) =>
+  db.blogCategory.findUnique({ where: { slug } }),
+);
+
 export async function generateMetadata({
   params,
 }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const cat = await db.blogCategory.findUnique({
-    where: { slug },
-    select: { name: true, description: true },
-  });
+  const cat = await getCategoryBySlug(slug);
   if (!cat) return { title: "Kategorie nicht gefunden" };
   return {
     title: `${cat.name} · Wissen`,
@@ -57,9 +62,7 @@ export default async function WissenCategoryPage({
       : "neueste";
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
 
-  const category = await db.blogCategory.findUnique({
-    where: { slug },
-  });
+  const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
   // Sortierung pro URL-State:

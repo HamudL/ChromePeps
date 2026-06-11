@@ -4,6 +4,7 @@
 // pro N Sekunden statt pro Request) ohne Build-Time-Abhängigkeit.
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -21,6 +22,7 @@ import {
   RESEARCH_DISCLAIMER,
   HOMEPAGE_CACHE,
   HOMEPAGE_CACHE_TTL,
+  BANK_TRANSFER_ENABLED,
 } from "@/lib/constants";
 import { cacheGet, cacheSet } from "@/lib/redis";
 import { ProductCard } from "@/components/shop/product-card";
@@ -39,6 +41,12 @@ import { TrustBar } from "@/components/shop/trust-bar";
 import { LiveMetrics } from "@/components/shop/live-metrics";
 import { RecentlyViewed } from "@/components/shop/recently-viewed";
 import { SectionBlur } from "@/components/layout/section-blur";
+
+// Title/Description erben vom Root-Layout — hier nur das Canonical der
+// Startseite (das Root-Layout setzt bewusst KEIN globales canonical).
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 async function getBestsellers(): Promise<ProductCardData[]> {
   const cached = await cacheGet<ProductCardData[]>(HOMEPAGE_CACHE.BESTSELLERS);
@@ -266,7 +274,12 @@ export default async function HomePage() {
               {
                 icon: CreditCard,
                 title: "Sichere Zahlung",
-                desc: "Stripe, Apple Pay, Google Pay oder Banküberweisung.",
+                // Zahlarten-Aufzählung MUSS dem Vorkasse-Schalter folgen —
+                // eine beworbene, im Checkout aber nicht angebotene
+                // Zahlungsart ist irreführend (abmahnfähig).
+                desc: BANK_TRANSFER_ENABLED
+                  ? "Stripe, Apple Pay, Google Pay oder Banküberweisung."
+                  : "Stripe, Apple Pay oder Google Pay.",
                 link: "/zahlung",
                 linkText: "Zahlungsoptionen",
               },

@@ -42,6 +42,9 @@ export async function sendPasswordResetEmail(
     to: input.to,
     subject: "Passwort zur\u00fccksetzen",
     tag: "password-reset",
+    // Wird im Forgot-Password-Request awaited \u2014 kein Retry-Backoff,
+    // sonst h\u00e4ngt der User bei einem Resend-Ausfall ~6s am Spinner.
+    retries: 0,
     react: PasswordResetEmail({
       name: input.name,
       resetUrl: input.resetUrl,
@@ -105,18 +108,25 @@ export async function sendOrderConfirmationEmail(
       totalInCents: input.totalInCents,
       paymentMethod: input.paymentMethod,
       shippingAddress: input.shippingAddress,
-      bankDetails: isBank
-        ? {
-            accountHolder: BANK_DETAILS.accountHolder,
-            iban: BANK_DETAILS.iban,
-            bic: BANK_DETAILS.bic,
-            bankName: BANK_DETAILS.bankName,
-          }
-        : undefined,
+      // Bankdaten nur mitsenden, wenn tatsächlich eine Bankverbindung
+      // konfiguriert ist — sonst stünden leere Felder in der Mail.
+      bankDetails:
+        isBank && BANK_DETAILS.iban
+          ? {
+              accountHolder: BANK_DETAILS.accountHolder,
+              iban: BANK_DETAILS.iban,
+              bic: BANK_DETAILS.bic,
+              bankName: BANK_DETAILS.bankName,
+            }
+          : undefined,
       hasCoaAttachments: attachments.length > 0,
     }),
   });
 }
+
+// Obergrenze für die Roh-Byte-Summe aller COA-Anhänge einer Mail —
+// Begründung im Doc-Kommentar von loadCoaAttachments ("Größen-Budget").
+const MAX_TOTAL_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
 /**
  * Lädt COA-PDFs als Mail-Anhänge passend zu den bestellten Items.
@@ -132,6 +142,13 @@ export async function sendOrderConfirmationEmail(
  * Dedup: wenn mehrere Items denselben (productId, dosage) treffen, wird
  * der Anhang nur einmal verschickt — mehrfach den gleichen PDF an die
  * gleiche Mail anzuhängen ist nur Lärm.
+ *
+ * Größen-Budget: Resend rejected Mails über ~40 MB Gesamtgröße — und
+ * Anhänge wachsen durch Base64-Encoding nochmal um ~37 %. Wir kappen die
+ * Anhang-Summe daher bei 25 MB Rohdaten (≈ 34 MB encodiert + Mail-Body
+ * bleibt sicher unter dem Limit). Lieber fehlen einzelne COAs, als dass
+ * die komplette Bestellbestätigung rejected wird. Solange mindestens ein
+ * Anhang drankommt, bleibt `hasCoaAttachments` in der Mail true.
  */
 async function loadCoaAttachments(
   items: Array<{ productId: string; variantName: string | null }>,
@@ -230,6 +247,8 @@ async function loadCoaAttachments(
 
     const attachments: import("./client").SendMailAttachment[] = [];
     const seenAttachmentKeys = new Set<string>(); // dedupe by (productId, COA.dosage)
+    // Laufende Anhang-Summe gegen das 25-MB-Budget (s. Doc-Kommentar oben).
+    let totalAttachmentBytes = 0;
 
     for (const target of targets) {
       const productCoas = coasByProduct.get(target.productId) ?? [];
@@ -256,6 +275,16 @@ async function loadCoaAttachments(
           continue;
         }
         const content = await readFile(filePath);
+        // Budget-Check: passt dieser PDF nicht mehr rein, überspringen wir
+        // ihn und probieren die nächsten weiter — ein späterer kleinerer
+        // COA kann das Restbudget noch nutzen. Übersprungene landen im Log.
+        if (totalAttachmentBytes + content.length > MAX_TOTAL_ATTACHMENT_BYTES) {
+          console.warn(
+            `[mail] COA attachment budget exceeded (${totalAttachmentBytes} of ${MAX_TOTAL_ATTACHMENT_BYTES} bytes used), skipping: ${matched.pdfUrl} (${content.length} bytes)`,
+          );
+          continue;
+        }
+        totalAttachmentBytes += content.length;
         const safeName = matched.product.name.replace(/[^a-zA-Z0-9-]/g, "_");
         const dosageSuffix = matched.dosage
           ? `-${matched.dosage.replace(/[^a-zA-Z0-9]/g, "")}`
@@ -293,6 +322,9 @@ export async function sendEmailVerifyEmail(
     to: input.to,
     subject: "Bitte best\u00e4tigen Sie Ihre E-Mail-Adresse",
     tag: "email-verify",
+    // Wird in Registrierung/resend-verification awaited \u2014 kein
+    // Retry-Backoff (User-facing Latenz); Resend-Button existiert.
+    retries: 0,
     react: EmailVerifyEmail({
       name: input.name,
       verifyUrl: input.verifyUrl,
@@ -363,6 +395,11 @@ export async function sendReviewRequestEmail(
 
 export interface SendInventoryAlertInput {
   to: string | string[];
+  /**
+   * Weitere Empfänger als Blind-Copy — der Cron schickt an mehrere Admins,
+   * ohne deren Adressen gegenseitig im To-Header offenzulegen.
+   */
+  bcc?: string | string[];
   items: LowStockItem[];
   adminUrl?: string;
 }
@@ -381,6 +418,7 @@ export async function sendInventoryAlertEmail(
 
   return sendMail({
     to: input.to,
+    bcc: input.bcc,
     subject,
     tag: "inventory-alert",
     react: InventoryAlertEmail({

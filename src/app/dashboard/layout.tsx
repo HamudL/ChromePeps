@@ -7,7 +7,9 @@ import { EmailVerifyBanner } from "@/components/dashboard/email-verify-banner";
 import { ResearchBanner } from "@/components/layout/research-banner";
 
 export const metadata = {
-  title: `Mein Konto | ${APP_NAME}`,
+  // Kein "| ChromePeps"-Suffix — den hängt das title-Template des
+  // Root-Layouts automatisch an (sonst doppelter Brand-Suffix).
+  title: "Mein Konto",
 };
 
 export default async function DashboardLayout({

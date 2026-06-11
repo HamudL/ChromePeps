@@ -3,6 +3,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import {
   verifyTotpCode,
   generateRecoveryCodes,
@@ -34,6 +35,15 @@ export async function POST(req: NextRequest) {
       { status: 401 },
     );
   }
+
+  // Sehr eng: Jeder erfolgreiche Call invalidiert ALLE alten Recovery-
+  // Codes — und die Passwort/TOTP-Prüfungen unten sollen nicht als
+  // Brute-Force-Orakel missbraucht werden können.
+  const limit = await rateLimit(`2fa-recovery:${session.user.id}`, {
+    maxRequests: 3,
+    windowMs: 3_600_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);

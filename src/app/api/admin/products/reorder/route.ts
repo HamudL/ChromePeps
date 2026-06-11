@@ -63,7 +63,11 @@ export async function PATCH(req: NextRequest) {
 
   // Invalidiere alle Listen-Caches und alle Produkt-Detail-Caches.
   // Pattern-Match weil Detail-Keys den Slug im Suffix tragen.
-  await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}*`);
+  // `:*` (mit Doppelpunkt) wie an allen anderen Invalidierungs-Stellen:
+  // Listen-Keys sind immer "products:list:<suffix>", einen nackten
+  // "products:list"-Key gibt es nicht — die Variante ohne `:` war
+  // Pattern-Drift.
+  await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("products:detail:*");
   // Reorder verändert die Top-4-Bestseller-Reihenfolge auf der Homepage.
   await cacheDelPattern("homepage:*");

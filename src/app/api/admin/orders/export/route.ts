@@ -36,6 +36,19 @@ function toCsvRow(cells: CsvCell[]): string {
   return cells.map(csvEscape).join(";");
 }
 
+/**
+ * CSV-Formula-Injection-Mitigation: Excel/LibreOffice interpretieren
+ * Zellen, die mit `=`, `+`, `-`, `@`, Tab oder CR beginnen, als Formel —
+ * ein Kunde könnte sich über Name/Adresse z.B. `=HYPERLINK(...)` in den
+ * Admin-Export schmuggeln. Führendes `'` erzwingt Text-Interpretation
+ * (Standard-Mitigation). Nur auf Freitext-Felder anwenden, nicht auf
+ * reine Zahlen.
+ */
+function csvSafe(value: string | null | undefined): string {
+  if (!value) return "";
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
 function formatCents(cents: number): string {
   // German decimal format — Excel parses "12,34" as a number in de locale.
   return (cents / 100).toFixed(2).replace(".", ",");
@@ -160,23 +173,23 @@ export async function GET(req: NextRequest) {
         formatDate(order.createdAt),
         // Prefer the account's name/email; fall back to guestName/
         // guestEmail for guest orders so the export stays complete.
-        order.user?.name ?? order.guestName ?? "",
-        order.user?.email ?? order.guestEmail ?? "",
+        csvSafe(order.user?.name ?? order.guestName),
+        csvSafe(order.user?.email ?? order.guestEmail),
         order.status,
         order.paymentStatus,
         order.paymentMethod,
-        itemsDescription,
+        csvSafe(itemsDescription),
         order.items.length,
         formatCents(order.subtotalInCents),
         formatCents(order.discountInCents),
         formatCents(order.shippingInCents),
         formatCents(order.taxInCents),
         formatCents(order.totalInCents),
-        order.promoCode ?? "",
-        order.shippingAddress?.city ?? "",
-        order.shippingAddress?.postalCode ?? "",
-        order.shippingAddress?.country ?? "",
-        order.trackingNumber ?? "",
+        csvSafe(order.promoCode),
+        csvSafe(order.shippingAddress?.city),
+        csvSafe(order.shippingAddress?.postalCode),
+        csvSafe(order.shippingAddress?.country),
+        csvSafe(order.trackingNumber),
       ])
     );
   }

@@ -1,7 +1,6 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useWishlistStore } from "@/store/wishlist-store";
 
@@ -24,15 +23,11 @@ export function WishlistButton({ productId, className }: WishlistButtonProps) {
       variant="ghost"
       size="icon"
       className={className}
-      onClick={(e) => {
-        e.preventDefault();
-        toggle(productId);
-        if (active) {
-          toast("Von Merkliste entfernt");
-        } else {
-          toast.success("Zur Merkliste hinzugefügt");
-        }
-      }}
+      // Kein preventDefault mehr nötig: der Button liegt in der
+      // ProductCard nicht mehr IM Link, sondern daneben (z-10 über dem
+      // Karten-Overlay). Die Toasts feuert der Store erst NACH der
+      // Server-Antwort — so sieht ein Gast (401) keinen falschen Erfolg.
+      onClick={() => toggle(productId)}
       aria-label={active ? "Von Merkliste entfernen" : "Zur Merkliste hinzufügen"}
     >
       <Heart

@@ -10,10 +10,13 @@ import { EmailLayout } from "./components/email-layout";
 
 interface NewsletterConfirmEmailProps {
   confirmUrl: string;
+  /** HMAC-gesicherter One-Click-Abmelde-Link (Pflicht in jeder Newsletter-Mail). */
+  unsubscribeUrl?: string;
 }
 
 export function NewsletterConfirmEmail({
   confirmUrl,
+  unsubscribeUrl,
 }: NewsletterConfirmEmailProps) {
   return (
     <EmailLayout preview="Newsletter-Anmeldung best&auml;tigen">
@@ -57,6 +60,16 @@ export function NewsletterConfirmEmail({
         Sie haben sich nicht angemeldet? Dann k&ouml;nnen Sie diese E-Mail
         einfach ignorieren. Ohne Best&auml;tigung tragen wir Sie nicht in den
         Verteiler ein.
+        {unsubscribeUrl && (
+          <>
+            {" "}
+            Alternativ k&ouml;nnen Sie Ihre Adresse{" "}
+            <Link href={unsubscribeUrl} className="text-zinc-700 underline">
+              hier dauerhaft austragen
+            </Link>
+            .
+          </>
+        )}
       </Text>
     </EmailLayout>
   );

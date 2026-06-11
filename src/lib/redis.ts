@@ -7,9 +7,15 @@ const globalForRedis = globalThis as unknown as {
 function createRedisClient(): Redis {
   const client = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
     maxRetriesPerRequest: 3,
+    // Unbegrenzte Reconnects mit Exponential-Backoff (Cap 5 s). Vorher:
+    // `times > 3 → null` — null heißt bei ioredis "gib endgültig auf",
+    // der Client verbindet danach NIE wieder. Ein Redis-Neustart oder
+    // kurzer Netz-Blip (> ~1,2 s) ließ Cache UND Rate-Limiter bis zum
+    // Container-Neustart tot zurück. Die Request-Ebene bleibt durch
+    // maxRetriesPerRequest=3 + die graceful cacheGet/Set/Del-Helper
+    // geschützt — einzelne Aufrufe hängen also nicht am Backoff.
     retryStrategy(times) {
-      if (times > 3) return null;
-      return Math.min(times * 200, 2000);
+      return Math.min(times * 200, 5000);
     },
     // NOTE: removed lazyConnect — Redis must auto-connect on startup
   });

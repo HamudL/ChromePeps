@@ -30,7 +30,6 @@ export default async function TwoFactorSettingsPage() {
     where: { id: session.user.id },
     select: {
       id: true,
-      email: true,
       role: true,
       totpEnabledAt: true,
       totpRecoveryCodes: true,
@@ -112,7 +111,6 @@ export default async function TwoFactorSettingsPage() {
 
       <TwoFactorSetupClient
         isEnabled={isEnabled}
-        userEmail={user.email}
         remainingRecoveryCodes={remainingRecoveryCodes}
       />
     </div>

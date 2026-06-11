@@ -39,7 +39,6 @@ import {
 
 interface Props {
   isEnabled: boolean;
-  userEmail: string;
   remainingRecoveryCodes: number;
 }
 

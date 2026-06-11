@@ -63,11 +63,15 @@ export function Labor({ data }: { data: UeberUnsData }) {
           </div>
         </div>
 
-        <HplcFigure
-          lotNumber={data.lotNumber}
-          purityComma={data.purityComma}
-          testDate={data.testDate}
-        />
+        {/* Chromatogramm-Card nur mit ECHTEN Showcase-Daten rendern —
+            ohne veröffentlichte COA keine fabrizierten Messwerte. */}
+        {data.lotNumber && data.purityComma && data.testDate && (
+          <HplcFigure
+            lotNumber={data.lotNumber}
+            purityComma={data.purityComma}
+            testDate={data.testDate}
+          />
+        )}
       </div>
     </section>
   );

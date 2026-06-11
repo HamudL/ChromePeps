@@ -7,6 +7,7 @@ import { updateProductSchema } from "@/validators/product";
 import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
 import { slugify } from "@/lib/utils";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 
 // GET /api/products/[slug] — public (cached) or admin (uncached, includes inactive)
 export async function GET(
@@ -17,8 +18,7 @@ export async function GET(
 
   // Rate-Limit pro IP — nicht-existente Slugs erzeugen sonst beliebig viele
   // Cache-Misses + DB-Hits (inkl. reviews-Subquery).
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = getClientIp(req.headers);
   const rl = await rateLimit(`product-detail:${ip}`, {
     maxRequests: 60,
     windowMs: 60_000,
@@ -134,7 +134,8 @@ export async function PATCH(
   }
 
   const { slug } = await params;
-  const body = await req.json();
+  // Kaputtes JSON → 400 statt unbehandelter 500.
+  const body = (await req.json().catch(() => null)) ?? {};
 
   const existing = await db.product.findUnique({ where: { slug } });
   if (!existing) {
@@ -274,26 +275,9 @@ export async function PATCH(
   }
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("homepage:*");
-
-  // Cart-Cache der betroffenen User invalidieren. Der gecachte Cart-
-  // Snapshot enthält stock/price/isActive/name/image — alles was sich
-  // bei einem Product-PATCH ändern kann. Ohne Invalidierung würde der
-  // User im Cart noch die alten Werte sehen, der Server-Side-Stock-
-  // Check beim Checkout würde dann ggf. den Order rejecten — UX-
-  // verwirrend ("Add to Cart" funktionierte aber Checkout sagt
-  // out-of-stock).
-  //
-  // Bewusst nur die betroffenen Carts statt cart:* — bei vielen
-  // gleichzeitig aktiven Carts blast-radius gering halten.
-  const affectedCarts = await db.cart.findMany({
-    where: { items: { some: { productId: id } } },
-    select: { userId: true },
-  });
-  if (affectedCarts.length > 0) {
-    await Promise.all(
-      affectedCarts.map((c) => cacheDel(CACHE_KEYS.CART(c.userId))),
-    );
-  }
+  // Shop-Kategorie-Liste: isActive-Toggle oder Kategorie-Wechsel ändern
+  // ihren Active-Product-Count.
+  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
 
   revalidatePath(`/products/${newSlug ?? slug}`);
   revalidatePath("/products");
@@ -327,25 +311,13 @@ export async function DELETE(
     );
   }
 
-  // Carts mit diesem Produkt VOR dem Delete sammeln — danach sind die
-  // CartItems via Cascade weg und der Lookup würde nichts mehr finden.
-  // Cache muss aber auch dann invalidiert werden, sonst zeigt der
-  // gecachte Snapshot noch das nicht mehr existierende Item.
-  const affectedCarts = await db.cart.findMany({
-    where: { items: { some: { productId: product.id } } },
-    select: { userId: true },
-  });
-
   await db.product.delete({ where: { slug } });
 
   await cacheDel(CACHE_KEYS.PRODUCT_DETAIL(slug));
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("homepage:*");
-  if (affectedCarts.length > 0) {
-    await Promise.all(
-      affectedCarts.map((c) => cacheDel(CACHE_KEYS.CART(c.userId))),
-    );
-  }
+  // Shop-Kategorie-Liste: Hard-Delete senkt ihren Active-Product-Count.
+  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
   revalidatePath(`/products/${slug}`);
   revalidatePath("/products");
 

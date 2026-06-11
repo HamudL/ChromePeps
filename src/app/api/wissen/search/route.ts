@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 
 /**
  * GET /api/wissen/search?q=...
@@ -26,7 +27,7 @@ import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 const RESULTS_PER_RESOURCE = 5;
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
+  const ip = getClientIp(req.headers);
   const limit = await rateLimit(`wissen:search:${ip}`, {
     maxRequests: 30,
     windowMs: 60_000,

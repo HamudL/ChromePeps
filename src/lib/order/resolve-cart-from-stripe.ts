@@ -6,21 +6,30 @@ import type { CartForOrder } from "@/lib/order/create-from-stripe";
  * Resolve the cart-like object that `createOrderFromStripeSession`
  * needs, from a Stripe session + metadata.
  *
- *   - Authenticated orders: read the user's Cart row from the DB
- *     and return it with its id (so the caller's transaction can
- *     clear it after the order is committed).
+ * PRIMÄRE Quelle ist der `guestItems`-Metadata-Snapshot, den
+ * /api/stripe/checkout beim Erstellen der Session stempelt — für
+ * Gäste UND Auth-User. Das ist exakt die Item-Liste, die bepreist
+ * und bezahlt wurde. Der Live-Cart des Users ist dafür ungeeignet:
+ * zwischen Stripe-Redirect und Webhook (Sekunden bis Minuten) kann
+ * der User den Cart in einem zweiten Tab mutieren — die Order
+ * enthielte dann unbezahlte Items bzw. es fehlten bezahlte (TOCTOU).
  *
- *   - Guest orders: no server-side cart exists. The checkout route
- *     stamped a compact `guestItems` JSON blob into the session
- *     metadata (see src/app/api/stripe/checkout/route.ts). We
- *     parse that blob, look up the referenced products + variants,
- *     and return a synthetic cart without an `id` (so the caller
- *     knows there's nothing to clear).
+ *   - Auth-Orders: Items aus dem Snapshot; die Cart-Row wird nur
+ *     noch nachgeschlagen, um ihre `id` fürs Leeren nach Order-
+ *     Erstellung mitzugeben.
+ *   - Gast-Orders: wie bisher Snapshot-only, ohne `id`.
+ *   - Legacy-Fallback: Sessions ohne Snapshot (vor Phase 9 erstellt)
+ *     lesen wie früher den Live-Cart.
+ *
+ * Sicherheit: Varianten werden nur akzeptiert, wenn sie wirklich zum
+ * referenzierten Produkt gehören (`variant.productId === p`) — sonst
+ * könnte ein manipulierter Checkout ein teures Produkt zum Preis der
+ * Billig-Variante eines anderen Produkts kaufen.
  *
  * Returns null when:
- *   - the order type is guest but `guestItems` metadata is missing
- *     or malformed, OR
- *   - the order type is user but the user's Cart row has no items
+ *   - weder Snapshot noch (für Auth) ein nicht-leerer Live-Cart
+ *     existiert, ODER
+ *   - der Snapshot nur auf gelöschte/fremde Produkte zeigt
  *
  * Callers should treat null as "payment landed but the cart was
  * empty / stale" and either short-circuit (the webhook does — it
@@ -32,7 +41,22 @@ export async function resolveCartFromStripeSession(
 ): Promise<CartForOrder | null> {
   const userId = stripeSession.metadata?.userId;
 
-  // ---------- Authenticated order ----------
+  // ---------- Snapshot-Pfad (primär, Gast + Auth) ----------
+  const fromSnapshot = await resolveFromMetadataSnapshot(stripeSession);
+  if (fromSnapshot) {
+    if (!userId) return fromSnapshot;
+    // Auth: Cart-id fürs Leeren anhängen (falls die Row noch existiert).
+    const cart = await db.cart.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    return cart ? { ...fromSnapshot, id: cart.id } : fromSnapshot;
+  }
+
+  // ---------- Legacy-Fallback: Live-Cart (nur Auth) ----------
+  // Erreicht nur Sessions, die VOR dem Snapshot-Stamping erstellt
+  // wurden (oder deren Snapshot unlesbar ist). Bewusst beibehalten,
+  // damit in-flight Checkouts über ein Deploy hinweg nicht stranden.
   if (userId) {
     const cart = await db.cart.findUnique({
       where: { userId },
@@ -64,17 +88,14 @@ export async function resolveCartFromStripeSession(
         })),
       };
     }
-    // Cart fehlt — typischer Fall: User hat sein Konto nach dem
-    // Stripe-Redirect gelöscht, Cascade hat den Cart entfernt. Fall
-    // through zum metadata-Snapshot-Fallback unten, der seit Phase 9
-    // auch für Auth-User gestempelt wird.
   }
 
-  // ---------- Guest order / Auth-Recovery ----------
-  // Kein guestEmail-Check mehr — der Auth-Recovery-Pfad triggert
-  // diesen Block ohne guestEmail in der metadata. Identifikation
-  // läuft dann über stripeSession.customer_details/email im
-  // Order-Helper; hier rekonstruieren wir nur die Items.
+  return null;
+}
+
+async function resolveFromMetadataSnapshot(
+  stripeSession: Stripe.Checkout.Session
+): Promise<CartForOrder | null> {
   const rawItemsJson = stripeSession.metadata?.guestItems;
   if (typeof rawItemsJson !== "string" || !rawItemsJson) return null;
 
@@ -124,6 +145,7 @@ export async function resolveCartFromStripeSession(
           where: { id: { in: variantIds } },
           select: {
             id: true,
+            productId: true,
             name: true,
             sku: true,
             priceInCents: true,
@@ -139,6 +161,8 @@ export async function resolveCartFromStripeSession(
     if (!product) return [];
     const variant = entry.v ? variantMap.get(entry.v) ?? null : null;
     if (entry.v && !variant) return [];
+    // Varianten-Mixing abwehren: Variante muss zum Produkt gehören.
+    if (variant && variant.productId !== entry.p) return [];
     return [
       {
         productId: entry.p,
@@ -162,6 +186,6 @@ export async function resolveCartFromStripeSession(
 
   if (items.length === 0) return null;
 
-  // No `id` — signals "no server-side cart to clear".
+  // Ohne `id` — der Caller entscheidet, ob ein Cart zu leeren ist.
   return { items };
 }

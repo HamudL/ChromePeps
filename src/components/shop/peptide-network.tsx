@@ -52,6 +52,22 @@ export function PeptideNetwork({
     let isVisible = true;
     let sized = false;
 
+    // Rect-Cache mit Dirty-Flag: getBoundingClientRect() PRO FRAME (so
+    // lief es vorher) erzwingt einen synchronen Layout-Flush in jedem
+    // Tick — bei 60 fps der teuerste Einzelposten des Loops. Stattdessen
+    // messen wir nur, wenn sich etwas geändert haben kann:
+    //  - ResizeObserver  → Element-Größe (feuert auch initial beim
+    //    observe() — deckt "parents that size late" und HMR ab)
+    //  - window scroll   → rect.top/left verschieben sich beim Scrollen
+    //    (die Cursor-Konvertierung Window→Canvas hängt daran)
+    // Das Dirty-Flag verschiebt die Messung in den nächsten Tick, damit
+    // Scroll-Handler selbst keinen Layout-Thrash erzeugen.
+    let rect: DOMRect | null = null;
+    let rectDirty = true;
+    const markRectDirty = () => {
+      rectDirty = true;
+    };
+
     const seed = () => {
       const a = Math.random() * Math.PI * 2;
       const s = (0.2 + Math.random() * 0.3) * dpr;
@@ -78,23 +94,29 @@ export function PeptideNetwork({
     window.addEventListener("pointerleave", onLeave);
 
     const tick = () => {
-      // Self-size every frame (cheap: one getBoundingClientRect call). Robust
-      // across layout shifts, HMR, navigation, and parents that size late.
-      const rect = canvas.getBoundingClientRect();
-      const targetW = Math.round(rect.width * dpr);
-      const targetH = Math.round(rect.height * dpr);
-      if (targetW > 0 && targetH > 0) {
-        if (canvas.width !== targetW) canvas.width = targetW;
-        if (canvas.height !== targetH) canvas.height = targetH;
-        if (!sized) {
-          particles = Array.from({ length: count }, seed);
-          sized = true;
+      // Nur bei Dirty-Flag neu messen (Resize/Scroll/initial) — sonst
+      // den gecachten Rect nutzen. Spart den Layout-Flush pro Frame.
+      if (rectDirty || !rect) {
+        rect = canvas.getBoundingClientRect();
+        rectDirty = false;
+        const targetW = Math.round(rect.width * dpr);
+        const targetH = Math.round(rect.height * dpr);
+        if (targetW > 0 && targetH > 0) {
+          if (canvas.width !== targetW) canvas.width = targetW;
+          if (canvas.height !== targetH) canvas.height = targetH;
+          if (!sized) {
+            particles = Array.from({ length: count }, seed);
+            sized = true;
+          }
         }
       }
 
       const w = canvas.width;
       const h = canvas.height;
       if (w === 0 || h === 0 || !sized) {
+        // Noch keine Layout-Größe (Parent sized late) — beim nächsten
+        // Tick erneut messen, bis der ResizeObserver/Layout liefert.
+        rectDirty = true;
         raf = requestAnimationFrame(tick);
         return;
       }
@@ -183,6 +205,13 @@ export function PeptideNetwork({
     // Kick off immediately — don't wait for observers.
     startLoop();
 
+    // Rect-Invalidierung: ResizeObserver für Größenänderungen (feuert
+    // initial direkt nach observe()), Scroll-Listener für Positions-
+    // Drift. Beide setzen nur das Flag — gemessen wird im Tick.
+    const ro = new ResizeObserver(markRectDirty);
+    ro.observe(canvas);
+    window.addEventListener("scroll", markRectDirty, { passive: true });
+
     // Pause when off-screen. Purely optimization; loop already runs.
     const io = new IntersectionObserver(
       ([entry]) => {
@@ -204,6 +233,8 @@ export function PeptideNetwork({
     return () => {
       stopLoop();
       io.disconnect();
+      ro.disconnect();
+      window.removeEventListener("scroll", markRectDirty);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerleave", onLeave);

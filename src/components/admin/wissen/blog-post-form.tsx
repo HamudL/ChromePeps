@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageUpload } from "@/components/admin/image-upload";
+import { useDebounce } from "@/hooks/use-debounce";
 import { MarkdownEditor } from "./markdown-editor";
 import {
   ArticleLivePreview,
@@ -157,6 +158,16 @@ export function BlogPostForm({
       setSlug(slugify(title));
     }
   }, [title, slugManuallyEdited]);
+
+  // Markdown-Preview vom Tipp-Takt entkoppeln: ArticleLivePreview parst
+  // den Body per react-markdown — vorher bei JEDEM Keystroke im
+  // 28-Zeilen-Editor ein voller Reparse (+ TOC-Extraktion). Mit 300 ms
+  // Debounce parst während des Tippens nichts; erst die Tipp-Pause
+  // rendert die Vorschau nach. Debounce statt useDeferredValue, weil
+  // useDeferredValue den Parse nur depriorisiert, aber trotzdem pro
+  // Keystroke ausführt. Speichern (handleSubmit) nutzt weiterhin den
+  // undebounceden contentMdx-State — kein Datenverlust möglich.
+  const debouncedContentMdx = useDebounce(contentMdx, 300);
 
   const tags = useMemo(
     () =>
@@ -744,7 +755,7 @@ export function BlogPostForm({
             title={title}
             titleEmphasis={titleEmphasis || null}
             excerpt={excerpt}
-            contentMdx={contentMdx}
+            contentMdx={debouncedContentMdx}
             coverImage={coverImage}
             readingMinutes={readingMinutes}
             publishedAt={isPublished ? (publishedAt ?? new Date()) : null}

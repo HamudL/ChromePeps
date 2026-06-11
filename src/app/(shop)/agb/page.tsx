@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BANK_TRANSFER_ENABLED, SELLER_DETAILS } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Allgemeine Geschäftsbedingungen",
   description:
     "AGB für den Verkauf von Forschungspeptiden und Laborbedarf durch ChromePeps.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/agb" },
 };
+
+// Tatsächliches Stand-Datum der AGB — bewusst eine Konstante statt
+// new Date(): das Abrufdatum als "Stand" auszugeben ist rechtlich
+// falsch. Bei inhaltlichen Änderungen der AGB manuell aktualisieren!
+const AGB_STAND = "1. Juni 2026";
 
 export default function AgbPage() {
   return (
@@ -15,7 +22,7 @@ export default function AgbPage() {
         Allgemeine Geschäftsbedingungen
       </h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Stand: {new Date().toLocaleDateString("de-DE")}
+        Stand: {AGB_STAND}
       </p>
 
       <div className="space-y-6 text-sm leading-relaxed">
@@ -36,9 +43,12 @@ export default function AgbPage() {
 
         <section>
           <h2 className="text-lg font-semibold">§ 2 Vertragspartner</h2>
+          {/* Vertragspartner kommt zentral aus SELLER_DETAILS (env-basiert) —
+              identisch mit Impressum und Rechnungs-PDF. */}
           <p>
-            Der Kaufvertrag kommt zustande mit [TODO: Firmenname], [TODO:
-            Anschrift]. Weitere Informationen zu uns finden Sie im{" "}
+            Der Kaufvertrag kommt zustande mit {SELLER_DETAILS.companyName},{" "}
+            {SELLER_DETAILS.streetLine1}, {SELLER_DETAILS.postalCodeCity}.
+            Weitere Informationen zu uns finden Sie im{" "}
             <Link href="/impressum" className="underline">
               Impressum
             </Link>
@@ -101,19 +111,36 @@ export default function AgbPage() {
             Die Lieferung erfolgt, sofern nicht anders vereinbart, an die von
             Ihnen angegebene Lieferadresse. Die Lieferzeit beträgt, sofern beim
             jeweiligen Produkt nicht anders angegeben, innerhalb Deutschlands
-            2 bis 4 Werktage nach Zahlungseingang. Bei Zahlung per Vorkasse beginnt
-            die Lieferzeit einen Tag nach Erteilung des Zahlungsauftrages an das
-            überweisende Kreditinstitut.
+            2 bis 4 Werktage nach Zahlungseingang.
+            {BANK_TRANSFER_ENABLED && (
+              <>
+                {" "}
+                Bei Zahlung per Vorkasse beginnt die Lieferzeit einen Tag nach
+                Erteilung des Zahlungsauftrages an das überweisende
+                Kreditinstitut.
+              </>
+            )}
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold">§ 7 Zahlung</h2>
           <p>
-            Die Bezahlung erfolgt wahlweise per Vorkasse (Banküberweisung) oder
-            über den Zahlungsdienstleister Stripe (Kreditkarte). Bei Vorkasse
-            teilen wir Ihnen unsere Bankverbindung in der Auftragsbestätigung
-            mit; die Ware wird nach Eingang des Rechnungsbetrages versandt.
+            {BANK_TRANSFER_ENABLED ? (
+              <>
+                Die Bezahlung erfolgt wahlweise per Vorkasse (Banküberweisung)
+                oder über den Zahlungsdienstleister Stripe (Kreditkarte). Bei
+                Vorkasse teilen wir Ihnen unsere Bankverbindung in der
+                Auftragsbestätigung mit; die Ware wird nach Eingang des
+                Rechnungsbetrages versandt.
+              </>
+            ) : (
+              <>
+                Die Bezahlung erfolgt über den Zahlungsdienstleister Stripe
+                (Kredit-/Debitkarte). Die Ware wird nach erfolgreicher
+                Zahlungsfreigabe versandt.
+              </>
+            )}{" "}
             Weitere Informationen finden Sie auf der{" "}
             <Link href="/zahlung" className="underline">
               Seite &bdquo;Zahlung&ldquo;
@@ -163,7 +190,10 @@ export default function AgbPage() {
             insoweit, als nicht der gewährte Schutz durch zwingende
             Bestimmungen des Rechts des Staates, in dem der Verbraucher seinen
             gewöhnlichen Aufenthalt hat, entzogen wird. Für Streitigkeiten mit
-            Unternehmern ist Gerichtsstand [TODO: Sitz der Gesellschaft].
+            {/* Kein eigenes SELLER-Feld für den Gerichtsstand — die übliche
+                Vorlagen-Formulierung "Sitz der Gesellschaft" ersetzt den
+                früheren [TODO]-Platzhalter, ohne Daten zu erfinden. */}{" "}
+            Unternehmern ist Gerichtsstand der Sitz der Gesellschaft.
           </p>
         </section>
 
@@ -188,8 +218,8 @@ export default function AgbPage() {
         <div className="mt-10 p-4 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg text-xs text-yellow-900 dark:text-yellow-200">
           <strong>Hinweis:</strong> Dieser Text ist eine Vorlage und sollte vor
           Live-Schaltung durch einen Anwalt geprüft und an die tatsächlichen
-          Geschäftsprozesse angepasst werden. Alle mit{" "}
-          <code>[TODO: …]</code> markierten Stellen sind zu befüllen.
+          Geschäftsprozesse angepasst werden. Die Anbieterdaten kommen zentral
+          aus den <code>SELLER_*</code>-Umgebungsvariablen (siehe .env.example).
         </div>
       </div>
     </div>

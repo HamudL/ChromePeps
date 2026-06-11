@@ -35,11 +35,17 @@ export function CookieBanner() {
             <h2 className="text-sm font-semibold">
               Cookies &amp; Datenschutz
             </h2>
+            {/* Text muss zur tatsächlichen Technik passen: "Akzeptieren"
+                lädt Google Analytics 4 (components/analytics/
+                google-analytics.tsx gated auf decision === "accepted") —
+                das Banner darf also nicht behaupten, es gäbe ausschließlich
+                notwendige Cookies. */}
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              Wir verwenden ausschließlich technisch notwendige Cookies für
-              Login, Warenkorb und Checkout. Falls wir künftig Statistik-
-              oder Marketing-Cookies einsetzen, fragen wir vorher Ihre
-              Einwilligung über dieses Banner ab. Details finden Sie in
+              Wir verwenden technisch notwendige Cookies für Login, Warenkorb
+              und Checkout. Statistik-Cookies (Google Analytics) setzen wir
+              nur mit Ihrer Einwilligung — also erst, wenn Sie auf
+              &bdquo;Akzeptieren&ldquo; klicken. Bei &bdquo;Ablehnen&ldquo;
+              bleibt es bei den notwendigen Cookies. Details finden Sie in
               unserer{" "}
               <Link href="/datenschutz" className="underline">
                 Datenschutzerklärung

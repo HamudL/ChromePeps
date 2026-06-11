@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import {
   generateTotpSecret,
   buildOtpauthUrl,
@@ -34,6 +35,14 @@ export async function POST() {
       { status: 401 },
     );
   }
+
+  // Jeder Call generiert Secret + QR-Code und schreibt in die DB —
+  // eng limitieren, mehr als ein paar Versuche braucht kein Mensch.
+  const limit = await rateLimit(`2fa-setup:${session.user.id}`, {
+    maxRequests: 5,
+    windowMs: 300_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },

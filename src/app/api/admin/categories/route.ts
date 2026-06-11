@@ -67,6 +67,9 @@ export async function POST(req: NextRequest) {
   });
 
   await cacheDel(CACHE_KEYS.CATEGORIES);
+  // Shop-Variante der Kategorie-Liste (FilterBar) mit invalidieren —
+  // eigener Key wegen abweichendem Shape (Count nur aktiver Produkte).
+  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
 
   return NextResponse.json({ success: true, data: category }, { status: 201 });
 }

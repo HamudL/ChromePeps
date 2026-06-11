@@ -47,6 +47,9 @@ const nextConfig: NextConfig = {
       "frame-src https://hcaptcha.com https://*.hcaptcha.com",
       "object-src 'none'",
       "base-uri 'self'",
+      // CSP-Pendant zu X-Frame-Options: DENY — moderne Browser werten
+      // frame-ancestors aus und ignorieren XFO, wenn beides gesetzt ist.
+      "frame-ancestors 'none'",
       // form-action erlaubt POST-Submits an die eigene Origin und an
       // accounts.google.com. Letzteres ist nötig weil NextAuth den
       // OAuth-Flow per 302 von /api/auth/signin/google an Google's
@@ -107,8 +110,14 @@ const nextConfig: NextConfig = {
       // Datei-Pfade enthalten keine Content-Hashes, daher 1 Tag
       // browser-cache + stale-while-revalidate für 7 Tage — Update
       // landet trotzdem schnell live, repeat-visits sparen Roundtrips.
+      //
+      // Bewusst auf `.webp` eingeschränkt (einziger Asset-Typ unter
+      // public/ueber-uns/): der frühere Matcher `/ueber-uns/:path*`
+      // traf auch die HTML-Route /ueber-uns selbst — Browser hielten
+      // die SEITE 24 h im Cache, Content-Updates kamen bei Repeat-
+      // Visitors erst einen Tag später an.
       {
-        source: "/ueber-uns/:path*",
+        source: "/ueber-uns/:path*.webp",
         headers: [
           {
             key: "Cache-Control",
@@ -217,8 +226,8 @@ const nextConfig: NextConfig = {
     // Server-Side React-Komponenten optimiert kompilieren — schneller
     // RSC-Build, kleinere RSC-Payloads.
     optimizeServerReact: true,
-    // Macht prefetch von Links granularer — verhindert dass beim Hover
-    // auf ein Link sofort die volle RSC-Payload kommt.
+    // Stellt die Scroll-Position bei Browser-Back/Forward-Navigation
+    // wieder her (hat nichts mit Link-Prefetching zu tun).
     scrollRestoration: true,
   },
   output: "standalone",

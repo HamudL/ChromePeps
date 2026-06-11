@@ -71,6 +71,15 @@ export function ArticleLivePreview(props: ArticleLivePreviewProps) {
   } = props;
 
   const toc = useMemo(() => extractToc(contentMdx), [contentMdx]);
+  // Element-Memo für den teuersten Teil des Previews: react-markdown
+  // parst bei jedem Render neu. Identische Element-Referenz lässt React
+  // den kompletten Body-Subtree beim Reconcile überspringen — Tippen in
+  // Titel/Excerpt/SEO-Feldern reparst den Markdown-Body damit nicht
+  // mehr mit (der Body selbst kommt vom Parent bereits debounced).
+  const body = useMemo(
+    () => (contentMdx ? <ArticleBody markdown={contentMdx} /> : null),
+    [contentMdx],
+  );
   const dateLabel = publishedAt
     ? formatDate(publishedAt)
     : "(noch nicht veröffentlicht)";
@@ -80,6 +89,17 @@ export function ArticleLivePreview(props: ArticleLivePreviewProps) {
       : null;
   const titleParts = renderTitleWithEmphasis(title, titleEmphasis);
   const authorName = author?.name ?? "Autor wählen…";
+
+  // coverImage ist freier Admin-Text — nur lokale Pfade ("/...", aber
+  // nicht protokoll-relative "//host") oder https-URLs als <img src>
+  // durchlassen, damit javascript:- o. ä. Schemata nie im DOM landen.
+  // Alles andere fällt auf den CoverPlaceholder zurück.
+  const safeCoverImage =
+    coverImage &&
+    ((coverImage.startsWith("/") && !coverImage.startsWith("//")) ||
+      coverImage.startsWith("https://"))
+      ? coverImage
+      : null;
 
   return (
     <article className="bg-background">
@@ -164,10 +184,10 @@ export function ArticleLivePreview(props: ArticleLivePreviewProps) {
 
         {/* Cover */}
         <div className="container pb-10">
-          {coverImage ? (
+          {safeCoverImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={coverImage}
+              src={safeCoverImage}
               alt={title}
               className="w-full rounded-sm"
               style={{ aspectRatio: "21/9", objectFit: "cover" }}
@@ -213,9 +233,7 @@ export function ArticleLivePreview(props: ArticleLivePreviewProps) {
             className="prose"
             style={{ maxWidth: "680px", margin: "0 auto" }}
           >
-            {contentMdx ? (
-              <ArticleBody markdown={contentMdx} />
-            ) : (
+            {body ?? (
               <p className="text-muted-foreground italic">
                 (Body — schreibe links in Markdown, hier siehst du das
                 Ergebnis.)

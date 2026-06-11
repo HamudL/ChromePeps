@@ -30,12 +30,12 @@ server {
     resolver_timeout 5s;
 
     # ---- Security Headers ----
-    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(self)" always;
+    # Gemeinsame Header zentral in security-headers.inc (X-Frame-Options DENY,
+    # konsistent mit Next.js). nginx-Vererbung beachten: Locations mit eigenem
+    # add_header verlieren die server-level Header → dort re-includen.
+    include /etc/nginx/conf.d/security-headers.inc;
+    # CSP nur hier auf server-level (nicht in der .inc): Die Static-Asset-
+    # Locations unten brauchen keine CSP (wirkt nur auf HTML-Dokumente).
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com https://images.unsplash.com; font-src 'self' data:; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com; base-uri 'self'; form-action 'self';" always;
 
     server_tokens off;
@@ -46,6 +46,8 @@ server {
         proxy_pass http://nextjs;
         expires 365d;
         add_header Cache-Control "public, immutable";
+        # add_header im Block ⇒ server-level Header weg — re-includen.
+        include /etc/nginx/conf.d/security-headers.inc;
         access_log off;
     }
 
@@ -53,6 +55,7 @@ server {
         proxy_pass http://nextjs;
         expires 30d;
         add_header Cache-Control "public";
+        include /etc/nginx/conf.d/security-headers.inc;
         access_log off;
     }
 
@@ -60,6 +63,7 @@ server {
         proxy_pass http://nextjs;
         expires 365d;
         add_header Cache-Control "public, immutable";
+        include /etc/nginx/conf.d/security-headers.inc;
         access_log off;
     }
 

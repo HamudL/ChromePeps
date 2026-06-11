@@ -6,7 +6,11 @@ import { cacheGet, cacheSet, cacheDel } from "@/lib/redis";
 const CACHE_KEY = "announcement";
 const CACHE_TTL = 300; // 5 min
 
-/** GET /api/admin/announcement — public, returns the current announcement text */
+/**
+ * GET /api/admin/announcement — returns the current announcement text.
+ * Wird vom Admin-UI (/admin/announcement) gelesen; die öffentliche
+ * AnnouncementBar nutzt die auth-freie Spiegel-Route /api/announcement.
+ */
 export async function GET() {
   const cached = await cacheGet(CACHE_KEY);
   if (cached !== null) {
@@ -33,7 +37,17 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  const body = await req.json();
+  // Kaputtes JSON → 400. Wichtig: ohne den Guard würde ein defekter
+  // Body als `text = ""` durchrutschen und das Announcement LÖSCHEN.
+  let body: { text?: unknown };
+  try {
+    body = (await req.json()) ?? {};
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Ungültiger Request-Body." },
+      { status: 400 }
+    );
+  }
   const text = typeof body.text === "string" ? body.text.trim() : "";
 
   if (text) {

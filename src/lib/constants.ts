@@ -40,7 +40,13 @@ export const CACHE_KEYS = {
   PRODUCTS_LIST: "products:list",
   PRODUCT_DETAIL: (slug: string) => `products:detail:${slug}`,
   CATEGORIES: "categories:all",
-  CART: (userId: string) => `cart:${userId}`,
+  // Shop-Variante der Kategorie-Liste (FilterBar auf /products +
+  // Kategorie-Landingpages). Gleiche Tabelle wie CATEGORIES, aber
+  // anderes Shape: zählt nur AKTIVE Produkte pro Kategorie. Eigener
+  // Key, weil CATEGORIES bereits vom Admin-Endpoint mit dem Admin-
+  // Shape (Count über ALLE Produkte) belegt ist — ein geteilter Key
+  // würde die beiden Shapes gegenseitig vergiften.
+  CATEGORIES_SHOP: "categories:shop",
   STATS: "admin:stats",
   PROMOS: "promos:all",
   // Top-N Bestseller-Produkt-IDs (Set serialisiert als Array). Wird auf
@@ -54,7 +60,6 @@ export const CACHE_TTL = {
   PRODUCTS_LIST: 60,
   PRODUCT_DETAIL: 120,
   CATEGORIES: 300,
-  CART: 3600,
   STATS: 30,
   PROMOS: 60,
   // Bestseller-Liste ändert sich basierend auf Orders. 5 min ist
@@ -84,33 +89,97 @@ export const HOMEPAGE_CACHE_TTL = {
   METRICS: 300,
 } as const;
 
+// Bankverbindung für Vorkasse — kommt ausschließlich aus der Umgebung.
+// Hier stand früher eine Beispiel-IBAN hartkodiert, an die echte Kunden
+// überwiesen hätten.
+//
+// BEWUSST KEIN NEXT_PUBLIC_: Diese Werte werden zur LAUFZEIT auf dem
+// Server gelesen (Server-Components, API-Routen, Mails). NEXT_PUBLIC_-
+// Variablen würden zur BUILD-Zeit ins Client-Bundle geinlined — das
+// Image wird aber generisch in CI gebaut, die echten Werte stehen erst
+// in der VPS-.env. Mit NEXT_PUBLIC_ wäre Vorkasse über die Server-Env
+// nie aktivierbar gewesen (Client-Bundle dauerhaft false + Hydration-
+// Mismatch gegen das Server-HTML). Client-Components (Checkout,
+// Success) erhalten die Werte als Props von Server-Wrapper-Pages.
 export const BANK_DETAILS = {
-  accountHolder: "ChromePeps GmbH",
-  iban: "DE89 3704 0044 0532 0130 00",
-  bic: "COBADEFFXXX",
-  bankName: "Commerzbank",
+  accountHolder: process.env.BANK_ACCOUNT_HOLDER ?? "",
+  iban: process.env.BANK_IBAN ?? "",
+  bic: process.env.BANK_BIC ?? "",
+  bankName: process.env.BANK_NAME ?? "",
 } as const;
 
+// Vorkasse ist nur buchbar, wenn sie explizit aktiviert wurde UND eine
+// Bankverbindung hinterlegt ist — verhindert, dass die Zahlungsart je
+// wieder ohne echte Kontodaten live geht. Server-seitig erzwungen in
+// /api/checkout/bank-transfer, client-seitig im Checkout ausgeblendet.
+export const BANK_TRANSFER_ENABLED =
+  process.env.BANK_TRANSFER_ENABLED === "true" &&
+  BANK_DETAILS.iban.length > 0;
+
+// Serialisierbares Shape für die Server→Client-Übergabe der Vorkasse-
+// Infos (Checkout-/Success-Wrapper-Pages → Client-Components).
+export interface BankTransferInfo {
+  enabled: boolean;
+  accountHolder: string;
+  iban: string;
+  bic: string;
+  bankName: string;
+}
+
+export function getBankTransferInfo(): BankTransferInfo {
+  return {
+    enabled: BANK_TRANSFER_ENABLED,
+    accountHolder: BANK_DETAILS.accountHolder,
+    iban: BANK_DETAILS.iban,
+    bic: BANK_DETAILS.bic,
+    bankName: BANK_DETAILS.bankName,
+  };
+}
+
 /**
- * Seller data for invoices and official documents.
+ * Verkäufer-/Impressumsdaten — die EINE Quelle für Impressum, Datenschutz,
+ * AGB, Widerruf, Kontakt-Seite, JSON-LD und das Rechnungs-PDF.
  *
- * NOTE: These fields must be kept in sync with the Impressum page. The
- * placeholder values here will be replaced with the real company data
- * before going live — the invoice PDF falls back to these values.
+ * Env-basiert (SELLER_*), damit der Betreiber vor Live-Schaltung nur die
+ * .env füllen muss statt fünf Rechtsseiten zu editieren. Solange ein Wert
+ * fehlt, bleibt der bisherige "[TODO: …]"-Platzhalter sichtbar — daran
+ * erkennen Konsumenten (z. B. lib/json-ld.ts, die Betreiber-Hinweisboxen)
+ * automatisch, dass die Daten noch unvollständig sind.
+ *
+ * Bewusst `||` statt `??`: eine aus .env.example kopierte, noch leere
+ * Variable (SELLER_STREET="") ist definiert, aber nicht gepflegt — sie
+ * soll den Platzhalter zeigen, nicht einen leeren String ins Impressum
+ * rendern.
+ *
+ * KEIN NEXT_PUBLIC_ nötig: alle Konsumenten sind Server-Components bzw.
+ * server-only (Rechnungs-PDF) — die Werte landen im gerenderten HTML,
+ * nicht im Client-Bundle. Falls SELLER_DETAILS je in einer "use client"-
+ * Datei gebraucht wird, müssen die betroffenen Felder auf NEXT_PUBLIC_
+ * umgestellt werden, sonst greift im Browser immer der Fallback.
  */
 export const SELLER_DETAILS = {
-  companyName: "ChromePeps UG (haftungsbeschränkt)",
-  streetLine1: "[TODO: Straße und Hausnummer]",
-  postalCodeCity: "[TODO: PLZ Ort]",
-  country: "Deutschland",
-  email: "support@chromepeps.com",
-  phone: "[TODO: Telefonnummer]",
-  vatId: "[TODO: DE XXXXXXXXX]",
-  taxId: "[TODO: Steuernummer]",
-  registerCourt: "[TODO: Amtsgericht]",
-  registerNumber: "[TODO: HRB XXXXXX]",
-  managingDirector: "[TODO: Geschäftsführer]",
+  companyName:
+    process.env.SELLER_COMPANY_NAME || "ChromePeps UG (haftungsbeschränkt)",
+  streetLine1: process.env.SELLER_STREET || "[TODO: Straße und Hausnummer]",
+  postalCodeCity: process.env.SELLER_POSTAL_CITY || "[TODO: PLZ Ort]",
+  country: process.env.SELLER_COUNTRY || "Deutschland",
+  email: process.env.SELLER_EMAIL || "support@chromepeps.com",
+  phone: process.env.SELLER_PHONE || "[TODO: Telefonnummer]",
+  vatId: process.env.SELLER_VAT_ID || "[TODO: DE XXXXXXXXX]",
+  taxId: process.env.SELLER_TAX_ID || "[TODO: Steuernummer]",
+  registerCourt: process.env.SELLER_REGISTER_COURT || "[TODO: Amtsgericht]",
+  registerNumber: process.env.SELLER_REGISTER_NUMBER || "[TODO: HRB XXXXXX]",
+  managingDirector:
+    process.env.SELLER_MANAGING_DIRECTOR || "[TODO: Geschäftsführer]",
 } as const;
+
+// True, solange mindestens ein Verkäufer-Feld noch ein "[TODO: …]"-
+// Platzhalter ist. Die Rechtsseiten blenden damit ihre Betreiber-
+// Warnhinweise automatisch aus, sobald alle SELLER_*-Variablen gepflegt
+// sind — kein manuelles Entfernen der Hinweisboxen nötig.
+export const SELLER_DETAILS_INCOMPLETE = Object.values(SELLER_DETAILS).some(
+  (v) => v.includes("[TODO")
+);
 
 // German statutory VAT rate (19%) used for invoices and checkout math.
 export const TAX_RATE = 0.19;

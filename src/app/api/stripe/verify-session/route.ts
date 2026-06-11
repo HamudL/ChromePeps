@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { cacheDel } from "@/lib/redis";
-import { CACHE_KEYS } from "@/lib/constants";
+import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
 import { resolveCartFromStripeSession } from "@/lib/order/resolve-cart-from-stripe";
+import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 
 /**
  * POST /api/stripe/verify-session
@@ -23,10 +24,20 @@ import { resolveCartFromStripeSession } from "@/lib/order/resolve-cart-from-stri
  * anyone completing the payment has it).
  */
 export async function POST(req: NextRequest) {
+  // Public Endpoint + ein Stripe-API-Call pro Request — ohne Limit
+  // ließe sich unsere Stripe-API-Quota von außen leerziehen.
+  const ip = getClientIp(req.headers);
+  const limit = await rateLimit(`verify-session:ip:${ip}`, {
+    maxRequests: 10,
+    windowMs: 60_000,
+  });
+  if (!limit.success) return rateLimitExceeded(limit);
+
   const userSession = await auth();
   const currentUserId = userSession?.user?.id ?? null;
 
-  const { sessionId } = await req.json();
+  // Kaputtes JSON → 400 "Missing sessionId" statt unbehandelter 500.
+  const { sessionId } = (await req.json().catch(() => null)) ?? {};
   if (!sessionId || typeof sessionId !== "string") {
     return NextResponse.json(
       { success: false, error: "Missing sessionId" },
@@ -145,8 +156,14 @@ export async function POST(req: NextRequest) {
       return { order: created, wasCreated: true };
     });
 
-    if (sessionUserId) {
-      await cacheDel(CACHE_KEYS.CART(sessionUserId));
+    // Stock-abhängige Caches invalidieren, wenn DIESER Pfad die Order
+    // (inkl. Stock-Dekrement) erstellt hat — die Schwester-Pfade
+    // (Webhook, Vorkasse) tun dasselbe. Ohne den Aufruf zeigte der Shop
+    // genau im Fallback-Szenario (Webhook down/verzögert) bis zum
+    // TTL-Ablauf alte Verfügbarkeit. Fail-safe + fire-and-forget:
+    // blockiert die Success-Page nicht.
+    if (txResult.wasCreated) {
+      void invalidateStockCaches();
     }
 
     // Send confirmation email only when this path actually created
