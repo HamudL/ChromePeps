@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
+import { restoreOrderStock } from "@/lib/order/restore-stock";
+import { buildOrderUrl } from "@/lib/order/order-url";
 import { updateOrderStatusSchema } from "@/validators/order";
 import {
   sendOrderShippedEmail,
@@ -58,11 +61,20 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await req.json();
+  // Kaputter Body → sauberer 400 statt unbehandelter 500 beim Property-Zugriff.
+  const body = (await parseJsonBody(req)) as Record<string, unknown> | null;
+  if (body === null) {
+    return NextResponse.json(
+      { success: false, error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
 
   // Handle isTestOrder-only toggle (mark/unmark test order). Kein Status-Wechsel,
   // keine Mails — reine Metadaten-Änderung.
   if (typeof body.isTestOrder === "boolean" && !body.status && !body.paymentStatus) {
+    // Lokale const, damit das typeof-Narrowing auch in der tx-Closure trägt.
+    const isTestOrder = body.isTestOrder;
     const existing = await db.order.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
@@ -74,7 +86,7 @@ export async function PATCH(
     const order = await db.$transaction(async (tx) => {
       const updated = await tx.order.update({
         where: { id },
-        data: { isTestOrder: body.isTestOrder },
+        data: { isTestOrder },
         include: { items: true, events: { orderBy: { createdAt: "desc" } } },
       });
 
@@ -82,7 +94,7 @@ export async function PATCH(
         data: {
           orderId: id,
           status: existing.status,
-          note: body.isTestOrder
+          note: isTestOrder
             ? "Als Testbestellung markiert"
             : "Testbestellung-Kennzeichnung entfernt",
         },
@@ -96,6 +108,9 @@ export async function PATCH(
 
   // Handle paymentStatus-only update (Mark as Paid)
   if (body.paymentStatus && !body.status) {
+    // Cast statt Validierung: die includes-Prüfung direkt darunter lehnt
+    // alles außerhalb der Liste ohnehin mit 400 ab.
+    const paymentStatus = body.paymentStatus as string;
     const existing = await db.order.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
@@ -105,7 +120,7 @@ export async function PATCH(
     }
 
     const validPaymentStatuses = ["PENDING", "SUCCEEDED", "FAILED", "REFUNDED"];
-    if (!validPaymentStatuses.includes(body.paymentStatus)) {
+    if (!validPaymentStatuses.includes(paymentStatus)) {
       return NextResponse.json(
         { success: false, error: "Invalid payment status" },
         { status: 400 }
@@ -114,11 +129,11 @@ export async function PATCH(
 
     const order = await db.$transaction(async (tx) => {
       const updateData: Record<string, unknown> = {
-        paymentStatus: body.paymentStatus,
+        paymentStatus,
       };
 
       // When marking as paid, also move order to PROCESSING
-      if (body.paymentStatus === "SUCCEEDED" && existing.status === "PENDING") {
+      if (paymentStatus === "SUCCEEDED" && existing.status === "PENDING") {
         updateData.status = "PROCESSING";
       }
 
@@ -137,9 +152,9 @@ export async function PATCH(
           orderId: id,
           status: statusForEvent as "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "REFUNDED",
           note:
-            body.paymentStatus === "SUCCEEDED"
+            paymentStatus === "SUCCEEDED"
               ? "Payment confirmed (bank transfer received)"
-              : `Payment status updated to ${body.paymentStatus}`,
+              : `Payment status updated to ${paymentStatus}`,
         },
       });
 
@@ -184,38 +199,13 @@ export async function PATCH(
       break;
   }
 
-  // Restore stock on cancellation — nur unter strengen Bedingungen:
-  //  1) Test-Orders haben nie Stock dekrementiert (siehe
-  //     /api/admin/orders/test) → dürfen auch nichts re-incrementen
-  //     (sonst phantom inventory pro gecancelter Test-Order).
-  //  2) Stock wird bei JEDER echten Order schon bei der Erstellung
-  //     dekrementiert — Stripe-Orders entstehen direkt als
-  //     PROCESSING, Vorkasse-Orders als PENDING (Reservierung bis
-  //     Zahlungseingang). Cancel aus PENDING/PROCESSING/SHIPPED muss
-  //     daher restauren. NICHT aus DELIVERED (Ware beim Kunden) und
-  //     nicht aus terminalen Status (CANCELLED/REFUNDED/ARCHIVED —
-  //     dort ist der Bestand bereits zurückgebucht).
-  //  3) stockRestoredAt schützt zusätzlich gegen Doppel-Restore bei
-  //     Status-Flapping (CANCELLED → PROCESSING → CANCELLED) und
-  //     gegen Refund-nach-Cancel (Webhook prüft dasselbe Feld).
-  //  4) `.catch(() => {})` bleibt, falls product/variant
-  //     hard-deleted wurde.
-  // Vor die Transaction gehoben (alle Inputs sind Pre-TX-State), damit
-  // dieselbe Bedingung nach dem Commit die Cache-Invalidierung steuert.
-  const stockWasDecremented = (
-    ["PENDING", "PROCESSING", "SHIPPED"] as const
-  ).includes(existing.status as "PENDING" | "PROCESSING" | "SHIPPED");
-  const willRestoreStock =
-    parsed.data.status === "CANCELLED" &&
-    stockWasDecremented &&
-    !existing.isTestOrder &&
-    !existing.stockRestoredAt;
-  // Marker direkt ins Status-Update falten (statt zweitem update auf
-  // derselben Row) — Status + Restore-Marker werden atomar in EINEM
-  // Statement gesetzt, gleiches Muster wie der Refund-Pfad im Webhook.
-  if (willRestoreStock) {
-    updateData.stockRestoredAt = new Date();
-  }
+  // Restore stock on cancellation — die komplette Policy (nie für
+  // Test-Orders, nie doppelt via stockRestoredAt, nie aus DELIVERED,
+  // bei Cancel nur aus PENDING/PROCESSING/SHIPPED) lebt zentral in
+  // restoreOrderStock; der Helper setzt auch den stockRestoredAt-
+  // Marker selbst im selben tx. Der Rückgabewert steuert nach dem
+  // Commit die Cache-Invalidierung.
+  let stockRestored = false;
 
   const order = await db.$transaction(async (tx) => {
     const updated = await tx.order.update({
@@ -232,34 +222,19 @@ export async function PATCH(
       },
     });
 
-    if (willRestoreStock) {
-      // Stock-Restore parallelisieren: zwar führt Postgres bei einer
-      // interactive transaction die Statements seriell auf derselben
-      // Connection aus, der Client-Side-Overhead (Statement-Encoding,
-      // Pipeline-Sending) wird aber durch Promise.all gebündelt. Bei
-      // 5+ Items spürbarer Latency-Gewinn ohne Semantik-Drift —
-      // jeder Update bleibt einzeln catch-isoliert (Variant/Product
-      // hard-deleted? → Item überspringen, andere weiter restoren).
-      await Promise.all(
-        updated.items.map((item) => {
-          if (item.variantId) {
-            return tx.productVariant
-              .update({
-                where: { id: item.variantId },
-                data: { stock: { increment: item.quantity } },
-              })
-              .catch(() => {});
-          }
-          if (item.productId) {
-            return tx.product
-              .update({
-                where: { id: item.productId },
-                data: { stock: { increment: item.quantity } },
-              })
-              .catch(() => {});
-          }
-          return Promise.resolve();
-        }),
+    if (parsed.data.status === "CANCELLED") {
+      // Entscheidend ist der PRE-Update-Status (existing) — `updated`
+      // steht bereits auf CANCELLED.
+      stockRestored = await restoreOrderStock(
+        tx,
+        {
+          id: existing.id,
+          status: existing.status,
+          isTestOrder: existing.isTestOrder,
+          stockRestoredAt: existing.stockRestoredAt,
+          items: updated.items,
+        },
+        { trigger: "cancel" },
       );
     }
 
@@ -300,7 +275,7 @@ export async function PATCH(
   // ohne Invalidierung sähe der Shop das erst nach TTL-Ablauf. Fail-safe
   // (Redis-Fehler werden intern geschluckt) — der Status-Update ist zu
   // diesem Zeitpunkt bereits committed und bleibt es auch.
-  if (willRestoreStock) {
+  if (stockRestored) {
     await invalidateStockCaches();
   }
 
@@ -343,14 +318,13 @@ export async function PATCH(
             orderNumber: fullOrder.orderNumber,
             // Gäste haben kein Dashboard — sie bekommen den öffentlichen
             // Order-Status-Link (gleiche URL-Form wie in der
-            // Bestellbestätigung, siehe stripe/webhook + bank-transfer).
-            orderUrl: baseUrl
-              ? isGuest
-                ? `${baseUrl}/order-status?orderNumber=${encodeURIComponent(
-                    fullOrder.orderNumber
-                  )}&email=${encodeURIComponent(recipientEmail)}`
-                : `${baseUrl}/dashboard/orders/${fullOrder.id}`
-              : undefined,
+            // Bestellbestätigung, siehe buildOrderUrl).
+            orderUrl: buildOrderUrl({
+              orderId: fullOrder.id,
+              orderNumber: fullOrder.orderNumber,
+              email: recipientEmail,
+              isGuest,
+            }),
             shippedAt: fullOrder.shippedAt ?? new Date(),
             trackingNumber: fullOrder.trackingNumber,
             trackingUrl: null,

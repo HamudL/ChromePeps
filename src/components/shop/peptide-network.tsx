@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useVisibilityGatedRaf } from "@/hooks/use-visibility-gated-raf";
 
 interface PeptideNetworkProps {
   /** Particle count. Default 55. */
@@ -28,6 +29,9 @@ export function PeptideNetwork({
   className,
 }: PeptideNetworkProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Frame-Callback für useVisibilityGatedRaf — wird im Setup-Effekt
+  // gesetzt, weil der Tick über Canvas-State closed, der erst dort entsteht.
+  const tickRef = useRef<(() => void) | null>(null);
   const [shouldRender, setShouldRender] = useState(false);
 
   // Gate: mobile + reduced-motion skip. Runs once on mount.
@@ -47,9 +51,6 @@ export function PeptideNetwork({
     if (!ctx) return;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    let raf = 0;
-    let isLooping = false;
-    let isVisible = true;
     let sized = false;
 
     // Rect-Cache mit Dirty-Flag: getBoundingClientRect() PRO FRAME (so
@@ -116,8 +117,8 @@ export function PeptideNetwork({
       if (w === 0 || h === 0 || !sized) {
         // Noch keine Layout-Größe (Parent sized late) — beim nächsten
         // Tick erneut messen, bis der ResizeObserver/Layout liefert.
+        // (Den nächsten Frame plant der Hook.)
         rectDirty = true;
-        raf = requestAnimationFrame(tick);
         return;
       }
 
@@ -187,23 +188,11 @@ export function PeptideNetwork({
           }
         }
       }
-
-      raf = requestAnimationFrame(tick);
     };
 
-    const startLoop = () => {
-      if (isLooping) return;
-      isLooping = true;
-      raf = requestAnimationFrame(tick);
-    };
-    const stopLoop = () => {
-      if (!isLooping) return;
-      isLooping = false;
-      cancelAnimationFrame(raf);
-    };
-
-    // Kick off immediately — don't wait for observers.
-    startLoop();
+    // Loop-Start/-Stopp (IntersectionObserver + visibilitychange) macht
+    // der useVisibilityGatedRaf-Hook — hier nur den Tick registrieren.
+    tickRef.current = tick;
 
     // Rect-Invalidierung: ResizeObserver für Größenänderungen (feuert
     // initial direkt nach observe()), Scroll-Listener für Positions-
@@ -212,34 +201,22 @@ export function PeptideNetwork({
     ro.observe(canvas);
     window.addEventListener("scroll", markRectDirty, { passive: true });
 
-    // Pause when off-screen. Purely optimization; loop already runs.
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        isVisible = entry.isIntersecting;
-        if (isVisible && !document.hidden) startLoop();
-        else stopLoop();
-      },
-      { rootMargin: "100px" },
-    );
-    io.observe(canvas);
-
-    // Pause when tab hidden.
-    const onVisibilityChange = () => {
-      if (document.hidden) stopLoop();
-      else if (isVisible) startLoop();
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
     return () => {
-      stopLoop();
-      io.disconnect();
+      tickRef.current = null;
       ro.disconnect();
       window.removeEventListener("scroll", markRectDirty);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerleave", onLeave);
     };
   }, [shouldRender, count, dark]);
+
+  // Pausiert den rAF-Loop off-screen und bei verstecktem Tab — gleiche
+  // Parameter wie zuvor inline (rootMargin 100px); enabled erst nach dem
+  // Mobile-/Reduced-Motion-Gate, vorher existiert das Canvas gar nicht.
+  useVisibilityGatedRaf(canvasRef, tickRef, {
+    rootMargin: "100px",
+    enabled: shouldRender,
+  });
 
   if (!shouldRender) return null;
 

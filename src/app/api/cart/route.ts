@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { syncCartSchema } from "@/validators/cart";
 
@@ -40,7 +41,7 @@ export async function PUT(req: NextRequest) {
   });
   if (!limit.success) return rateLimitExceeded(limit);
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req);
   const parsed = syncCartSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

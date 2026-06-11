@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { db, isPrismaUniqueError } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 
 /**
  * PATCH/DELETE /api/admin/shipping/[id]
@@ -38,7 +39,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req);
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -54,12 +55,7 @@ export async function PATCH(
     });
     return NextResponse.json({ success: true, data: rate });
   } catch (err: unknown) {
-    if (
-      typeof err === "object" &&
-      err !== null &&
-      "code" in err &&
-      (err as { code: string }).code === "P2002"
-    ) {
+    if (isPrismaUniqueError(err)) {
       return NextResponse.json(
         { success: false, error: "Country code bereits vergeben." },
         { status: 409 },

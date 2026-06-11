@@ -3,6 +3,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import {
   verifyTotpCode,
@@ -45,7 +46,8 @@ export async function POST(req: NextRequest) {
   });
   if (!limit.success) return rateLimitExceeded(limit);
 
-  const body = await req.json().catch(() => ({}));
+  // Kaputter Body → null → safeParse scheitert mit 400 (beide Felder Pflicht).
+  const body = await parseJsonBody(req);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

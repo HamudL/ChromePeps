@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { createGlossarTermSchema } from "@/validators/wissen";
 import { requireWissenAdmin } from "@/lib/wissen/admin-auth";
 
@@ -18,7 +19,8 @@ export async function POST(req: NextRequest) {
   const guard = await requireWissenAdmin();
   if (guard) return guard;
 
-  const body = await req.json();
+  // Kaputter Body → safeParse(null) → 400 statt unbehandelter 500.
+  const body = await parseJsonBody(req);
   const parsed = createGlossarTermSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

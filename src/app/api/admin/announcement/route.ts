@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { cacheGet, cacheSet, cacheDel } from "@/lib/redis";
 
 const CACHE_KEY = "announcement";
@@ -39,10 +40,8 @@ export async function PUT(req: NextRequest) {
 
   // Kaputtes JSON → 400. Wichtig: ohne den Guard würde ein defekter
   // Body als `text = ""` durchrutschen und das Announcement LÖSCHEN.
-  let body: { text?: unknown };
-  try {
-    body = (await req.json()) ?? {};
-  } catch {
+  const body = (await parseJsonBody(req)) as { text?: unknown } | null;
+  if (body === null) {
     return NextResponse.json(
       { success: false, error: "Ungültiger Request-Body." },
       { status: 400 }

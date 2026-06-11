@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { z } from "zod";
 import { writeAuditLog } from "@/lib/admin-audit";
 
@@ -31,7 +32,8 @@ export async function PATCH(
     );
   }
 
-  const body = await req.json();
+  // Kaputter Body → safeParse(null) → 400 statt unbehandelter 500.
+  const body = await parseJsonBody(req);
   const parsed = updateUserRoleSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

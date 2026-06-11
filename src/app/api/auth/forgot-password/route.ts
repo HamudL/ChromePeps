@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { forgotPasswordSchema } from "@/validators/auth";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
@@ -15,7 +16,8 @@ import { PASSWORD_RESET_TOKEN_TTL_MS } from "@/lib/constants";
  * per IP to prevent abuse.
  */
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  // Kaputter Body → null → safeParse scheitert mit 400 (email ist Pflichtfeld).
+  const body = await parseJsonBody(req);
   const parsed = forgotPasswordSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth, invalidateUserSessions } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { updateProfileSchema, changePasswordSchema } from "@/validators/auth";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
@@ -58,7 +59,8 @@ export async function PATCH(req: NextRequest) {
   });
   if (!limit.success) return rateLimitExceeded(limit);
 
-  const body = await req.json();
+  // Kaputter Body → safeParse(null) → 400 statt unbehandelter 500.
+  const body = await parseJsonBody(req);
   const parsed = updateProfileSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -156,7 +158,8 @@ export async function PUT(req: NextRequest) {
   });
   if (!limit.success) return rateLimitExceeded(limit);
 
-  const body = await req.json();
+  // Kaputter Body → safeParse(null) → 400 statt unbehandelter 500.
+  const body = await parseJsonBody(req);
   const parsed = changePasswordSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -238,7 +241,7 @@ export async function DELETE(req: NextRequest) {
   });
   if (!limit.success) return rateLimitExceeded(limit);
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req);
   const parsed = deleteAccountSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

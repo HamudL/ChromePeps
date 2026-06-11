@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { updateBlogPostSchema } from "@/validators/wissen";
 import { requireWissenAdmin } from "@/lib/wissen/admin-auth";
 
@@ -34,8 +35,19 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   if (guard) return guard;
   const { id } = await params;
 
-  const body = await req.json();
-  const parsed = updateBlogPostSchema.safeParse({ ...body, id });
+  // Expliziter 400 nötig: `{ ...null, id }` würde das all-optionale
+  // Update-Schema passieren und ein leeres Update ausführen.
+  const body = await parseJsonBody(req);
+  if (body === null) {
+    return NextResponse.json(
+      { success: false, error: "Invalid JSON body" },
+      { status: 400 },
+    );
+  }
+  const parsed = updateBlogPostSchema.safeParse({
+    ...(body as Record<string, unknown>),
+    id,
+  });
   if (!parsed.success) {
     return NextResponse.json(
       { success: false, error: parsed.error.errors[0].message },

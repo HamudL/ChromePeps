@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { createCertificateSchema } from "@/validators/certificate";
 
 // GET /api/admin/certificates
@@ -64,7 +65,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = await req.json();
+  // Expliziter 400: der reportUrl-Zugriff direkt darunter würde auf null crashen.
+  const body = (await parseJsonBody(req)) as { reportUrl?: unknown } | null;
+  if (body === null) {
+    return NextResponse.json(
+      { success: false, error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
   // Normalize empty string reportUrl to null
   if (body.reportUrl === "") body.reportUrl = null;
 

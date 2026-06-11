@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { createPromoCodeSchema } from "@/validators/promo";
 
 // GET /api/admin/promos — list all promo codes (admin only)
@@ -31,7 +32,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = await req.json();
+  // Kaputter Body → safeParse(null) → 400 statt unbehandelter 500.
+  const body = await parseJsonBody(req);
   const parsed = createPromoCodeSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

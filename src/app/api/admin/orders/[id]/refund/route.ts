@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { stripe } from "@/lib/stripe";
 import { writeAuditLog } from "@/lib/admin-audit";
 
@@ -48,7 +49,17 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   }
 
   const { id } = await params;
-  const body = await req.json().catch(() => ({}));
+  // Expliziter 400: das Schema ist all-nullish — ein kaputter/leerer Body
+  // würde sonst als `{}` durchgehen und einen impliziten VOLL-Refund
+  // auslösen. Voll-Refund verlangt jetzt explizit ein `{}`-Body
+  // (amountInCents schlicht weglassen).
+  const body = await parseJsonBody(req);
+  if (body === null) {
+    return NextResponse.json(
+      { success: false, error: "Invalid JSON body" },
+      { status: 400 },
+    );
+  }
   const parsed = refundSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
-import { db } from "@/lib/db";
+import { db, isPrismaUniqueError } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
 import { resolveCartFromStripeSession } from "@/lib/order/resolve-cart-from-stripe";
+import { buildOrderUrl } from "@/lib/order/order-url";
 import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 
 /**
@@ -37,7 +39,9 @@ export async function POST(req: NextRequest) {
   const currentUserId = userSession?.user?.id ?? null;
 
   // Kaputtes JSON → 400 "Missing sessionId" statt unbehandelter 500.
-  const { sessionId } = (await req.json().catch(() => null)) ?? {};
+  const { sessionId } = ((await parseJsonBody(req)) ?? {}) as {
+    sessionId?: unknown;
+  };
   if (!sessionId || typeof sessionId !== "string") {
     return NextResponse.json(
       { success: false, error: "Missing sessionId" },
@@ -191,14 +195,12 @@ export async function POST(req: NextRequest) {
           }
 
           if (recipientEmail) {
-            const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-            const orderUrl = baseUrl
-              ? sessionUserId
-                ? `${baseUrl}/dashboard/orders/${fullOrder.id}`
-                : `${baseUrl}/order-status?orderNumber=${encodeURIComponent(
-                    fullOrder.orderNumber
-                  )}&email=${encodeURIComponent(recipientEmail)}`
-              : undefined;
+            const orderUrl = buildOrderUrl({
+              orderId: fullOrder.id,
+              orderNumber: fullOrder.orderNumber,
+              email: recipientEmail,
+              isGuest: !sessionUserId,
+            });
             await sendOrderConfirmationEmail({
               to: recipientEmail,
               customerName: recipientName,
@@ -252,12 +254,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     // If unique constraint error, order was created by webhook in the meantime
-    const isPrismaUniqueError =
-      err &&
-      typeof err === "object" &&
-      "code" in err &&
-      (err as { code: string }).code === "P2002";
-    if (isPrismaUniqueError) {
+    if (isPrismaUniqueError(err)) {
       const created = await db.order.findUnique({
         where: { stripeSessionId: sessionId },
         select: { id: true, orderNumber: true },

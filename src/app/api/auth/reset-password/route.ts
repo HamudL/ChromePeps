@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { resetPasswordSchema } from "@/validators/auth";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
@@ -14,7 +15,8 @@ import { purgeSessionUserCache } from "@/lib/auth";
  * Tokens are single-use — once marked usedAt, they cannot be replayed.
  */
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  // Kaputter Body → null → safeParse scheitert mit 400 (token/password Pflicht).
+  const body = await parseJsonBody(req);
   const parsed = resetPasswordSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

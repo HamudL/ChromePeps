@@ -1,5 +1,6 @@
 import "server-only";
-import { createHash, createHmac, timingSafeEqual } from "crypto";
+import { createHmac } from "crypto";
+import { safeEqual } from "@/lib/safe-equal";
 
 /**
  * Unsubscribe-Token für Newsletter-Mails.
@@ -34,11 +35,9 @@ export function newsletterUnsubscribeToken(email: string): string | null {
 }
 
 /**
- * Timing-safe Verifikation eines Unsubscribe-Tokens.
- *
- * Beide Seiten werden auf feste Länge gehasht (gleiches Muster wie
- * checkCronAuth in src/lib/cron-auth.ts), damit timingSafeEqual weder
- * über die Länge leakt noch bei Längenungleichheit wirft.
+ * Timing-safe Verifikation eines Unsubscribe-Tokens — geteilter
+ * safeEqual-Helper (siehe src/lib/safe-equal.ts), gleiches Muster wie
+ * checkCronAuth.
  */
 export function verifyNewsletterUnsubscribeToken(
   email: string,
@@ -46,7 +45,5 @@ export function verifyNewsletterUnsubscribeToken(
 ): boolean {
   const expected = newsletterUnsubscribeToken(email);
   if (!expected || !token) return false;
-  const ha = createHash("sha256").update(expected).digest();
-  const hb = createHash("sha256").update(token).digest();
-  return timingSafeEqual(ha, hb);
+  return safeEqual(expected, token);
 }

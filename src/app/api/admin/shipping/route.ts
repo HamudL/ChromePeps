@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { ensureShippingRatesSeeded } from "@/lib/shipping/rates";
 
 /**
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req);
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

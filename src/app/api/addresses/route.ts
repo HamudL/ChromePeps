@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { addressSchema } from "@/validators/address";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 
@@ -38,7 +39,8 @@ export async function POST(req: NextRequest) {
   });
   if (!limit.success) return rateLimitExceeded(limit);
 
-  const body = await req.json();
+  // Kaputter Body → safeParse(null) → 400 statt unbehandelter 500.
+  const body = await parseJsonBody(req);
   const parsed = addressSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

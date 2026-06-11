@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { updateAddressSchema } from "@/validators/address";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 
@@ -24,8 +25,19 @@ export async function PATCH(
   if (!limit.success) return rateLimitExceeded(limit);
 
   const { id } = await params;
-  const body = await req.json();
-  const parsed = updateAddressSchema.safeParse({ ...body, id });
+  // Expliziter 400 nötig: `{ ...null, id }` würde das all-optionale
+  // Update-Schema passieren und ein leeres Update ausführen.
+  const body = await parseJsonBody(req);
+  if (body === null) {
+    return NextResponse.json(
+      { success: false, error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
+  const parsed = updateAddressSchema.safeParse({
+    ...(body as Record<string, unknown>),
+    id,
+  });
   if (!parsed.success) {
     return NextResponse.json(
       { success: false, error: parsed.error.errors[0].message },
