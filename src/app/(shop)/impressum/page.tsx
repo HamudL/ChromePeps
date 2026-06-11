@@ -11,6 +11,12 @@ export const metadata: Metadata = {
   alternates: { canonical: "/impressum" },
 };
 
+// Statisch mit stuendlicher Revalidierung: Diese Seite liest Runtime-Env
+// (SELLER_*/BANK_*-Stammdaten). Beim CI-Build (leere Env) wird der
+// Platzhalter-Stand gebacken; zur Laufzeit regeneriert ISR die Seite im
+// Container - gepflegte .env-Werte erscheinen ohne Image-Rebuild.
+export const revalidate = 3600;
+
 export default function ImpressumPage() {
   return (
     <div className="container max-w-3xl py-12">

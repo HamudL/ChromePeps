@@ -1,7 +1,3 @@
-// Rendert dynamisch (SSR pro Request): der geteilte (shop)-Header ruft
-// `await auth()` (Cookies) → der ganze (shop)-Baum ist dynamic, ein
-// `revalidate`-Export wäre hier wirkungslos. Siehe (shop)/layout.tsx.
-
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -41,6 +37,19 @@ import { ProductViewTracker } from "@/components/shop/product-view-tracker";
 import { RecentlyViewed } from "@/components/shop/recently-viewed";
 import { SectionBlur } from "@/components/layout/section-blur";
 import { FadeUp } from "../../home-animations";
+
+// On-Demand-ISR: Seit der Header session-frei ist (Auth-Slot als
+// Client-Island, siehe (shop)/layout.tsx), kann die PDP gecacht werden.
+// generateStaticParams() => [] verschiebt das Rendering komplett auf
+// die Laufzeit (der CI-Build hat keine DATABASE_URL!); der erste
+// Request pro Slug rendert + cached, danach revalidiert ISR alle 60s —
+// gleiche Frische wie der Redis-Layer (PRODUCT_DETAIL-TTL 120s),
+// Admin-Edits erscheinen also weiterhin innerhalb ~1 min.
+export const revalidate = 60;
+
+export function generateStaticParams() {
+  return [];
+}
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;

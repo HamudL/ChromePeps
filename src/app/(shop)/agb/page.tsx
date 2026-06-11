@@ -15,6 +15,12 @@ export const metadata: Metadata = {
 // falsch. Bei inhaltlichen Änderungen der AGB manuell aktualisieren!
 const AGB_STAND = "1. Juni 2026";
 
+// Statisch mit stuendlicher Revalidierung: Diese Seite liest Runtime-Env
+// (SELLER_*/BANK_*-Stammdaten). Beim CI-Build (leere Env) wird der
+// Platzhalter-Stand gebacken; zur Laufzeit regeneriert ISR die Seite im
+// Container - gepflegte .env-Werte erscheinen ohne Image-Rebuild.
+export const revalidate = 3600;
+
 export default function AgbPage() {
   return (
     <div className="container max-w-3xl py-12">
