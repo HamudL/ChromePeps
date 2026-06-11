@@ -41,6 +41,17 @@ export interface SendMailInput {
    * mehrere Admin-Adressen nicht gegenseitig im To-Header sichtbar sind.
    */
   bcc?: string | string[];
+  /**
+   * Anzahl ZUSÄTZLICHER Versuche bei transienten Fehlern (Default 2 →
+   * max. 3 Versuche, Backoff 1s/5s). INTERAKTIVE Pfade, die das Resultat
+   * im Request awaiten (Forgot-Password, Registrierung, Newsletter-
+   * Subscribe, resend-verification), setzen retries: 0 — sonst hinge
+   * jeder dieser Requests bei einem Resend-Ausfall ~6+ Sekunden am
+   * Spinner. Fire-and-forget-Pfade (Bestellbestätigung im Webhook,
+   * Versand-Mails) behalten den vollen Retry: dort zählt Zustellung,
+   * nicht Latenz.
+   */
+  retries?: number;
 }
 
 export interface SendMailResult {
@@ -113,7 +124,9 @@ export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
     process.env.MAIL_FROM ?? "ChromePeps <no-reply@chromepeps.com>";
   const replyTo = process.env.MAIL_REPLY_TO ?? "support@chromepeps.com";
 
-  const maxAttempts = RETRY_DELAYS_MS.length + 1;
+  const maxAttempts =
+    Math.min(input.retries ?? RETRY_DELAYS_MS.length, RETRY_DELAYS_MS.length) +
+    1;
   let lastError = "unknown error";
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {

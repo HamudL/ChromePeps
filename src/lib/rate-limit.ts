@@ -42,6 +42,15 @@ return {n, ttl}
 const memoryBuckets = new Map<string, { count: number; resetAt: number }>();
 let lastSweep = 0;
 
+// Harte Kapazitätsgrenze: Der Fallback aktiviert sich ausgerechnet im
+// Redis-Outage, und viele Keys sind attacker-chosen (E-Mail im
+// Login-Key, rotierende IPs). Ohne Deckel könnte ein Angreifer die Map
+// im 300s-Fenster auf hunderttausende Einträge treiben (Heap-Druck +
+// GC-Pausen genau im Stress-Szenario). Bei Überlauf wird der ÄLTESTE
+// Eintrag verdrängt (Map iteriert insertion-ordered) — 50k aktive
+// Buckets sind weit mehr als legitimer Traffic je erzeugt.
+const MEMORY_BUCKET_CAP = 50_000;
+
 function memoryRateLimit(
   key: string,
   config: RateLimitConfig
@@ -58,6 +67,10 @@ function memoryRateLimit(
 
   const existing = memoryBuckets.get(key);
   if (!existing || existing.resetAt <= now) {
+    if (memoryBuckets.size >= MEMORY_BUCKET_CAP) {
+      const oldest = memoryBuckets.keys().next();
+      if (!oldest.done) memoryBuckets.delete(oldest.value);
+    }
     memoryBuckets.set(key, { count: 1, resetAt: now + config.windowMs });
     return {
       success: true,

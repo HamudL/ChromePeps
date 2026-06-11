@@ -648,9 +648,11 @@ export async function POST(req: NextRequest) {
 
   // Stock wurde in der Transaktion dekrementiert → Listing-/Detail-/
   // Bestseller-Caches invalidieren, sonst zeigt der Shop bis zum TTL-
-  // Ablauf eine veraltete Verfügbarkeit. Fail-safe (Redis-Fehler werden
-  // intern geschluckt) — bricht den Checkout nie.
-  await invalidateStockCaches();
+  // Ablauf eine veraltete Verfügbarkeit. Fail-safe UND bewusst NICHT
+  // awaited: die Pattern-Deletes scannen den Redis-Keyspace — der
+  // Kunde soll auf seine Bestellbestätigung nicht warten, bis die
+  // Cache-Hygiene durch ist.
+  void invalidateStockCaches();
 
   // Fire-and-forget: Mail-Send (mit COA-PDF-Attachments aus dem Filesystem
   // + Resend-API-Call) blockt die HTTP-Response NICHT. Der User klickt

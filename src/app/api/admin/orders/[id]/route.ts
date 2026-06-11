@@ -210,6 +210,12 @@ export async function PATCH(
     stockWasDecremented &&
     !existing.isTestOrder &&
     !existing.stockRestoredAt;
+  // Marker direkt ins Status-Update falten (statt zweitem update auf
+  // derselben Row) — Status + Restore-Marker werden atomar in EINEM
+  // Statement gesetzt, gleiches Muster wie der Refund-Pfad im Webhook.
+  if (willRestoreStock) {
+    updateData.stockRestoredAt = new Date();
+  }
 
   const order = await db.$transaction(async (tx) => {
     const updated = await tx.order.update({
@@ -227,10 +233,6 @@ export async function PATCH(
     });
 
     if (willRestoreStock) {
-      await tx.order.update({
-        where: { id },
-        data: { stockRestoredAt: new Date() },
-      });
       // Stock-Restore parallelisieren: zwar führt Postgres bei einer
       // interactive transaction die Statements seriell auf derselben
       // Connection aus, der Client-Side-Overhead (Statement-Encoding,

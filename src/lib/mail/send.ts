@@ -42,6 +42,9 @@ export async function sendPasswordResetEmail(
     to: input.to,
     subject: "Passwort zur\u00fccksetzen",
     tag: "password-reset",
+    // Wird im Forgot-Password-Request awaited \u2014 kein Retry-Backoff,
+    // sonst h\u00e4ngt der User bei einem Resend-Ausfall ~6s am Spinner.
+    retries: 0,
     react: PasswordResetEmail({
       name: input.name,
       resetUrl: input.resetUrl,
@@ -319,6 +322,9 @@ export async function sendEmailVerifyEmail(
     to: input.to,
     subject: "Bitte best\u00e4tigen Sie Ihre E-Mail-Adresse",
     tag: "email-verify",
+    // Wird in Registrierung/resend-verification awaited \u2014 kein
+    // Retry-Backoff (User-facing Latenz); Resend-Button existiert.
+    retries: 0,
     react: EmailVerifyEmail({
       name: input.name,
       verifyUrl: input.verifyUrl,

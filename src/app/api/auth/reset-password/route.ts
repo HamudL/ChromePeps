@@ -5,6 +5,7 @@ import { resetPasswordSchema } from "@/validators/auth";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import { hashResetToken } from "@/lib/password-reset";
+import { purgeSessionUserCache } from "@/lib/auth";
 
 /**
  * POST /api/auth/reset-password
@@ -80,14 +81,10 @@ export async function POST(req: NextRequest) {
     }),
   ]);
 
-  // Session-Cache r\u00e4umen, damit die Invalidierung sofort greift
-  // (nicht erst nach Ablauf der 60s-Cache-TTL).
-  try {
-    const { cacheDel } = await import("@/lib/redis");
-    await cacheDel(`auth:session-user:v2:${user.id}`);
-  } catch {
-    /* TTL r\u00e4umt notfalls auf */
-  }
+  // Session-Cache r\u00e4umen, damit die Invalidierung sofort greift (nicht
+  // erst nach Ablauf der 60s-Cache-TTL). Zentraler Helper \u2014 Key-Format
+  // lebt ausschlie\u00dflich in src/lib/auth.ts.
+  await purgeSessionUserCache(user.id);
 
   return NextResponse.json({
     success: true,

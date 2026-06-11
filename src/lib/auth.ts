@@ -40,27 +40,15 @@ class CaptchaRequiredError extends CredentialsSignin {
 const DUMMY_BCRYPT_HASH =
   "$2b$12$C63VRTmd/r4a9kPzGQNu5.B4vm3NVaM7JjDnltcgdXA3JKH/lDBvO";
 
-const LOGIN_FAIL_TTL_SECONDS = 600;
-const CAPTCHA_THRESHOLD = 2;
-
 /**
- * Server-seitiger Login-Failure-Counter. Spiegelt die Logik der
- * Server-Action `recordLoginFailure` — aber HIER, im authorize(), ist
- * sie nicht umgehbar: Ein direkter POST an /api/auth/callback/
- * credentials traf früher nie einen Zähler, weil das Inkrementieren
- * dem Client überlassen war.
+ * Failure-Counting + Captcha-Threshold leben in src/lib/login-failures.ts
+ * (eine Quelle für authorize() UND die UX-Server-Action). Hier nur ein
+ * dünner dynamic-import-Wrapper, weil dieses Modul keine Top-Level-
+ * Redis-Importe haben darf (Edge-Bundle, siehe Kommentar oben).
  */
 async function recordAuthFailure(email: string): Promise<void> {
-  try {
-    const { redis } = await import("@/lib/redis");
-    const key = `login-fail:${email.toLowerCase()}`;
-    const count = await redis.incr(key);
-    if (count === 1) {
-      await redis.expire(key, LOGIN_FAIL_TTL_SECONDS);
-    }
-  } catch {
-    /* Redis down — die Rate-Limits (mit In-Memory-Fallback) greifen trotzdem */
-  }
+  const { recordLoginFailure } = await import("@/lib/login-failures");
+  await recordLoginFailure(email);
 }
 
 // IMPORTANT: do NOT statically import `@/lib/redis` at the top of this
@@ -114,6 +102,28 @@ declare module "next-auth" {
   }
 }
 
+// EINE Stelle für das Key-Format des Session-User-Caches. Der v2-Suffix
+// versioniert das Cache-Shape — beim nächsten Shape-Bump NUR hier ändern,
+// damit Reader (session-Callback) und Purger nie auseinanderlaufen.
+export function sessionUserCacheKey(userId: string): string {
+  return `auth:session-user:v2:${userId}`;
+}
+
+/**
+ * Räumt den Redis-Session-Cache eines Users, damit Änderungen an
+ * sessionVersion/Rolle sofort greifen (nicht erst nach 60s TTL).
+ * Für Caller, die das Versions-Increment bereits selbst (z.B. in einer
+ * Transaktion) erledigt haben — etwa der Passwort-Reset.
+ */
+export async function purgeSessionUserCache(userId: string): Promise<void> {
+  try {
+    const { cacheDel } = await import("@/lib/redis");
+    await cacheDel(sessionUserCacheKey(userId));
+  } catch {
+    /* Cache-TTL (60s) räumt notfalls auf */
+  }
+}
+
 /**
  * Invalidiert alle bestehenden JWT-Sessions eines Users: inkrementiert
  * users.sessionVersion und räumt den Redis-Session-Cache, damit die
@@ -129,12 +139,7 @@ export async function invalidateUserSessions(userId: string): Promise<void> {
     where: { id: userId },
     data: { sessionVersion: { increment: 1 } },
   });
-  try {
-    const { cacheDel } = await import("@/lib/redis");
-    await cacheDel(`auth:session-user:v2:${userId}`);
-  } catch {
-    /* Cache-TTL (60s) räumt notfalls auf */
-  }
+  await purgeSessionUserCache(userId);
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -207,14 +212,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         // Captcha ab CAPTCHA_THRESHOLD Fehlversuchen — server-enforced.
-        let failCount = 0;
-        try {
-          const { redis } = await import("@/lib/redis");
-          const raw = await redis.get(`login-fail:${emailKey}`);
-          failCount = raw ? parseInt(raw, 10) || 0 : 0;
-        } catch {
-          /* Redis down → Captcha-Stufe entfällt; Limits oben greifen */
-        }
+        // hCaptcha-Tokens sind single-use: authorize() ist die EINZIGE
+        // Stelle, die verifiziert (die UX-Action liest nur den Zähler).
+        const { getLoginFailureCount, CAPTCHA_THRESHOLD } = await import(
+          "@/lib/login-failures"
+        );
+        const failCount = await getLoginFailureCount(emailKey);
         if (failCount >= CAPTCHA_THRESHOLD) {
           const captchaToken =
             typeof credentials?.captchaToken === "string"
@@ -268,15 +271,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           // 2FA-Drosselung: Ein 6-stelliger TOTP-Code hat nur 10^6
           // Kombinationen und Codes sind ±90s gültig — ohne Limit war
-          // er bei bekanntem Passwort online durchprobierbar. 5
-          // Versuche / 5 min pro User-Konto.
-          const totpLimit = await rateLimit(`2fa:${user.id}`, {
-            maxRequests: 5,
-            windowMs: 300_000,
-          });
-          if (!totpLimit.success) {
-            throw new RateLimitedError();
+          // er bei bekanntem Passwort online durchprobierbar.
+          // WICHTIG: Es zählen nur FEHLversuche (Peek hier, Increment
+          // unten in den Fehler-Zweigen). Ein INCR-basiertes Limit über
+          // alle Versuche sperrte legitime User aus, die sich nach
+          // einem Passwort-Wechsel (Session-Invalidierung!) auf
+          // mehreren Geräten kurz hintereinander neu anmelden.
+          // Redis-down → fail-open: die E-Mail-/IP-Limits oben deckeln
+          // die Gesamtversuche trotzdem.
+          const TWO_FA_FAIL_LIMIT = 5;
+          const TWO_FA_FAIL_TTL_SECONDS = 300;
+          const twoFaFailKey = `2fa-fail:${user.id}`;
+          try {
+            const { redis } = await import("@/lib/redis");
+            const raw = await redis.get(twoFaFailKey);
+            if ((raw ? parseInt(raw, 10) || 0 : 0) >= TWO_FA_FAIL_LIMIT) {
+              throw new RateLimitedError();
+            }
+          } catch (err) {
+            if (err instanceof RateLimitedError) throw err;
           }
+          const recordTwoFaFailure = async () => {
+            try {
+              const { redis } = await import("@/lib/redis");
+              const count = await redis.incr(twoFaFailKey);
+              if (count === 1) {
+                await redis.expire(twoFaFailKey, TWO_FA_FAIL_TTL_SECONDS);
+              }
+            } catch {
+              /* fail-silent */
+            }
+          };
 
           // Erst TOTP versuchen (häufigster Fall). Fallback auf
           // Recovery-Code wenn TOTP nicht passt UND der Input
@@ -293,6 +318,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               );
               if (!newCodes) {
                 await recordAuthFailure(emailKey);
+                await recordTwoFaFailure();
                 throw new InvalidTwoFactorCodeError();
               }
               await db.user.update({
@@ -301,6 +327,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               });
             } else {
               await recordAuthFailure(emailKey);
+              await recordTwoFaFailure();
               throw new InvalidTwoFactorCodeError();
             }
           } else if (!isEncryptedSecret(user.totpSecret)) {
@@ -351,9 +378,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (user?.email) {
         try {
+          const { clearLoginFailures } = await import("@/lib/login-failures");
+          await clearLoginFailures(user.email);
           const { redis } = await import("@/lib/redis");
-          await redis.del(`login-fail:${user.email.toLowerCase()}`);
           await redis.del(`register-fail:${user.email.toLowerCase()}`);
+          // 2FA-Fehlversuchs-Zähler nach erfolgreichem Login zurücksetzen.
+          if (user.id) {
+            await redis.del(`2fa-fail:${user.id}`);
+          }
         } catch {
           /* fail-silent */
         }
@@ -390,7 +422,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const { cacheGet, cacheSet } = await import("@/lib/redis");
         // Key-Version v2: Cache-Shape trägt jetzt sessionVersion —
         // Alt-Einträge ohne das Feld dürfen nicht gelesen werden.
-        const cacheKey = `auth:session-user:v2:${token.id}`;
+        const cacheKey = sessionUserCacheKey(token.id as string);
         let cached = await cacheGet<CachedSessionUser>(cacheKey);
         if (cached === null) {
           const row = await db.user.findUnique({

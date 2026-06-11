@@ -464,7 +464,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    guestItemsMeta = JSON.stringify(authMetaItems);
+    // Stripe-Metadata-Values sind auf 500 Zeichen begrenzt. Beim Gast ist
+    // der Snapshot Pflicht (harter 400 oben bei Überlänge) — beim Auth-
+    // User ist er nur Defense-in-Depth: Bei großen Warenkörben lassen wir
+    // ihn WEG statt den Checkout zu blocken; der Webhook fällt dann auf
+    // den Live-Cart-Pfad zurück (resolve-cart-from-stripe Legacy-Zweig).
+    const authMetaJson = JSON.stringify(authMetaItems);
+    guestItemsMeta = authMetaJson.length <= 490 ? authMetaJson : null;
     customerEmail = session?.user?.email ?? undefined;
   }
 

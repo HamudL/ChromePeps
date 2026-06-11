@@ -73,11 +73,22 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
     // Auth-Wechsel (anderer User / Logout) wird neu geladen, damit
     // niemand die Merkliste des vorherigen Users sieht.
     if (get().loaded && get().userId === userId) return;
+    // Identität wechselt: die alten ids gehören dem VORHERIGEN User —
+    // sofort leeren, BEVOR der Fetch läuft. Sonst würde ein
+    // fehlschlagender Fetch (Netz-Blip beim Logout) die fremde
+    // Merkliste stehen lassen, und der Early-Return oben verhindert
+    // bis zum Hard-Reload jede Korrektur.
+    const identityChanged = get().userId !== userId;
+    if (identityChanged) {
+      set({ ids: new Set<string>() });
+    }
     try {
       const res = await fetch("/api/wishlist");
       const json = await res.json();
       if (json.success) {
         set({ ids: new Set(json.data), loaded: true, userId });
+      } else {
+        set({ loaded: true, userId });
       }
     } catch {
       set({ loaded: true, userId });

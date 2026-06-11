@@ -355,8 +355,14 @@ async function handleRefund(charge: Stripe.Charge) {
   // Bestand nur zurückbuchen, wenn er für diese Order noch "draußen"
   // ist: Ein Admin-Cancel hat ggf. schon restauriert (stockRestoredAt
   // gesetzt) — Refund nach Cancel würde sonst doppelt inkrementieren.
-  // Test-Orders haben nie Bestand dekrementiert.
-  const shouldRestoreStock = !order.stockRestoredAt && !order.isTestOrder;
+  // Test-Orders haben nie Bestand dekrementiert. DELIVERED-Orders
+  // restaurieren ebenfalls NICHT automatisch (gleiche Policy wie der
+  // Admin-Cancel): die Ware liegt beim Kunden — ein Kulanz-Refund ohne
+  // Warenrücksendung würde sonst Bestand erzeugen, der physisch nie
+  // zurückkommt. Bei echter Retoure bucht der Admin manuell nach.
+  const alreadyDelivered = order.status === "DELIVERED";
+  const shouldRestoreStock =
+    !order.stockRestoredAt && !order.isTestOrder && !alreadyDelivered;
 
   await db.$transaction(async (tx) => {
     await tx.order.update({
@@ -374,7 +380,9 @@ async function handleRefund(charge: Stripe.Charge) {
         status: "REFUNDED",
         note: shouldRestoreStock
           ? `Voll-Erstattung via Stripe (${fmtEur(charge.amount_refunded)}) — Bestand zurückgebucht.`
-          : `Voll-Erstattung via Stripe (${fmtEur(charge.amount_refunded)}) — Bestand war bereits zurückgebucht.`,
+          : alreadyDelivered && !order.stockRestoredAt
+            ? `Voll-Erstattung via Stripe (${fmtEur(charge.amount_refunded)}) — Bestand NICHT zurückgebucht (Ware ausgeliefert; bei Retoure manuell nachbuchen).`
+            : `Voll-Erstattung via Stripe (${fmtEur(charge.amount_refunded)}) — Bestand war bereits zurückgebucht.`,
       },
     });
 

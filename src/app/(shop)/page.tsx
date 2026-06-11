@@ -22,6 +22,7 @@ import {
   RESEARCH_DISCLAIMER,
   HOMEPAGE_CACHE,
   HOMEPAGE_CACHE_TTL,
+  BANK_TRANSFER_ENABLED,
 } from "@/lib/constants";
 import { cacheGet, cacheSet } from "@/lib/redis";
 import { ProductCard } from "@/components/shop/product-card";
@@ -273,7 +274,12 @@ export default async function HomePage() {
               {
                 icon: CreditCard,
                 title: "Sichere Zahlung",
-                desc: "Stripe, Apple Pay, Google Pay oder Banküberweisung.",
+                // Zahlarten-Aufzählung MUSS dem Vorkasse-Schalter folgen —
+                // eine beworbene, im Checkout aber nicht angebotene
+                // Zahlungsart ist irreführend (abmahnfähig).
+                desc: BANK_TRANSFER_ENABLED
+                  ? "Stripe, Apple Pay, Google Pay oder Banküberweisung."
+                  : "Stripe, Apple Pay oder Google Pay.",
                 link: "/zahlung",
                 linkText: "Zahlungsoptionen",
               },

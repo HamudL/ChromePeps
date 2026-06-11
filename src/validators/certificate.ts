@@ -13,17 +13,18 @@ export const createCertificateSchema = z.object({
   dosage: z.string().max(20).nullish(),
   reportUrl: z.string().url("Invalid URL").nullish().or(z.literal("")),
   // pdfUrl wird in lib/mail/send.ts als Filesystem-Pfad relativ zu
-  // public/ gelesen (COA-Mail-Anhang via readFile). Erlaubt sind daher
-  // nur eigene Upload-Pfade oder externe https-Links; `..`-Segmente
-  // schließen Path-Traversal (z.B. /uploads/../.env) schon bei der
-  // Eingabe hart aus — nicht erst beim Prefix-Check im Mail-Code.
+  // public/ gelesen (COA-Mail-Anhang via readFile). Sicherheitsrelevant
+  // ist hier nur das Traversal-Verbot (`..`) — der /uploads/-Prefix
+  // wird am Verwendungsort (Mail-Code) erzwungen, NICHT in der Eingabe:
+  // updateCertificateSchema ist ein partial() desselben Schemas, und
+  // Bestands-Zertifikate mit historisch anderem URL-Format würden sonst
+  // bei jedem Admin-Edit (auch reiner notes-Korrektur) mit 400 abgelehnt
+  // und wären unpflegbar, bis jemand das Feld manuell ersetzt.
   pdfUrl: z
     .string()
     .refine(
-      (v) =>
-        !v.includes("..") &&
-        (v.startsWith("/uploads/") || v.startsWith("https://")),
-      "pdfUrl muss mit /uploads/ beginnen oder eine https://-URL sein"
+      (v) => !v.includes(".."),
+      "pdfUrl darf keine ..-Segmente enthalten"
     )
     .nullish()
     .or(z.literal("")),

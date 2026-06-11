@@ -69,25 +69,25 @@ export async function PATCH(req: NextRequest) {
 
   // Ändert sich die E-Mail wirklich? (Vorher: jeder PATCH mit email-Feld
   // behielt den alten emailVerified-Status — die neue Adresse war nie
-  // verifiziert, galt aber als verifiziert.)
+  // verifiziert, galt aber als verifiziert.) Ein findMany beantwortet
+  // "aktuelle E-Mail?" UND "neue Adresse vergeben?" in EINEM Roundtrip.
   let emailChanged = false;
   if (parsed.data.email) {
-    const current = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: { email: true },
+    const rows = await db.user.findMany({
+      where: {
+        OR: [{ id: session.user.id }, { email: parsed.data.email }],
+      },
+      select: { id: true, email: true },
     });
+    const current = rows.find((r) => r.id === session.user.id);
+    const conflict = rows.find((r) => r.id !== session.user.id);
     emailChanged = !!current && current.email !== parsed.data.email;
 
-    if (emailChanged) {
-      const existing = await db.user.findFirst({
-        where: { email: parsed.data.email, NOT: { id: session.user.id } },
-      });
-      if (existing) {
-        return NextResponse.json(
-          { success: false, error: "Email already in use" },
-          { status: 409 }
-        );
-      }
+    if (emailChanged && conflict) {
+      return NextResponse.json(
+        { success: false, error: "Email already in use" },
+        { status: 409 }
+      );
     }
   }
 

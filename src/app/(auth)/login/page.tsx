@@ -156,29 +156,31 @@ export default function LoginPage() {
         email = formData.get("email") as string;
         password = formData.get("password") as string;
 
-        // Server-side rate limit + captcha check (nur in Stufe 1).
-        const rateCheck = await checkLoginRateLimit(
-          email,
-          captchaRequired ? captchaToken : undefined,
-        );
+        // Reine UX-Vorabprüfung (nur Stufe 1): Rate-Limit-Hinweis +
+        // "Widget einblenden?". Der hCaptcha-Token wird hier bewusst
+        // NICHT mitgeschickt: Tokens sind single-use, und die einzige
+        // verifizierende Stelle ist authorize() — ein Doppel-Verify
+        // (Action + authorize) lehnte denselben Token beim zweiten Mal
+        // als "already seen" ab und sperrte User in einer
+        // Captcha-Schleife aus.
+        const rateCheck = await checkLoginRateLimit(email);
         if (!rateCheck.success) {
           if (rateCheck.captchaRequired) {
             setCaptchaRequired(true);
           }
-          // „captcha-required" ist ein interner Code — keine User-Meldung
-          // wenn der Server nur signalisiert „bitte erst Captcha lösen".
-          if (rateCheck.error && rateCheck.error !== "captcha-required") {
+          if (rateCheck.error) {
             setError(rateCheck.error);
           }
-          captchaResetRef.current?.resetCaptcha();
-          setCaptchaToken("");
           return;
         }
-        // Captcha war erfolgreich — Token verbrauchen, neuer braucht's
-        // erst beim nächsten Failure.
-        if (captchaRequired) {
-          captchaResetRef.current?.resetCaptcha();
-          setCaptchaToken("");
+        if (rateCheck.captchaRequired) {
+          setCaptchaRequired(true);
+          // Ohne gelösten Token gar nicht erst einen Login-Versuch
+          // verbrennen — authorize() würde ihn mit CaptchaRequired
+          // ablehnen und das Rate-Limit-Budget kostet er trotzdem.
+          if (!captchaToken) {
+            return;
+          }
         }
       }
 
@@ -189,6 +191,13 @@ export default function LoginPage() {
         pendingCredentials ? totpCode : undefined,
         captchaToken || undefined,
       );
+
+      // Der Token ist nach diesem Versuch verbraucht (single-use) —
+      // unabhängig vom Ausgang frisches Widget für den nächsten Submit.
+      if (captchaToken) {
+        captchaResetRef.current?.resetCaptcha();
+        setCaptchaToken("");
+      }
 
       if (result.ok) {
         const params = new URLSearchParams(window.location.search);
@@ -286,10 +295,12 @@ export default function LoginPage() {
             </>
           )}
 
-          {/* hCaptcha — nur sichtbar wenn der Server >=2 Fehlversuche
-              für diese Email gezählt hat. Wird automatisch nach
-              erfolgreichem Login wieder versteckt. */}
-          {captchaRequired && !pendingCredentials && (
+          {/* hCaptcha — sichtbar sobald der Server >=2 Fehlversuche für
+              diese Email gezählt hat. Bewusst AUCH in 2FA-Stufe 2:
+              authorize() erzwingt das Captcha-Gate VOR der TOTP-Prüfung
+              und zählt falsche Codes als Fehlversuche — ohne Widget in
+              Stufe 2 wäre der CaptchaRequired-Fehler dort unlösbar. */}
+          {captchaRequired && (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
                 Zur Sicherheit bitte das Captcha lösen.
@@ -343,9 +354,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             className="w-full gap-2"
-            disabled={
-              isPending || (captchaRequired && !pendingCredentials && !captchaToken)
-            }
+            disabled={isPending || (captchaRequired && !captchaToken)}
           >
             {isPending ? (
               <>

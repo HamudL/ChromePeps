@@ -7,6 +7,7 @@ import { getClientIp } from "@/lib/client-ip";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { createOrderFromStripeSession } from "@/lib/order/create-from-stripe";
 import { resolveCartFromStripeSession } from "@/lib/order/resolve-cart-from-stripe";
+import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 
 /**
  * POST /api/stripe/verify-session
@@ -154,6 +155,16 @@ export async function POST(req: NextRequest) {
       });
       return { order: created, wasCreated: true };
     });
+
+    // Stock-abhängige Caches invalidieren, wenn DIESER Pfad die Order
+    // (inkl. Stock-Dekrement) erstellt hat — die Schwester-Pfade
+    // (Webhook, Vorkasse) tun dasselbe. Ohne den Aufruf zeigte der Shop
+    // genau im Fallback-Szenario (Webhook down/verzögert) bis zum
+    // TTL-Ablauf alte Verfügbarkeit. Fail-safe + fire-and-forget:
+    // blockiert die Success-Page nicht.
+    if (txResult.wasCreated) {
+      void invalidateStockCaches();
+    }
 
     // Send confirmation email only when this path actually created
     // the order, so we don't duplicate when webhook + verify-session

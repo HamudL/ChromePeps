@@ -201,15 +201,17 @@ export async function createOrderFromStripeSession(
   if (typeof paidTotal === "number" && paidTotal !== totals.totalInCents) {
     const paidDiscount =
       stripeSession.total_details?.amount_discount ?? totals.discountInCents;
-    // Versand steckt je nach Session-Alter im Line-Item (legacy) oder in
-    // shipping_options (amount_shipping). Wir übernehmen amount_shipping
-    // nur, wenn Stripe es kennt UND es nicht 0-bei-Legacy ist.
-    const paidShipping =
-      stripeSession.total_details &&
-      typeof stripeSession.total_details.amount_shipping === "number" &&
-      stripeSession.total_details.amount_shipping > 0
-        ? stripeSession.total_details.amount_shipping
-        : totals.shippingInCents;
+    // Versand steckt je nach Session-Alter im Line-Item (legacy, vor dem
+    // shipping_options-Umbau) oder in shipping_options. Unterscheidung
+    // über session.shipping_cost: das Objekt existiert NUR bei Sessions
+    // mit shipping_options — dann ist amount_total autoritativ, AUCH
+    // wenn er 0 ist (legitimer Gratis-Versand; ein `> 0`-Check fiele
+    // hier fälschlich auf den neu berechneten Tarif zurück und wiese
+    // nie bezahlte Versandkosten auf der Rechnung aus). Legacy-Sessions
+    // ohne shipping_cost behalten den berechneten Wert.
+    const paidShipping = stripeSession.shipping_cost
+      ? stripeSession.shipping_cost.amount_total
+      : totals.shippingInCents;
     const taxInCents = Math.round(paidTotal - paidTotal / 1.19);
     reconcileNote =
       `[Reconcile] Stripe-Charge (${(paidTotal / 100).toFixed(2)} €) wich von der ` +
@@ -313,9 +315,14 @@ export async function createOrderFromStripeSession(
   // WICHTIG: Bei CAS-Fehlschlag wird NICHT mehr geworfen. Das Geld ist
   // zu diesem Zeitpunkt bereits kassiert — ein Throw ließ den Webhook
   // mit 500 antworten, Stripe retried endlos und es entstand NIE eine
-  // Order (Geld ohne Bestellung). Stattdessen: Order entsteht immer,
-  // der Bestand wird auf 0 geklemmt und der Übersell landet sichtbar
-  // als OrderEvent + Error-Log für den Admin.
+  // Order (Geld ohne Bestellung). Stattdessen: Order entsteht immer;
+  // im Übersell-Fall wird UNKONDITIONAL um die volle Menge dekrementiert
+  // (Bestand darf negativ werden). Warum nicht auf 0 klemmen? Refund/
+  // Cancel buchen später die VOLLE item.quantity zurück — eine Klemmung
+  // hätte weniger entnommen als restauriert wird und damit pro Übersell
+  // Phantom-Inventar erzeugt. Negativ verhält sich für alle Kauf-Pfade
+  // wie 0 (überall `stock >= qty`-Guards) und ist für den Admin ein
+  // sichtbares Übersell-Signal; zusätzlich OrderEvent + Error-Log.
   const oversold: string[] = [];
   for (const item of cart.items) {
     if (item.variantId) {
@@ -329,7 +336,7 @@ export async function createOrderFromStripeSession(
         );
         await tx.productVariant.updateMany({
           where: { id: item.variantId },
-          data: { stock: 0 },
+          data: { stock: { decrement: item.quantity } },
         });
       }
     } else {
@@ -341,7 +348,7 @@ export async function createOrderFromStripeSession(
         oversold.push(`${item.product.name} ×${item.quantity}`);
         await tx.product.updateMany({
           where: { id: item.productId },
-          data: { stock: 0 },
+          data: { stock: { decrement: item.quantity } },
         });
       }
     }
@@ -363,8 +370,22 @@ export async function createOrderFromStripeSession(
   // creation and cart clear doesn't leave stale items behind. Skip for
   // guests — they have no server-side cart row (their cart only exists
   // in the client-side Zustand store which we can't touch from here).
+  //
+  // WICHTIG: Nur die BESTELLTEN Positionen löschen, nicht den ganzen
+  // Cart. Seit die Order aus dem Metadata-Snapshot gebaut wird, kann
+  // der Live-Cart neuere Items enthalten (zweiter Tab während der
+  // Stripe-Bezahlung) — ein pauschales deleteMany würde diese Items
+  // verschlucken, obwohl sie weder bestellt noch bezahlt wurden.
   if (cart.id) {
-    await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+    await tx.cartItem.deleteMany({
+      where: {
+        cartId: cart.id,
+        OR: cart.items.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+        })),
+      },
+    });
   }
 
   return order;

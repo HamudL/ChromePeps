@@ -91,13 +91,21 @@ export const HOMEPAGE_CACHE_TTL = {
 
 // Bankverbindung für Vorkasse — kommt ausschließlich aus der Umgebung.
 // Hier stand früher eine Beispiel-IBAN hartkodiert, an die echte Kunden
-// überwiesen hätten. NEXT_PUBLIC_, weil Checkout/Success Client-Components
-// sind und die Daten ohnehin kundensichtbar (keine Secrets).
+// überwiesen hätten.
+//
+// BEWUSST KEIN NEXT_PUBLIC_: Diese Werte werden zur LAUFZEIT auf dem
+// Server gelesen (Server-Components, API-Routen, Mails). NEXT_PUBLIC_-
+// Variablen würden zur BUILD-Zeit ins Client-Bundle geinlined — das
+// Image wird aber generisch in CI gebaut, die echten Werte stehen erst
+// in der VPS-.env. Mit NEXT_PUBLIC_ wäre Vorkasse über die Server-Env
+// nie aktivierbar gewesen (Client-Bundle dauerhaft false + Hydration-
+// Mismatch gegen das Server-HTML). Client-Components (Checkout,
+// Success) erhalten die Werte als Props von Server-Wrapper-Pages.
 export const BANK_DETAILS = {
-  accountHolder: process.env.NEXT_PUBLIC_BANK_ACCOUNT_HOLDER ?? "",
-  iban: process.env.NEXT_PUBLIC_BANK_IBAN ?? "",
-  bic: process.env.NEXT_PUBLIC_BANK_BIC ?? "",
-  bankName: process.env.NEXT_PUBLIC_BANK_NAME ?? "",
+  accountHolder: process.env.BANK_ACCOUNT_HOLDER ?? "",
+  iban: process.env.BANK_IBAN ?? "",
+  bic: process.env.BANK_BIC ?? "",
+  bankName: process.env.BANK_NAME ?? "",
 } as const;
 
 // Vorkasse ist nur buchbar, wenn sie explizit aktiviert wurde UND eine
@@ -105,8 +113,28 @@ export const BANK_DETAILS = {
 // wieder ohne echte Kontodaten live geht. Server-seitig erzwungen in
 // /api/checkout/bank-transfer, client-seitig im Checkout ausgeblendet.
 export const BANK_TRANSFER_ENABLED =
-  process.env.NEXT_PUBLIC_BANK_TRANSFER_ENABLED === "true" &&
+  process.env.BANK_TRANSFER_ENABLED === "true" &&
   BANK_DETAILS.iban.length > 0;
+
+// Serialisierbares Shape für die Server→Client-Übergabe der Vorkasse-
+// Infos (Checkout-/Success-Wrapper-Pages → Client-Components).
+export interface BankTransferInfo {
+  enabled: boolean;
+  accountHolder: string;
+  iban: string;
+  bic: string;
+  bankName: string;
+}
+
+export function getBankTransferInfo(): BankTransferInfo {
+  return {
+    enabled: BANK_TRANSFER_ENABLED,
+    accountHolder: BANK_DETAILS.accountHolder,
+    iban: BANK_DETAILS.iban,
+    bic: BANK_DETAILS.bic,
+    bankName: BANK_DETAILS.bankName,
+  };
+}
 
 /**
  * Verkäufer-/Impressumsdaten — die EINE Quelle für Impressum, Datenschutz,

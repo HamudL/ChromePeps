@@ -10,6 +10,11 @@ import bcrypt from "bcryptjs";
 import { generateEmailVerifyToken } from "@/lib/email-verify";
 import { sendEmailVerifyEmail } from "@/lib/mail/send";
 import { EMAIL_VERIFY_TOKEN_TTL_MS } from "@/lib/constants";
+import {
+  getLoginFailureCount,
+  CAPTCHA_THRESHOLD,
+  LOGIN_FAIL_TTL_SECONDS,
+} from "@/lib/login-failures";
 
 export interface AuthActionResult {
   success: boolean;
@@ -23,20 +28,26 @@ export interface AuthActionResult {
   captchaRequired?: boolean;
 }
 
-const LOGIN_FAIL_TTL_SECONDS = 600; // 10 Minuten Wartezeit, dann reset
-const CAPTCHA_THRESHOLD = 2;
-
 /**
- * Server-side rate limit check for login. Returnt zusätzlich `captchaRequired`
- * basierend auf einem separaten Failure-Counter (siehe `recordLoginFailure`),
- * damit der Client das hCaptcha-Widget einblenden kann.
+ * Reine UX-Vorab-Prüfung für den Login-Screen: Rate-Limit-Hinweis +
+ * "Captcha-Widget einblenden?"-Signal.
  *
- * Die actual authentication happens client-side via fetch to /api/auth/callback,
- * which avoids the NEXT_REDIRECT issue in NextAuth v5 beta server actions.
+ * WICHTIG: Diese Action VERIFIZIERT den hCaptcha-Token bewusst NICHT.
+ * hCaptcha-Tokens sind single-use — die einzige verifizierende Stelle
+ * ist authorize() in src/lib/auth.ts (Enforcement-Schicht). Eine
+ * frühere Version prüfte den Token hier UND in authorize(): der zweite
+ * Verify desselben Tokens schlug bei hCaptcha als "already seen" fehl
+ * und schickte User mit korrekt gelöstem Captcha in eine Endlosschleife.
+ *
+ * Failure-Counting passiert ebenfalls ausschließlich server-seitig im
+ * authorize() — die früheren öffentlichen Actions recordLoginFailure/
+ * clearLoginFailures sind entfernt: als "use server"-Exports waren sie
+ * von jedem unauthentifizierten Client aufrufbar, und clearLoginFailures
+ * hätte einem Angreifer erlaubt, den Captcha-Zähler beliebiger E-Mails
+ * vor jedem Brute-Force-Burst zurückzusetzen.
  */
 export async function checkLoginRateLimit(
   email: string,
-  captchaToken?: string,
 ): Promise<AuthActionResult> {
   const parsed = z.string().email().safeParse(email);
   if (!parsed.success) {
@@ -54,70 +65,8 @@ export async function checkLoginRateLimit(
     };
   }
 
-  // Captcha-Threshold: ab 2 fehlgeschlagenen Versuchen muss der nächste
-  // Submit einen gültigen hCaptcha-Token mitbringen.
-  let failCount = 0;
-  try {
-    const raw = await redis.get(loginFailKey(parsed.data));
-    failCount = raw ? parseInt(raw, 10) || 0 : 0;
-  } catch {
-    /* Redis-Outage → fail-OPEN, captcha = false */
-  }
-
-  const captchaRequired = failCount >= CAPTCHA_THRESHOLD;
-  if (captchaRequired) {
-    if (!captchaToken) {
-      return { success: false, captchaRequired: true, error: "captcha-required" };
-    }
-    const captchaOk = await verifyHCaptcha(captchaToken);
-    if (!captchaOk) {
-      return {
-        success: false,
-        captchaRequired: true,
-        error: "Captcha-Verifikation fehlgeschlagen. Bitte erneut lösen.",
-      };
-    }
-  }
-
-  return { success: true, captchaRequired };
-}
-
-/**
- * Wird vom Client nach einem fehlgeschlagenen Login-Versuch (CredentialsSignin
- * error, InvalidTwoFactorCode etc.) gerufen, um den Failure-Counter für die
- * Email zu inkrementieren. Bei Erreichen des Captcha-Thresholds blendet der
- * nächste `checkLoginRateLimit`-Call das Captcha ein.
- */
-export async function recordLoginFailure(email: string): Promise<void> {
-  const parsed = z.string().email().safeParse(email);
-  if (!parsed.success) return;
-  try {
-    const key = loginFailKey(parsed.data);
-    const count = await redis.incr(key);
-    if (count === 1) {
-      await redis.expire(key, LOGIN_FAIL_TTL_SECONDS);
-    }
-  } catch {
-    /* Redis-Outage → silent fail, kein Captcha bis Redis wieder läuft */
-  }
-}
-
-/**
- * Wird vom Server nach einem erfolgreichen Login (oder Pre-Verify-Stufe) gerufen,
- * um den Failure-Counter zurückzusetzen.
- */
-export async function clearLoginFailures(email: string): Promise<void> {
-  const parsed = z.string().email().safeParse(email);
-  if (!parsed.success) return;
-  try {
-    await redis.del(loginFailKey(parsed.data));
-  } catch {
-    /* fail-silent */
-  }
-}
-
-function loginFailKey(email: string): string {
-  return `login-fail:${email.toLowerCase()}`;
+  const failCount = await getLoginFailureCount(parsed.data);
+  return { success: true, captchaRequired: failCount >= CAPTCHA_THRESHOLD };
 }
 
 /**
