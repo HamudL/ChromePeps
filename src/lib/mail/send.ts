@@ -17,6 +17,7 @@ import {
   InventoryAlertEmail,
   type LowStockItem,
 } from "@/emails/inventory-alert";
+import { OpsAlertEmail } from "@/emails/ops-alert";
 import { BANK_DETAILS } from "@/lib/constants";
 
 /**
@@ -425,5 +426,30 @@ export async function sendInventoryAlertEmail(
       items: input.items,
       adminUrl: input.adminUrl,
     }),
+  });
+}
+
+export interface SendOpsAlertInput {
+  to: string;
+  bcc?: string[];
+  /** Kurzer Alert-Titel — landet auch im Subject ("[Ops] <title>"). */
+  title: string;
+  /** Detailzeilen für den Mail-Body. */
+  lines: string[];
+}
+
+/**
+ * Betriebs-Alarm an die Admins (Backup-Watchdog & künftige Ops-Checks).
+ * Wie alle Wrapper never-throw; Retries übernimmt der sendMail-Client.
+ */
+export async function sendOpsAlertEmail(
+  input: SendOpsAlertInput,
+): Promise<SendMailResult> {
+  return sendMail({
+    to: input.to,
+    bcc: input.bcc,
+    subject: `[Ops] ${input.title}`,
+    tag: "ops-alert",
+    react: OpsAlertEmail({ title: input.title, lines: input.lines }),
   });
 }
