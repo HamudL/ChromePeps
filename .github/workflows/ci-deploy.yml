@@ -64,7 +64,10 @@ jobs:
 
       - run: npm ci
       - run: npx prisma generate
-      - run: npm run test:run
+      # Coverage-Modus: die per-Pfad-Thresholds in vitest.config.ts
+      # (src/lib/**, src/store/**) sind das Gate — fällt Coverage unter
+      # die Schwellen, failt der Job, nicht nur einzelne Tests.
+      - run: npm run test:coverage
 
   # ──────────────────────────────────────────────
   # 3. E2E (Playwright) — smoke against `next start`
