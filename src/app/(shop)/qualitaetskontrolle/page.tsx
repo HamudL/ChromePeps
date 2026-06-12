@@ -6,10 +6,9 @@ import {
   Eye,
   Mail,
   ArrowRight,
-  FlaskConical,
 } from "lucide-react";
 import type { Metadata } from "next";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -57,83 +56,88 @@ export default function QualitaetskontrollePage() {
           aussahen. Ausblenden statt faken: das Panel kommt erst zurück,
           wenn echte Chargen-Messdaten übergeben werden können. */}
       <section className="relative border-b border-border/60">
-        <div className="container relative py-14 md:py-20">
-          <div className="max-w-3xl space-y-5">
-            <Badge
-              variant="outline"
-              className="border-primary/30 bg-primary/5 px-3 py-1 text-xs"
-            >
-              <FlaskConical className="mr-1.5 h-3 w-3 text-primary" />
-              Qualitätskontrolle
-            </Badge>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+        <div className="container relative section-pad">
+          <div className="max-w-3xl">
+            <span className="eyebrow">[ QUALITÄTSKONTROLLE ]</span>
+            <h1 className="display-title mt-4 text-4xl md:text-5xl lg:text-6xl">
               Jede Charge. Unabhängig geprüft.
             </h1>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
               Wir senden jede neue Charge an Janoshik Labs. Erst nach
               HPLC-Freigabe geht sie in den Versand, ohne Ausnahme.
             </p>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center gap-3 pt-7">
               {/* Früher gab es hier einen zweiten CTA zur öffentlichen
                   CoA-Sammlung. Die Sammlung ist nicht mehr öffentlich —
                   CoAs werden automatisch mit jeder Bestellung per E-Mail
                   versandt. Daher nur noch der Shop-CTA. */}
-              <Button asChild size="lg" className="gap-2 h-11">
+              <Button asChild variant="gold" size="xl" className="gap-2">
                 <Link href="/products">
                   Produkte entdecken
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                <span>Janoshik HPLC</span>
-              </div>
-              <span className="text-muted-foreground/40">·</span>
-              <div className="flex items-center gap-1.5">
-                <Eye className="h-3.5 w-3.5 text-primary" />
-                <span>Öffentlich verifizierbar</span>
-              </div>
-              <span className="text-muted-foreground/40">·</span>
-              <div className="flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-primary" />
-                <span>CoA per E-Mail</span>
-              </div>
+            <div className="flex flex-wrap items-center gap-2.5 pt-7">
+              <span className="trust-pill">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary-strong" />
+                Janoshik HPLC
+              </span>
+              <span className="trust-pill">
+                <Eye className="h-3.5 w-3.5 text-primary-strong" />
+                Öffentlich verifizierbar
+              </span>
+              <span className="trust-pill">
+                <Mail className="h-3.5 w-3.5 text-primary-strong" />
+                CoA per E-Mail
+              </span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Steps */}
-      <section className="container py-14 md:py-18 max-w-3xl">
-        <div className="space-y-6">
+      <section className="container section-pad max-w-3xl">
+        <header className="mb-8">
+          <span className="mono-label text-muted-foreground">Der Ablauf</span>
+          <h2 className="display-title mt-2 text-2xl md:text-3xl">
+            Von der Charge zur Freigabe
+          </h2>
+        </header>
+        <div className="space-y-4">
           {steps.map((step, i) => (
-            <div key={i} className="flex gap-5 rounded-xl border p-6 hover:shadow-md transition-shadow">
-              <div className="relative flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10 shrink-0">
-                <step.icon className="h-5 w-5 text-primary" />
-                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center h-5 w-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+            <Card
+              key={i}
+              variant="lift"
+              className="flex gap-5 p-6 reveal-up"
+            >
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <step.icon className="h-5 w-5 text-primary-strong" />
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary font-mono text-[10px] font-bold text-primary-foreground">
                   {i + 1}
                 </span>
               </div>
               <div>
-                <h2 className="text-lg font-semibold mb-1">{step.title}</h2>
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <h3 className="mb-1 text-lg font-semibold">{step.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {step.description}
                 </p>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
 
         {/* CoA note */}
-        <div className="text-center mt-12 pt-8 border-t">
-          <div className="mx-auto inline-flex items-center gap-3 rounded-xl border bg-muted/40 px-5 py-4">
-            <Mail className="h-5 w-5 text-primary shrink-0" />
-            <p className="text-sm text-muted-foreground text-left">
-              Das Analysezertifikat (CoA) wird automatisch per E-Mail mit Ihrer
-              Bestellung versendet.
-            </p>
+        <div className="mt-12">
+          <hr className="rule-gold" />
+          <div className="mt-8 flex items-center justify-center">
+            <div className="inline-flex items-center gap-3 rounded-xl border border-border bg-muted/40 px-5 py-4">
+              <Mail className="h-5 w-5 shrink-0 text-primary-strong" />
+              <p className="text-left text-sm text-muted-foreground">
+                Das Analysezertifikat (CoA) wird automatisch per E-Mail mit Ihrer
+                Bestellung versendet.
+              </p>
+            </div>
           </div>
         </div>
       </section>

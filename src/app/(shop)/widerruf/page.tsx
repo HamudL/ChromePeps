@@ -19,17 +19,22 @@ export const dynamic = "force-dynamic";
 
 export default function WiderrufPage() {
   return (
-    <div className="container max-w-3xl py-12">
-      <h1 className="text-3xl font-bold tracking-tight mb-2">
-        Widerrufsbelehrung
-      </h1>
-      <p className="text-sm text-muted-foreground mb-8">
-        Informationen zu Ihrem Widerrufsrecht als Verbraucher
-      </p>
+    <div className="container max-w-3xl section-pad">
+      <header>
+        <span className="eyebrow">[ WIDERRUFSRECHT ]</span>
+        <h1 className="display-title mt-3 text-4xl md:text-5xl">
+          Widerrufsbelehrung
+        </h1>
+        <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
+          Informationen zu Ihrem Widerrufsrecht als Verbraucher
+        </p>
+      </header>
 
-      <div className="space-y-6 text-sm leading-relaxed">
+      <hr className="rule-gold my-10" />
+
+      <div className="space-y-8 text-[15px] leading-relaxed text-foreground/90">
         <section>
-          <h2 className="text-lg font-semibold">Widerrufsrecht</h2>
+          <h2 className="display-title text-xl text-foreground">Widerrufsrecht</h2>
           <p>
             Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen
             diesen Vertrag zu widerrufen. Die Widerrufsfrist beträgt vierzehn
@@ -54,7 +59,7 @@ export default function WiderrufPage() {
             E-Mail:{" "}
             <a
               href={`mailto:${SELLER_DETAILS.email}`}
-              className="underline"
+              className="text-primary-strong underline-offset-2 hover:underline"
             >
               {SELLER_DETAILS.email}
             </a>
@@ -74,7 +79,7 @@ export default function WiderrufPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">Folgen des Widerrufs</h2>
+          <h2 className="display-title text-xl text-foreground">Folgen des Widerrufs</h2>
           <p>
             Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen,
             die wir von Ihnen erhalten haben, einschließlich der Lieferkosten
@@ -114,7 +119,7 @@ export default function WiderrufPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">
+          <h2 className="display-title text-xl text-foreground">
             Ausschluss bzw. vorzeitiges Erlöschen des Widerrufsrechts
           </h2>
           <p>
@@ -150,7 +155,7 @@ export default function WiderrufPage() {
         </section>
 
         <section className="border-t pt-6">
-          <h2 className="text-lg font-semibold">Muster-Widerrufsformular</h2>
+          <h2 className="display-title text-xl text-foreground">Muster-Widerrufsformular</h2>
           <p className="text-xs text-muted-foreground mb-3">
             Wenn Sie den Vertrag widerrufen wollen, füllen Sie bitte dieses
             Formular aus und senden Sie es zurück.
