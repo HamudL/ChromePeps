@@ -60,9 +60,9 @@ export default async function OrderDetailPage(props: {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <span className="eyebrow">Bestellung</span>
-          <h1 className="display-title mt-1.5 text-2xl">
+          <h2 className="display-title mt-1.5 text-2xl">
             <span className="font-mono">{order.orderNumber}</span>
-          </h1>
+          </h2>
           <p className="mt-1 text-sm tabular-nums text-muted-foreground">
             Aufgegeben am {format(new Date(order.createdAt), "dd.MM.yyyy 'um' HH:mm")}
           </p>

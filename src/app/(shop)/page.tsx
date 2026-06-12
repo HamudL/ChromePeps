@@ -383,6 +383,7 @@ export default async function HomePage() {
           ].map((step, i) => (
             <FadeUp
               key={step.n}
+              as="li"
               delay={i * 0.08}
               className="relative border-t border-border pt-6"
             >
@@ -391,7 +392,7 @@ export default async function HomePage() {
                 className="absolute -top-px left-0 h-px w-12 bg-primary"
               />
               <div className="flex items-center justify-between">
-                <step.icon className="h-7 w-7 text-primary" strokeWidth={1.6} />
+                <step.icon className="h-7 w-7 text-primary-strong" strokeWidth={1.6} />
                 <span className="stat-value text-3xl text-primary/25">
                   {step.n}
                 </span>

@@ -48,7 +48,7 @@ export default async function TwoFactorSettingsPage() {
     <div className="space-y-6">
       <div>
         <span className="eyebrow">Sicherheit</span>
-        <h1 className="display-title mt-2 text-2xl">Zwei-Faktor-Authentifizierung</h1>
+        <h2 className="display-title mt-2 text-2xl">Zwei-Faktor-Authentifizierung</h2>
         <p className="mt-1 text-muted-foreground">
           Zusätzlicher Schutz mit TOTP-Authenticator-App
           (Google Authenticator, Authy, 1Password, Bitwarden, …).

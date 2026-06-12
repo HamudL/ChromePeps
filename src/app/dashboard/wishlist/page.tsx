@@ -37,7 +37,7 @@ export default async function WishlistPage() {
     <div className="space-y-6">
       <div>
         <span className="eyebrow">Gemerkt</span>
-        <h1 className="display-title mt-2 text-2xl">Merkliste</h1>
+        <h2 className="display-title mt-2 text-2xl">Merkliste</h2>
         <p className="mt-1 text-muted-foreground">
           {products.length} {products.length === 1 ? "Produkt" : "Produkte"} gespeichert
         </p>
