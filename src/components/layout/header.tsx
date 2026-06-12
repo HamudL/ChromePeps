@@ -39,24 +39,26 @@ const navLinks = [
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <div className="container flex h-16 items-center justify-between gap-4">
         {/* Mobile menu — Client Island (Sheet + open-state). */}
         <HeaderMobileMenu links={navLinks} />
 
         {/* Logo — Client Island wegen usePathname-Conditional. */}
         <HeaderBrand />
 
-        {/* Desktop nav — reines HTML. */}
+        {/* Desktop nav — reines HTML (kein usePathname → Layout bleibt
+            statik-fähig). Aktiv-State lebt im Mobile-Menü-Island; hier
+            reine CSS-Hover-Gold-Underline. */}
         <nav
           aria-label="Hauptnavigation"
-          className="hidden md:flex items-center gap-6"
+          className="hidden items-center gap-7 md:flex"
         >
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="gold-underline py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {link.label}
             </Link>
@@ -64,7 +66,7 @@ export function Header() {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-1.5">
           <ThemeToggle />
           <HeaderSearch />
           <HeaderCartButton />
