@@ -11,10 +11,17 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md",
+        // Gold — das primäre Conversion-CTA der "Cinematic Lab"-Sprache.
+        // Goldfläche mit Ink-Text, weiche Gold-Aura, beim Hover ein
+        // dezenter Shine-Sweep (btn-shine, definiert in globals.css).
+        gold: "btn-shine bg-primary text-primary-foreground font-semibold shadow-[0_1px_0_hsl(45_92%_75%/0.6)_inset,0_8px_24px_-12px_hsl(45_92%_41%/0.7)] hover:bg-[hsl(45_92%_36%)] hover:shadow-[0_1px_0_hsl(45_92%_75%/0.6)_inset,0_12px_30px_-10px_hsl(45_92%_41%/0.8)]",
+        // Ink — dunkles Premium-Pendant für helle Sektionen (Sekundär-CTA
+        // mit Gewicht, ohne mit dem Gold-CTA zu konkurrieren).
+        ink: "bg-ink text-ink-foreground border border-ink-border shadow-sm hover:bg-[hsl(20_14%_9%)] hover:border-primary/40",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
@@ -24,6 +31,8 @@ const buttonVariants = cva(
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
+        // XL — für Hero-/Hauptseiten-CTAs mit Präsenz.
+        xl: "h-12 rounded-md px-9 text-base [&_svg]:size-5",
         icon: "h-10 w-10",
       },
     },
