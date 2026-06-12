@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { cacheDel, cacheDelPattern } from "@/lib/redis";
+import { invalidateShopCategoriesCache } from "@/lib/shop/categories";
 import { updateCategorySchema } from "@/validators/product";
 import { slugify } from "@/lib/utils";
 import { CACHE_KEYS } from "@/lib/constants";
@@ -20,8 +22,19 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await req.json();
-  const parsed = updateCategorySchema.safeParse({ ...body, id });
+  // Expliziter 400 nötig: `{ ...null, id }` würde das all-optionale
+  // Update-Schema passieren und ein leeres Update ausführen.
+  const body = await parseJsonBody(req);
+  if (body === null) {
+    return NextResponse.json(
+      { success: false, error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
+  const parsed = updateCategorySchema.safeParse({
+    ...(body as Record<string, unknown>),
+    id,
+  });
   if (!parsed.success) {
     return NextResponse.json(
       { success: false, error: parsed.error.errors[0].message },
@@ -40,7 +53,7 @@ export async function PATCH(
 
   await cacheDel(CACHE_KEYS.CATEGORIES);
   // Shop-Variante der Kategorie-Liste (FilterBar) mit invalidieren.
-  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
+  await invalidateShopCategoriesCache();
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("homepage:*");
 
@@ -77,7 +90,7 @@ export async function DELETE(
 
   await cacheDel(CACHE_KEYS.CATEGORIES);
   // Shop-Variante der Kategorie-Liste (FilterBar) mit invalidieren.
-  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
+  await invalidateShopCategoriesCache();
   await cacheDelPattern("homepage:*");
 
   return NextResponse.json({ success: true });

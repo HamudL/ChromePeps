@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { cacheGet, cacheSet } from "@/lib/redis";
+import { cacheDel, cacheGet, cacheSet } from "@/lib/redis";
 import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
 
 /**
@@ -40,4 +40,14 @@ export async function getShopCategories(): Promise<ShopCategory[]> {
   });
   await cacheSet(CACHE_KEYS.CATEGORIES_SHOP, result, CACHE_TTL.CATEGORIES);
   return result;
+}
+
+/**
+ * Invalidierung des Shop-Kategorie-Caches — zentral, weil der Active-
+ * Product-Count an Category- UND Product-Writes hängt (isActive-Toggle,
+ * Kategorie-Wechsel, Create/Delete). Fail-safe wie cacheDel selbst:
+ * Redis-Ausfall bricht keinen Admin-Write.
+ */
+export async function invalidateShopCategoriesCache(): Promise<void> {
+  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
 }

@@ -1,30 +1,32 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/auth";
 import { HeaderMobileMenu } from "./header-mobile-menu";
 import { HeaderBrand } from "./header-brand";
 import { HeaderSearch } from "./header-search";
 import { ThemeToggle } from "./theme-toggle";
 import { HeaderCartButton } from "./header-cart-button";
-import { HeaderUserMenu } from "./header-user-menu";
+import { HeaderAuthSlot } from "./header-auth-slot";
 
 /**
- * Header — Server Component.
+ * Header — Server Component OHNE Session-Zugriff.
  *
- * Vorher war der ganze Header `"use client"` weil `useSession()` +
- * `useCartStore()` + Mobile-Menu-State + User-Dropdown alles im
- * gleichen File saßen. Effekt: jede einzelne (shop)-Page zog die
- * komplette Header-Markup, alle Icons, Sheet, DropdownMenu und
- * NextAuth-React in ihren Client-Bundle.
+ * Historie in zwei Schritten:
+ *  1. Früher war der ganze Header `"use client"` (useSession + Cart +
+ *     Menu-State in einem File) → komplette Header-Markup in jedem
+ *     Client-Bundle.
+ *  2. Danach Server-Component mit `await auth()` → schlankes Bundle,
+ *     ABER: auth() liest Cookies und deoptete damit den GESAMTEN
+ *     (shop)-Baum auf per-Request-SSR. Selbst /impressum war dynamic,
+ *     `revalidate` wirkungslos (dokumentiert im alten (shop)/layout-
+ *     Kommentar).
  *
- * Jetzt: Session wird Server-seitig per `auth()` aus dem Redis-
- * gecachten JWT gezogen, die statische Markup-Struktur (Container,
- * Nav-Links, Logo-Wrapper) ist reines HTML. Vier kleine
- * Client-Islands kümmern sich um die interaktiven Slots:
+ * Jetzt: Die Markup-Struktur bleibt Server-HTML, der session-abhängige
+ * Slot ist ein kleines Client-Island (HeaderAuthSlot, useSession über
+ * den Root-SessionProvider). Damit ist der Layoutbaum statik-fähig und
+ * Statik/ISR funktioniert wieder pro Seite. Client-Islands:
  *   - HeaderMobileMenu (Sheet-State)
  *   - HeaderBrand (usePathname zum Hide-Logo-on-Home)
  *   - HeaderCartButton (Zustand-Badge)
- *   - HeaderUserMenu (Dropdown + signOut, nur wenn eingeloggt)
+ *   - HeaderAuthSlot (Session: UserMenu vs. Anmelden-Link)
  */
 
 const navLinks = [
@@ -35,10 +37,7 @@ const navLinks = [
   { href: "/ueber-uns", label: "Über uns" },
 ] as const;
 
-export async function Header() {
-  const session = await auth();
-  const sessionUser = session?.user;
-
+export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -69,20 +68,7 @@ export async function Header() {
           <ThemeToggle />
           <HeaderSearch />
           <HeaderCartButton />
-
-          {sessionUser?.id ? (
-            <HeaderUserMenu
-              user={{
-                name: sessionUser.name,
-                email: sessionUser.email,
-                role: sessionUser.role,
-              }}
-            />
-          ) : (
-            <Button asChild variant="outline" size="sm">
-              <Link href="/login">Anmelden</Link>
-            </Button>
-          )}
+          <HeaderAuthSlot />
         </div>
       </div>
     </header>

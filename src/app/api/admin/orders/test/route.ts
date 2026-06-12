@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { generateOrderNumber } from "@/lib/order/generate-order-number";
 import { calculateOrderTotals } from "@/lib/order/calculate-totals";
 
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const raw = await req.json().catch(() => null);
+  const raw = await parseJsonBody(req);
   if (!raw) {
     return NextResponse.json(
       { success: false, error: "Invalid JSON body" },

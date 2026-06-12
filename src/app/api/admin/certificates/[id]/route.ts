@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { updateCertificateSchema } from "@/validators/certificate";
 
 // PATCH /api/admin/certificates/[id]
@@ -17,10 +18,21 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await req.json();
+  // Expliziter 400: `{ ...null, id }` würde das all-optionale Update-
+  // Schema passieren, und der reportUrl-Zugriff würde auf null crashen.
+  const body = (await parseJsonBody(req)) as { reportUrl?: unknown } | null;
+  if (body === null) {
+    return NextResponse.json(
+      { success: false, error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
   if (body.reportUrl === "") body.reportUrl = null;
 
-  const parsed = updateCertificateSchema.safeParse({ ...body, id });
+  const parsed = updateCertificateSchema.safeParse({
+    ...(body as Record<string, unknown>),
+    id,
+  });
   if (!parsed.success) {
     return NextResponse.json(
       { success: false, error: parsed.error.errors[0].message },

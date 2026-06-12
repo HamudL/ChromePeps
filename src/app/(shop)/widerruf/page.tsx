@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/widerruf" },
 };
 
+// force-dynamic: Diese Seite liest Runtime-Env (SELLER_*/BANK_*-Stamm-
+// daten). Statisches Prerender wuerde die LEERE CI-Build-Env backen und
+// der fluechtige ISR-Cache (.next/cache liegt auf keinem Volume) wuerde
+// die Platzhalter-Version nach JEDEM Deploy/Restart erneut servieren -
+// auf Pflichtseiten inakzeptabel. Ohne DB-Zugriff ist per-Request-
+// Rendering hier ohnehin praktisch kostenlos.
+export const dynamic = "force-dynamic";
+
 export default function WiderrufPage() {
   return (
     <div className="container max-w-3xl py-12">

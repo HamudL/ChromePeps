@@ -12,6 +12,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/kontakt" },
 };
 
+// force-dynamic: Diese Seite liest Runtime-Env (SELLER_*/BANK_*-Stamm-
+// daten). Statisches Prerender wuerde die LEERE CI-Build-Env backen und
+// der fluechtige ISR-Cache (.next/cache liegt auf keinem Volume) wuerde
+// die Platzhalter-Version nach JEDEM Deploy/Restart erneut servieren -
+// auf Pflichtseiten inakzeptabel. Ohne DB-Zugriff ist per-Request-
+// Rendering hier ohnehin praktisch kostenlos.
+export const dynamic = "force-dynamic";
+
 export default function KontaktPage() {
   // LocalBusiness-Schema wird nur ausgegeben wenn SELLER_DETAILS keine
   // [TODO: ...]-Platzhalter mehr enthält (siehe lib/json-ld.ts).

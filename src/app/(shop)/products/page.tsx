@@ -19,6 +19,13 @@ import type { ProductCardData } from "@/types";
 import type { Prisma } from "@prisma/client";
 import type { Metadata } from "next";
 
+// force-dynamic EXPLIZIT (der Header schützt seit dem Session-Island
+// nicht mehr): heute schon dynamic über den searchParams-Read — aber
+// ohne den Export würde ein Refactor, der searchParams entfernt, die
+// Route still auf Build-Prerender kippen, und der CI-Build hat keine
+// DATABASE_URL (Build-Crash). DB-Frische kommt aus dem Redis-Layer.
+export const dynamic = "force-dynamic";
+
 interface ProductsPageProps {
   searchParams: Promise<{
     search?: string;

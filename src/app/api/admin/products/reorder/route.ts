@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { cacheDelPattern } from "@/lib/redis";
 import { CACHE_KEYS } from "@/lib/constants";
 
@@ -41,7 +42,7 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req);
   const parsed = reorderSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

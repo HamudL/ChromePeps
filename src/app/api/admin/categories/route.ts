@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { cacheGet, cacheSet, cacheDel } from "@/lib/redis";
+import { invalidateShopCategoriesCache } from "@/lib/shop/categories";
 import { createCategorySchema } from "@/validators/product";
 import { slugify } from "@/lib/utils";
 import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
@@ -44,7 +46,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = await req.json();
+  // Kaputter Body → safeParse(null) → 400 statt unbehandelter 500.
+  const body = await parseJsonBody(req);
   const parsed = createCategorySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -69,7 +72,7 @@ export async function POST(req: NextRequest) {
   await cacheDel(CACHE_KEYS.CATEGORIES);
   // Shop-Variante der Kategorie-Liste (FilterBar) mit invalidieren —
   // eigener Key wegen abweichendem Shape (Count nur aktiver Produkte).
-  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
+  await invalidateShopCategoriesCache();
 
   return NextResponse.json({ success: true, data: category }, { status: 201 });
 }

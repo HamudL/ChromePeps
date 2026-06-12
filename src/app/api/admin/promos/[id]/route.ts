@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { updatePromoCodeSchema } from "@/validators/promo";
 
 // PATCH /api/admin/promos/[id] — update promo code
@@ -17,7 +18,9 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await req.json();
+  // Kaputter Body → safeParse(null) → 400 statt unbehandelter 500
+  // (z.object lehnt null auch bei all-optionalem Schema ab).
+  const body = await parseJsonBody(req);
   const parsed = updatePromoCodeSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

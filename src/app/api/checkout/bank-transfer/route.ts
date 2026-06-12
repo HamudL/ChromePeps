@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, isPrismaUniqueError } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { generateOrderNumber } from "@/lib/order/generate-order-number";
 import { calculateOrderTotals } from "@/lib/order/calculate-totals";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
+import { redeemPromo } from "@/lib/order/redeem-promo";
+import { buildOrderUrl } from "@/lib/order/order-url";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
@@ -69,10 +72,8 @@ export async function POST(req: NextRequest) {
     items?: Array<{ productId: unknown; variantId?: unknown; quantity: unknown }>;
     shippingAddressId?: unknown;
   };
-  let body: BankTransferBody;
-  try {
-    body = (await req.json()) as BankTransferBody;
-  } catch {
+  const body = (await parseJsonBody(req)) as BankTransferBody | null;
+  if (body === null) {
     return NextResponse.json(
       { success: false, error: "Ungültiger Request-Body." },
       { status: 400 }
@@ -550,33 +551,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Record promo usage — keyed by userId for auth, by guestEmail
-    // for guests. Die DB-Uniques (promoId,userId)/(promoId,guestEmail)
-    // fangen Doppel-Einlösungen unter Nebenläufigkeit (P2002 → 400
-    // unten); das usedCount-CAS erzwingt das globale maxUses-Limit,
-    // das vorher nur check-then-increment war.
+    // Strikte Einlösung (pre-payment): P2002 und PROMO_EXHAUSTED
+    // propagieren und werden im catch unten auf 400er gemappt.
+    // Warum strict vs. bestEffort: siehe redeemPromo.
     if (validatedPromoId) {
-      await tx.promoUsage.create({
-        data: {
-          promoId: validatedPromoId,
-          userId,
-          guestEmail: userId ? null : recipientEmail,
-          orderId: newOrder.id,
-          discountAmount: totals.discountInCents,
-        },
+      await redeemPromo(tx, {
+        promoId: validatedPromoId,
+        userId,
+        guestEmail: recipientEmail,
+        orderId: newOrder.id,
+        discountInCents: totals.discountInCents,
+        maxUses: validatedPromoMaxUses,
+        mode: "strict",
       });
-      const bumped = await tx.promoCode.updateMany({
-        where: {
-          id: validatedPromoId,
-          ...(validatedPromoMaxUses !== null
-            ? { usedCount: { lt: validatedPromoMaxUses } }
-            : {}),
-        },
-        data: { usedCount: { increment: 1 } },
-      });
-      if (bumped.count === 0) {
-        throw new Error("PROMO_EXHAUSTED");
-      }
     }
 
     // Decrement stock (with validation to prevent negative stock).
@@ -610,12 +597,7 @@ export async function POST(req: NextRequest) {
     return newOrder;
   });
   } catch (err) {
-    const isPrismaUniqueError =
-      err &&
-      typeof err === "object" &&
-      "code" in err &&
-      (err as { code: string }).code === "P2002";
-    if (isPrismaUniqueError) {
+    if (isPrismaUniqueError(err)) {
       return NextResponse.json(
         {
           success: false,
@@ -662,14 +644,12 @@ export async function POST(req: NextRequest) {
   // Spinner, weil der Webhook synchron auf Resend wartete.
   // sendOrderConfirmationEmail ist bereits "graceful failure" — wir loggen
   // .catch() nur für rare unhandled-rejections.
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const orderUrl = baseUrl
-    ? userId
-      ? `${baseUrl}/dashboard/orders/${order.id}`
-      : `${baseUrl}/order-status?orderNumber=${encodeURIComponent(
-          order.orderNumber
-        )}&email=${encodeURIComponent(recipientEmail)}`
-    : undefined;
+  const orderUrl = buildOrderUrl({
+    orderId: order.id,
+    orderNumber: order.orderNumber,
+    email: recipientEmail,
+    isGuest: !userId,
+  });
   void sendOrderConfirmationEmail({
     to: recipientEmail,
     customerName: recipientName,

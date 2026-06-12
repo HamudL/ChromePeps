@@ -23,14 +23,17 @@ interface HeaderUserMenuProps {
 }
 
 /**
- * Client-Island für das eingeloggte-User-Dropdown im Header. Wird nur
- * gerendert wenn der Server (Header.tsx, Server Component) eine Session
- * gelesen hat — sonst rendert der Header den "Anmelden"-Link inline.
+ * Client-Island für das eingeloggte-User-Dropdown im Header. Gerendert
+ * vom HeaderAuthSlot, der die Session CLIENT-seitig via useSession
+ * (Fetch auf /api/auth/session) holt — der Header selbst ist seit dem
+ * Session-Island-Umbau session-frei, damit der (shop)-Baum statikfähig
+ * bleibt.
  *
- * Vorher: useSession() im Header → kompletter Header war Client. Jetzt:
- * Session wird Server-side per `auth()` gelesen und als Prop runter-
- * gereicht. Logout-Action braucht trotzdem Client wegen NextAuth-
- * Form-Submission.
+ * VERTRAUENSGRENZE: `user.role` ist hier der vom Client gefetchte
+ * Session-Stand und taugt NUR für UI-Gating (Admin-Link ein-/
+ * ausblenden). Jede echte Autorisierung passiert server-seitig
+ * (Middleware + per-Route-Checks) — niemals Entscheidungen mit
+ * Sicherheitswirkung an dieses Prop hängen.
  */
 export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
   return (

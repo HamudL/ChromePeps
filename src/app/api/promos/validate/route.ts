@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 
@@ -14,9 +15,20 @@ import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 export async function POST(req: NextRequest) {
   const session = await auth();
 
-  const body = await req.json();
-  const code = (body.code ?? "").trim().toUpperCase();
-  const subtotalInCents: number = body.subtotalInCents ?? 0;
+  // Kaputter Body → sauberer 400 statt unbehandelter 500 beim Property-Zugriff.
+  const body = (await parseJsonBody(req)) as {
+    code?: unknown;
+    subtotalInCents?: unknown;
+    guestEmail?: unknown;
+  } | null;
+  if (body === null) {
+    return NextResponse.json(
+      { success: false, error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
+  const code = ((body.code ?? "") as string).trim().toUpperCase();
+  const subtotalInCents = (body.subtotalInCents ?? 0) as number;
   const rawGuestEmail =
     typeof body.guestEmail === "string" ? body.guestEmail.trim().toLowerCase() : "";
 

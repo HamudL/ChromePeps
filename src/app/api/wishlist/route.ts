@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 
 /** GET /api/wishlist — returns current user's wishlist product IDs */
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
   if (!limit.success) return rateLimitExceeded(limit);
 
   // Kaputtes JSON → 400 unten ("productId required") statt 500.
-  const body = (await req.json().catch(() => null)) ?? {};
+  const body = ((await parseJsonBody(req)) ?? {}) as { productId?: unknown };
   const productId = typeof body.productId === "string" ? body.productId : null;
   if (!productId) {
     return NextResponse.json(

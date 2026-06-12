@@ -23,7 +23,22 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/lib/**", "src/store/**", "src/components/**"],
-      exclude: ["**/*.d.ts", "**/node_modules/**"],
+      exclude: [
+        "**/*.d.ts",
+        "**/node_modules/**",
+        // react-pdf-Dokumentbaum (Rechnungs-PDF): nur über den
+        // @react-pdf/renderer-Reconciler renderbar — ein Unit-Test in
+        // jsdom kann das JSX weder ausführen noch sinnvoll assert-en.
+        // Verifikation läuft über den E2E-/Download-Pfad.
+        "src/lib/invoice/pdf.tsx",
+        // Prisma-Singleton-Bootstrap: schon der IMPORT instanziiert als
+        // Seiteneffekt einen echten PrismaClient — genau das vermeiden
+        // alle Unit-Tests bewusst per vi.mock("@/lib/db") (siehe z.B.
+        // stripe-webhook.test.ts). Der einzige weitere Export
+        // (isPrismaUniqueError, struktureller P2002-Check) ist ohne
+        // diesen Seiteneffekt nicht isoliert ladbar.
+        "src/lib/db.ts",
+      ],
       // Thresholds als Schutz vor stiller Coverage-Erosion. Zahlen sind
       // bewusst vorsichtig gesetzt — sie bleiben über dem aktuellen
       // Stand und blocken zukünftige Regressionen, ohne den Build heute

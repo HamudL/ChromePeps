@@ -16,10 +16,13 @@ import { breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
  * URL-State: ?sort=neueste|alphabetisch|meistgelesen, ?page=N.
  * "Meistgelesen" ist Stub (kein View-Tracking) und mappt auf "neueste".
  *
- * Rendert dynamisch (SSR pro Request): der geteilte (shop)-Header ruft
- * `await auth()` (Cookies) → der ganze (shop)-Baum ist dynamic, ein
- * `revalidate`-Export wäre hier wirkungslos. Siehe (shop)/layout.tsx.
+ * force-dynamic EXPLIZIT (der Header schützt seit dem Session-Island
+ * nicht mehr): die Seite liest searchParams (heute schon dynamic),
+ * aber ohne den Export würde ein künftiger Refactor, der den
+ * searchParams-Read entfernt, die Route still auf Build-Prerender
+ * kippen — und der CI-Build hat keine DATABASE_URL (Build-Crash).
  */
+export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 10;
 

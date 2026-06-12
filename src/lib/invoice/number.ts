@@ -1,5 +1,6 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
+import { isPrismaUniqueError } from "@/lib/db";
 
 /**
  * Invoice number allocator — UStG §14 compliant (fortlaufend, lueckenlos).
@@ -79,12 +80,7 @@ export async function getOrCreateInvoice(
       });
       return created;
     } catch (err: unknown) {
-      const isUnique =
-        err &&
-        typeof err === "object" &&
-        "code" in err &&
-        (err as { code: string }).code === "P2002";
-      if (!isUnique) throw err;
+      if (!isPrismaUniqueError(err)) throw err;
 
       // Another writer may have grabbed this (year, seq) OR the orderId
       // unique constraint fired because a sibling request already inserted

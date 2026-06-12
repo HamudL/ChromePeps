@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, isPrismaUniqueError } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { createReviewSchema } from "@/validators/review";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
   });
   if (!limit.success) return rateLimitExceeded(limit);
 
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req);
   if (!body || typeof body !== "object") {
     return NextResponse.json(
       { success: false, error: "Invalid body" },
@@ -179,12 +180,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: review }, { status: 201 });
   } catch (err: unknown) {
-    const isUnique =
-      err &&
-      typeof err === "object" &&
-      "code" in err &&
-      (err as { code: string }).code === "P2002";
-    if (isUnique) {
+    if (isPrismaUniqueError(err)) {
       return NextResponse.json(
         {
           success: false,

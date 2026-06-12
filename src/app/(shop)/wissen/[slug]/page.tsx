@@ -22,12 +22,17 @@ import { articleJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
  * 3-Spalten-Layout auf xl+ (TOC links, Body Mitte, Quellen rechts),
  * 2-Spalten auf lg, Mobile mit collapsible TOC oben.
  *
- * Rendert dynamisch (SSR pro Request): der geteilte (shop)-Header ist
- * eine Server-Component mit `await auth()` → liest Cookies → deopted den
- * ganzen (shop)-Baum auf dynamic (siehe (shop)/layout.tsx). Ein
- * `revalidate`-Export wäre hier wirkungslos; Artikel-Updates sind durch
- * das dynamische Rendering ohnehin sofort ohne Redeploy sichtbar.
+ * On-Demand-ISR (seit der Header session-frei ist): leeres
+ * generateStaticParams verschiebt das Rendering auf die Laufzeit (kein
+ * DATABASE_URL im CI-Build), revalidate cached Artikel 5 min. Artikel-
+ * Edits erscheinen damit bis zu 5 min verzögert — für redaktionelle
+ * Inhalte akzeptabel, dafür entfällt der DB-Roundtrip pro View.
  */
+export const revalidate = 300;
+
+export function generateStaticParams() {
+  return [];
+}
 
 interface Props {
   params: Promise<{ slug: string }>;

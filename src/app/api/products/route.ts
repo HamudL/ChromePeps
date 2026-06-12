@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { cacheGet, cacheSet, cacheDel, cacheDelPattern } from "@/lib/redis";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
+import { cacheGet, cacheSet, cacheDelPattern } from "@/lib/redis";
+import { invalidateShopCategoriesCache } from "@/lib/shop/categories";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import {
@@ -156,7 +158,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Kaputtes JSON → 400 via safeParse statt unbehandelter 500.
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req);
   const parsed = createProductSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -212,7 +214,7 @@ export async function POST(req: NextRequest) {
   await cacheDelPattern("homepage:*");
   // Shop-Kategorie-Liste: ihr Active-Product-Count ändert sich durch
   // ein neues Produkt.
-  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
+  await invalidateShopCategoriesCache();
   revalidatePath("/products");
 
   return NextResponse.json({ success: true, data: product }, { status: 201 });

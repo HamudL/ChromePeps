@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 
@@ -69,7 +70,10 @@ export async function POST(req: NextRequest) {
   if (!limit.success) return rateLimitExceeded(limit);
 
   // Kaputtes JSON → leeres Objekt → 400 unten, statt unbehandelter 500.
-  const body = (await req.json().catch(() => null)) ?? {};
+  const body = ((await parseJsonBody(req)) ?? {}) as {
+    orderNumber?: unknown;
+    email?: unknown;
+  };
   const rawOrderNumber =
     typeof body.orderNumber === "string" ? body.orderNumber.trim() : "";
   const rawEmail =

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { cacheGet, cacheSet, cacheDel, cacheDelPattern } from "@/lib/redis";
+import { invalidateShopCategoriesCache } from "@/lib/shop/categories";
 import { auth } from "@/lib/auth";
 import { updateProductSchema } from "@/validators/product";
 import { CACHE_KEYS, CACHE_TTL } from "@/lib/constants";
@@ -134,8 +136,9 @@ export async function PATCH(
   }
 
   const { slug } = await params;
-  // Kaputtes JSON → 400 statt unbehandelter 500.
-  const body = (await req.json().catch(() => null)) ?? {};
+  // `?? {}` bleibt bewusst: das Update-Schema ist all-optional — ein
+  // kaputter Body lief schon immer als leeres Update durch (kein 400).
+  const body = ((await parseJsonBody(req)) ?? {}) as Record<string, unknown>;
 
   const existing = await db.product.findUnique({ where: { slug } });
   if (!existing) {
@@ -277,7 +280,7 @@ export async function PATCH(
   await cacheDelPattern("homepage:*");
   // Shop-Kategorie-Liste: isActive-Toggle oder Kategorie-Wechsel ändern
   // ihren Active-Product-Count.
-  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
+  await invalidateShopCategoriesCache();
 
   revalidatePath(`/products/${newSlug ?? slug}`);
   revalidatePath("/products");
@@ -317,7 +320,7 @@ export async function DELETE(
   await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
   await cacheDelPattern("homepage:*");
   // Shop-Kategorie-Liste: Hard-Delete senkt ihren Active-Product-Count.
-  await cacheDel(CACHE_KEYS.CATEGORIES_SHOP);
+  await invalidateShopCategoriesCache();
   revalidatePath(`/products/${slug}`);
   revalidatePath("/products");
 

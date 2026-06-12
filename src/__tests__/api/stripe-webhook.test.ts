@@ -72,6 +72,14 @@ vi.mock("@/lib/db", () => ({
     },
     $transaction: (cb: unknown) => transaction(cb),
   },
+  // Die Route importiert den P2002-Check aus demselben Modul — der Mock
+  // muss ihn mitliefern (Logik gespiegelt, nicht das echte db.ts laden:
+  // das würde einen PrismaClient instanziieren).
+  isPrismaUniqueError: (err: unknown) =>
+    !!err &&
+    typeof err === "object" &&
+    "code" in err &&
+    (err as { code: string }).code === "P2002",
 }));
 
 vi.mock("@/lib/redis", () => ({
@@ -245,15 +253,21 @@ describe("Stripe Webhook · Handler-Dispatch", () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     expect(transaction).toHaveBeenCalledTimes(1);
-    // Order auf REFUNDED setzen + Doppel-Restore-Marker
+    // Order auf REFUNDED setzen
     expect(orderUpdate).toHaveBeenCalledWith({
       where: { id: "ord_99" },
       data: {
         status: "REFUNDED",
         paymentStatus: "REFUNDED",
-        stockRestoredAt: expect.any(Date),
       },
     });
+    // Doppel-Restore-Marker kommt jetzt als eigener tx-Call aus
+    // restoreOrderStock (gleiche Transaktion, separates Update).
+    expect(orderUpdate).toHaveBeenCalledWith({
+      where: { id: "ord_99" },
+      data: { stockRestoredAt: expect.any(Date) },
+    });
+    expect(orderUpdate).toHaveBeenCalledTimes(2);
     // OrderEvent „REFUNDED"
     expect(orderEventCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -341,7 +355,9 @@ describe("Stripe Webhook · Handler-Dispatch", () => {
       where: { id: "ord_cancelled" },
       data: { status: "REFUNDED", paymentStatus: "REFUNDED" },
     });
-    // KEIN zweiter Restore (Phantom-Inventar-Schutz)
+    // KEIN zweiter Restore (Phantom-Inventar-Schutz) — und kein
+    // zweiter order.update (kein neuer stockRestoredAt-Marker).
+    expect(orderUpdate).toHaveBeenCalledTimes(1);
     expect(productUpdate).not.toHaveBeenCalled();
     expect(productVariantUpdate).not.toHaveBeenCalled();
   });

@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 import { generateOrderNumber } from "@/lib/order/generate-order-number";
 import { calculateOrderTotals } from "@/lib/order/calculate-totals";
+import { redeemPromo } from "@/lib/order/redeem-promo";
 import { resolveShippingRate } from "@/lib/shipping/rates";
 
 /**
@@ -269,38 +270,22 @@ export async function createOrderFromStripeSession(
     },
   });
 
-  // Record promo usage and bump the global counter. Die DB-Uniques
-  // @@unique([promoId, userId]) / @@unique([promoId, guestEmail]) sind
-  // der harte Race-Guard. Da das Geld zu diesem Zeitpunkt bereits MIT
-  // Rabatt kassiert ist, darf eine bereits vorhandene Einlösung die
-  // Order nicht scheitern lassen: Pre-Check in der Transaktion → bei
-  // vorhandener Row nur Paper-Trail statt zweiter Einlösung. (Kein
-  // try/catch um den create: ein P2002 ist ein Postgres-Fehler und
-  // würde die gesamte Transaktion poisonen. Der verbleibende echte
-  // Gleichzeitigkeits-Rest heilt über den Stripe-Webhook-Retry: die
-  // abgebrochene Transaktion wird wiederholt und sieht dann die Row.)
+  // Best-Effort-Einlösung (post-payment): das Geld ist bereits MIT
+  // Rabatt kassiert — eine vorhandene Einlösung darf die Order nicht
+  // scheitern lassen. Pre-Check/Race-Verhalten: siehe redeemPromo. Das
+  // OrderEvent für den "bereits eingelöst"-Fall schreibt weiterhin
+  // dieser Caller anhand des Rückgabewerts.
   if (promoId) {
-    const existingUsage = await tx.promoUsage.findFirst({
-      where: userId
-        ? { promoId, userId }
-        : { promoId, guestEmail: guestEmail ?? "" },
-      select: { id: true },
+    const { redeemed } = await redeemPromo(tx, {
+      promoId,
+      userId,
+      guestEmail,
+      orderId: order.id,
+      discountInCents: totals.discountInCents,
+      maxUses: null,
+      mode: "bestEffort",
     });
-    if (!existingUsage) {
-      await tx.promoUsage.create({
-        data: {
-          promoId,
-          userId,
-          guestEmail: userId ? null : guestEmail ?? null,
-          orderId: order.id,
-          discountAmount: totals.discountInCents,
-        },
-      });
-      await tx.promoCode.update({
-        where: { id: promoId },
-        data: { usedCount: { increment: 1 } },
-      });
-    } else {
+    if (!redeemed) {
       await tx.orderEvent.create({
         data: {
           orderId: order.id,

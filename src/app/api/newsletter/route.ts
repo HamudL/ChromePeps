@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { sendMail } from "@/lib/mail/client";
 import NewsletterConfirmEmail from "@/emails/newsletter-confirm";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
   if (!limit.success) return rateLimitExceeded(limit);
 
   // Kaputtes JSON → 400 via safeParse statt unbehandelter 500.
-  const body = await req.json().catch(() => null);
+  const body = await parseJsonBody(req);
   const parsed = newsletterSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

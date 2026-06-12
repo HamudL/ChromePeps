@@ -15,6 +15,14 @@ export const metadata: Metadata = {
 // falsch. Bei inhaltlichen Änderungen der AGB manuell aktualisieren!
 const AGB_STAND = "1. Juni 2026";
 
+// force-dynamic: Diese Seite liest Runtime-Env (SELLER_*/BANK_*-Stamm-
+// daten). Statisches Prerender wuerde die LEERE CI-Build-Env backen und
+// der fluechtige ISR-Cache (.next/cache liegt auf keinem Volume) wuerde
+// die Platzhalter-Version nach JEDEM Deploy/Restart erneut servieren -
+// auf Pflichtseiten inakzeptabel. Ohne DB-Zugriff ist per-Request-
+// Rendering hier ohnehin praktisch kostenlos.
+export const dynamic = "force-dynamic";
+
 export default function AgbPage() {
   return (
     <div className="container max-w-3xl py-12">

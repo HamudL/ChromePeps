@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCoupon } from "@/lib/stripe-coupon";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
@@ -40,9 +41,28 @@ export async function POST(req: NextRequest) {
   const isGuest = !userId;
 
   // Kaputtes JSON darf keinen 500er werfen — leeres Objekt fällt unten
-  // sauber in die Feld-Validierungen (400er).
-  const body = (await req.json().catch(() => null)) ?? {};
-  const promoCode: string | null = body.promoCode ?? null;
+  // sauber in die Feld-Validierungen (400er). Der Typ spiegelt (wie bei
+  // Vorkasse) nur den Zustand NACH der Laufzeit-Validierung wider.
+  type StripeCheckoutBody = {
+    promoCode?: unknown;
+    guestEmail?: unknown;
+    guestName?: unknown;
+    shippingAddress?: {
+      firstName: string;
+      lastName: string;
+      street: string;
+      city: string;
+      postalCode: string;
+      country: string;
+      street2?: unknown;
+      company?: unknown;
+      phone?: unknown;
+    } | null;
+    items?: Array<{ productId: unknown; variantId?: unknown; quantity: unknown }>;
+    shippingAddressId?: unknown;
+  };
+  const body = ((await parseJsonBody(req)) ?? {}) as StripeCheckoutBody;
+  const promoCode: string | null = (body.promoCode ?? null) as string | null;
 
   // Rate-limit. Per-identity (tight) + per-IP (defense in depth).
   const ip = getClientIp(req.headers);
