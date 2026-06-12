@@ -59,13 +59,16 @@ export default async function DashboardOrdersPage(props: {
   if (orders.length === 0 && currentPage === 1) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center justify-center py-16">
-          <Package className="mb-4 h-12 w-12 text-muted-foreground" />
-          <h2 className="mb-2 text-lg font-semibold">Noch keine Bestellungen</h2>
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-muted/50">
+            <Package className="h-7 w-7 text-muted-foreground" />
+          </div>
+          <span className="eyebrow justify-center">Bestellungen</span>
+          <h2 className="display-title mt-2 mb-2 text-xl">Noch keine Bestellungen</h2>
           <p className="mb-6 text-sm text-muted-foreground">
             Sobald Sie eine Bestellung aufgeben, erscheint sie hier.
           </p>
-          <Button asChild>
+          <Button variant="gold" asChild>
             <Link href="/products">Produkte entdecken</Link>
           </Button>
         </CardContent>
@@ -77,7 +80,8 @@ export default async function DashboardOrdersPage(props: {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Meine Bestellungen</CardTitle>
+          <span className="eyebrow">Verlauf</span>
+          <CardTitle className="display-title mt-2 text-xl">Meine Bestellungen</CardTitle>
           <CardDescription>
             {total === 1 ? "1 Bestellung" : `${total} Bestellungen`} insgesamt
           </CardDescription>
@@ -87,11 +91,11 @@ export default async function DashboardOrdersPage(props: {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Bestellnr.</TableHead>
-                  <TableHead>Datum</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Positionen</TableHead>
-                  <TableHead className="text-right">Gesamt</TableHead>
+                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Bestellnr.</TableHead>
+                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Datum</TableHead>
+                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Status</TableHead>
+                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Positionen</TableHead>
+                  <TableHead className="text-right font-mono text-[10px] uppercase tracking-[0.12em]">Gesamt</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -100,12 +104,12 @@ export default async function DashboardOrdersPage(props: {
                     <TableCell>
                       <Link
                         href={`/dashboard/orders/${order.id}`}
-                        className="font-medium text-primary underline-offset-4 group-hover:underline"
+                        className="font-mono font-medium text-primary-strong underline-offset-4 group-hover:underline"
                       >
                         {order.orderNumber}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="tabular-nums text-muted-foreground">
                       {format(new Date(order.createdAt), "dd.MM.yyyy")}
                     </TableCell>
                     <TableCell>
@@ -121,7 +125,7 @@ export default async function DashboardOrdersPage(props: {
                         ? order.items[0].productName
                         : `${order.items.length} Positionen`}
                     </TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-right font-medium tabular-nums">
                       {formatPrice(order.totalInCents)}
                     </TableCell>
                   </TableRow>

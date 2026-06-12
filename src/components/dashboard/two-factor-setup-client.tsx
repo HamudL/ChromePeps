@@ -204,23 +204,24 @@ export function TwoFactorSetupClient({
   // ============================================================
   if (shownRecoveryCodes) {
     return (
-      <Card className="border-emerald-300 bg-emerald-50/50">
+      <Card className="border-primary/40 bg-primary/[0.06]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-emerald-900">
-            <AlertTriangle className="h-5 w-5" />
-            Speichere diese Recovery-Codes JETZT
+          <span className="eyebrow">Recovery-Codes</span>
+          <CardTitle className="mt-2 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-primary-strong" />
+            Speichern Sie diese Codes JETZT
           </CardTitle>
-          <CardDescription className="text-emerald-900/80">
-            Du siehst diese Codes nur einmal. Bewahre sie an einem
-            sicheren Ort auf — sie sind dein Notausgang, falls du den
-            Zugriff auf deine Authenticator-App verlierst. Jeder Code
+          <CardDescription>
+            Sie sehen diese Codes nur einmal. Bewahren Sie sie an einem
+            sicheren Ort auf — sie sind Ihr Notausgang, falls Sie den
+            Zugriff auf Ihre Authenticator-App verlieren. Jeder Code
             ist nach einmaliger Verwendung verbraucht.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-2 rounded-md border border-emerald-300 bg-white p-4 font-mono text-sm">
+          <div className="grid grid-cols-2 gap-2 rounded-md border border-primary/30 bg-card p-4 font-mono text-sm tracking-wide">
             {shownRecoveryCodes.map((code) => (
-              <div key={code} className="text-center">
+              <div key={code} className="text-center tabular-nums">
                 {code}
               </div>
             ))}
@@ -268,7 +269,8 @@ export function TwoFactorSetupClient({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Schritt 2: Code aus deiner App eingeben</CardTitle>
+          <span className="eyebrow">Schritt 2 von 2</span>
+          <CardTitle className="display-title mt-2 text-xl">Code aus deiner App eingeben</CardTitle>
           <CardDescription>
             Scanne den QR-Code mit deiner Authenticator-App ODER tippe das
             Secret manuell ab. Dann bestätige mit dem ersten 6-stelligen
@@ -276,7 +278,7 @@ export function TwoFactorSetupClient({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col items-center gap-3 rounded-md border bg-muted/30 p-4">
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-muted/30 p-4">
             <Image
               src={setupData.qrDataUrl}
               alt="QR-Code für TOTP-Authenticator"
@@ -286,17 +288,19 @@ export function TwoFactorSetupClient({
               className="rounded bg-white p-2"
             />
             <div className="text-center">
-              <p className="text-xs text-muted-foreground">
-                Manuelles Setup-Secret:
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Manuelles Setup-Secret
               </p>
-              <code className="text-sm font-mono tracking-wider">
+              <code className="mt-1 block font-mono text-sm tracking-wider">
                 {setupData.secret}
               </code>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="verifyCode">6-stelliger Code aus der App</Label>
+            <Label htmlFor="verifyCode" className="field-label">
+              [ 6-stelliger Code aus der App ]
+            </Label>
             <Input
               id="verifyCode"
               type="text"
@@ -329,6 +333,7 @@ export function TwoFactorSetupClient({
             </Button>
             <Button
               type="button"
+              variant="gold"
               onClick={verifySetup}
               disabled={verifyLoading || verifyCode.length !== 6}
               className="flex-1"
@@ -336,7 +341,7 @@ export function TwoFactorSetupClient({
               {verifyLoading && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Aktivieren
+              2FA aktivieren
             </Button>
           </div>
         </CardContent>
@@ -351,7 +356,8 @@ export function TwoFactorSetupClient({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>2FA aktivieren</CardTitle>
+          <span className="eyebrow">Schritt 1 von 2</span>
+          <CardTitle className="display-title mt-2 text-xl">2FA aktivieren</CardTitle>
           <CardDescription>
             Du brauchst eine Authenticator-App auf deinem Smartphone:
             Google Authenticator, Authy, 1Password, Bitwarden, …
@@ -361,11 +367,11 @@ export function TwoFactorSetupClient({
           {setupError && (
             <p className="mb-3 text-sm text-destructive">{setupError}</p>
           )}
-          <Button onClick={startSetup} disabled={setupLoading}>
+          <Button variant="gold" onClick={startSetup} disabled={setupLoading}>
             {setupLoading && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Schritt 1: Setup starten
+            Setup starten
           </Button>
         </CardContent>
       </Card>
@@ -377,10 +383,11 @@ export function TwoFactorSetupClient({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Recovery-Codes neu generieren</CardTitle>
+          <span className="eyebrow">Recovery</span>
+          <CardTitle className="display-title mt-2 text-xl">Recovery-Codes neu generieren</CardTitle>
           <CardDescription>
             Ersetzt alle bestehenden Codes. Aktuell verbleibend:{" "}
-            {remainingRecoveryCodes} / 10.
+            <span className="tabular-nums">{remainingRecoveryCodes} / 10</span>.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -392,7 +399,8 @@ export function TwoFactorSetupClient({
 
       <Card className="border-destructive/30">
         <CardHeader>
-          <CardTitle className="text-destructive">2FA deaktivieren</CardTitle>
+          <span className="mono-label text-destructive">Gefahrenzone</span>
+          <CardTitle className="display-title mt-2 text-xl text-destructive">2FA deaktivieren</CardTitle>
           <CardDescription>
             Verlangt Bestätigung mit Passwort + 2FA-Code (TOTP oder
             Recovery). Nach dem Deaktivieren wird beim Login nur noch
@@ -433,7 +441,9 @@ export function TwoFactorSetupClient({
           </AlertDialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-2">
-              <Label htmlFor="disablePassword">Passwort</Label>
+              <Label htmlFor="disablePassword" className="field-label">
+                [ Passwort ]
+              </Label>
               <Input
                 id="disablePassword"
                 type="password"
@@ -444,7 +454,9 @@ export function TwoFactorSetupClient({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="disableCode">2FA-Code</Label>
+              <Label htmlFor="disableCode" className="field-label">
+                [ 2FA-Code ]
+              </Label>
               <Input
                 id="disableCode"
                 type="text"
@@ -508,7 +520,9 @@ export function TwoFactorSetupClient({
           </AlertDialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-2">
-              <Label htmlFor="regenPassword">Passwort</Label>
+              <Label htmlFor="regenPassword" className="field-label">
+                [ Passwort ]
+              </Label>
               <Input
                 id="regenPassword"
                 type="password"
@@ -519,7 +533,9 @@ export function TwoFactorSetupClient({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="regenTotp">TOTP-Code (6 Ziffern)</Label>
+              <Label htmlFor="regenTotp" className="field-label">
+                [ TOTP-Code — 6 Ziffern ]
+              </Label>
               <Input
                 id="regenTotp"
                 type="text"
