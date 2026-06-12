@@ -1,4 +1,5 @@
 import "server-only";
+import { revalidatePath } from "next/cache";
 import { cacheDel, cacheDelPattern } from "@/lib/redis";
 import { CACHE_KEYS, HOMEPAGE_CACHE } from "@/lib/constants";
 
@@ -39,4 +40,22 @@ export async function invalidateStockCaches(): Promise<void> {
     // Homepage-Bestseller-Cards tragen stock im Card-Payload.
     cacheDel(HOMEPAGE_CACHE.BESTSELLERS),
   ]);
+
+  // Seit die PDP On-Demand-ISR nutzt (products/[slug], revalidate 60),
+  // hängt die server-gerenderte Verfügbarkeit (isOutOfStock, Buy-Panel,
+  // JSON-LD-Availability) zusätzlich am Next-Full-Route-Cache — Redis-
+  // Deletes allein erreichen den nicht. Slug-genau geht nicht (Order-
+  // Items tragen nur productId), daher alle PDPs invalidieren: Verkäufe
+  // sind selten genug, dass der Re-Render-Preis irrelevant ist, aber ein
+  // soeben ausverkauftes Produkt darf keine 60s "Verfügbar" zeigen.
+  // try/catch, weil revalidatePath außerhalb eines Request-Kontexts
+  // wirft — der Helper bleibt fail-safe.
+  try {
+    revalidatePath("/products/[slug]", "page");
+  } catch (err) {
+    console.warn(
+      "[invalidate-stock-caches] revalidatePath failed:",
+      err instanceof Error ? err.message : err
+    );
+  }
 }

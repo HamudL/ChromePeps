@@ -203,9 +203,10 @@ export async function PATCH(
   // Test-Orders, nie doppelt via stockRestoredAt, nie aus DELIVERED,
   // bei Cancel nur aus PENDING/PROCESSING/SHIPPED) lebt zentral in
   // restoreOrderStock; der Helper setzt auch den stockRestoredAt-
-  // Marker selbst im selben tx. Der Rückgabewert steuert nach dem
-  // Commit die Cache-Invalidierung.
-  let stockRestored = false;
+  // Marker selbst im selben tx. Der Rückgabewert (Marker-Timestamp)
+  // steuert nach dem Commit die Cache-Invalidierung und wird ins
+  // Response-Objekt gemerged.
+  let stockRestoredAt: Date | null = null;
 
   const order = await db.$transaction(async (tx) => {
     const updated = await tx.order.update({
@@ -225,7 +226,7 @@ export async function PATCH(
     if (parsed.data.status === "CANCELLED") {
       // Entscheidend ist der PRE-Update-Status (existing) — `updated`
       // steht bereits auf CANCELLED.
-      stockRestored = await restoreOrderStock(
+      stockRestoredAt = await restoreOrderStock(
         tx,
         {
           id: existing.id,
@@ -236,6 +237,12 @@ export async function PATCH(
         },
         { trigger: "cancel" },
       );
+      // Der Marker wurde NACH dem include-Update gesetzt — das Response-
+      // Objekt würde sonst stockRestoredAt=null behaupten, obwohl der
+      // Restore im selben tx committed.
+      if (stockRestoredAt) {
+        updated.stockRestoredAt = stockRestoredAt;
+      }
     }
 
     // Promo-Kontingent freigeben, wenn eine UNBEZAHLTE Vorkasse-Order
@@ -275,7 +282,7 @@ export async function PATCH(
   // ohne Invalidierung sähe der Shop das erst nach TTL-Ablauf. Fail-safe
   // (Redis-Fehler werden intern geschluckt) — der Status-Update ist zu
   // diesem Zeitpunkt bereits committed und bleibt es auch.
-  if (stockRestored) {
+  if (stockRestoredAt) {
     await invalidateStockCaches();
   }
 

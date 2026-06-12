@@ -4,16 +4,16 @@ import { db } from "@/lib/db";
 // Base URL with sensible fallback for local/dev builds.
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-// ISR: re-generiert alle 1h, sonst statisch ausgeliefert. Reduziert
-// Crawler-Last erheblich — Googlebot polled die Sitemap mehrfach pro
-// Tag, mit force-dynamic war das jeweils ein DB-Hit (5 parallele
-// Queries). Bei 5 Wissen-Posts und ~15 Produkten zwar billig, aber
-// AUDIT_REPORT_v3 §4.13 + v2 §5.5 wollten das aufgeräumt haben.
-//
-// Build-time: try/catch unten fängt fehlende DATABASE_URL ab und
-// liefert nur staticRoutes() — die ISR-Revalidation generiert dann
-// nach 1h die volle Sitemap zur Laufzeit.
-export const revalidate = 3600;
+// force-dynamic (Revision der früheren ISR-Entscheidung aus
+// AUDIT_REPORT_v3 §4.13): Der CI-Build hat keine DATABASE_URL — das
+// Build-Prerender backte über den catch-Fallback eine auf die
+// staticRoutes() geschrumpfte Sitemap OHNE Produkt-/Artikel-URLs ins
+// Image. Da der ISR-Cache (.next/cache) auf keinem Volume liegt,
+// servierte JEDER Deploy/Container-Restart Crawlern bis zu 1h diese
+// Rumpf-Sitemap. Die eingesparte Last (5 parallele Queries, wenige
+// Crawler-Polls/Tag) rechtfertigt das nicht — per-Request ist hier
+// die korrekte, billige Wahl.
+export const dynamic = "force-dynamic";
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
 

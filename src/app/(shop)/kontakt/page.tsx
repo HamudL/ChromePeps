@@ -12,11 +12,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/kontakt" },
 };
 
-// Statisch mit stuendlicher Revalidierung: Diese Seite liest Runtime-Env
-// (SELLER_*/BANK_*-Stammdaten). Beim CI-Build (leere Env) wird der
-// Platzhalter-Stand gebacken; zur Laufzeit regeneriert ISR die Seite im
-// Container - gepflegte .env-Werte erscheinen ohne Image-Rebuild.
-export const revalidate = 3600;
+// force-dynamic: Diese Seite liest Runtime-Env (SELLER_*/BANK_*-Stamm-
+// daten). Statisches Prerender wuerde die LEERE CI-Build-Env backen und
+// der fluechtige ISR-Cache (.next/cache liegt auf keinem Volume) wuerde
+// die Platzhalter-Version nach JEDEM Deploy/Restart erneut servieren -
+// auf Pflichtseiten inakzeptabel. Ohne DB-Zugriff ist per-Request-
+// Rendering hier ohnehin praktisch kostenlos.
+export const dynamic = "force-dynamic";
 
 export default function KontaktPage() {
   // LocalBusiness-Schema wird nur ausgegeben wenn SELLER_DETAILS keine

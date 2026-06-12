@@ -6,14 +6,25 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * zeigen Listing/Detail/Homepage bis TTL-Ablauf veraltete
  * Verfügbarkeit (409er erst im Checkout).
  */
-const { cacheDelMock, cacheDelPatternMock } = vi.hoisted(() => ({
-  cacheDelMock: vi.fn(),
-  cacheDelPatternMock: vi.fn(),
-}));
+const { cacheDelMock, cacheDelPatternMock, revalidatePathMock } = vi.hoisted(
+  () => ({
+    cacheDelMock: vi.fn(),
+    cacheDelPatternMock: vi.fn(),
+    revalidatePathMock: vi.fn(),
+  })
+);
 
 vi.mock("@/lib/redis", () => ({
   cacheDel: cacheDelMock,
   cacheDelPattern: cacheDelPatternMock,
+}));
+
+// Seit dem PDP-ISR-Umbau invalidiert der Helper zusätzlich den Next-
+// Full-Route-Cache — außerhalb eines Request-Kontexts würde das echte
+// revalidatePath werfen (der Helper fängt das, aber der Mock macht die
+// Aufruf-Assertion möglich).
+vi.mock("next/cache", () => ({
+  revalidatePath: revalidatePathMock,
 }));
 
 import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
@@ -37,6 +48,18 @@ describe("invalidateStockCaches", () => {
     expect(cacheDelMock).toHaveBeenCalledWith(HOMEPAGE_CACHE.BESTSELLERS);
     expect(cacheDelPatternMock).toHaveBeenCalledTimes(2);
     expect(cacheDelMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("invalidiert den Next-Route-Cache aller PDPs (ISR)", async () => {
+    await invalidateStockCaches();
+    expect(revalidatePathMock).toHaveBeenCalledWith("/products/[slug]", "page");
+  });
+
+  it("bleibt fail-safe, wenn revalidatePath wirft (kein Request-Kontext)", async () => {
+    revalidatePathMock.mockImplementation(() => {
+      throw new Error("static generation store missing");
+    });
+    await expect(invalidateStockCaches()).resolves.toBeUndefined();
   });
 
   it("propagiert Fehler nicht doppelt: Helper verlässt sich auf graceful cacheDel*", async () => {

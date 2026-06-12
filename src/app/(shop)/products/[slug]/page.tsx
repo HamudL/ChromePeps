@@ -42,9 +42,12 @@ import { FadeUp } from "../../home-animations";
 // Client-Island, siehe (shop)/layout.tsx), kann die PDP gecacht werden.
 // generateStaticParams() => [] verschiebt das Rendering komplett auf
 // die Laufzeit (der CI-Build hat keine DATABASE_URL!); der erste
-// Request pro Slug rendert + cached, danach revalidiert ISR alle 60s —
-// gleiche Frische wie der Redis-Layer (PRODUCT_DETAIL-TTL 120s),
-// Admin-Edits erscheinen also weiterhin innerhalb ~1 min.
+// Request pro Slug rendert + cached.
+// Frische-Vertrag: Bestandsänderungen aus Bestellungen/Refunds/Cancels
+// invalidieren die PDP SOFORT (invalidateStockCaches ruft
+// revalidatePath für diese Route), Admin-Produkt-Edits via
+// revalidatePath in den Admin-Routen; das revalidate=60 ist nur das
+// Sicherheitsnetz für alles Ungetriggerte.
 export const revalidate = 60;
 
 export function generateStaticParams() {

@@ -55,7 +55,7 @@ describe("restoreOrderStock — Skip-Policy", () => {
       { trigger: "cancel" }
     );
 
-    expect(result).toBe(false);
+    expect(result).toBeNull();
     expect(productUpdate).not.toHaveBeenCalled();
     expect(orderUpdate).not.toHaveBeenCalled();
   });
@@ -67,7 +67,7 @@ describe("restoreOrderStock — Skip-Policy", () => {
       { trigger: "refund" }
     );
 
-    expect(result).toBe(false);
+    expect(result).toBeNull();
     expect(orderUpdate).not.toHaveBeenCalled();
   });
 
@@ -78,7 +78,7 @@ describe("restoreOrderStock — Skip-Policy", () => {
         makeOrder({ status: "DELIVERED" }),
         { trigger }
       );
-      expect(result).toBe(false);
+      expect(result).toBeNull();
     }
     expect(productUpdate).not.toHaveBeenCalled();
   });
@@ -90,7 +90,7 @@ describe("restoreOrderStock — Skip-Policy", () => {
       { trigger: "cancel" }
     );
 
-    expect(result).toBe(false);
+    expect(result).toBeNull();
     expect(orderUpdate).not.toHaveBeenCalled();
   });
 
@@ -102,7 +102,7 @@ describe("restoreOrderStock — Skip-Policy", () => {
       { trigger: "refund" }
     );
 
-    expect(result).toBe(true);
+    expect(result).toBeInstanceOf(Date);
     expect(productUpdate).toHaveBeenCalledTimes(1);
   });
 });
@@ -115,7 +115,7 @@ describe("restoreOrderStock — Restore-Pfad", () => {
         trigger: "cancel",
       });
 
-      expect(result).toBe(true);
+      expect(result).toBeInstanceOf(Date);
       expect(productUpdate).toHaveBeenCalledWith({
         where: { id: "prod_1" },
         data: { stock: { increment: 2 } },
@@ -141,7 +141,7 @@ describe("restoreOrderStock — Restore-Pfad", () => {
       trigger: "refund",
     });
 
-    expect(result).toBe(true);
+    expect(result).toBeInstanceOf(Date);
     expect(variantUpdate).toHaveBeenCalledTimes(1);
     expect(variantUpdate).toHaveBeenCalledWith({
       where: { id: "var_1" },
@@ -167,7 +167,7 @@ describe("restoreOrderStock — Restore-Pfad", () => {
       trigger: "cancel",
     });
 
-    expect(result).toBe(true);
+    expect(result).toBeInstanceOf(Date);
     expect(productUpdate).toHaveBeenCalledTimes(1);
     expect(orderUpdate).toHaveBeenCalledTimes(1);
   });

@@ -352,7 +352,7 @@ async function handleRefund(charge: Stripe.Charge) {
   // Unterscheidung für die OrderEvent-Note.
   const alreadyDelivered = order.status === "DELIVERED";
 
-  let restoredStock = false;
+  let restoredStock: Date | null = null;
   await db.$transaction(async (tx) => {
     await tx.order.update({
       where: { id: order.id },

@@ -70,6 +70,12 @@ function buildCategoryListingKey(opts: {
  * Subkategorien — das muss ein separater Schema-Schritt werden.
  */
 
+// force-dynamic EXPLIZIT (der Header schützt seit dem Session-Island
+// nicht mehr): heute schon dynamic über den searchParams-Read — ohne
+// den Export würde ein Refactor ohne searchParams die Route auf
+// Build-Prerender kippen (CI-Build hat keine DATABASE_URL).
+export const dynamic = "force-dynamic";
+
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{

@@ -24,9 +24,12 @@ import type { Prisma } from "@prisma/client";
  *
  * `order.status` muss der PRE-Update-Status sein (vor dem Kipp auf
  * CANCELLED/REFUNDED). Setzt stockRestoredAt im selben tx — Caller
- * dürfen das Feld NICHT mehr selbst schreiben. Returnt true, wenn
- * tatsächlich restauriert wurde (steuert OrderEvent-Note und
- * Cache-Invalidierung beim Caller).
+ * dürfen das Feld NICHT mehr selbst schreiben. Returnt den gesetzten
+ * Marker-Timestamp (oder null wenn nicht restauriert): steuert
+ * OrderEvent-Note und Cache-Invalidierung beim Caller, und Routen
+ * können den Wert in ihr Response-Objekt mergen, damit der API-
+ * Consumer nach einem Cancel nicht fälschlich stockRestoredAt=null
+ * liest, obwohl der Restore committed wurde.
  */
 export interface RestorableOrder {
   id: string;
@@ -46,15 +49,15 @@ export async function restoreOrderStock(
   tx: Prisma.TransactionClient,
   order: RestorableOrder,
   opts: { trigger: "cancel" | "refund" }
-): Promise<boolean> {
-  if (order.isTestOrder) return false;
-  if (order.stockRestoredAt) return false;
-  if (order.status === "DELIVERED") return false;
+): Promise<Date | null> {
+  if (order.isTestOrder) return null;
+  if (order.stockRestoredAt) return null;
+  if (order.status === "DELIVERED") return null;
   if (
     opts.trigger === "cancel" &&
     !CANCEL_RESTORABLE_STATUSES.includes(order.status)
   ) {
-    return false;
+    return null;
   }
 
   // Restore pro Item (skip wenn product/variant hard-deleted wurde —
@@ -85,10 +88,11 @@ export async function restoreOrderStock(
   );
 
   // Doppel-Restore-Marker im selben tx — atomar mit den Inkrementen.
+  const restoredAt = new Date();
   await tx.order.update({
     where: { id: order.id },
-    data: { stockRestoredAt: new Date() },
+    data: { stockRestoredAt: restoredAt },
   });
 
-  return true;
+  return restoredAt;
 }
