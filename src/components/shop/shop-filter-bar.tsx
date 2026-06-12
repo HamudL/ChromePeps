@@ -35,6 +35,9 @@ export function ShopFilterBar({
 }) {
   return (
     <div className="sticky top-16 z-20 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      {/* Gold-Haarlinie als oberer Akzent — bindet die Filter-Bar an die
+          Cinematic-Lab-Sprache (rule-gold) ohne den Sticky-Frame zu stören. */}
+      <div aria-hidden className="rule-gold" />
       <div className="container">
         <div className="flex items-center gap-4 overflow-x-auto py-3.5 scrollbar-none">
           <CategoryPills

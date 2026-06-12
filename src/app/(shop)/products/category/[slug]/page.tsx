@@ -313,18 +313,21 @@ export default async function CategoryLandingPage({
       <section className="container py-10 md:py-14">
         {productsWithBadges.length > 0 ? (
           <>
-            <div className="mb-8 flex items-baseline justify-between gap-6 border-b border-border pb-5">
-              <h2 className="font-serif text-[28px] md:text-[32px] font-medium tracking-[-0.02em] leading-none">
-                Alle {category.name}
-              </h2>
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-border pb-5">
+              <div className="min-w-0">
+                <span className="eyebrow mb-2.5">Kategorie</span>
+                <h2 className="font-serif text-[28px] md:text-[32px] font-medium tracking-[-0.02em] leading-none text-balance">
+                  Alle {category.name}
+                </h2>
+              </div>
               <div className="flex items-center gap-4">
-                <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground">
+                <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground tabular-nums">
                   {total} {total === 1 ? "Produkt" : "Produkte"}
                 </p>
                 {hasActiveFilters && (
                   <Link
                     href={basePath}
-                    className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground hover:text-primary underline underline-offset-4 decoration-dotted"
+                    className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground hover:text-primary-strong underline underline-offset-4 decoration-dotted"
                   >
                     Reset
                   </Link>
@@ -363,10 +366,11 @@ export default async function CategoryLandingPage({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 md:py-32 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-6">
-              <PackageSearch className="h-7 w-7 text-primary" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-muted/40 text-muted-foreground mb-6">
+              <PackageSearch className="h-7 w-7" strokeWidth={1.5} />
             </div>
-            <h2 className="text-2xl font-bold mb-2">
+            <span className="eyebrow mb-3">In Vorbereitung</span>
+            <h2 className="display-title text-2xl md:text-3xl mb-2">
               Noch keine Produkte in {category.name}
             </h2>
             <p className="text-muted-foreground max-w-md mb-6 leading-relaxed">

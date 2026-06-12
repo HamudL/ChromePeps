@@ -93,8 +93,12 @@ export function ProductCard({
         // die Spalten sich responsiv verteilen; die Karte wird also
         // nicht breiter, sondern höher und visuell präsenter.
         "px-7 pt-8 pb-7",
+        // Hover spricht jetzt die "lift"-Sprache der Card-Variante:
+        // warme Gold-Schlagschatten-Aura + Gold-Rand-Andeutung statt des
+        // neutralen Ink-Schattens — dieselbe taktile Anhebung wie bei den
+        // übrigen klickbaren Karten der Cinematic-Lab-Sprache.
         "transition-all duration-300 ease-out",
-        "hover:border-foreground hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-24px_hsl(20_14%_10%/0.2)]",
+        "hover:border-primary/45 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-26px_hsl(45_60%_30%/0.5)]",
         "animate-fade-in",
       )}
     >
@@ -136,18 +140,18 @@ export function ProductCard({
       {/* Head: Kategorie + Index + Wishlist */}
       <div className="relative mb-6 flex items-center justify-between gap-2 font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-primary font-semibold">
+          <span className="truncate text-primary-strong font-semibold">
             {product.category.name}
           </span>
           {product.isBestseller && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border px-1.5 py-0.5 text-[9px] font-bold tracking-[0.12em] text-foreground">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-1.5 py-0.5 text-[9px] font-bold tracking-[0.12em] text-primary-strong">
               <span aria-hidden className="h-1 w-1 rounded-full bg-primary" />
               Bestseller
             </span>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {indexLabel && <span>{indexLabel}</span>}
+          {indexLabel && <span className="tabular-nums">{indexLabel}</span>}
           <WishlistCardSlot productId={product.id} />
         </div>
       </div>
@@ -188,7 +192,7 @@ export function ProductCard({
       </div>
 
       {/* Name */}
-      <h3 className="relative text-2xl font-semibold tracking-tight leading-tight line-clamp-1 group-hover:text-primary transition-colors duration-300">
+      <h3 className="relative text-2xl font-semibold tracking-tight leading-tight line-clamp-1 group-hover:text-primary-strong transition-colors duration-300">
         {product.name}
       </h3>
 
@@ -229,7 +233,7 @@ export function ProductCard({
         ) : (
           <span
             className={cn(
-              "font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary",
+              "font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary-strong",
               "opacity-0 translate-x-2 transition-all duration-250",
               "group-hover:opacity-100 group-hover:translate-x-0",
               // Tastatur-Fokus: Karte ist der Link — bei Fokus den CTA
@@ -237,7 +241,7 @@ export function ProductCard({
               "group-focus-within:opacity-100 group-focus-within:translate-x-0",
             )}
           >
-            Ansehen →
+            Ansehen &rarr;
           </span>
         )}
       </div>
@@ -268,8 +272,8 @@ function SpecRow({ k, v, gold }: { k: string; v: string; gold?: boolean }) {
       <span className="text-muted-foreground">{k}</span>
       <span
         className={cn(
-          "truncate max-w-[60%] text-right",
-          gold ? "text-primary font-semibold" : "text-foreground",
+          "truncate max-w-[60%] text-right tabular-nums",
+          gold ? "text-primary-strong font-semibold" : "text-foreground",
         )}
       >
         {v}

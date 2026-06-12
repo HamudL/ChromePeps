@@ -17,7 +17,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Minus, Plus, Trash2, ShoppingBag, Check } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Check, Lock } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -74,14 +74,24 @@ export function CartSheet() {
         </SheetHeader>
 
         {items.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-muted-foreground">
-            <ShoppingBag className="h-12 w-12" />
-            <p className="font-medium">Ihr Warenkorb ist leer</p>
-            <p className="text-sm text-center">
-              Entdecken Sie unser Sortiment an hochwertigen Research Peptides.
-            </p>
-            <Button variant="outline" onClick={closeCart} asChild>
-              <Link href="/products">Produkte entdecken</Link>
+          <div className="flex-1 flex flex-col items-center justify-center gap-5 px-8 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-muted/40 text-muted-foreground">
+              <ShoppingBag className="h-7 w-7" strokeWidth={1.5} />
+            </div>
+            <div className="space-y-1.5">
+              <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-primary-strong font-semibold">
+                Leerer Warenkorb
+              </p>
+              <p className="text-base font-semibold tracking-tight">
+                Noch keine Peptide ausgewählt
+              </p>
+              <p className="mx-auto max-w-[16rem] text-sm text-muted-foreground leading-relaxed">
+                Jede Charge HPLC&#8209;geprüft, mit CoA&#8209;PDF und Lot&#8209;Nummer
+                per E&#8209;Mail. Entdecken Sie das Sortiment.
+              </p>
+            </div>
+            <Button variant="gold" onClick={closeCart} asChild>
+              <Link href="/products">Sortiment entdecken</Link>
             </Button>
           </div>
         ) : (
@@ -97,19 +107,19 @@ export function CartSheet() {
                 {items.map((item) => (
                   <div
                     key={`${item.productId}-${item.variantId}`}
-                    className="flex gap-4"
+                    className="flex gap-4 rounded-sm border border-border/70 bg-card p-3 transition-colors hover:border-primary/30"
                   >
-                    <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                    <div className="relative h-20 w-20 rounded-sm overflow-hidden border border-border bg-card flex-shrink-0">
                       {item.image ? (
                         <Image
                           src={item.image}
                           alt={item.name}
                           fill
-                          className="object-cover"
+                          className="object-contain p-1"
                           sizes="80px"
                         />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
+                        <div className="h-full w-full flex items-center justify-center font-mono text-[9px] tracking-[0.1em] uppercase text-muted-foreground">
                           Kein Bild
                         </div>
                       )}
@@ -118,16 +128,16 @@ export function CartSheet() {
                       <Link
                         href={`/products/${item.slug}`}
                         onClick={closeCart}
-                        className="text-sm font-medium hover:underline line-clamp-1"
+                        className="text-sm font-semibold tracking-tight hover:text-primary-strong transition-colors line-clamp-1"
                       >
                         {item.name}
                       </Link>
                       {item.variantName && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="font-mono text-[10px] tracking-[0.08em] uppercase text-muted-foreground mt-0.5">
                           {item.variantName}
                         </p>
                       )}
-                      <p className="text-sm font-semibold mt-1 tabular-nums">
+                      <p className="text-sm font-bold mt-1 tabular-nums">
                         {formatPrice(item.priceInCents)}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
@@ -209,7 +219,7 @@ export function CartSheet() {
                 <DashedDivider />
 
                 <div className="flex items-baseline justify-between pt-1">
-                  <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
+                  <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-foreground font-semibold">
                     Gesamt
                   </span>
                   <span className="text-2xl font-bold tracking-tight tabular-nums">
@@ -223,7 +233,7 @@ export function CartSheet() {
                     waren im Design-Handoff Platzhalter, gehören aber
                     inhaltlich nicht in die Sheet-Quittung. */}
                 <div className="mt-4 pt-4 border-t border-dashed">
-                  <p className="font-mono text-[9.5px] tracking-[0.15em] uppercase text-primary font-semibold mb-2">
+                  <p className="font-mono text-[9.5px] tracking-[0.15em] uppercase text-primary-strong font-semibold mb-2">
                     Zusätzlich inklusive
                   </p>
                   <ul className="space-y-1">
@@ -236,6 +246,7 @@ export function CartSheet() {
 
               <div className="px-6 py-4 border-t space-y-2 bg-background">
                 <Button
+                  variant="gold"
                   className="w-full gap-2"
                   size="lg"
                   onClick={closeCart}
@@ -253,6 +264,12 @@ export function CartSheet() {
                 >
                   <Link href="/cart">Warenkorb ansehen</Link>
                 </Button>
+                {/* Vertrauenssignal direkt am Bezahl-Moment — Mono-Pille
+                    in der Sprache der site-weiten .trust-pill. */}
+                <p className="flex items-center justify-center gap-1.5 pt-1 font-mono text-[10px] tracking-[0.12em] uppercase text-muted-foreground">
+                  <Lock className="h-3 w-3 text-primary" strokeWidth={2.5} aria-hidden />
+                  SSL&#8209;verschlüsselter Checkout
+                </p>
               </div>
             </SheetFooter>
           </>
