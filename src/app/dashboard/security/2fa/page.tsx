@@ -47,20 +47,22 @@ export default async function TwoFactorSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Sicherheit · 2FA</h1>
-        <p className="text-muted-foreground">
-          Zwei-Faktor-Authentifizierung mit TOTP-Authenticator-App
+        <span className="eyebrow">Sicherheit</span>
+        <h2 className="display-title mt-2 text-2xl">Zwei-Faktor-Authentifizierung</h2>
+        <p className="mt-1 text-muted-foreground">
+          Zusätzlicher Schutz mit TOTP-Authenticator-App
           (Google Authenticator, Authy, 1Password, Bitwarden, …).
         </p>
       </div>
 
-      {/* Status-Karte */}
-      <Card>
+      {/* Status-Karte — Ink-Panel als bewusster Sicherheits-Fokus */}
+      <Card variant="ink" className="card-ink overflow-hidden">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <span className="eyebrow">Status</span>
+          <CardTitle className="mt-2 flex items-center gap-2 text-ink-foreground">
             {isEnabled ? (
               <>
-                <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                <ShieldCheck className="h-5 w-5 text-primary" />
                 2FA ist aktiv
               </>
             ) : (
@@ -68,15 +70,15 @@ export default async function TwoFactorSettingsPage() {
                 <ShieldAlert
                   className={
                     isAdmin
-                      ? "h-5 w-5 text-amber-600"
-                      : "h-5 w-5 text-muted-foreground"
+                      ? "h-5 w-5 text-primary"
+                      : "h-5 w-5 text-ink-muted"
                   }
                 />
-                2FA ist NICHT aktiv
+                2FA ist nicht aktiv
               </>
             )}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-ink-muted">
             {isEnabled
               ? `Aktiviert am ${format(new Date(user.totpEnabledAt!), "dd.MM.yyyy HH:mm")}.
                 Bei jedem Login wird zusätzlich zu Email und Passwort
@@ -89,18 +91,18 @@ export default async function TwoFactorSettingsPage() {
         </CardHeader>
         {isEnabled && (
           <CardContent>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-ink-muted">
               Verbleibende Recovery-Codes:{" "}
-              <strong className="text-foreground">
+              <strong className="text-ink-foreground tabular-nums">
                 {remainingRecoveryCodes} / 10
               </strong>
               {remainingRecoveryCodes <= 3 && remainingRecoveryCodes > 0 && (
-                <span className="ml-2 text-amber-700">
+                <span className="ml-2 text-primary">
                   — Du solltest neue generieren, bevor sie alle aufgebraucht sind.
                 </span>
               )}
               {remainingRecoveryCodes === 0 && (
-                <span className="ml-2 text-rose-700">
+                <span className="ml-2 font-medium text-[hsl(0_72%_62%)]">
                   — Alle Recovery-Codes verbraucht. Bitte neue generieren!
                 </span>
               )}

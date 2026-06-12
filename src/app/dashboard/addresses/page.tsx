@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -236,14 +237,15 @@ export default function AddressesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold">Meine Adressen</h2>
-          <p className="text-sm text-muted-foreground">
+          <span className="eyebrow">Adressbuch</span>
+          <h2 className="display-title mt-2 text-xl">Meine Adressen</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Verwalten Sie Ihre Liefer- und Rechnungsadressen.
           </p>
         </div>
-        <Button onClick={openAddDialog} size="sm">
+        <Button onClick={openAddDialog} size="sm" className="shrink-0">
           <Plus className="mr-2 h-4 w-4" />
           Adresse hinzufügen
         </Button>
@@ -251,13 +253,16 @@ export default function AddressesPage() {
 
       {addresses.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <MapPin className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">Noch keine Adressen</h3>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-muted/50">
+              <MapPin className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <span className="eyebrow justify-center">Adressbuch</span>
+            <h3 className="display-title mt-2 mb-2 text-lg">Noch keine Adressen</h3>
             <p className="mb-6 text-sm text-muted-foreground">
               Fügen Sie eine Adresse hinzu, um loszulegen.
             </p>
-            <Button onClick={openAddDialog}>
+            <Button variant="gold" onClick={openAddDialog}>
               <Plus className="mr-2 h-4 w-4" />
               Adresse hinzufügen
             </Button>
@@ -266,14 +271,25 @@ export default function AddressesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {addresses.map((address) => (
-            <Card key={address.id} className="relative">
+            <Card
+              variant="lift"
+              key={address.id}
+              className={cn(
+                "relative",
+                address.isDefault && "border-primary/40",
+              )}
+            >
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-sm font-medium">
                     {address.label || `${address.firstName} ${address.lastName}`}
                   </CardTitle>
                   {address.isDefault && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary">
+                    <Badge
+                      variant="secondary"
+                      className="shrink-0 border-primary/30 bg-primary/10 text-primary-strong"
+                    >
+                      <Star className="mr-1 h-3 w-3" aria-hidden />
                       Standard
                     </Badge>
                   )}
@@ -348,7 +364,9 @@ export default function AddressesPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="addr-label">Bezeichnung (optional)</Label>
+              <Label htmlFor="addr-label" className="field-label">
+                [ Bezeichnung — optional ]
+              </Label>
               <Input
                 id="addr-label"
                 value={form.label}
@@ -359,7 +377,9 @@ export default function AddressesPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="addr-firstName">Vorname</Label>
+                <Label htmlFor="addr-firstName" className="field-label">
+                  [ Vorname ]
+                </Label>
                 <Input
                   id="addr-firstName"
                   value={form.firstName}
@@ -368,7 +388,9 @@ export default function AddressesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="addr-lastName">Nachname</Label>
+                <Label htmlFor="addr-lastName" className="field-label">
+                  [ Nachname ]
+                </Label>
                 <Input
                   id="addr-lastName"
                   value={form.lastName}
@@ -379,7 +401,9 @@ export default function AddressesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="addr-company">Firma (optional)</Label>
+              <Label htmlFor="addr-company" className="field-label">
+                [ Firma — optional ]
+              </Label>
               <Input
                 id="addr-company"
                 value={form.company}
@@ -388,7 +412,9 @@ export default function AddressesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="addr-street">Straße</Label>
+              <Label htmlFor="addr-street" className="field-label">
+                [ Straße ]
+              </Label>
               <Input
                 id="addr-street"
                 value={form.street}
@@ -398,7 +424,9 @@ export default function AddressesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="addr-street2">Adresszusatz (optional)</Label>
+              <Label htmlFor="addr-street2" className="field-label">
+                [ Adresszusatz — optional ]
+              </Label>
               <Input
                 id="addr-street2"
                 value={form.street2}
@@ -408,7 +436,9 @@ export default function AddressesPage() {
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="addr-postalCode">PLZ</Label>
+                <Label htmlFor="addr-postalCode" className="field-label">
+                  [ PLZ ]
+                </Label>
                 <Input
                   id="addr-postalCode"
                   value={form.postalCode}
@@ -417,7 +447,9 @@ export default function AddressesPage() {
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="addr-city">Stadt</Label>
+                <Label htmlFor="addr-city" className="field-label">
+                  [ Stadt ]
+                </Label>
                 <Input
                   id="addr-city"
                   value={form.city}
@@ -429,7 +461,9 @@ export default function AddressesPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="addr-state">Bundesland (optional)</Label>
+                <Label htmlFor="addr-state" className="field-label">
+                  [ Bundesland — optional ]
+                </Label>
                 <Input
                   id="addr-state"
                   value={form.state}
@@ -437,7 +471,9 @@ export default function AddressesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="addr-country">Land</Label>
+                <Label htmlFor="addr-country" className="field-label">
+                  [ Land ]
+                </Label>
                 <CountrySelect
                   id="addr-country"
                   value={form.country}
@@ -448,7 +484,9 @@ export default function AddressesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="addr-phone">Telefon (optional)</Label>
+              <Label htmlFor="addr-phone" className="field-label">
+                [ Telefon — optional ]
+              </Label>
               <Input
                 id="addr-phone"
                 type="tel"

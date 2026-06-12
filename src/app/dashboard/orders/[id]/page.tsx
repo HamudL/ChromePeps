@@ -24,7 +24,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { ArrowLeft, Clock, Download, MapPin, Receipt } from "lucide-react";
+import { ArrowLeft, Clock, Download, MapPin, Receipt, Truck } from "lucide-react";
 
 export default async function OrderDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -59,10 +59,11 @@ export default async function OrderDetailPage(props: {
       {/* Order header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Bestellung {order.orderNumber}
-          </h1>
-          <p className="text-sm text-muted-foreground">
+          <span className="eyebrow">Bestellung</span>
+          <h2 className="display-title mt-1.5 text-2xl">
+            <span className="font-mono">{order.orderNumber}</span>
+          </h2>
+          <p className="mt-1 text-sm tabular-nums text-muted-foreground">
             Aufgegeben am {format(new Date(order.createdAt), "dd.MM.yyyy 'um' HH:mm")}
           </p>
         </div>
@@ -101,11 +102,11 @@ export default async function OrderDetailPage(props: {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Produkt</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead className="text-center">Menge</TableHead>
-                  <TableHead className="text-right">Preis</TableHead>
-                  <TableHead className="text-right">Zwischensumme</TableHead>
+                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Produkt</TableHead>
+                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">SKU</TableHead>
+                  <TableHead className="text-center font-mono text-[10px] uppercase tracking-[0.12em]">Menge</TableHead>
+                  <TableHead className="text-right font-mono text-[10px] uppercase tracking-[0.12em]">Preis</TableHead>
+                  <TableHead className="text-right font-mono text-[10px] uppercase tracking-[0.12em]">Zwischensumme</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -122,11 +123,11 @@ export default async function OrderDetailPage(props: {
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {item.sku}
                     </TableCell>
-                    <TableCell className="text-center">{item.quantity}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-center tabular-nums">{item.quantity}</TableCell>
+                    <TableCell className="text-right tabular-nums">
                       {formatPrice(item.priceInCents)}
                     </TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-right font-medium tabular-nums">
                       {formatPrice(item.priceInCents * item.quantity)}
                     </TableCell>
                   </TableRow>
@@ -141,11 +142,11 @@ export default async function OrderDetailPage(props: {
           <div className="ml-auto w-full max-w-xs space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Zwischensumme</span>
-              <span>{formatPrice(order.subtotalInCents)}</span>
+              <span className="tabular-nums">{formatPrice(order.subtotalInCents)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Versand</span>
-              <span>
+              <span className="tabular-nums">
                 {order.shippingInCents === 0
                   ? "Kostenlos"
                   : formatPrice(order.shippingInCents)}
@@ -153,12 +154,12 @@ export default async function OrderDetailPage(props: {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">MwSt.</span>
-              <span>{formatPrice(order.taxInCents)}</span>
+              <span className="tabular-nums">{formatPrice(order.taxInCents)}</span>
             </div>
             <Separator />
-            <div className="flex justify-between font-semibold">
-              <span>Gesamt</span>
-              <span>{formatPrice(order.totalInCents)}</span>
+            <div className="flex items-baseline justify-between">
+              <span className="stat-key">Gesamt</span>
+              <span className="stat-value text-xl">{formatPrice(order.totalInCents)}</span>
             </div>
           </div>
         </CardContent>
@@ -264,9 +265,14 @@ export default async function OrderDetailPage(props: {
       {order.trackingNumber && (
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
+              <Truck className="h-5 w-5" aria-hidden />
+            </div>
             <div>
-              <p className="text-sm font-medium">Sendungsnummer</p>
-              <p className="font-mono text-sm text-muted-foreground">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Sendungsnummer
+              </p>
+              <p className="mt-0.5 font-mono text-sm font-medium tracking-wide">
                 {order.trackingNumber}
               </p>
             </div>

@@ -63,15 +63,17 @@ export default function ResetPasswordPage({
     return (
       <Card className="w-full max-w-md shadow-lg">
         <h1 className="sr-only">Passwort erfolgreich geändert</h1>
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-            <CheckCircle2 className="h-6 w-6 text-green-600" />
+        <CardHeader className="space-y-3 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success/10">
+            <CheckCircle2 className="h-7 w-7 text-success" />
           </div>
-          <CardTitle className="text-2xl font-bold">Passwort ge&auml;ndert</CardTitle>
+          <CardTitle className="display-title text-3xl">
+            Passwort ge&auml;ndert
+          </CardTitle>
           <CardDescription>Sie werden zum Login weitergeleitet...</CardDescription>
         </CardHeader>
         <CardFooter>
-          <Button asChild className="w-full">
+          <Button asChild variant="gold" className="w-full">
             <Link href="/login">Jetzt anmelden</Link>
           </Button>
         </CardFooter>
@@ -82,10 +84,11 @@ export default function ResetPasswordPage({
   return (
     <Card className="w-full max-w-md shadow-lg">
       <h1 className="sr-only">Neues Passwort setzen</h1>
-      <CardHeader className="text-center space-y-1">
-        <CardTitle className="text-2xl font-bold">Neues Passwort</CardTitle>
+      <CardHeader className="space-y-2">
+        <span className="eyebrow">[ NEUES PASSWORT ]</span>
+        <CardTitle className="display-title text-3xl">Neues Passwort</CardTitle>
         <CardDescription>
-          W&auml;hlen Sie ein starkes Passwort
+          W&auml;hlen Sie ein starkes Passwort f&uuml;r Ihr Konto.
         </CardDescription>
       </CardHeader>
 
@@ -101,7 +104,9 @@ export default function ResetPasswordPage({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="password">Neues Passwort</Label>
+            <Label htmlFor="password" className="field-label">
+              [ Neues Passwort ]
+            </Label>
             <Input
               id="password"
               name="password"
@@ -118,7 +123,9 @@ export default function ResetPasswordPage({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Passwort best&auml;tigen</Label>
+            <Label htmlFor="confirmPassword" className="field-label">
+              [ Passwort best&auml;tigen ]
+            </Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
@@ -132,7 +139,12 @@ export default function ResetPasswordPage({
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full gap-2" disabled={isPending}>
+          <Button
+            type="submit"
+            variant="gold"
+            className="w-full gap-2"
+            disabled={isPending}
+          >
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -237,10 +237,14 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-md shadow-lg">
       <h1 className="sr-only">Bei {APP_NAME} anmelden</h1>
-      <CardHeader className="text-center space-y-1">
-        <CardTitle className="text-2xl font-bold">Willkommen zurück</CardTitle>
+      <CardHeader className="space-y-2">
+        <span className="eyebrow">[ KONTO-ZUGANG ]</span>
+        <CardTitle className="display-title text-3xl">
+          Willkommen zurück
+        </CardTitle>
         <CardDescription>
-          Melden Sie sich bei Ihrem {APP_NAME}-Konto an
+          Melden Sie sich bei Ihrem {APP_NAME}-Konto an — Bestellverlauf,
+          Adressen und CoA-Archiv warten.
         </CardDescription>
       </CardHeader>
 
@@ -260,7 +264,9 @@ export default function LoginPage() {
           {!pendingCredentials && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="email">E-Mail</Label>
+                <Label htmlFor="email" className="field-label">
+                  [ E-Mail ]
+                </Label>
                 <Input
                   id="email"
                   name="email"
@@ -274,7 +280,9 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Passwort</Label>
+                  <Label htmlFor="password" className="field-label">
+                    [ Passwort ]
+                  </Label>
                   <Link
                     href="/forgot-password"
                     className="text-xs text-muted-foreground hover:text-foreground hover:underline"
@@ -316,7 +324,9 @@ export default function LoginPage() {
           {/* Stufe 2: TOTP-Code (oder Recovery-Code) */}
           {pendingCredentials && (
             <div className="space-y-2">
-              <Label htmlFor="totpCode">Zwei-Faktor-Code</Label>
+              <Label htmlFor="totpCode" className="field-label">
+                [ Zwei-Faktor-Code ]
+              </Label>
               <Input
                 id="totpCode"
                 name="totpCode"
@@ -353,6 +363,7 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col gap-4">
           <Button
             type="submit"
+            variant="gold"
             className="w-full gap-2"
             disabled={isPending || (captchaRequired && !captchaToken)}
           >

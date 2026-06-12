@@ -96,18 +96,18 @@ export function ReviewList({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {reviews.map((review, i) => (
           <FadeUp key={review.id} delay={i * 0.03}>
-            <Card className="h-full transition-shadow hover:shadow-md">
+            <Card className="h-full transition-all duration-300 hover:border-primary/40 hover:shadow-[0_14px_32px_-22px_hsl(45_60%_30%/0.45)]">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-sm font-semibold text-primary">
+                    <div className="h-10 w-10 shrink-0 rounded-full border border-primary/20 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-sm font-semibold text-primary-strong">
                       {review.user?.name?.[0]?.toUpperCase() ?? "?"}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">
+                      <p className="font-semibold text-sm truncate">
                         {review.user?.name ?? "Anonym"}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-mono text-[10.5px] tracking-[0.04em] text-muted-foreground mt-0.5">
                         {new Date(review.createdAt).toLocaleDateString(
                           "de-DE",
                           {
@@ -124,7 +124,7 @@ export function ReviewList({
                     {review.isVerified && (
                       <Badge
                         variant="outline"
-                        className="border-primary/40 bg-primary/5 text-[10px] px-1.5 py-0"
+                        className="border-primary/40 bg-primary/5 font-mono text-[9px] tracking-[0.1em] uppercase text-primary-strong px-1.5 py-0"
                       >
                         <ShieldCheck className="mr-1 h-2.5 w-2.5 text-primary" />
                         Verifiziert
@@ -152,7 +152,7 @@ export function ReviewList({
             type="button"
             onClick={loadMore}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-full border bg-card px-5 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2 font-mono text-[11px] tracking-[0.08em] uppercase font-medium transition-colors hover:border-primary/50 hover:text-primary-strong disabled:opacity-60"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             Mehr Bewertungen laden ({totalCount - reviews.length} weitere)

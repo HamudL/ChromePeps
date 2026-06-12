@@ -36,32 +36,39 @@ export function NewsletterForm() {
 
   if (state === "success") {
     return (
-      <div className="flex items-center gap-2 text-sm text-emerald-600">
-        <CheckCircle2 className="h-4 w-4" />
+      <div className="flex items-center gap-2 text-sm text-primary">
+        <CheckCircle2 className="h-4 w-4 shrink-0" />
         <span>Bitte prüfen Sie Ihr Postfach zur Bestätigung.</span>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <Input
-        type="email"
-        placeholder="Ihre E-Mail-Adresse"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="h-9 text-sm"
-        disabled={state === "loading"}
-      />
-      <Button type="submit" size="sm" disabled={state === "loading"}>
-        {state === "loading" ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          "Anmelden"
-        )}
-      </Button>
-      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <div className="flex gap-2">
+        <Input
+          type="email"
+          placeholder="Ihre E-Mail-Adresse"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="h-10 text-sm"
+          disabled={state === "loading"}
+        />
+        <Button
+          type="submit"
+          variant="gold"
+          disabled={state === "loading"}
+          className="shrink-0"
+        >
+          {state === "loading" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Anmelden"
+          )}
+        </Button>
+      </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </form>
   );
 }

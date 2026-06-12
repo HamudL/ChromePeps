@@ -25,17 +25,22 @@ export const dynamic = "force-dynamic";
 
 export default function AgbPage() {
   return (
-    <div className="container max-w-3xl py-12">
-      <h1 className="text-3xl font-bold tracking-tight mb-2">
-        Allgemeine Geschäftsbedingungen
-      </h1>
-      <p className="text-sm text-muted-foreground mb-8">
-        Stand: {AGB_STAND}
-      </p>
+    <div className="container max-w-3xl section-pad">
+      <header>
+        <span className="eyebrow">[ RECHTLICHES ]</span>
+        <h1 className="display-title mt-3 text-4xl md:text-5xl">
+          Allgemeine Geschäftsbedingungen
+        </h1>
+        <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
+          Stand: {AGB_STAND}
+        </p>
+      </header>
 
-      <div className="space-y-6 text-sm leading-relaxed">
+      <hr className="rule-gold my-10" />
+
+      <div className="space-y-8 text-[15px] leading-relaxed text-foreground/90">
         <section>
-          <h2 className="text-lg font-semibold">§ 1 Geltungsbereich</h2>
+          <h2 className="display-title text-xl text-foreground">§ 1 Geltungsbereich</h2>
           <p>
             Für alle Bestellungen über unseren Online-Shop durch Verbraucher
             und Unternehmer gelten die nachfolgenden AGB. Verbraucher ist jede
@@ -50,14 +55,14 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">§ 2 Vertragspartner</h2>
+          <h2 className="display-title text-xl text-foreground">§ 2 Vertragspartner</h2>
           {/* Vertragspartner kommt zentral aus SELLER_DETAILS (env-basiert) —
               identisch mit Impressum und Rechnungs-PDF. */}
           <p>
             Der Kaufvertrag kommt zustande mit {SELLER_DETAILS.companyName},{" "}
             {SELLER_DETAILS.streetLine1}, {SELLER_DETAILS.postalCodeCity}.
             Weitere Informationen zu uns finden Sie im{" "}
-            <Link href="/impressum" className="underline">
+            <Link href="/impressum" className="text-primary-strong underline-offset-2 hover:underline">
               Impressum
             </Link>
             .
@@ -65,7 +70,7 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">
+          <h2 className="display-title text-xl text-foreground">
             § 3 Vertragsschluss und Angebot
           </h2>
           <p>
@@ -81,7 +86,7 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">
+          <h2 className="display-title text-xl text-foreground">
             § 4 Besondere Bestimmungen für Forschungsprodukte
           </h2>
           <p>
@@ -97,7 +102,7 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">§ 5 Preise und Versandkosten</h2>
+          <h2 className="display-title text-xl text-foreground">§ 5 Preise und Versandkosten</h2>
           <p>
             Die auf den Produktseiten angegebenen Preise enthalten die gesetzliche
             Mehrwertsteuer und sonstige Preisbestandteile. Zusätzlich zu den
@@ -106,7 +111,7 @@ export default function AgbPage() {
             innerhalb Deutschlands; unterhalb dieses Werts fällt eine
             Versandkostenpauschale von 5,99 EUR an. Die genauen Konditionen
             finden Sie auf der{" "}
-            <Link href="/versand" className="underline">
+            <Link href="/versand" className="text-primary-strong underline-offset-2 hover:underline">
               Seite &bdquo;Versand&ldquo;
             </Link>
             .
@@ -114,7 +119,7 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">§ 6 Lieferung</h2>
+          <h2 className="display-title text-xl text-foreground">§ 6 Lieferung</h2>
           <p>
             Die Lieferung erfolgt, sofern nicht anders vereinbart, an die von
             Ihnen angegebene Lieferadresse. Die Lieferzeit beträgt, sofern beim
@@ -132,7 +137,7 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">§ 7 Zahlung</h2>
+          <h2 className="display-title text-xl text-foreground">§ 7 Zahlung</h2>
           <p>
             {BANK_TRANSFER_ENABLED ? (
               <>
@@ -150,7 +155,7 @@ export default function AgbPage() {
               </>
             )}{" "}
             Weitere Informationen finden Sie auf der{" "}
-            <Link href="/zahlung" className="underline">
+            <Link href="/zahlung" className="text-primary-strong underline-offset-2 hover:underline">
               Seite &bdquo;Zahlung&ldquo;
             </Link>
             .
@@ -158,19 +163,19 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">§ 8 Eigentumsvorbehalt</h2>
+          <h2 className="display-title text-xl text-foreground">§ 8 Eigentumsvorbehalt</h2>
           <p>
             Die Ware bleibt bis zur vollständigen Bezahlung unser Eigentum.
           </p>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">
+          <h2 className="display-title text-xl text-foreground">
             § 9 Widerrufsrecht für Verbraucher
           </h2>
           <p>
             Verbrauchern steht ein Widerrufsrecht nach Maßgabe der{" "}
-            <Link href="/widerruf" className="underline">
+            <Link href="/widerruf" className="text-primary-strong underline-offset-2 hover:underline">
               Widerrufsbelehrung
             </Link>{" "}
             zu.
@@ -178,7 +183,7 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">§ 10 Gewährleistung</h2>
+          <h2 className="display-title text-xl text-foreground">§ 10 Gewährleistung</h2>
           <p>
             Es gelten die gesetzlichen Gewährleistungsrechte. Die
             Gewährleistungsfrist für Verbraucher beträgt zwei Jahre ab Erhalt
@@ -189,7 +194,7 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">
+          <h2 className="display-title text-xl text-foreground">
             § 11 Anwendbares Recht und Gerichtsstand
           </h2>
           <p>
@@ -206,7 +211,7 @@ export default function AgbPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">§ 12 Streitbeilegung</h2>
+          <h2 className="display-title text-xl text-foreground">§ 12 Streitbeilegung</h2>
           <p>
             Die Europäische Kommission stellt eine Plattform zur
             Online-Streitbeilegung (OS) bereit:{" "}
@@ -214,7 +219,7 @@ export default function AgbPage() {
               href="https://ec.europa.eu/consumers/odr/"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline"
+              className="break-words text-primary-strong underline-offset-2 hover:underline"
             >
               https://ec.europa.eu/consumers/odr/
             </a>

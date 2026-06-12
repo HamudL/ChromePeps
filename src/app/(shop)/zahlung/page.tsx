@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CreditCard, Landmark, Shield, CheckCircle2 } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { BANK_DETAILS, BANK_TRANSFER_ENABLED } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -21,44 +22,51 @@ export const dynamic = "force-dynamic";
 
 export default function ZahlungPage() {
   return (
-    <div className="container max-w-3xl py-12">
-      <h1 className="text-3xl font-bold tracking-tight mb-2">
-        Zahlungsmethoden
-      </h1>
-      <p className="text-sm text-muted-foreground mb-8">
-        Sichere und bewährte Zahlungsmöglichkeiten
-      </p>
+    <div className="container max-w-3xl section-pad">
+      <header>
+        <span className="eyebrow">[ ZAHLUNG ]</span>
+        <h1 className="display-title mt-3 text-4xl md:text-5xl">
+          Zahlungsmethoden
+        </h1>
+        <p className="mt-4 max-w-2xl text-muted-foreground">
+          Sichere, bewährte Zahlungswege — verschlüsselt übertragen und über
+          einen PCI-DSS-zertifizierten Dienstleister abgewickelt.
+        </p>
+      </header>
+
+      <hr className="rule-gold my-10" />
 
       <div className="space-y-6 text-sm leading-relaxed">
-        <div className={`grid gap-4 mb-6 ${BANK_TRANSFER_ENABLED ? "sm:grid-cols-2" : ""}`}>
+        <div className={`grid gap-4 ${BANK_TRANSFER_ENABLED ? "sm:grid-cols-2" : ""}`}>
           {BANK_TRANSFER_ENABLED && (
-            <div className="border rounded-lg p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Landmark className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Vorkasse / Überweisung</h3>
-              </div>
-              <p className="text-muted-foreground">
+            <Card className="p-5">
+              <Landmark className="h-5 w-5 text-primary-strong" />
+              <h2 className="mt-3 font-semibold">Vorkasse / Überweisung</h2>
+              <p className="mt-1.5 text-muted-foreground">
                 Überweisen Sie den Rechnungsbetrag auf unser Bankkonto. Versand
                 erfolgt nach Zahlungseingang.
               </p>
-            </div>
+            </Card>
           )}
-          <div className="border rounded-lg p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <CreditCard className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Kreditkarte (Stripe)</h3>
-            </div>
-            <p className="text-muted-foreground">
+          <Card className="p-5">
+            <CreditCard className="h-5 w-5 text-primary-strong" />
+            <h2 className="mt-3 font-semibold">Kreditkarte (Stripe)</h2>
+            <p className="mt-1.5 text-muted-foreground">
               Visa, Mastercard und American Express. Sofortiger Versand nach
               Zahlungsfreigabe.
             </p>
-          </div>
+          </Card>
         </div>
 
         {BANK_TRANSFER_ENABLED && (
           <section>
-            <h2 className="text-lg font-semibold">Vorkasse per Banküberweisung</h2>
-            <p>
+            <span className="mono-label text-muted-foreground">
+              01 · Vorkasse
+            </span>
+            <h2 className="display-title mt-2 text-xl">
+              Vorkasse per Banküberweisung
+            </h2>
+            <p className="mt-2">
               Bei Wahl der Zahlungsart Vorkasse senden wir Ihnen unmittelbar nach
               Bestellabschluss eine Auftragsbestätigung mit unseren Bankdaten. Die
               Ware wird versendet, sobald der Rechnungsbetrag vollständig auf
@@ -66,24 +74,28 @@ export default function ZahlungPage() {
               Ihre Bestellnummer als Verwendungszweck an, damit wir die Zahlung
               schnell zuordnen können.
             </p>
-            <div className="mt-4 p-4 border rounded-lg bg-muted/30">
-              <p className="font-medium mb-1">Unsere Bankverbindung</p>
-              <p className="text-muted-foreground">
-                Kontoinhaber: {BANK_DETAILS.accountHolder}
-                <br />
-                IBAN: {BANK_DETAILS.iban}
-                <br />
-                BIC: {BANK_DETAILS.bic}
-                <br />
-                Bank: {BANK_DETAILS.bankName}
-              </p>
-            </div>
+            <Card variant="ink" className="card-ink mt-4 p-5">
+              <span className="eyebrow">[ UNSERE BANKVERBINDUNG ]</span>
+              <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 font-mono text-sm sm:grid-cols-[auto_1fr]">
+                <dt className="text-ink-muted">Kontoinhaber</dt>
+                <dd className="text-ink-foreground">{BANK_DETAILS.accountHolder}</dd>
+                <dt className="text-ink-muted">IBAN</dt>
+                <dd className="text-ink-foreground">{BANK_DETAILS.iban}</dd>
+                <dt className="text-ink-muted">BIC</dt>
+                <dd className="text-ink-foreground">{BANK_DETAILS.bic}</dd>
+                <dt className="text-ink-muted">Bank</dt>
+                <dd className="text-ink-foreground">{BANK_DETAILS.bankName}</dd>
+              </dl>
+            </Card>
           </section>
         )}
 
         <section>
-          <h2 className="text-lg font-semibold">Kreditkarte über Stripe</h2>
-          <p>
+          <span className="mono-label text-muted-foreground">
+            {BANK_TRANSFER_ENABLED ? "02" : "01"} · Karte
+          </span>
+          <h2 className="display-title mt-2 text-xl">Kreditkarte über Stripe</h2>
+          <p className="mt-2">
             Wir akzeptieren Visa, Mastercard und American Express. Die Zahlung
             wird über den PCI-DSS-zertifizierten Zahlungsdienstleister Stripe
             abgewickelt. Ihre Zahlungsdaten werden verschlüsselt direkt an
@@ -94,29 +106,30 @@ export default function ZahlungPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">Sicherheit</h2>
-          <ul className="list-none space-y-2">
-            <li className="flex items-start gap-2">
-              <Shield className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+          <span className="mono-label text-muted-foreground">Sicherheit</span>
+          <h2 className="display-title mt-2 text-xl">Wie wir Ihre Zahlung schützen</h2>
+          <ul className="mt-3 list-none space-y-2.5">
+            <li className="flex items-start gap-2.5">
+              <Shield className="mt-0.5 h-4 w-4 shrink-0 text-success" />
               <span>
                 Alle Datenübertragungen sind SSL/TLS-verschlüsselt (HTTPS).
               </span>
             </li>
-            <li className="flex items-start gap-2">
-              <Shield className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+            <li className="flex items-start gap-2.5">
+              <Shield className="mt-0.5 h-4 w-4 shrink-0 text-success" />
               <span>
                 Zahlungsabwicklung über PCI-DSS-zertifizierten Anbieter
                 (Stripe).
               </span>
             </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+            <li className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
               <span>
                 Keine Speicherung von Kreditkartendaten auf unseren Servern.
               </span>
             </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+            <li className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
               <span>
                 Transparente Preisangaben inklusive aller gesetzlichen
                 Abgaben.
@@ -126,8 +139,9 @@ export default function ZahlungPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">Mehrwertsteuer</h2>
-          <p>
+          <span className="mono-label text-muted-foreground">Steuer</span>
+          <h2 className="display-title mt-2 text-xl">Mehrwertsteuer</h2>
+          <p className="mt-2">
             Alle Preise verstehen sich inklusive der gesetzlichen
             Mehrwertsteuer von 19 %. Eine ordnungsgemäße Rechnung mit
             ausgewiesener MwSt. erhalten Sie automatisch per E-Mail und steht

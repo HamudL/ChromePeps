@@ -37,7 +37,7 @@ export function DashboardNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-row gap-1 lg:flex-col">
+    <nav className="scrollbar-none flex flex-row gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
       {navItems.map((item) => {
         const isActive =
           item.href === "/dashboard"
@@ -50,9 +50,9 @@ export function DashboardNav() {
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex shrink-0 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               isActive
-                ? "bg-primary text-primary-foreground"
+                ? "bg-primary text-primary-foreground shadow-[0_6px_18px_-12px_hsl(45_92%_41%/0.8)]"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
