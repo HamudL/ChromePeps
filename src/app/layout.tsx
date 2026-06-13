@@ -1,37 +1,36 @@
 import type { Metadata } from "next";
-import { DM_Sans, Comfortaa, DM_Mono } from "next/font/google";
+import { Fraunces, Instrument_Sans, IBM_Plex_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
 import { organizationJsonLd, websiteJsonLd, safeJsonLd } from "@/lib/json-ld";
 import "./globals.css";
 
-// === Schrift-Stack: „Soft Bio-Pharma"-Palette ===
-// User-Auswahl aus dem Vergleichs-Tool /fonts-demo (Palette 06).
+// === Schrift-Stack: „Chromatogramm" ===
 // Semantische CSS-Variablen-Namen damit zukünftige Wechsel ohne
 // Search-and-Replace gehen. Tailwind exposed sie via theme.fontFamily.
 //
-// dmSans     → UI / Body (default)
-// comfortaa  → Display / Headlines (rounded, freundlich, pharma-modern)
-// dmMono     → Lab-Cert / Code / Mono-Labels
+// instrumentSans → UI / Body (präzise Grotesk, default)
+// fraunces       → Display / Headlines (Serif mit optischer Größe + echter Kursive)
+// ibmPlexMono    → Messdaten / Lot-Nummern / Mono-Labels
 
-const dmSans = DM_Sans({
+const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const comfortaa = Comfortaa({
+const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  axes: ["opsz"],
   display: "swap",
 });
 
-const dmMono = DM_Mono({
+const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
-  weight: ["300", "400", "500"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
@@ -128,7 +127,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${dmSans.variable} ${comfortaa.variable} ${dmMono.variable} font-sans antialiased`}
+        className={`${instrumentSans.variable} ${fraunces.variable} ${ibmPlexMono.variable} font-sans antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

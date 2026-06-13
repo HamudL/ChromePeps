@@ -10,22 +10,23 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md",
-        // Gold — das primäre Conversion-CTA der "Cinematic Lab"-Sprache.
-        // Goldfläche mit Ink-Text, weiche Gold-Aura, beim Hover ein
-        // dezenter Shine-Sweep (btn-shine, definiert in globals.css).
-        gold: "btn-shine bg-primary text-primary-foreground font-semibold shadow-[0_1px_0_hsl(45_92%_75%/0.6)_inset,0_8px_24px_-12px_hsl(45_92%_41%/0.7)] hover:bg-[hsl(45_92%_36%)] hover:shadow-[0_1px_0_hsl(45_92%_75%/0.6)_inset,0_12px_30px_-10px_hsl(45_92%_41%/0.8)]",
-        // Ink — dunkles Premium-Pendant für helle Sektionen (Sekundär-CTA
-        // mit Gewicht, ohne mit dem Gold-CTA zu konkurrieren).
-        ink: "bg-ink text-ink-foreground border border-ink-border shadow-sm hover:bg-[hsl(20_14%_9%)] hover:border-primary/40",
+          "bg-primary text-primary-foreground shadow-sm hover:bg-primary-strong",
+        // Primäres Conversion-CTA der „Chromatogramm"-Sprache: volle
+        // Viridian-Fläche, heller Text, einmaliger Shine-Sweep beim
+        // Hover (btn-shine, globals.css). Der Variant-Name "gold" ist
+        // historisch — alle Call-Sites nutzen ihn als Haupt-CTA.
+        gold: "btn-shine bg-primary text-primary-foreground font-semibold shadow-[0_1px_0_hsl(0_0%_100%/0.12)_inset,0_10px_28px_-14px_hsl(var(--primary)/0.7)] hover:bg-primary-strong",
+        // Ink — tiefes Nachtblau als gewichtiger Sekundär-CTA auf
+        // hellen Flächen.
+        ink: "bg-ink text-ink-foreground border border-ink-border shadow-sm hover:border-primary/50 hover:bg-[hsl(218_32%_10%)]",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/60",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-primary-strong underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",

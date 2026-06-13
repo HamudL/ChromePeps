@@ -2,11 +2,13 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-// Card-Varianten der "Cinematic Lab"-Sprache:
-//  - default: helle Premium-Karte (ein Tick mehr Tiefe als shadcn-Default).
+// Card-Varianten der „Chromatogramm"-Sprache:
+//  - default: helle Dossier-Karte — scharfe Kante, Haarlinie, kein
+//    weicher Schatten-Teppich.
 //  - ink: dunkle Karte für bewusste Kontrast-Einschübe (Checkout-Trust,
-//    Bank-Details, Featured) — trägt die Ink-Tokens + feinen Gold-Hairline.
-//  - lift: helle Karte mit Hover-Anhebung + Gold-Rand-Andeutung; für
+//    Bank-Details, Featured). `card-ink` rescoped die Akzent-Tokens
+//    (globals.css) auf helles Mint.
+//  - lift: helle Karte mit Hover-Anhebung + kühlem Schatten; für
 //    klickbare Karten (Produkt, Kategorie, Wissen).
 const cardVariants = cva(
   "rounded-lg border text-card-foreground transition-all duration-300",
@@ -14,8 +16,8 @@ const cardVariants = cva(
     variants: {
       variant: {
         default: "bg-card border-border shadow-sm",
-        ink: "bg-ink text-ink-foreground border-ink-border shadow-[0_20px_60px_-30px_hsl(20_14%_4%/0.8)]",
-        lift: "bg-card border-border shadow-sm hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_hsl(45_60%_30%/0.45)] hover:border-primary/40",
+        ink: "card-ink bg-ink text-ink-foreground border-ink-border shadow-[0_20px_60px_-30px_hsl(218_35%_5%/0.8)]",
+        lift: "bg-card border-border shadow-sm hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-26px_hsl(218_30%_20%/0.5)] hover:border-primary/50",
       },
     },
     defaultVariants: { variant: "default" },
