@@ -100,23 +100,17 @@ export function ResearchDisclaimer() {
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-md rounded-lg border border-border bg-background p-8 shadow-2xl"
+        className="w-full max-w-md rounded-2xl bg-background p-8 shadow-2xl"
       >
         {/* Icon */}
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-sm bg-primary/10">
-          <FlaskConical
-            className="h-7 w-7 text-primary-strong"
-            aria-hidden="true"
-          />
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-6">
+          <FlaskConical className="h-7 w-7 text-primary" aria-hidden="true" />
         </div>
 
-        {/* Kicker + Title */}
-        <p className="mono-tag mb-3 text-center text-primary-strong">
-          Research Use Only
-        </p>
+        {/* Title */}
         <h2
           id="research-disclaimer-title"
-          className="display-title mb-4 text-center text-2xl"
+          className="text-xl font-bold text-center mb-4"
         >
           Nur für Forschungszwecke
         </h2>
@@ -139,7 +133,7 @@ export function ResearchDisclaimer() {
             type="checkbox"
             checked={checked}
             onChange={(e) => setChecked(e.target.checked)}
-            className="mt-1 h-4 w-4 shrink-0 rounded-sm border-border accent-primary"
+            className="mt-1 h-4 w-4 rounded border-border accent-primary shrink-0"
           />
           <span className="text-sm leading-relaxed">
             Ich bestätige, dass ich in einem Forschungs- oder Laborkontext
@@ -154,8 +148,7 @@ export function ResearchDisclaimer() {
         <Button
           onClick={handleAccept}
           disabled={!checked}
-          variant="gold"
-          className="h-11 w-full"
+          className="w-full h-11"
           size="lg"
         >
           Bestätigen und fortfahren

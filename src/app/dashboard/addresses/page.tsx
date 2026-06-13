@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardHeader,
@@ -236,34 +237,24 @@ export default function AddressesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <span className="eyebrow">Adressbuch</span>
-            <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <h2 className="display-title text-xl">Meine Adressen</h2>
-              <span className="mono-label text-muted-foreground">
-                {addresses.length === 1
-                  ? "1 Eintrag"
-                  : `${addresses.length} Einträge`}
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Verwalten Sie Ihre Liefer- und Rechnungsadressen.
-            </p>
-          </div>
-          <Button onClick={openAddDialog} size="sm" className="shrink-0">
-            <Plus className="mr-2 h-4 w-4" />
-            Adresse hinzufügen
-          </Button>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <span className="eyebrow">Adressbuch</span>
+          <h2 className="display-title mt-2 text-xl">Meine Adressen</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Verwalten Sie Ihre Liefer- und Rechnungsadressen.
+          </p>
         </div>
-        <div className="tick-rule mt-4" aria-hidden />
+        <Button onClick={openAddDialog} size="sm" className="shrink-0">
+          <Plus className="mr-2 h-4 w-4" />
+          Adresse hinzufügen
+        </Button>
       </div>
 
       {addresses.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-sm border border-border bg-muted/50">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-muted/50">
               <MapPin className="h-7 w-7 text-muted-foreground" />
             </div>
             <span className="eyebrow justify-center">Adressbuch</span>
@@ -279,7 +270,7 @@ export default function AddressesPage() {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {addresses.map((address, index) => (
+          {addresses.map((address) => (
             <Card
               variant="lift"
               key={address.id}
@@ -291,19 +282,16 @@ export default function AddressesPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-sm font-medium">
-                    <span
-                      aria-hidden
-                      className="mr-2 font-mono text-[10px] tracking-[0.12em] text-muted-foreground"
-                    >
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
                     {address.label || `${address.firstName} ${address.lastName}`}
                   </CardTitle>
                   {address.isDefault && (
-                    <span className="mono-tag inline-flex shrink-0 items-center gap-1 rounded-[2px] border border-primary/40 bg-primary/10 px-2 py-1 text-primary-strong">
-                      <Star className="h-3 w-3" aria-hidden />
+                    <Badge
+                      variant="secondary"
+                      className="shrink-0 border-primary/30 bg-primary/10 text-primary-strong"
+                    >
+                      <Star className="mr-1 h-3 w-3" aria-hidden />
                       Standard
-                    </span>
+                    </Badge>
                   )}
                 </div>
                 {address.label && (
@@ -377,7 +365,7 @@ export default function AddressesPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="addr-label" className="field-label">
-                Bezeichnung — optional
+                [ Bezeichnung — optional ]
               </Label>
               <Input
                 id="addr-label"
@@ -390,7 +378,7 @@ export default function AddressesPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="addr-firstName" className="field-label">
-                  Vorname
+                  [ Vorname ]
                 </Label>
                 <Input
                   id="addr-firstName"
@@ -401,7 +389,7 @@ export default function AddressesPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="addr-lastName" className="field-label">
-                  Nachname
+                  [ Nachname ]
                 </Label>
                 <Input
                   id="addr-lastName"
@@ -414,7 +402,7 @@ export default function AddressesPage() {
 
             <div className="space-y-2">
               <Label htmlFor="addr-company" className="field-label">
-                Firma — optional
+                [ Firma — optional ]
               </Label>
               <Input
                 id="addr-company"
@@ -425,7 +413,7 @@ export default function AddressesPage() {
 
             <div className="space-y-2">
               <Label htmlFor="addr-street" className="field-label">
-                Straße
+                [ Straße ]
               </Label>
               <Input
                 id="addr-street"
@@ -437,7 +425,7 @@ export default function AddressesPage() {
 
             <div className="space-y-2">
               <Label htmlFor="addr-street2" className="field-label">
-                Adresszusatz — optional
+                [ Adresszusatz — optional ]
               </Label>
               <Input
                 id="addr-street2"
@@ -449,7 +437,7 @@ export default function AddressesPage() {
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="addr-postalCode" className="field-label">
-                  PLZ
+                  [ PLZ ]
                 </Label>
                 <Input
                   id="addr-postalCode"
@@ -460,7 +448,7 @@ export default function AddressesPage() {
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="addr-city" className="field-label">
-                  Stadt
+                  [ Stadt ]
                 </Label>
                 <Input
                   id="addr-city"
@@ -474,7 +462,7 @@ export default function AddressesPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="addr-state" className="field-label">
-                  Bundesland — optional
+                  [ Bundesland — optional ]
                 </Label>
                 <Input
                   id="addr-state"
@@ -484,7 +472,7 @@ export default function AddressesPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="addr-country" className="field-label">
-                  Land
+                  [ Land ]
                 </Label>
                 <CountrySelect
                   id="addr-country"
@@ -497,7 +485,7 @@ export default function AddressesPage() {
 
             <div className="space-y-2">
               <Label htmlFor="addr-phone" className="field-label">
-                Telefon — optional
+                [ Telefon — optional ]
               </Label>
               <Input
                 id="addr-phone"
@@ -520,11 +508,7 @@ export default function AddressesPage() {
               </Label>
             </div>
 
-            {error && (
-              <p role="alert" className="text-sm text-destructive">
-                {error}
-              </p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
 
             <DialogFooter>
               <Button

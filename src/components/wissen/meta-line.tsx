@@ -1,10 +1,9 @@
+import { Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Mono-Meta-Zeile unter Article-Cards und im Artikel-Header —
- * reine Messdaten-Typo (IBM Plex Mono), Felder durch Mittelpunkte
- * getrennt. Optional alle Felder — rendert nur was tatsächlich
- * übergeben wurde, Separatoren stehen nur ZWISCHEN Feldern.
+ * Mono-Meta-Zeile unter Article-Cards und im Artikel-Header.
+ * Optional alle Felder — rendert nur was tatsächlich übergeben wurde.
  * `dark` schaltet auf Ink-Section-Foreground (für Featured-Card auf
  * dunklem Hintergrund).
  */
@@ -27,34 +26,39 @@ export function MetaLine({
   className,
 }: Props) {
   const colorClass = dark ? "text-ink-muted" : "text-muted-foreground";
-  const items = [
-    author ?? null,
-    time ?? null,
-    date ?? null,
-    updated ? `Akt. ${updated}` : null,
-  ].filter((it): it is string => Boolean(it));
-
-  if (items.length === 0) return null;
-
   return (
     <div
       className={cn(
-        "mono-label flex flex-wrap items-center gap-x-2.5 gap-y-1",
+        "mono-label flex flex-wrap items-center gap-x-3 gap-y-1",
         colorClass,
         className,
       )}
-      style={{ fontSize: 10.5 }}
     >
-      {items.map((it, i) => (
-        <span key={i} className="inline-flex items-center gap-x-2.5">
-          {i > 0 && (
-            <span aria-hidden="true" className="opacity-40">
-              ·
-            </span>
-          )}
-          {it}
+      {author && (
+        <span className="inline-flex items-center gap-1.5">
+          <User size={11} />
+          {author}
         </span>
-      ))}
+      )}
+      {time && (
+        <span className="inline-flex items-center gap-1.5">
+          <span className="opacity-50">·</span>
+          <Clock size={11} />
+          {time}
+        </span>
+      )}
+      {date && (
+        <span className="inline-flex items-center gap-1.5">
+          <span className="opacity-50">·</span>
+          {date}
+        </span>
+      )}
+      {updated && (
+        <span className="inline-flex items-center gap-1.5 opacity-70">
+          <span className="opacity-50">·</span>
+          Akt. {updated}
+        </span>
+      )}
     </div>
   );
 }

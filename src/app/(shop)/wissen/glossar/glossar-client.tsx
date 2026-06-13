@@ -151,13 +151,8 @@ export function GlossarClient({ terms }: Props) {
                 <h2 className="font-serif text-[80px] md:text-[120px] leading-[0.85] tracking-[-0.04em] font-medium">
                   {L}
                 </h2>
-                {/* Mess-Lineal füllt die Zeile bis zum Zähler. */}
-                <div
-                  className="tick-rule flex-1 mb-4 hidden sm:block"
-                  aria-hidden="true"
-                />
                 <span
-                  className="mono-tag text-muted-foreground mb-3 ml-auto sm:ml-0 shrink-0"
+                  className="mono-tag text-muted-foreground mb-3 ml-auto"
                   style={{ fontSize: 10.5 }}
                 >
                   {grouped[L].length}{" "}

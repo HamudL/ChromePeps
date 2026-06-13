@@ -5,11 +5,15 @@ import { notFound } from "next/navigation";
 import { requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { formatPrice, cn } from "@/lib/utils";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/constants";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   Card,
   CardHeader,
+  CardTitle,
   CardContent,
 } from "@/components/ui/card";
 import {
@@ -20,14 +24,8 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { OrderStatusTag } from "@/components/dashboard/order-status-tag";
-import { ArrowLeft, Download, Truck } from "lucide-react";
+import { ArrowLeft, Clock, Download, MapPin, Receipt, Truck } from "lucide-react";
 
-/**
- * Bestelldetail — der Beleg im Laborjournal: Kopf mit Mono-Bestell-
- * nummer und Mess-Lineal, Positionstabelle mit Mono-Beträgen,
- * Summenblock mit Haarlinien, Status-Timeline als Protokollspur.
- */
 export default async function OrderDetailPage(props: {
   params: Promise<{ id: string }>;
 }) {
@@ -50,7 +48,7 @@ export default async function OrderDetailPage(props: {
 
   return (
     <div className="space-y-6">
-      {/* Zurück zur Liste */}
+      {/* Back button */}
       <Button variant="ghost" size="sm" asChild className="-ml-2">
         <Link href="/dashboard">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -58,54 +56,52 @@ export default async function OrderDetailPage(props: {
         </Link>
       </Button>
 
-      {/* Beleg-Kopf */}
-      <div>
-        <span className="eyebrow">Bestellprotokoll</span>
-        <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="display-title text-2xl">
-              <span className="font-mono">{order.orderNumber}</span>
-            </h2>
-            <p className="mt-1.5 font-mono text-xs tabular-nums text-muted-foreground">
-              Aufgegeben am{" "}
-              {format(new Date(order.createdAt), "dd.MM.yyyy 'um' HH:mm")}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <OrderStatusTag status={order.status} />
-            {order.paymentStatus === "SUCCEEDED" && (
-              <Button asChild size="sm" variant="outline">
-                <a
-                  href={`/api/orders/${order.id}/invoice`}
-                  target="_blank"
-                  rel="noopener"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Rechnung herunterladen
-                </a>
-              </Button>
-            )}
-          </div>
+      {/* Order header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <span className="eyebrow">Bestellung</span>
+          <h2 className="display-title mt-1.5 text-2xl">
+            <span className="font-mono">{order.orderNumber}</span>
+          </h2>
+          <p className="mt-1 text-sm tabular-nums text-muted-foreground">
+            Aufgegeben am {format(new Date(order.createdAt), "dd.MM.yyyy 'um' HH:mm")}
+          </p>
         </div>
-        <div className="tick-rule mt-4" aria-hidden />
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant="secondary"
+            className={cn("w-fit text-sm", ORDER_STATUS_COLORS[order.status] ?? "")}
+          >
+            {ORDER_STATUS_LABELS[order.status] ?? order.status}
+          </Badge>
+          {order.paymentStatus === "SUCCEEDED" && (
+            <Button asChild size="sm" variant="outline">
+              <a
+                href={`/api/orders/${order.id}/invoice`}
+                target="_blank"
+                rel="noopener"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Rechnung herunterladen
+              </a>
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Positionen — Beleg-Tabelle mit Summenblock */}
+      {/* Items table */}
       <Card>
-        <CardHeader className="pb-4">
-          <span className="mono-label text-muted-foreground">
-            Positionen ·{" "}
-            <span className="tabular-nums">
-              {String(order.items.length).padStart(2, "0")}
-            </span>
-          </span>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Receipt className="h-4 w-4" />
+            Bestellpositionen
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Pos.</TableHead>
                   <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Produkt</TableHead>
                   <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">SKU</TableHead>
                   <TableHead className="text-center font-mono text-[10px] uppercase tracking-[0.12em]">Menge</TableHead>
@@ -114,11 +110,8 @@ export default async function OrderDetailPage(props: {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {order.items.map((item, index) => (
+                {order.items.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
-                      {String(index + 1).padStart(2, "0")}
-                    </TableCell>
                     <TableCell className="font-medium">
                       {item.productName}
                       {item.variantName && (
@@ -130,13 +123,11 @@ export default async function OrderDetailPage(props: {
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {item.sku}
                     </TableCell>
-                    <TableCell className="text-center font-mono text-sm tabular-nums">
-                      {item.quantity}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-sm tabular-nums">
+                    <TableCell className="text-center tabular-nums">{item.quantity}</TableCell>
+                    <TableCell className="text-right tabular-nums">
                       {formatPrice(item.priceInCents)}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm font-medium tabular-nums">
+                    <TableCell className="text-right font-medium tabular-nums">
                       {formatPrice(item.priceInCents * item.quantity)}
                     </TableCell>
                   </TableRow>
@@ -145,48 +136,44 @@ export default async function OrderDetailPage(props: {
             </Table>
           </div>
 
-          {/* Summenblock — Haarlinien wie auf einem Analysebeleg */}
-          <div className="ml-auto mt-6 w-full max-w-xs space-y-2 text-sm">
-            <div className="flex justify-between border-t border-border pt-2">
+          <Separator className="my-4" />
+
+          {/* Pricing summary */}
+          <div className="ml-auto w-full max-w-xs space-y-2 text-sm">
+            <div className="flex justify-between">
               <span className="text-muted-foreground">Zwischensumme</span>
-              <span className="font-mono tabular-nums">
-                {formatPrice(order.subtotalInCents)}
-              </span>
+              <span className="tabular-nums">{formatPrice(order.subtotalInCents)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Versand</span>
-              <span className="font-mono tabular-nums">
-                {order.shippingInCents === 0 ? (
-                  <span className="font-sans text-success">Kostenlos</span>
-                ) : (
-                  formatPrice(order.shippingInCents)
-                )}
+              <span className="tabular-nums">
+                {order.shippingInCents === 0
+                  ? "Kostenlos"
+                  : formatPrice(order.shippingInCents)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">MwSt.</span>
-              <span className="font-mono tabular-nums">
-                {formatPrice(order.taxInCents)}
-              </span>
+              <span className="tabular-nums">{formatPrice(order.taxInCents)}</span>
             </div>
-            <div className="flex items-baseline justify-between border-t border-foreground pt-3">
+            <Separator />
+            <div className="flex items-baseline justify-between">
               <span className="stat-key">Gesamt</span>
-              <span className="stat-value text-xl">
-                {formatPrice(order.totalInCents)}
-              </span>
+              <span className="stat-value text-xl">{formatPrice(order.totalInCents)}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Lieferadresse */}
+        {/* Shipping address */}
         {order.shippingAddress && (
           <Card>
-            <CardHeader className="pb-4">
-              <span className="mono-label text-muted-foreground">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MapPin className="h-4 w-4" />
                 Lieferadresse
-              </span>
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-sm leading-relaxed">
               <p className="font-medium">
@@ -221,42 +208,50 @@ export default async function OrderDetailPage(props: {
           </Card>
         )}
 
-        {/* Status-Timeline — Protokollspur mit eckigen Markern */}
+        {/* Order timeline */}
         <Card>
-          <CardHeader className="pb-4">
-            <span className="mono-label text-muted-foreground">
-              Statusverlauf
-            </span>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Clock className="h-4 w-4" />
+              Bestellverlauf
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {order.events.length === 0 ? (
               <p className="text-sm text-muted-foreground">Keine Ereignisse erfasst.</p>
             ) : (
-              <ol className="relative ml-1.5 border-l border-border">
+              <ol className="relative border-l border-border ml-2">
                 {order.events.map((event, index) => (
-                  <li key={event.id} className="mb-6 ml-5 last:mb-0">
+                  <li key={event.id} className="mb-6 ml-6 last:mb-0">
                     <span
-                      aria-hidden
                       className={cn(
-                        "absolute -left-[5px] mt-1 h-2.5 w-2.5 border border-background",
+                        "absolute -left-1.5 flex h-3 w-3 rounded-full border-2 border-background",
                         index === 0 ? "bg-primary" : "bg-muted-foreground/40"
                       )}
                     />
-                    <div className="flex flex-col gap-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <OrderStatusTag status={event.status} />
-                        <time className="font-mono text-[11px] tabular-nums text-muted-foreground">
-                          {format(
-                            new Date(event.createdAt),
-                            "dd.MM.yyyy · HH:mm"
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "text-xs",
+                            ORDER_STATUS_COLORS[event.status] ?? ""
                           )}
-                        </time>
+                        >
+                          {ORDER_STATUS_LABELS[event.status] ?? event.status}
+                        </Badge>
                       </div>
                       {event.note && (
                         <p className="text-sm text-muted-foreground">
                           {event.note}
                         </p>
                       )}
+                      <time className="text-xs text-muted-foreground">
+                        {format(
+                          new Date(event.createdAt),
+                          "dd.MM.yyyy 'um' HH:mm"
+                        )}
+                      </time>
                     </div>
                   </li>
                 ))}
@@ -266,15 +261,15 @@ export default async function OrderDetailPage(props: {
         </Card>
       </div>
 
-      {/* Sendungsverfolgung */}
+      {/* Tracking info */}
       {order.trackingNumber && (
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-primary/30 bg-primary/10 text-primary-strong">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
               <Truck className="h-5 w-5" aria-hidden />
             </div>
             <div>
-              <p className="mono-label text-muted-foreground">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                 Sendungsnummer
               </p>
               <p className="mt-0.5 font-mono text-sm font-medium tracking-wide">

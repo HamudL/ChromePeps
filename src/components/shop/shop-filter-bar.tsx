@@ -12,10 +12,10 @@ interface Category {
 }
 
 /**
- * Sticky Filter-Bar für Shop-Listing und Kategorie-Landingpages —
- * ruhige Werkzeugzeile im Protokoll-Stil. Server-Wrapper, der die
- * Client-Tags (CategoryPills) + QuickFilter + Sort zusammenhält und den
- * gemeinsamen Container-Frame (Sticky, Blur, Haarlinien) liefert.
+ * Sticky Filter-Bar für Shop-Listing und Kategorie-Landingpages im
+ * Apotheke-Stil. Server-Wrapper, der die Client-Pills + QuickFilter +
+ * Sort zusammenhält und den gemeinsamen Container-Frame (Sticky, Blur,
+ * Border-Bottom) liefert.
  *
  * `basePath` entscheidet, wohin die Client-Filter (Quick, Sort)
  * Navigationen schreiben. Auf /products bleibt es "/products"; auf
@@ -35,30 +35,24 @@ export function ShopFilterBar({
 }) {
   return (
     <div className="sticky top-16 z-20 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      {/* Akzent-Haarlinie als oberer Abschluss — bindet die Werkzeugzeile
-          an die Protokoll-Sprache, ohne den Sticky-Frame zu stören. */}
+      {/* Gold-Haarlinie als oberer Akzent — bindet die Filter-Bar an die
+          Cinematic-Lab-Sprache (rule-gold) ohne den Sticky-Frame zu stören. */}
       <div aria-hidden className="rule-gold" />
       <div className="container">
-        <div className="flex items-center gap-4 overflow-x-auto py-3 scrollbar-none">
-          {/* Mono-Label als ruhiger Zeilenanfang — nur ab md, auf Mobile
-              zählt jeder Pixel Scrollbreite. */}
-          <span
-            aria-hidden
-            className="mono-tag hidden shrink-0 text-muted-foreground md:inline"
-          >
-            Filter
-          </span>
-
+        <div className="flex items-center gap-4 overflow-x-auto py-3.5 scrollbar-none">
           <CategoryPills
             categories={categories}
             currentCategory={currentCategory}
             totalCount={totalCount}
           />
 
-          {/* Trennlinie zwischen Kategorie-Tags und Quick-Filtern */}
-          <span aria-hidden className="h-5 w-px shrink-0 bg-border" />
+          {/* Trennlinie zwischen Kategorie-Pills und Quick-Filtern */}
+          <span
+            aria-hidden
+            className="h-5 w-px shrink-0 bg-border"
+          />
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <QuickFilterChip
               param="inStock"
               label="Auf Lager"

@@ -6,7 +6,17 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import Image from "next/image";
+import {
+  ArrowRight,
+  FlaskConical,
+  ShieldCheck,
+  CreditCard,
+  Eye,
+  Mail,
+  Microscope,
+  Package,
+} from "lucide-react";
 import { db } from "@/lib/db";
 import {
   RESEARCH_DISCLAIMER,
@@ -17,6 +27,7 @@ import {
 import { cacheGet, cacheSet } from "@/lib/redis";
 import { ProductCard } from "@/components/shop/product-card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   productCardSelect,
   getBestsellerProductIds,
@@ -24,6 +35,8 @@ import {
 import type { ProductCardData } from "@/types";
 
 import { FadeUp } from "./home-animations";
+import { HeroLogo } from "./hero-logo";
+import { PeptideNetwork } from "@/components/shop/peptide-network";
 import { TrustBar } from "@/components/shop/trust-bar";
 import { LiveMetrics } from "@/components/shop/live-metrics";
 import { RecentlyViewed } from "@/components/shop/recently-viewed";
@@ -128,119 +141,6 @@ async function getLiveMetrics(): Promise<LiveMetricsResult> {
   return result;
 }
 
-/**
- * Signatur-Visual der Marke: ein stilisiertes Chromatogramm als
- * handgezeichnetes Inline-SVG — ruhige Basislinie, zwei kleine
- * Verunreinigungs-Hügel, EIN dominanter Hauptpeak. Bewusst schematisch
- * (kein echter Messexport) und als solches beschriftet; die echten
- * Werte stehen in der LiveMetrics-Sektion und auf den CoA-Seiten.
- */
-function ChromatogramPanel() {
-  return (
-    <figure className="card-ink relative overflow-hidden rounded-lg border border-ink-border bg-ink text-ink-foreground">
-      <div className="absolute inset-0 apo-grid opacity-50" aria-hidden />
-      <div className="relative p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-4">
-          <span className="mono-tag text-ink-muted">Protokoll · HPLC-UV</span>
-          <span className="mono-tag text-ink-muted">ChromePeps · Signatur</span>
-        </div>
-        <div className="tick-rule mt-3" aria-hidden />
-
-        {/* Dekoratives SVG — die Aussage trägt die figcaption + sr-only. */}
-        <svg
-          viewBox="0 0 460 230"
-          className="mt-5 w-full"
-          aria-hidden="true"
-          focusable="false"
-        >
-          {/* Raster-Hilfslinien */}
-          <g stroke="hsl(var(--ink-border))" strokeWidth="1" opacity="0.7">
-            <line x1="30" y1="60" x2="450" y2="60" />
-            <line x1="30" y1="101" x2="450" y2="101" />
-            <line x1="30" y1="142" x2="450" y2="142" />
-          </g>
-          {/* Achsen */}
-          <g stroke="hsl(var(--ink-muted))" strokeWidth="1" opacity="0.55">
-            <line x1="30" y1="18" x2="30" y2="184" />
-            <line x1="30" y1="184" x2="450" y2="184" />
-            <line x1="30" y1="184" x2="30" y2="189" />
-            <line x1="114" y1="184" x2="114" y2="189" />
-            <line x1="198" y1="184" x2="198" y2="189" />
-            <line x1="282" y1="184" x2="282" y2="189" />
-            <line x1="366" y1="184" x2="366" y2="189" />
-            <line x1="450" y1="184" x2="450" y2="189" />
-          </g>
-          {/* Mono-Achsenbeschriftung */}
-          <g
-            className="font-mono"
-            fontSize="9"
-            fill="hsl(var(--ink-muted))"
-            letterSpacing="0.08em"
-          >
-            <text x="30" y="202" textAnchor="middle">0</text>
-            <text x="114" y="202" textAnchor="middle">2</text>
-            <text x="198" y="202" textAnchor="middle">4</text>
-            <text x="282" y="202" textAnchor="middle">6</text>
-            <text x="366" y="202" textAnchor="middle">8</text>
-            <text x="450" y="202" textAnchor="middle">10</text>
-            <text x="450" y="218" textAnchor="end">t [min]</text>
-            <text x="36" y="14">mAU</text>
-          </g>
-          {/* Fläche unter dem Hauptpeak */}
-          <path
-            d="M 256 183.6 C 270 183.6 280 180 288 152 C 294 126 298 70 303 56 C 305.5 49 307.5 49 310 56 C 315 70 319 126 325 152 C 333 180 343 183.6 357 183.7 L 357 184 L 256 184 Z"
-            fill="hsl(var(--primary) / 0.16)"
-          />
-          {/* Messkurve: Basislinie mit leichtem Rauschen, zwei kleinen
-              Nebensignalen und dem dominanten Hauptpeak bei ~6,6 min. */}
-          <path
-            d="M 30 184 C 48 183.2 62 183.8 76 183.4 C 88 183 96 181.6 104 178.4 C 110 175.8 114 173.6 118 176.2 C 123 179.4 130 183.4 142 183.6 C 156 183.8 164 181.4 172 180 C 178 179 184 182 192 183.2 C 208 184 228 183.4 256 183.6 C 270 183.6 280 180 288 152 C 294 126 298 70 303 56 C 305.5 49 307.5 49 310 56 C 315 70 319 126 325 152 C 333 180 343 183.6 357 183.7 C 389 184 421 183.5 450 183.8"
-            fill="none"
-            stroke="hsl(var(--primary))"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Retentions-Annotation am Hauptpeak */}
-          <line
-            x1="306"
-            y1="46"
-            x2="306"
-            y2="32"
-            stroke="hsl(var(--primary))"
-            strokeWidth="1"
-            strokeDasharray="2 3"
-            opacity="0.8"
-          />
-          <text
-            x="306"
-            y="24"
-            textAnchor="middle"
-            className="font-mono"
-            fontSize="9"
-            fill="hsl(var(--primary))"
-            letterSpacing="0.08em"
-          >
-            tR 6,6 min
-          </text>
-        </svg>
-
-        <figcaption className="mt-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <span className="mono-label text-primary">Hauptpeak ≥ 99 %</span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-muted">
-            UV 220 nm · schematisch
-          </span>
-        </figcaption>
-        <span className="sr-only">
-          Stilisiertes Chromatogramm: ruhige Basislinie mit einem dominanten
-          Hauptpeak — steht für eine gemessene Reinheit von mindestens 99
-          Prozent.
-        </span>
-      </div>
-    </figure>
-  );
-}
-
 export default async function HomePage() {
   // Promise.allSettled statt Promise.all: ein Failure (z. B. Redis-Down,
   // Postgres-Query timeout auf der Aggregate-Query) darf die Homepage
@@ -303,95 +203,37 @@ export default async function HomePage() {
     });
   }
 
-  // Drei belegbare Versprechen — als nummerierte Protokoll-Einträge.
-  const versprechen = [
-    {
-      index: "01",
-      title: "Drittlabor-geprüft",
-      desc: "Jede Charge wird durch Janoshik unabhängig per HPLC auf Reinheit getestet — vor der Freigabe, ohne Ausnahme.",
-      link: "/qualitaetskontrolle",
-      linkText: "Qualitätskontrolle",
-    },
-    {
-      index: "02",
-      title: "Sichere Zahlung",
-      // Zahlarten-Aufzählung MUSS dem Vorkasse-Schalter folgen —
-      // eine beworbene, im Checkout aber nicht angebotene
-      // Zahlungsart ist irreführend (abmahnfähig).
-      desc: BANK_TRANSFER_ENABLED
-        ? "Stripe, Apple Pay, Google Pay oder Banküberweisung — verschlüsselt, ohne dass Kartendaten bei uns liegen."
-        : "Stripe, Apple Pay oder Google Pay — verschlüsselt, ohne dass Kartendaten bei uns liegen.",
-      link: "/zahlung",
-      linkText: "Zahlungsoptionen",
-    },
-    {
-      index: "03",
-      title: "CoA zu jeder Bestellung",
-      desc: "Das passende Analysezertifikat erhalten Sie automatisch per E-Mail mit Ihrer Bestellung — verifizierbar auf janoshik.com.",
-      link: "/qualitaetskontrolle",
-      linkText: "Qualitätskontrolle",
-    },
-  ];
-
-  // Vier Schritte als Markierungen auf einer Mess-Strecke.
-  const prozessSchritte = [
-    {
-      n: "01",
-      title: "Chargen-Handling",
-      desc: "Lagerung bei -24°C mit eindeutiger Lot-Nummer.",
-      meta: "−24 °C · Lot",
-    },
-    {
-      n: "02",
-      title: "Janoshik-Test",
-      desc: "HPLC-Analyse durch ein unabhängiges Drittlabor.",
-      meta: "HPLC · UV 220 nm",
-    },
-    {
-      n: "03",
-      title: "Qualitätskontrolle",
-      desc: "Nur Chargen, die alle Tests bestehen, werden freigegeben.",
-      meta: "Freigabe · dokumentiert",
-    },
-    {
-      n: "04",
-      title: "Online verifizierbar",
-      desc: "Ergebnisse öffentlich einsehbar auf janoshik.com.",
-      meta: "janoshik.com",
-    },
-  ];
-
   return (
     <div className="flex flex-col">
-      {/* ── Hero — editorial-asymmetrisch: Statement links, Analyse-Panel
-          rechts, darunter die Mess-Zeile mit Instrument-Readouts. ── */}
-      <section
-        className="relative hero-ambient overflow-hidden"
-        aria-labelledby="hero-heading"
-      >
-        <div className="absolute inset-0 subtle-grid opacity-30" aria-hidden />
-        <div className="container relative pb-12 pt-16 md:pb-16 md:pt-24 lg:pt-28">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-12">
-            <FadeUp className="flex flex-col items-start gap-6 lg:col-span-7">
+      {/* ── Hero ── */}
+      <section className="relative hero-ambient overflow-hidden" aria-label="Hero">
+        <div className="absolute inset-0 subtle-grid opacity-30" />
+        <PeptideNetwork />
+        {/* Soft radial vignette keeps the text legible over the particle network */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 hidden md:block"
+          style={{
+            background:
+              "radial-gradient(620px 360px at 50% 50%, hsl(var(--background) / 0.85), transparent 70%)",
+          }}
+        />
+        <div className="container relative py-24 md:py-32 lg:py-40">
+          <FadeUp>
+            <div className="mx-auto max-w-3xl text-center flex flex-col items-center gap-7">
               <span className="eyebrow">
                 Research-Use-Only · Janoshik-verifiziert · Est. 2026
               </span>
 
-              <h1
-                id="hero-heading"
-                className="display-title text-[clamp(2.5rem,6.5vw,4.5rem)]"
-              >
-                ChromePeps — Forschungspeptide, <em>gemessen,</em> nicht
-                versprochen.
-              </h1>
+              <HeroLogo />
 
-              <p className="max-w-xl text-lg text-muted-foreground md:text-xl">
-                Unabhängig per HPLC geprüfte Reinheit. Jede Charge mit
-                Lot-Nummer und Analysezertifikat von Janoshik Labs —
-                öffentlich verifizierbar.
+              <p className="text-lg md:text-xl text-muted-foreground max-w-xl text-balance">
+                Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit.
+                Jede Charge mit Lot-Nummer und Analysezertifikat — gemessen,
+                nicht versprochen.
               </p>
 
-              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
                 <Button asChild variant="gold" size="xl">
                   <Link href="/products">
                     Zum Shop
@@ -402,41 +244,34 @@ export default async function HomePage() {
                   <Link href="/qualitaetskontrolle">Qualitätskontrolle</Link>
                 </Button>
               </div>
-            </FadeUp>
 
-            <FadeUp delay={0.12} className="lg:col-span-5">
-              <ChromatogramPanel />
-            </FadeUp>
-          </div>
-
-          {/* Mess-Zeile: statische Instrument-Readouts (keine fabrizierten
-              Metriken — die echten Zahlen stehen in der LiveMetrics-
-              Sektion). Tick-Rule als Mess-Lineal, Werte linksbündig. */}
-          <FadeUp delay={0.2} className="mt-14 md:mt-16">
-            <div className="tick-rule" aria-hidden />
-            <dl className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8">
-              <div>
-                <dt className="stat-key">Analyse-Methode</dt>
-                <dd className="stat-value mt-2 text-2xl md:text-3xl">
-                  HPLC · UV 220 nm
-                </dd>
-              </div>
-              <div>
-                <dt className="stat-key">3rd-Party verifiziert</dt>
-                <dd className="stat-value mt-2 text-2xl md:text-3xl">100 %</dd>
-              </div>
-              <div>
-                <dt className="stat-key">Chargen-Lagerung</dt>
-                <dd className="stat-value mt-2 text-2xl md:text-3xl">−24 °C</dd>
-              </div>
-            </dl>
+              {/* Instrument-Readout: statische Vertrauens-Fakten (keine
+                  fabrizierten Metriken — die echten Zahlen stehen in der
+                  LiveMetrics-Sektion). Mono-Präzision direkt unter dem Hero. */}
+              <dl className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-5 border-t border-border/70 pt-7">
+                <div className="text-center">
+                  <dt className="stat-value text-2xl md:text-3xl">HPLC</dt>
+                  <dd className="stat-key mt-1.5">UV · 220 nm</dd>
+                </div>
+                <div aria-hidden className="hidden h-8 w-px bg-border sm:block" />
+                <div className="text-center">
+                  <dt className="stat-value text-2xl md:text-3xl">100 %</dt>
+                  <dd className="stat-key mt-1.5">3rd-Party verifiziert</dd>
+                </div>
+                <div aria-hidden className="hidden h-8 w-px bg-border sm:block" />
+                <div className="text-center">
+                  <dt className="stat-value text-2xl md:text-3xl">−24 °C</dt>
+                  <dd className="stat-key mt-1.5">Charge gelagert</dd>
+                </div>
+              </dl>
+            </div>
           </FadeUp>
         </div>
       </section>
 
-      {/* ── Live Metrics — Readout-Band mit echten Zahlen aus der DB. Wenn
-          noch keine COAs vorhanden sind, wird die Section ausgeblendet
-          statt mit 0-Werten zu werben. ── */}
+      {/* ── Live Metrics (light) — echte Zahlen aus DB. Wenn noch keine
+          COAs/Orders vorhanden sind, wird die Section ausgeblendet statt
+          mit 0-Werten zu werben. ── */}
       {liveMetricsTiles.length > 0 && (
         <LiveMetrics metrics={liveMetricsTiles} />
       )}
@@ -444,85 +279,94 @@ export default async function HomePage() {
       {/* ── Übergang hell → dunkel (Progressive Blur) ── */}
       <SectionBlur />
 
-      {/* ── Warum ChromePeps? (ink) — drei nummerierte Protokoll-Einträge,
-          versetzt statt symmetrischem Karten-Grid. ── */}
-      <section
-        className="section-ink relative grain-overlay"
-        aria-labelledby="warum-heading"
-      >
+      {/* ── Warum ChromePeps? (ink) ── */}
+      <section className="section-ink relative grain-overlay">
         <div className="absolute inset-0 apo-grid opacity-60" aria-hidden />
         <div className="container relative section-pad">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
-            <FadeUp className="lg:col-span-4">
-              <span className="eyebrow">Warum ChromePeps</span>
-              <h2
-                id="warum-heading"
-                className="display-title mt-4 text-3xl md:text-4xl"
-              >
-                Drei Versprechen, die wir <em>belegen</em> können.
-              </h2>
-              <p className="mt-4 max-w-prose text-ink-muted">
-                Kein Marketing-Vokabular, sondern überprüfbare Standards — vom
-                unabhängigen Labortest bis zum Zertifikat in Ihrem Postfach.
-              </p>
-            </FadeUp>
+          <FadeUp className="max-w-2xl">
+            <span className="eyebrow">Warum ChromePeps</span>
+            <h2 className="display-title mt-4 text-3xl md:text-4xl lg:text-5xl">
+              Drei Versprechen, die wir belegen können.
+            </h2>
+            <p className="mt-4 max-w-prose text-ink-muted">
+              Kein Marketing-Vokabular, sondern überprüfbare Standards — vom
+              unabhängigen Labortest bis zum Zertifikat in Ihrem Postfach.
+            </p>
+          </FadeUp>
 
-            <ol className="border-b border-ink-border lg:col-span-8">
-              {versprechen.map((eintrag, i) => (
-                <FadeUp
-                  as="li"
-                  key={eintrag.title}
-                  delay={i * 0.08}
-                  // Zunehmender Einzug ab lg — versetzte Protokoll-Liste
-                  // statt symmetrischer Karten.
-                  className={`grid grid-cols-[3.5rem_1fr] gap-x-5 border-t border-ink-border py-7 md:grid-cols-[5rem_1fr_auto] md:items-baseline md:gap-x-8 md:py-8 ${
-                    ["", "lg:pl-12", "lg:pl-24"][i]
-                  }`}
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-px overflow-hidden rounded-xl border border-ink-border bg-ink-border/60">
+            {[
+              {
+                icon: Microscope,
+                index: "01",
+                title: "Drittlabor-geprüft",
+                desc: "Jede Charge wird durch Janoshik unabhängig per HPLC auf Reinheit getestet — vor der Freigabe, ohne Ausnahme.",
+                link: "/qualitaetskontrolle",
+                linkText: "Qualitätskontrolle",
+              },
+              {
+                icon: CreditCard,
+                index: "02",
+                title: "Sichere Zahlung",
+                // Zahlarten-Aufzählung MUSS dem Vorkasse-Schalter folgen —
+                // eine beworbene, im Checkout aber nicht angebotene
+                // Zahlungsart ist irreführend (abmahnfähig).
+                desc: BANK_TRANSFER_ENABLED
+                  ? "Stripe, Apple Pay, Google Pay oder Banküberweisung — verschlüsselt, ohne dass Kartendaten bei uns liegen."
+                  : "Stripe, Apple Pay oder Google Pay — verschlüsselt, ohne dass Kartendaten bei uns liegen.",
+                link: "/zahlung",
+                linkText: "Zahlungsoptionen",
+              },
+              {
+                icon: Mail,
+                index: "03",
+                title: "CoA zu jeder Bestellung",
+                desc: "Das passende Analysezertifikat erhalten Sie automatisch per E-Mail mit Ihrer Bestellung — verifizierbar auf janoshik.com.",
+                link: "/qualitaetskontrolle",
+                linkText: "Qualitätskontrolle",
+              },
+            ].map((card, i) => (
+              <FadeUp
+                key={card.title}
+                delay={i * 0.08}
+                className="group flex h-full flex-col bg-ink p-7 transition-colors hover:bg-[hsl(20_14%_6%)]"
+              >
+                <div className="flex items-center justify-between">
+                  <card.icon className="h-7 w-7 text-primary" strokeWidth={1.6} />
+                  <span className="mono-tag text-ink-muted">{card.index}</span>
+                </div>
+                <h3 className="mt-5 text-lg font-semibold">{card.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-muted">
+                  {card.desc}
+                </p>
+                <Link
+                  href={card.link}
+                  className="mono-label mt-5 inline-flex items-center gap-1.5 text-primary transition-colors hover:text-primary/80"
                 >
-                  <span aria-hidden className="index-ghost text-4xl md:text-5xl">
-                    {eintrag.index}
-                  </span>
-                  <div>
-                    <h3 className="display-title text-xl md:text-2xl">
-                      {eintrag.title}
-                    </h3>
-                    <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
-                      {eintrag.desc}
-                    </p>
-                  </div>
-                  <Link
-                    href={eintrag.link}
-                    className="mono-label col-start-2 mt-4 inline-flex items-center gap-1.5 text-primary transition-colors hover:text-primary-strong md:col-start-auto md:mt-0"
-                  >
-                    {eintrag.linkText}
-                    <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                  </Link>
-                </FadeUp>
-              ))}
-            </ol>
+                  {card.linkText}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </FadeUp>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Trust Bar (ink) — interaktive Specimen-Tags mit Evidence-
-          Tooltips. Direkt im Anschluss an "Warum ChromePeps?" (auch ink),
-          damit die Vertrauens-Signale thematisch zusammenbleiben. ── */}
+      {/* ── Trust Bar (dark) — interaktive Pills mit Evidence-Tooltips.
+          Platziert direkt im Anschluss an "Warum ChromePeps?" (auch
+          dark), damit die Vertrauens-Signale thematisch zusammenbleiben
+          und der Light/Dark-Rhythmus nicht gebrochen wird. ── */}
       <TrustBar />
 
       {/* ── Übergang dunkel → hell (Progressive Blur) ── */}
       <SectionBlur />
 
-      {/* ── Qualitätsprozess (light) — vier Schritte als Markierungen auf
-          einer horizontalen Mess-Strecke (Mobile: vertikale Achse). ── */}
-      <section className="container section-pad" aria-labelledby="prozess-heading">
+      {/* ── Qualitätsprozess (light) ── */}
+      <section className="container section-pad">
         <FadeUp>
           <span className="eyebrow">Qualitätsprozess</span>
-          <h2
-            id="prozess-heading"
-            className="display-title mt-4 max-w-2xl text-3xl md:text-4xl lg:text-5xl"
-          >
-            Vom Wareneingang zum Etikett — in <em>vier verifizierten</em>{" "}
-            Schritten.
+          <h2 className="display-title mt-4 max-w-2xl text-3xl md:text-4xl lg:text-5xl">
+            Vom Wareneingang zum Etikett — in vier verifizierten Schritten.
           </h2>
           <p className="mt-4 max-w-prose text-muted-foreground">
             Keine Abkürzungen, keine „Sonderchargen“. Jeder Schritt ist
@@ -530,35 +374,36 @@ export default async function HomePage() {
           </p>
         </FadeUp>
 
-        <div className="mt-14">
-          {/* Die Mess-Achse: tick-rule horizontal (Desktop) … */}
-          <div className="tick-rule hidden md:block" aria-hidden />
-          {/* … bzw. vertikale Haarlinie links (Mobile). */}
-          <ol className="grid grid-cols-1 gap-y-10 border-l border-border pl-6 md:mt-8 md:grid-cols-4 md:gap-x-8 md:gap-y-0 md:border-l-0 md:pl-0">
-            {prozessSchritte.map((schritt, i) => (
-              <FadeUp as="li" key={schritt.n} delay={i * 0.08} className="relative">
-                {/* Markierung auf der Achse: horizontaler Strich (Mobile),
-                    vertikaler Strich hoch zur tick-rule (Desktop). */}
-                <span
-                  aria-hidden
-                  className="absolute -left-6 top-2 h-px w-4 bg-primary md:hidden"
-                />
-                <span
-                  aria-hidden
-                  className="absolute -top-8 left-0 hidden h-8 w-px bg-primary md:block"
-                />
-                <span className="mono-label text-primary-strong">{schritt.n}</span>
-                <h3 className="mt-3 font-semibold">{schritt.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {schritt.desc}
-                </p>
-                <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/70">
-                  {schritt.meta}
-                </p>
-              </FadeUp>
-            ))}
-          </ol>
-        </div>
+        <ol className="mt-14 grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { icon: Package, n: "01", title: "Chargen-Handling", desc: "Lagerung bei -24\u00B0C mit eindeutiger Lot-Nummer." },
+            { icon: Microscope, n: "02", title: "Janoshik-Test", desc: "HPLC-Analyse durch ein unabhängiges Drittlabor." },
+            { icon: ShieldCheck, n: "03", title: "Qualitätskontrolle", desc: "Nur Chargen, die alle Tests bestehen, werden freigegeben." },
+            { icon: Eye, n: "04", title: "Online verifizierbar", desc: "Ergebnisse öffentlich einsehbar auf janoshik.com." },
+          ].map((step, i) => (
+            <FadeUp
+              key={step.n}
+              as="li"
+              delay={i * 0.08}
+              className="relative border-t border-border pt-6"
+            >
+              <span
+                aria-hidden
+                className="absolute -top-px left-0 h-px w-12 bg-primary"
+              />
+              <div className="flex items-center justify-between">
+                <step.icon className="h-7 w-7 text-primary-strong" strokeWidth={1.6} />
+                <span className="stat-value text-3xl text-primary/25">
+                  {step.n}
+                </span>
+              </div>
+              <h3 className="mt-5 font-semibold">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {step.desc}
+              </p>
+            </FadeUp>
+          ))}
+        </ol>
 
         <FadeUp delay={0.32}>
           <div className="mt-12">
@@ -572,101 +417,114 @@ export default async function HomePage() {
         </FadeUp>
       </section>
 
-      {/* ── Kategorien — editoriale Index-Liste statt Bilder-Karten-Grid:
-          Ghost-Index, Fraunces-Titel mit Hover-Underline, Produkt-Count
-          in Mono. ── */}
+      {/* ── Kategorien ── */}
       {categories.length > 0 && (
-        <section className="container section-pad" aria-labelledby="sortiment-heading">
+        <section className="container section-pad">
           {/* Trenner zwischen zwei hellen Sektionen (Qualitätsprozess →
               Kategorien) — editorialer als border-t. */}
-          <hr className="rule-gold mb-14" />
+          <hr className="rule-gold mb-16" />
           <FadeUp>
             <span className="eyebrow">Sortiment</span>
-            <h2
-              id="sortiment-heading"
-              className="display-title mt-4 max-w-2xl text-3xl md:text-4xl lg:text-5xl"
-            >
-              Nach Kategorie <em>erkunden.</em>
+            <h2 className="display-title mt-4 max-w-2xl text-3xl md:text-4xl lg:text-5xl">
+              Nach Kategorie erkunden.
             </h2>
           </FadeUp>
 
-          <ul className="mt-10 border-b border-border">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((cat, i) => (
-              <FadeUp as="li" key={cat.id} delay={i * 0.06}>
+              <FadeUp key={cat.id} delay={i * 0.08}>
                 <Link
                   href={`/products/category/${cat.slug}`}
-                  className="group grid grid-cols-[3rem_1fr_auto] items-baseline gap-x-4 border-t border-border py-6 md:grid-cols-[4.5rem_minmax(0,1fr)_minmax(0,20rem)_auto] md:gap-x-8 md:py-8"
+                  className="group block h-full"
                 >
-                  <span aria-hidden className="index-ghost text-3xl md:text-5xl">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="gold-underline justify-self-start display-title text-2xl md:text-3xl">
-                    {cat.name}
-                  </h3>
-                  {/* Beschreibung nur ab md — die Zeile bleibt auf Mobile
-                      eine kompakte Index-Zeile. */}
-                  <p className="hidden truncate text-sm text-muted-foreground md:block">
-                    {cat.description ?? ""}
-                  </p>
-                  <span className="flex items-center gap-4 justify-self-end">
-                    <span className="mono-label whitespace-nowrap text-muted-foreground">
-                      {cat._count.products}{" "}
-                      {cat._count.products === 1 ? "Produkt" : "Produkte"}
-                    </span>
-                    <ArrowRight
-                      className="h-4 w-4 text-muted-foreground transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary-strong"
-                      aria-hidden
-                    />
-                  </span>
+                  <Card
+                    variant="lift"
+                    className="h-full cursor-pointer overflow-hidden"
+                  >
+                    <div className="relative h-48 overflow-hidden bg-muted">
+                      {cat.image ? (
+                        <Image
+                          src={cat.image}
+                          alt={cat.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-muted">
+                          <FlaskConical className="h-12 w-12 text-muted-foreground/30" />
+                        </div>
+                      )}
+                      <span className="absolute left-4 top-4 trust-pill bg-background/85 backdrop-blur">
+                        {cat._count.products}{" "}
+                        {cat._count.products === 1 ? "Produkt" : "Produkte"}
+                      </span>
+                    </div>
+                    <CardContent className="flex items-center justify-between p-5">
+                      <h3 className="gold-underline text-lg font-semibold">
+                        {cat.name}
+                      </h3>
+                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </CardContent>
+                  </Card>
                 </Link>
               </FadeUp>
             ))}
-          </ul>
+          </div>
         </section>
       )}
 
-      {/* ── Bestseller (light — die ProductCard ist hell) ── */}
+      {/* ── Bestseller ── */}
       {bestsellers.length > 0 && (
-        <section className="container section-pad" aria-labelledby="bestseller-heading">
-          <hr className="rule-gold mb-14" />
-          <FadeUp>
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-              <div className="max-w-xl">
-                <span className="eyebrow">Bestseller</span>
-                <h2
-                  id="bestseller-heading"
-                  className="display-title mt-4 text-3xl md:text-4xl lg:text-5xl"
+        <>
+        {/* ── Übergang hell → dunkel (Progressive Blur) ── */}
+        <SectionBlur />
+        <section className="section-ink relative grain-overlay">
+          <div className="absolute inset-0 apo-grid opacity-50" aria-hidden />
+          <div className="container relative section-pad">
+            <FadeUp>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="max-w-xl">
+                  <span className="eyebrow">Bestseller</span>
+                  <h2 className="display-title mt-4 text-3xl md:text-4xl lg:text-5xl">
+                    Was unsere Forscher am häufigsten bestellen.
+                  </h2>
+                </div>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="hidden shrink-0 border-ink-border bg-transparent text-ink-foreground hover:bg-white/10 hover:text-ink-foreground sm:inline-flex"
                 >
-                  Was unsere Forscher am häufigsten <em>bestellen.</em>
-                </h2>
+                  <Link href="/products">
+                    Alle Produkte <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
+            </FadeUp>
+
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {bestsellers.map((product, i) => (
+                <FadeUp key={product.id} delay={i * 0.08}>
+                  <ProductCard product={product} />
+                </FadeUp>
+              ))}
+            </div>
+
+            <div className="mt-10 text-center sm:hidden">
               <Button
                 asChild
                 variant="outline"
-                size="sm"
-                className="hidden shrink-0 sm:inline-flex"
+                className="border-ink-border bg-transparent text-ink-foreground hover:bg-white/10 hover:text-ink-foreground"
               >
-                <Link href="/products">
-                  Alle Produkte <ArrowRight className="h-4 w-4" />
-                </Link>
+                <Link href="/products">Alle Produkte</Link>
               </Button>
             </div>
-          </FadeUp>
-
-          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {bestsellers.map((product, i) => (
-              <FadeUp key={product.id} delay={i * 0.08}>
-                <ProductCard product={product} />
-              </FadeUp>
-            ))}
-          </div>
-
-          <div className="mt-10 sm:hidden">
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/products">Alle Produkte</Link>
-            </Button>
           </div>
         </section>
+        {/* ── Übergang dunkel → hell (Progressive Blur) ── */}
+        <SectionBlur />
+        </>
       )}
 
       {/* ── Zuletzt angesehen (client-island, blendet sich bei leerem

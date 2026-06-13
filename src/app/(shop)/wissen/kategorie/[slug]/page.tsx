@@ -113,9 +113,12 @@ export default async function WissenCategoryPage({
         }}
       />
 
-      {/* Kompakter Kategorie-Kopf — konsistent zum Hub-Masthead. */}
+      {/* Compact category hero */}
       <section className="border-b border-border relative overflow-hidden">
-        <div className="absolute inset-0 apo-grid-light" aria-hidden="true" />
+        <div
+          className="absolute inset-0 apo-grid opacity-100"
+          aria-hidden="true"
+        />
         <div className="container relative py-12 md:py-16">
           <nav
             aria-label="Breadcrumb"
@@ -129,13 +132,13 @@ export default async function WissenCategoryPage({
             <span className="text-foreground">{category.name}</span>
           </nav>
 
-          <div className="mt-7 flex items-end justify-between gap-8 flex-wrap">
+          <div className="mt-5 flex items-end justify-between gap-8 flex-wrap">
             <div>
-              <span className="eyebrow">
-                Rubrik · {String(myIndex + 1).padStart(2, "0")} /{" "}
+              <span className="mono-tag text-primary">
+                Kategorie · {String(myIndex + 1).padStart(2, "0")} /{" "}
                 {String(allCategories.length).padStart(2, "0")}
               </span>
-              <h1 className="mt-4 display-title text-[44px] md:text-[60px]">
+              <h1 className="mt-3 font-serif text-[44px] md:text-[60px] leading-[1.04] tracking-[-0.02em] font-medium">
                 {category.name}.
               </h1>
               {category.description && (
@@ -144,24 +147,24 @@ export default async function WissenCategoryPage({
                 </p>
               )}
             </div>
-            {/* Mono-Readout: Bestand + letzter Stand. */}
-            <dl className="grid grid-cols-2 gap-x-10 gap-y-2 self-end">
+            <dl
+              className="grid grid-cols-2 gap-x-8 gap-y-2 self-end font-mono text-[12px]"
+              style={{ letterSpacing: "0.02em" }}
+            >
               <div>
-                <dt className="stat-key">Artikel</dt>
-                <dd className="stat-value mt-1.5 text-3xl">{total}</dd>
+                <dt className="mono-tag text-muted-foreground">Artikel</dt>
+                <dd className="mt-1 text-[24px] font-semibold tabular-nums">
+                  {total}
+                </dd>
               </div>
               <div>
-                <dt className="stat-key">Stand</dt>
-                <dd
-                  className="mt-1.5 font-mono text-[13px] tabular-nums"
-                  style={{ letterSpacing: "0.02em" }}
-                >
+                <dt className="mono-tag text-muted-foreground">Update</dt>
+                <dd className="mt-1 text-[14px]">
                   {category.updatedAt.toLocaleDateString("de-DE")}
                 </dd>
               </div>
             </dl>
           </div>
-          <div className="tick-rule mt-8" aria-hidden="true" />
         </div>
       </section>
 
@@ -229,13 +232,12 @@ export default async function WissenCategoryPage({
               Noch keine Artikel in dieser Kategorie.
             </p>
           ) : (
-            <div className="border-t border-foreground/80">
-              {posts.map((p, i) => (
+            <div className="border-t border-foreground/95">
+              {posts.map((p) => (
                 <ArticleCard
                   key={p.slug}
                   article={toCardData(p)}
                   variant="list"
-                  index={(page - 1) * PAGE_SIZE + i + 1}
                 />
               ))}
             </div>

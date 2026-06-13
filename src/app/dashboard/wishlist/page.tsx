@@ -37,14 +37,10 @@ export default async function WishlistPage() {
     <div className="space-y-6">
       <div>
         <span className="eyebrow">Gemerkt</span>
-        <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-          <h2 className="display-title text-2xl">Merkliste</h2>
-          <span className="mono-label text-muted-foreground">
-            {products.length}{" "}
-            {products.length === 1 ? "Produkt" : "Produkte"} gespeichert
-          </span>
-        </div>
-        <div className="tick-rule mt-4" aria-hidden />
+        <h2 className="display-title mt-2 text-2xl">Merkliste</h2>
+        <p className="mt-1 text-muted-foreground">
+          {products.length} {products.length === 1 ? "Produkt" : "Produkte"} gespeichert
+        </p>
       </div>
 
       {products.length > 0 ? (
@@ -55,7 +51,7 @@ export default async function WishlistPage() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 py-16 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-sm border border-border bg-card">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card">
             <Heart className="h-7 w-7 text-muted-foreground/50" />
           </div>
           <span className="eyebrow justify-center">Gemerkt</span>

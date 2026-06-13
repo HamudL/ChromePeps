@@ -29,9 +29,9 @@ export function ReviewSection({ productId }: ReviewSectionProps) {
 
   if (!state) {
     return (
-      <div className="flex items-center justify-center gap-2 rounded-sm border border-dashed border-border py-8 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        Bewertungsformular wird geladen …
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        Lade Bewertungsformular...
       </div>
     );
   }

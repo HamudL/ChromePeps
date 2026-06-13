@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FlaskConical } from "lucide-react";
+import { Clock, FlaskConical } from "lucide-react";
 import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -29,15 +29,17 @@ export function RecentlyViewed({ currentProductId }: { currentProductId?: string
   if (visible.length === 0) return null;
 
   return (
-    <section className="container py-12 md:py-16" aria-label="Zuletzt angesehen">
-      {/* Sektionskopf im Protokoll-Stil: Mono-Kicker, Fraunces-Titel,
-          Mess-Lineal als Haarlinie darunter. */}
-      <div className="mb-8">
-        <span className="eyebrow">Verlauf</span>
-        <h2 className="display-title mt-3 text-2xl md:text-3xl">
-          Zuletzt angesehen.
-        </h2>
-        <div className="tick-rule mt-6" aria-hidden />
+    <section className="container py-12 md:py-16">
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Clock className="h-6 w-6 text-muted-foreground" />
+            Zuletzt angesehen
+          </h2>
+          <p className="mt-1 text-muted-foreground">
+            Produkte, die Sie sich kürzlich angesehen haben
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">

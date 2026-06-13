@@ -9,12 +9,9 @@ import { FlaskConical } from "lucide-react";
  *  - rechtlich: der wichtigste Einzeiler ("Nur für Forschungszwecke")
  *    steht immer im Blickfeld, unabhängig davon ob der Nutzer den Footer-
  *    Disclaimer je gesehen hat.
- *  - visuell: schmaler heller Mono-Streifen mit feiner Unterlinie und
- *    Viridian-Akzent („Chromatogramm"). Kein X-Button — der Disclaimer
- *    soll nicht wegklickbar sein.
- *
- * WICHTIG: aria-label="Forschungshinweis" nicht umbenennen — die
- * :has()-Regel in globals.css (Ausblenden auf /ueber-uns) hängt daran.
+ *  - visuell: passt zum Apotheke-Stil (goldener Primary-Akzent, schmaler
+ *    heller Streifen mit feiner Unterlinie, Mono-Typo). Kein X-Button —
+ *    der Disclaimer soll nicht wegklickbar sein.
  *
  * Static Server Component — kein JS, kein State.
  */

@@ -1,0 +1,128 @@
+.nav {
+  background: var(--c-bg2);
+  border-bottom: 1px solid var(--c-border);
+  position: sticky;
+  top: 64px;
+  z-index: 30;
+}
+.inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: stretch;
+  height: 56px;
+  gap: 24px;
+}
+.label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+.liveDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  box-shadow: 0 0 0 3px hsl(45 92% 41% / 0.22);
+  animation: livePulse 2.4s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 3px hsl(45 92% 41% / 0.22);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 0 6px hsl(45 92% 41% / 0);
+  }
+}
+.svgWrap {
+  position: relative;
+}
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.svg .grid {
+  stroke: var(--c-border);
+  stroke-width: 0.6;
+  stroke-dasharray: 2 3;
+}
+.baseline {
+  stroke: var(--c-muted);
+  stroke-width: 0.4;
+  opacity: 0.5;
+}
+.trace {
+  fill: none;
+  stroke: var(--c-primary);
+  stroke-width: 1.3;
+  filter: drop-shadow(0 0 3px hsl(45 90% 55% / 0.45));
+}
+.traceFill {
+  fill: hsl(45 92% 41% / 0.06);
+}
+.playhead {
+  stroke: var(--c-primary);
+  stroke-width: 1.5;
+}
+.peakTick {
+  stroke: var(--c-fg);
+  stroke-width: 0.8;
+  opacity: 0.4;
+}
+.peakLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--c-muted);
+  letter-spacing: 0.06em;
+}
+.peakLink {
+  cursor: pointer;
+}
+.peakLink:hover .peakLabel {
+  fill: var(--c-fg);
+}
+.peakHot .peakLabel {
+  fill: var(--c-fg);
+  font-weight: 600;
+}
+.peakHot circle {
+  fill: var(--c-primary);
+}
+.right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+.right b {
+  color: var(--c-fg);
+  font-weight: 600;
+  font-feature-settings: "tnum" on, "lnum" on;
+}
+@media (max-width: 640px) {
+  .inner {
+    padding: 0 20px;
+    grid-template-columns: 0 1fr auto;
+    gap: 12px;
+  }
+  .label {
+    display: none;
+  }
+}

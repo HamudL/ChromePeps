@@ -36,7 +36,7 @@ export function HeaderMobileMenu({ links }: HeaderMobileMenuProps) {
         </span>
         <hr className="rule-gold mt-3" />
         <nav aria-label="Hauptmenü" className="mt-6 flex flex-col">
-          {links.map((link, i) => {
+          {links.map((link) => {
             const active =
               link.href === "/"
                 ? pathname === "/"
@@ -49,22 +49,10 @@ export function HeaderMobileMenu({ links }: HeaderMobileMenuProps) {
                 aria-current={active ? "page" : undefined}
                 className={
                   active
-                    ? "relative flex items-baseline gap-3 border-l-2 border-primary py-2.5 pl-4 text-lg font-semibold text-primary-strong"
-                    : "flex items-baseline gap-3 border-l-2 border-transparent py-2.5 pl-4 text-lg font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+                    ? "relative border-l-2 border-primary py-2.5 pl-4 text-lg font-semibold text-primary-strong"
+                    : "border-l-2 border-transparent py-2.5 pl-4 text-lg font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
                 }
               >
-                {/* Index-Nummer — dieselbe Protokoll-Gliederung wie die
-                    Desktop-Navigation. */}
-                <span
-                  aria-hidden
-                  className={
-                    active
-                      ? "font-mono text-[10px] tracking-[0.1em] text-primary-strong"
-                      : "font-mono text-[10px] tracking-[0.1em] text-muted-foreground/60"
-                  }
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </span>
                 {link.label}
               </Link>
             );

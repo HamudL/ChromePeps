@@ -60,10 +60,10 @@ export function ReviewForm({
 
   if (alreadyReviewed) {
     return (
-      <Card className="border-success/40 bg-success/5">
+      <Card className="border-green-200 bg-green-50/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
             Vielen Dank für Ihre Bewertung
           </CardTitle>
           <CardDescription>
@@ -91,10 +91,10 @@ export function ReviewForm({
 
   if (state === "success") {
     return (
-      <Card className="border-success/40 bg-success/5">
+      <Card className="border-green-200 bg-green-50/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
             Bewertung gesendet
           </CardTitle>
           <CardDescription>
@@ -138,7 +138,7 @@ export function ReviewForm({
       // Refresh the server component so the new review appears in the list.
       router.refresh();
     } catch {
-      setError("Netzwerkfehler. Bitte versuchen Sie es später erneut.");
+      setError("Netzwerkfehler. Bitte versuchen Sie es sp\u00e4ter erneut.");
       setState("idle");
     }
   }
@@ -154,7 +154,7 @@ export function ReviewForm({
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-sm border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -172,14 +172,13 @@ export function ReviewForm({
                     onClick={() => setRating(value)}
                     onMouseEnter={() => setHoverRating(value)}
                     onMouseLeave={() => setHoverRating(0)}
-                    className="rounded-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                    className="rounded focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary"
                     aria-label={`${value} von 5 Sternen`}
-                    aria-pressed={rating === value}
                   >
                     <Star
-                      className={`h-6 w-6 transition-colors ${
+                      className={`h-6 w-6 ${
                         active
-                          ? "fill-primary text-primary"
+                          ? "fill-yellow-400 text-yellow-400"
                           : "text-muted-foreground/40"
                       }`}
                     />
@@ -187,7 +186,7 @@ export function ReviewForm({
                 );
               })}
               {rating > 0 && (
-                <span className="ml-2 font-mono text-sm tabular-nums text-muted-foreground">
+                <span className="ml-2 text-sm text-muted-foreground">
                   {rating} / 5
                 </span>
               )}
@@ -217,16 +216,12 @@ export function ReviewForm({
               rows={5}
               disabled={state === "loading"}
             />
-            <p className="text-right font-mono text-[10.5px] tabular-nums text-muted-foreground">
+            <p className="text-xs text-muted-foreground text-right">
               {body.length} / 2000
             </p>
           </div>
 
-          <Button
-            type="submit"
-            variant="gold"
-            disabled={state === "loading" || rating === 0}
-          >
+          <Button type="submit" disabled={state === "loading" || rating === 0}>
             {state === "loading" ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

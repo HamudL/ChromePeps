@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { Phone, MapPin, Clock, ArrowRight } from "lucide-react";
 import { SELLER_DETAILS } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,46 +31,8 @@ export default function KontaktPage() {
     { name: "Kontakt", path: "/kontakt" },
   ]);
 
-  // Kontakt-Fakten als Protokollzeilen — eine ruhige Liste statt
-  // Karten-Raster. Werte kommen zentral aus SELLER_DETAILS (env-basiert).
-  const protokoll: ReadonlyArray<{ key: string; value: React.ReactNode; note?: string }> = [
-    {
-      key: "Telefon",
-      value: SELLER_DETAILS.phone,
-      note: "Mo bis Fr, 9:00 bis 17:00 Uhr",
-    },
-    {
-      key: "Postanschrift",
-      value: (
-        <>
-          {SELLER_DETAILS.companyName}
-          <br />
-          {SELLER_DETAILS.streetLine1}
-          <br />
-          {SELLER_DETAILS.postalCodeCity}
-        </>
-      ),
-    },
-    {
-      key: "Geschäftszeiten",
-      value: (
-        <>
-          Montag bis Freitag
-          <br />
-          9:00 bis 17:00 Uhr
-        </>
-      ),
-      note: "Shop rund um die Uhr bestellbar.",
-    },
-    {
-      key: "Antwortzeit",
-      value: "innerhalb eines Werktags",
-      note: "Kein Ticket-System, kein Bot.",
-    },
-  ];
-
   return (
-    <div className="container max-w-3xl section-pad">
+    <div className="container max-w-3xl py-12">
       {localBusiness && (
         <script
           type="application/ld+json"
@@ -85,7 +47,7 @@ export default function KontaktPage() {
       />
 
       <header>
-        <span className="eyebrow">Kontakt</span>
+        <span className="eyebrow">[ KONTAKT ]</span>
         <h1 className="display-title mt-3 text-4xl md:text-5xl">
           Sprechen Sie mit uns
         </h1>
@@ -97,15 +59,11 @@ export default function KontaktPage() {
       </header>
 
       {/* E-Mail als Ink-Fokus-CTA — der primäre, schnellste Kanal. */}
-      <Card variant="ink" className="mt-10 p-6 sm:p-7">
-        <div className="flex items-center justify-between gap-6">
-          <span className="mono-tag text-ink-muted">Kanal 01 · E-Mail</span>
-          <span className="mono-tag text-ink-muted">bevorzugt</span>
-        </div>
-        <div className="tick-rule mt-4" aria-hidden="true" />
-        <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <Card variant="ink" className="card-ink mt-10 p-6 sm:p-7">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-mono text-lg text-ink-foreground">
+            <span className="eyebrow">[ SCHNELLSTER WEG ]</span>
+            <p className="mt-2 font-mono text-lg text-ink-foreground">
               {SELLER_DETAILS.email}
             </p>
             <p className="mt-1 text-sm text-ink-muted">
@@ -123,29 +81,43 @@ export default function KontaktPage() {
         </div>
       </Card>
 
-      {/* Weitere Kanäle als Protokollzeilen. */}
-      <section className="mt-12">
-        <span className="mono-label text-muted-foreground">
-          Weitere Kanäle
-        </span>
-        <div className="tick-rule mt-3" aria-hidden="true" />
-        <dl>
-          {protokoll.map((row) => (
-            <div
-              key={row.key}
-              className="grid gap-x-10 gap-y-1.5 border-b border-border py-5 sm:grid-cols-[180px_1fr]"
-            >
-              <dt className="field-label !mb-0 pt-0.5">{row.key}</dt>
-              <dd>
-                <p className="text-sm leading-relaxed">{row.value}</p>
-                {row.note && (
-                  <p className="mt-1 text-xs text-muted-foreground">{row.note}</p>
-                )}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <Card className="p-5">
+          <Phone className="h-5 w-5 text-primary-strong" />
+          <h2 className="mono-label mt-3 text-muted-foreground">Telefon</h2>
+          <p className="mt-1.5 text-sm">{SELLER_DETAILS.phone}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Mo bis Fr, 9:00 bis 17:00 Uhr
+          </p>
+        </Card>
+
+        <Card className="p-5">
+          <MapPin className="h-5 w-5 text-primary-strong" />
+          <h2 className="mono-label mt-3 text-muted-foreground">Postanschrift</h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            {SELLER_DETAILS.companyName}
+            <br />
+            {SELLER_DETAILS.streetLine1}
+            <br />
+            {SELLER_DETAILS.postalCodeCity}
+          </p>
+        </Card>
+
+        <Card className="p-5">
+          <Clock className="h-5 w-5 text-primary-strong" />
+          <h2 className="mono-label mt-3 text-muted-foreground">
+            Geschäftszeiten
+          </h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            Montag bis Freitag
+            <br />
+            9:00 bis 17:00 Uhr
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Shop rund um die Uhr bestellbar.
+          </p>
+        </Card>
+      </div>
 
       <hr className="rule-gold my-10" />
 

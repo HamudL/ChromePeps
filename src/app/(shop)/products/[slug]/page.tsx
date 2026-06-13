@@ -1,7 +1,19 @@
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ShieldCheck, Truck, Mail, ArrowUpRight } from "lucide-react";
+import {
+  FlaskConical,
+  Thermometer,
+  Weight,
+  Hash,
+  Layers,
+  Dna,
+  ShieldCheck,
+  Truck,
+  Mail,
+  Sparkles,
+  ChevronRight,
+} from "lucide-react";
 import { db } from "@/lib/db";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
@@ -241,29 +253,21 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     { name: product.name, path: `/products/${product.slug}` },
   ]);
 
-  // Kenndaten für die Protokoll-Tabelle — eine Zeile pro vorhandenem
-  // Feld, Mono-Werte, keine Icon-Deko.
-  const specs: { label: string; value: string }[] = [];
+  // Collect specs — the same shape as before but now rendered as
+  // editorial mini-cards instead of a flat icon-label-value list.
+  const specs: { icon: React.ReactNode; label: string; value: string }[] = [];
   if (product.purity)
-    specs.push({ label: "Reinheit", value: product.purity });
+    specs.push({ icon: <FlaskConical className="h-4 w-4" />, label: "Reinheit", value: product.purity });
   if (product.molecularWeight)
-    specs.push({ label: "Molekulargewicht", value: product.molecularWeight });
+    specs.push({ icon: <Weight className="h-4 w-4" />, label: "Molekulargewicht", value: product.molecularWeight });
   if (product.casNumber)
-    specs.push({ label: "CAS-Nummer", value: product.casNumber });
+    specs.push({ icon: <Hash className="h-4 w-4" />, label: "CAS-Nummer", value: product.casNumber });
   if (product.storageTemp)
-    specs.push({ label: "Lagerung", value: product.storageTemp });
+    specs.push({ icon: <Thermometer className="h-4 w-4" />, label: "Lagerung", value: product.storageTemp });
   if (product.form)
-    specs.push({ label: "Form", value: product.form });
+    specs.push({ icon: <Layers className="h-4 w-4" />, label: "Form", value: product.form });
   if (product.weight)
-    specs.push({ label: "Gewicht", value: product.weight });
-  specs.push({ label: "Artikelnummer", value: product.sku });
-  // Bewusst nur binärer Status: "Verfügbar" oder "Ausverkauft". Die
-  // genaue Stock-Zahl ist Admin-only-Info — Kunden interessiert nur,
-  // ob sie kaufen können.
-  specs.push({
-    label: "Verfügbarkeit",
-    value: isOutOfStock ? "Ausverkauft" : "Ab Lager verfügbar",
-  });
+    specs.push({ icon: <Dna className="h-4 w-4" />, label: "Gewicht", value: product.weight });
 
   // Compute displayed price for the hero headline. For variant
   // products we show a range; for single-SKU products we show a
@@ -280,14 +284,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     return formatPrice(product.priceInCents);
   })();
 
-  const coaTestedAt = latestCoa
-    ? new Date(latestCoa.testDate).toLocaleDateString("de-DE", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    : null;
-
   return (
     <div className="flex flex-col">
       {/* Analytics + structured data (invisible) */}
@@ -301,146 +297,170 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }}
       />
 
-      {/* ── Dossier-Kopf ──
-          Breadcrumb in Mono, darunter der Dossier-Header über volle
-          Breite (Kategorie-Eyebrow · H1 in Fraunces · Specimen-Tags ·
-          Rating), abgeschlossen mit dem Mess-Lineal. Darunter das
-          zweispaltige Arbeitsblatt: links die Abbildung, rechts die
-          Kaufbox. Auf Mobile stapelt sich alles in Lesereihenfolge. */}
-      <section className="hero-ambient border-b border-border">
-        <div className="container relative pt-7 pb-10 md:pt-9 md:pb-14">
-          {/* Breadcrumb (mono) */}
+      {/* ── PDP Hero (Apotheke) ──
+          Helle Sektion, 2-col: links Media-Box (weiß, feines Grid), rechts
+          Kategorie-Crumb · H1 · shortDesc · Specs-Grid (mono) · Varianten ·
+          Preis-Zeile · CTA · Research-Callout. Die existierenden Blöcke
+          darunter (Specs, CoA, Reviews, Related) bleiben unverändert. */}
+      <section className="relative border-b border-border bg-background">
+        <div className="container relative py-8 md:py-12 lg:py-14">
+          {/* Breadcrumb (mono, Apotheke) */}
           <nav
             aria-label="Breadcrumb"
-            className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground"
+            className="mb-7 flex flex-wrap items-center gap-1.5 font-mono text-[10.5px] tracking-[0.18em] uppercase text-muted-foreground"
           >
-            <Link href="/" className="transition-colors hover:text-primary-strong">
+            <Link
+              href="/"
+              className="hover:text-primary transition-colors"
+            >
               Home
             </Link>
-            <span aria-hidden className="text-muted-foreground/50">/</span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
             <Link
               href="/products"
-              className="transition-colors hover:text-primary-strong"
+              className="hover:text-primary transition-colors"
             >
               Shop
             </Link>
-            <span aria-hidden className="text-muted-foreground/50">/</span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
             <Link
               href={`/products/category/${product.category.slug}`}
-              className="transition-colors hover:text-primary-strong"
+              className="hover:text-primary transition-colors"
             >
               {product.category.name}
             </Link>
-            <span aria-hidden className="text-muted-foreground/50">/</span>
-            <span aria-current="page" className="truncate text-foreground">
-              {product.name}
-            </span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+            <span className="text-foreground truncate">{product.name}</span>
           </nav>
 
-          {/* Dossier-Header */}
-          <FadeUp>
-            <header className="mt-8 max-w-3xl">
-              <Link
-                href={`/products/category/${product.category.slug}`}
-                className="eyebrow gold-underline"
-              >
-                {product.category.name}
-              </Link>
-              <h1 className="display-title mt-3 text-[clamp(2.4rem,5vw,3.6rem)]">
-                {product.name}
-              </h1>
-              {product.shortDesc && (
-                <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground md:text-base">
-                  {product.shortDesc}
-                </p>
-              )}
-
-              {/* Specimen-Tags: Lot, CAS, Reinheit, Form */}
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                {latestCoa && (
-                  <span className="trust-pill">Lot {latestCoa.batchNumber}</span>
-                )}
-                {product.casNumber && (
-                  <span className="trust-pill">CAS {product.casNumber}</span>
-                )}
-                {latestCoa?.purity != null && (
-                  <span className="inline-flex items-center gap-1.5 rounded-sm border border-primary/40 bg-accent px-2.5 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-primary-strong">
-                    {latestCoa.purity.toFixed(2)} % HPLC
-                  </span>
-                )}
-                {product.form && (
-                  <span className="trust-pill">{product.form}</span>
-                )}
-              </div>
-
-              {reviewsTotalCount > 0 && (
-                <div className="mt-4 flex items-center gap-2.5">
-                  <StarRating rating={avgRating} />
-                  <Link
-                    href="#reviews"
-                    className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-primary-strong"
-                  >
-                    {avgRating.toFixed(1)} · {reviewsTotalCount}{" "}
-                    {reviewsTotalCount === 1 ? "Bewertung" : "Bewertungen"}
-                  </Link>
-                </div>
-              )}
-            </header>
-          </FadeUp>
-
-          <div className="tick-rule mt-8" aria-hidden />
-
-          {/* Arbeitsblatt: Abbildung links, Kaufbox rechts */}
-          <div className="mt-8 grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-            {/* ── Abbildung ── ruhige, gerahmte Box mit feinem
-                Mess-Raster. Die ImageGallery rendert frameless mit
-                object-contain, damit freigestellte Vial-Bilder nicht
-                beschnitten werden und das Raster bis unter die Vial
-                durchscheint. Sticky auf lg+. */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-start">
+            {/* ── Media (left) ── Helle, gerahmte Box mit feinem Grid
+                im Hintergrund. Die ImageGallery rendert frameless mit
+                object-contain, damit freigestellte Vial-Bilder vom User
+                nicht beschnitten werden und das Grid-Pattern bis unter
+                die Vial durchscheint. Sticky auf lg+. */}
             <FadeUp>
               <div className="lg:sticky lg:top-24">
-                <figure className="m-0">
-                  <div className="relative overflow-hidden rounded-sm border border-border bg-card">
-                    <div
-                      aria-hidden
-                      className="apo-grid-light pointer-events-none absolute inset-0"
+                <div className="relative rounded-sm border border-border bg-card overflow-hidden">
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 apo-grid-light pointer-events-none"
+                  />
+                  {/* Nur minimaler Innen-Rand, damit die Vial den Frame
+                      praktisch ausfüllt. Die Thumbnail-Reihe darunter
+                      bekommt durch die space-y-3 der Gallery ihren
+                      eigenen Abstand. */}
+                  <div className="relative z-10 p-2 md:p-3">
+                    <ImageGallery
+                      images={product.images.map((img) => ({
+                        url: img.url,
+                        alt: img.alt ?? product.name,
+                      }))}
+                      productName={product.name}
+                      capColor={capColorForCategory(product.category.slug)}
+                      fit="contain"
+                      frameless
                     />
-                    <div className="relative z-10 p-2 md:p-3">
-                      <ImageGallery
-                        images={product.images.map((img) => ({
-                          url: img.url,
-                          alt: img.alt ?? product.name,
-                        }))}
-                        fit="contain"
-                        frameless
-                      />
-                    </div>
                   </div>
-                  <figcaption className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                    Abb. 01 — {product.name}
-                    {latestCoa ? ` · Lot ${latestCoa.batchNumber}` : ""}
-                  </figcaption>
-                </figure>
+                </div>
               </div>
             </FadeUp>
 
-            {/* ── Kaufbox ── */}
-            <FadeUp delay={0.08}>
-              <div className="space-y-6">
-                {/* Status-Zeile (binär, siehe Q2-Direktive) */}
-                <p className="flex items-center gap-2 font-mono text-[10.5px] font-semibold uppercase tracking-[0.16em]">
-                  <span
-                    aria-hidden
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      isOutOfStock ? "bg-destructive" : "bg-success"
-                    }`}
-                  />
-                  <span
-                    className={isOutOfStock ? "text-destructive" : "text-success"}
+            {/* ── Buy-Panel (right) ── */}
+            <FadeUp delay={0.1}>
+              <div className="space-y-7">
+                {/* Kategorie + Index-Crumb (gold, mono) */}
+                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-primary-strong font-semibold">
+                  <Link
+                    href={`/products/category/${product.category.slug}`}
+                    className="hover:underline"
                   >
-                    {isOutOfStock ? "Ausverkauft" : "Sofort verfügbar"}
-                  </span>
+                    {product.category.name}
+                  </Link>
+                  {product.form && (
+                    <>
+                      {" \u00B7 "}
+                      <span className="text-muted-foreground">
+                        {product.form}
+                      </span>
+                    </>
+                  )}
                 </p>
+
+                {/* H1 + Kurzbeschreibung */}
+                <div className="space-y-3">
+                  <h1 className="text-[clamp(2.2rem,4vw,3.2rem)] font-semibold tracking-[-0.03em] leading-[1]">
+                    {product.name}
+                  </h1>
+
+                  {product.shortDesc && (
+                    <p className="max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+                      {product.shortDesc}
+                    </p>
+                  )}
+
+                  {reviewsTotalCount > 0 && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <StarRating rating={avgRating} />
+                      <span className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground">
+                        {avgRating.toFixed(1)} · {reviewsTotalCount}{" "}
+                        {reviewsTotalCount === 1
+                          ? "Bewertung"
+                          : "Bewertungen"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Specs-Grid (2x3) — Monospace-Labels mit feinen Linien */}
+                <dl className="grid grid-cols-2 gap-px border border-border bg-border overflow-hidden rounded-sm">
+                  {latestCoa?.purity != null && (
+                    <PdpSpec
+                      k="Reinheit"
+                      v={`${latestCoa.purity.toFixed(2)}%`}
+                      gold
+                    />
+                  )}
+                  {latestCoa && (
+                    <PdpSpec
+                      k="Methode"
+                      v={`${latestCoa.testMethod} · UV 220 nm`}
+                    />
+                  )}
+                  {latestCoa && (
+                    <PdpSpec
+                      k="Labor"
+                      v={latestCoa.laboratory}
+                    />
+                  )}
+                  {latestCoa && (
+                    <PdpSpec
+                      k="Lot"
+                      v={latestCoa.batchNumber}
+                    />
+                  )}
+                  {latestCoa && (
+                    <PdpSpec
+                      k="Test Datum"
+                      v={new Date(latestCoa.testDate).toLocaleDateString(
+                        "de-DE",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )}
+                    />
+                  )}
+                  {/* Stock-Anzeige bewusst nur als binärer Status:
+                      "Verfügbar" oder "Ausverkauft". Die genaue
+                      Stock-Zahl ist Admin-only-Info — Kunden interessiert
+                      nur ob sie kaufen können. */}
+                  <PdpSpec
+                    k="Verfügbarkeit"
+                    v={isOutOfStock ? "Ausverkauft" : "Verfügbar"}
+                  />
+                </dl>
 
                 {/* Varianten + Preis + Menge + CTA — in einem Panel
                     das den selectedVariant-State lokal hält. Früher:
@@ -469,9 +489,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   priceDisplay={priceDisplay}
                 />
 
-                {/* Research-Only Fußnote zur Kaufbox */}
-                <div className="border-l-2 border-primary bg-muted/50 p-4 text-[13px] leading-relaxed text-muted-foreground">
-                  <strong className="font-semibold text-foreground">
+                {/* Research-Only Callout (muted BG, gold left-border) */}
+                <div className="border-l-[3px] border-primary bg-muted/50 p-4 text-[13px] leading-relaxed text-muted-foreground">
+                  <strong className="text-foreground font-semibold">
                     Nur für Forschungszwecke.
                   </strong>{" "}
                   Nicht zum menschlichen Verzehr, Arzneimittel- oder
@@ -480,19 +500,19 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 </div>
 
                 {/* Trust- & CoA-Block als bewusster dunkler Ink-Einschub —
-                    der Kontrastmoment in der hellen Kaufbox. CoA-Zusage
-                    oben, darunter die Vertrauenssignale als Specimen-Tags
-                    (card-ink themt eyebrow/trust-pill automatisch). */}
-                <Card variant="ink" className="overflow-hidden p-5">
+                    der Premium-Kontrastmoment im hellen Buy-Panel. CoA-
+                    Zusage oben, darunter die Vertrauenssignale als Mono-
+                    Pillen (card-ink themt eyebrow/trust-pill automatisch). */}
+                <Card variant="ink" className="card-ink overflow-hidden p-5">
                   <div className="flex gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary/15 text-primary">
-                      <Mail className="h-4 w-4" aria-hidden />
+                      <Mail className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-ink-foreground">
                         Analysezertifikat inklusive
                       </p>
-                      <p className="mt-0.5 text-xs leading-relaxed text-ink-muted">
+                      <p className="mt-0.5 text-xs text-ink-muted leading-relaxed">
                         Das passende CoA erhalten Sie automatisch per E-Mail
                         zusammen mit Ihrer Bestellung — unabhängig durch
                         Janoshik verifiziert.
@@ -500,6 +520,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                     </div>
                   </div>
 
+                  {/* Trust-indicator row — als Mono-Pillen */}
                   <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-ink-border pt-4">
                     <span className="trust-pill">
                       <ShieldCheck className="h-3 w-3 text-primary" aria-hidden />
@@ -521,32 +542,87 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         </div>
       </section>
 
-      {/* ── Protokoll: Spezifikationen + Sequenz (hell) ── */}
-      {(specs.length > 0 || product.sequence) && (
+      {/* ── Specs + CoA + Sequence (light) ── */}
+      {(specs.length > 0 || product.sequence || latestCoa) && (
         <section className="container py-12 md:py-16">
-          <FadeUp>
-            <div className="max-w-2xl">
-              <span className="eyebrow">Protokoll</span>
-              <h2 className="display-title mt-3 text-2xl md:text-3xl">
-                Spezifikationen
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Alle Kenndaten dieses Produkts — dokumentiert für
-                reproduzierbare Forschungsergebnisse.
-              </p>
-            </div>
-          </FadeUp>
+          {specs.length > 0 && (
+            <>
+              <FadeUp>
+                <div className="mb-8 max-w-2xl">
+                  <span className="eyebrow mb-2.5">Technische Daten</span>
+                  <h2 className="display-title text-2xl md:text-3xl">
+                    Spezifikationen
+                  </h2>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Präzise dokumentiert für reproduzierbare Forschungsergebnisse.
+                  </p>
+                </div>
+              </FadeUp>
 
-          <FadeUp delay={0.05}>
-            <dl className="mt-8 grid grid-cols-1 gap-x-12 border-b border-border md:grid-cols-2">
-              {specs.map((spec) => (
-                <SpecRow key={spec.label} k={spec.label} v={spec.value} />
-              ))}
-            </dl>
-          </FadeUp>
+              <FadeUp delay={0.05}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {specs.map((spec) => (
+                    <div
+                      key={spec.label}
+                      className="group rounded-sm border border-border bg-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_14px_32px_-22px_hsl(45_60%_30%/0.45)]"
+                    >
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary-strong transition-colors group-hover:bg-primary/15">
+                          {spec.icon}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                            {spec.label}
+                          </p>
+                          <p className="text-sm md:text-base font-semibold break-words mt-1">
+                            {spec.value}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </FadeUp>
+            </>
+          )}
+
+          {/* Certificate-Card — zeigt die neueste COA als flippbare
+              "Vault"-Karte. Nur rendern, wenn wir tatsächlich COA-Daten
+              haben; sonst bleibt der CoA-Kallout im Buy-Panel oben der
+              einzige Hinweis. */}
+          {latestCoa && (
+            <FadeUp delay={0.08}>
+              <div className="mt-10 flex flex-col items-center gap-4 text-center md:text-left md:flex-row md:items-stretch md:justify-start md:gap-8">
+                <div className="max-w-sm w-full shrink-0">
+                  <CertificateCard
+                    lot={latestCoa.batchNumber}
+                    purity={latestCoa.purity ?? undefined}
+                    testedAt={new Date(latestCoa.testDate).toLocaleDateString(
+                      "de-DE",
+                      { day: "2-digit", month: "short", year: "numeric" }
+                    )}
+                    method={`${latestCoa.testMethod} · UV 220 nm`}
+                    lab={latestCoa.laboratory}
+                    pdfUrl={latestCoa.pdfUrl ?? latestCoa.reportUrl ?? undefined}
+                  />
+                </div>
+                <div className="max-w-md space-y-2 md:pt-6">
+                  <span className="eyebrow mb-1">Zertifikat dieser Charge</span>
+                  <h3 className="display-title text-xl md:text-2xl">
+                    Unabhängig geprüft. Klick zum Umdrehen.
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Die Rückseite zeigt einen beispielhaften HPLC-Peak und
+                    verlinkt auf das vollständige PDF. Der eigentliche Report
+                    wird bei jeder Bestellung automatisch mit versandt.
+                  </p>
+                </div>
+              </div>
+            </FadeUp>
+          )}
 
           {product.sequence && (
-            <FadeUp delay={0.08}>
+            <FadeUp delay={0.1}>
               <div className="mt-8">
                 <SequenceCopyBlock sequence={product.sequence} />
               </div>
@@ -555,105 +631,56 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         </section>
       )}
 
-      {/* ── Laborbefund (Ink) ──
-          Der Kontrastmoment der Seite: die neueste COA als Dokument-
-          karte auf Nachtblau, daneben die Verifikations-Story samt
-          Link zur Janoshik-Gegenprüfung. Nur rendern, wenn echte
-          COA-Daten vorliegen — sonst bleibt die CoA-Zusage in der
-          Kaufbox der einzige Hinweis. */}
-      {latestCoa && (
+      {/* ── Beschreibung (dark) ── */}
+      {product.description && (
         <>
-          <SectionBlur />
-          <section className="section-ink grain-overlay relative">
-            <div className="container relative z-10 section-pad">
-              <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_minmax(0,420px)] lg:gap-16">
-                <FadeUp>
-                  <div className="max-w-xl">
-                    <span className="eyebrow">Laborbefund</span>
-                    <h2 className="display-title mt-3 text-3xl md:text-4xl">
-                      Gemessen, <em>nicht versprochen.</em>
-                    </h2>
-                    <p className="mt-4 text-sm leading-relaxed text-ink-muted md:text-[15px]">
-                      Diese Charge wurde durch das unabhängige Analyselabor
-                      Janoshik per HPLC auf Reinheit und Identität geprüft.
-                      Den vollständigen Befund erhalten Sie automatisch per
-                      E-Mail mit Ihrer Bestellung — und jeder Report lässt
-                      sich über seine Task-ID direkt beim Labor gegenprüfen.
-                    </p>
-                    <a
-                      href="https://janoshik.com/verification"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-ink mt-6"
-                    >
-                      Bei Janoshik verifizieren
-                      <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
-                    </a>
-                  </div>
-                </FadeUp>
-
-                <FadeUp delay={0.08}>
-                  <CertificateCard
-                    lot={latestCoa.batchNumber}
-                    purity={latestCoa.purity ?? undefined}
-                    testedAt={coaTestedAt ?? undefined}
-                    method={`${latestCoa.testMethod} · UV 220 nm`}
-                    lab={latestCoa.laboratory}
-                    pdfUrl={latestCoa.pdfUrl ?? latestCoa.reportUrl ?? undefined}
-                  />
-                </FadeUp>
-              </div>
+        <SectionBlur />
+        <section className="section-dark">
+          <div className="container py-12 md:py-16">
+            <div className="max-w-3xl">
+              <FadeUp>
+                <p className="font-mono text-[11px] uppercase tracking-[0.18em] font-semibold text-primary mb-3">
+                  Über dieses Peptid
+                </p>
+                <h2 className="display-title text-2xl md:text-3xl mb-6">
+                  Beschreibung
+                </h2>
+              </FadeUp>
+              <FadeUp delay={0.05}>
+                <div className="prose prose-sm prose-invert max-w-none text-white/70 whitespace-pre-line leading-relaxed">
+                  {product.description}
+                </div>
+              </FadeUp>
             </div>
-          </section>
-          <SectionBlur />
+          </div>
+        </section>
+        <SectionBlur />
         </>
       )}
 
-      {/* ── Beschreibung (hell, .prose) ── */}
-      {product.description && (
-        <section className="container py-12 md:py-16">
-          <div className="max-w-3xl">
-            <FadeUp>
-              <span className="eyebrow">Dossier</span>
-              <h2 className="display-title mt-3 text-2xl md:text-3xl">
-                Beschreibung
-              </h2>
-            </FadeUp>
-            <FadeUp delay={0.05}>
-              <div className="prose mt-6 whitespace-pre-line">
-                {product.description}
-              </div>
-            </FadeUp>
-          </div>
-        </section>
-      )}
-
-      {/* ── Bewertungen (hell) ── */}
-      <section id="reviews" className="container scroll-mt-24 py-12 md:py-16">
+      {/* ── Reviews (light) ── */}
+      <section id="reviews" className="container py-12 md:py-16 scroll-mt-24">
         <FadeUp>
-          <div className="flex flex-wrap items-end justify-between gap-6">
+          <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <span className="eyebrow">Rückmeldungen</span>
-              <h2 className="display-title mt-3 text-2xl md:text-3xl">
+              <span className="eyebrow mb-2.5">Community</span>
+              <h2 className="display-title text-2xl md:text-3xl">
                 Bewertungen
+                <span className="ml-2 text-muted-foreground font-medium">
+                  ({reviewsTotalCount})
+                </span>
               </h2>
             </div>
             {reviewsTotalCount > 0 && (
-              <div className="flex items-baseline gap-3">
-                <span className="stat-value text-4xl tabular-nums md:text-5xl">
+              <div className="flex items-center gap-2 rounded-full border bg-card px-4 py-1.5 shadow-sm">
+                <StarRating rating={avgRating} />
+                <span className="text-sm font-semibold tabular-nums">
                   {avgRating.toFixed(1)}
                 </span>
-                <div className="pb-1">
-                  <StarRating rating={avgRating} />
-                  <p className="stat-key mt-1.5">
-                    {reviewsTotalCount}{" "}
-                    {reviewsTotalCount === 1 ? "Bewertung" : "Bewertungen"}
-                  </p>
-                </div>
+                <span className="text-xs text-muted-foreground">/ 5</span>
               </div>
             )}
           </div>
-          <div className="tick-rule mt-6 mb-8" aria-hidden />
         </FadeUp>
 
         {reviewsTotalCount > 0 ? (
@@ -678,50 +705,50 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           />
         ) : (
           <FadeUp delay={0.05}>
-            <div className="rounded-sm border border-dashed border-border py-12 text-center">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                Noch keine Bewertungen erfasst
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Teilen Sie als Erste:r Ihre Erfahrung mit diesem Produkt.
+            <div className="rounded-2xl border-2 border-dashed border-border/60 py-12 text-center">
+              <Sparkles className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
+              <p className="text-sm text-muted-foreground">
+                Noch keine Bewertungen. Sei der Erste!
               </p>
             </div>
           </FadeUp>
         )}
 
-        <div className="mt-12 max-w-2xl">
+        <div className="mt-10">
           <ReviewSection productId={product.id} />
         </div>
       </section>
 
-      {/* ── Ähnliche Produkte (dunkel) ── */}
+      {/* ── Related Products (dark) ── */}
       {relatedProducts.length > 0 && (
         <>
-          <SectionBlur />
-          <section className="section-dark">
-            <div className="container py-12 md:py-16">
-              <FadeUp>
-                <div className="mb-10 max-w-2xl">
-                  <span className="eyebrow">Auch interessant</span>
-                  <h2 className="display-title mt-3 text-2xl md:text-3xl">
-                    Ähnliche Produkte
-                  </h2>
-                  <p className="mt-2 text-sm text-ink-muted">
-                    Weitere Peptide aus der Kategorie {product.category.name}
-                  </p>
-                </div>
-              </FadeUp>
-
-              <div className="grid grid-cols-1 gap-x-5 gap-y-10 sm:grid-cols-2 md:grid-cols-3 md:gap-x-6 md:gap-y-12 lg:grid-cols-4">
-                {relatedProducts.map((related, i) => (
-                  <FadeUp key={related.id} delay={i * 0.08}>
-                    <ProductCard product={related} />
-                  </FadeUp>
-                ))}
+        <SectionBlur />
+        <section className="section-dark">
+          <div className="container py-12 md:py-16">
+            <FadeUp>
+              <div className="mb-10 max-w-2xl">
+                <p className="font-mono text-[11px] uppercase tracking-[0.18em] font-semibold text-primary mb-3">
+                  Auch interessant
+                </p>
+                <h2 className="display-title text-2xl md:text-3xl">
+                  Ähnliche Produkte
+                </h2>
+                <p className="mt-2 text-sm text-white/60">
+                  Weitere Peptide aus der Kategorie {product.category.name}
+                </p>
               </div>
+            </FadeUp>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10 md:gap-x-6 md:gap-y-12">
+              {relatedProducts.map((related, i) => (
+                <FadeUp key={related.id} delay={i * 0.08}>
+                  <ProductCard product={related} />
+                </FadeUp>
+              ))}
             </div>
-          </section>
-          <SectionBlur />
+          </div>
+        </section>
+        <SectionBlur />
         </>
       )}
 
@@ -729,13 +756,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           Store / SSR selbst aus; filtert das aktuelle Produkt heraus) ── */}
       <RecentlyViewed currentProductId={product.id} />
 
-      {/* ── Research-Disclaimer als Fußnote ── */}
-      <section className="border-t border-border bg-muted/30">
-        <div className="container py-8">
-          <p className="mono-tag text-muted-foreground">
-            Hinweis — Research Use Only
-          </p>
-          <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground/80">
+      {/* ── Research Disclaimer ── */}
+      <section className="border-t">
+        <div className="container py-6 text-center">
+          <p className="text-xs text-muted-foreground/60 max-w-2xl mx-auto leading-relaxed">
             {RESEARCH_DISCLAIMER}
           </p>
         </div>
@@ -745,20 +769,54 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 }
 
 /**
- * Zeile der Protokoll-Tabelle: Mono-Key links, Mono-Wert rechts,
- * Haarlinie oben. Die Tabelle sitzt in einem zweispaltigen Grid
- * (md+) — jede Zeile bringt ihre eigene border-t mit, die Tabelle
- * schließt mit border-b ab.
+ * Spec-Cell im PDP-Hero-Specs-Grid (Apotheke-Stil). Die Zellen sitzen
+ * in einem `gap-px` Grid mit `bg-border` Hintergrund — jede Zelle hat
+ * also eine eigene Card-Fläche, durch den Border-Hintergrund entstehen
+ * 1px-Fugen zwischen den Zellen.
  */
-function SpecRow({ k, v }: { k: string; v: string }) {
+function PdpSpec({
+  k,
+  v,
+  gold,
+}: {
+  k: string;
+  v: string;
+  gold?: boolean;
+}) {
   return (
-    <div className="grid grid-cols-[120px_1fr] items-baseline gap-4 border-t border-border py-3.5 sm:grid-cols-[180px_1fr]">
-      <dt className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+    <div className="bg-card px-4 py-3.5">
+      <p className="font-mono text-[9.5px] tracking-[0.15em] uppercase text-muted-foreground">
         {k}
-      </dt>
-      <dd className="break-words font-mono text-sm tabular-nums text-foreground">
+      </p>
+      <p
+        className={`mt-1 font-mono text-sm font-medium ${
+          gold ? "text-primary-strong font-semibold" : "text-foreground"
+        }`}
+      >
         {v}
-      </dd>
+      </p>
     </div>
   );
+}
+
+/**
+ * Cap-Color für das 3D-Vial-Modell, abgeleitet aus der Produkt-Kategorie.
+ *
+ * Echte Pharma-Caps sind farbcodiert nach Substanz-Klasse — wir mimen
+ * das hier nach Kategorie-Slug. Default ist Gold (passt zur Brand).
+ *
+ * Wenn der Admin später einen `capColor`-Field pro Produkt will, kann
+ * man dieses Mapping ersetzen durch `product.capColor ?? fallback`.
+ */
+function capColorForCategory(slug: string): string {
+  const map: Record<string, string> = {
+    "weight-loss": "#8b5fbf",        // Metabolic / GLP-1 → purple
+    recovery: "#e0e0e6",              // Regenerative → clear/white
+    "anti-aging": "#b87333",          // Cellular Aging → bronze/copper (GHK-Cu)
+    "growth-hormone": "#d6a854",      // GH Secretagogue → gold/amber
+    longevity: "#e6c95a",             // NAD+ → yellow
+    cognitive: "#4a7bb5",             // Neuropeptide → blue
+    "sexual-health": "#a83a3a",       // Neuroendocrine → red
+  };
+  return map[slug] ?? "#d6a854";
 }

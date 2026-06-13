@@ -299,7 +299,7 @@ export function TwoFactorSetupClient({
 
           <div className="space-y-2">
             <Label htmlFor="verifyCode" className="field-label">
-              6-stelliger Code aus der App
+              [ 6-stelliger Code aus der App ]
             </Label>
             <Input
               id="verifyCode"
@@ -442,7 +442,7 @@ export function TwoFactorSetupClient({
           <div className="space-y-3 py-2">
             <div className="space-y-2">
               <Label htmlFor="disablePassword" className="field-label">
-                Passwort
+                [ Passwort ]
               </Label>
               <Input
                 id="disablePassword"
@@ -455,7 +455,7 @@ export function TwoFactorSetupClient({
             </div>
             <div className="space-y-2">
               <Label htmlFor="disableCode" className="field-label">
-                2FA-Code
+                [ 2FA-Code ]
               </Label>
               <Input
                 id="disableCode"
@@ -521,7 +521,7 @@ export function TwoFactorSetupClient({
           <div className="space-y-3 py-2">
             <div className="space-y-2">
               <Label htmlFor="regenPassword" className="field-label">
-                Passwort
+                [ Passwort ]
               </Label>
               <Input
                 id="regenPassword"
@@ -534,7 +534,7 @@ export function TwoFactorSetupClient({
             </div>
             <div className="space-y-2">
               <Label htmlFor="regenTotp" className="field-label">
-                TOTP-Code — 6 Ziffern
+                [ TOTP-Code — 6 Ziffern ]
               </Label>
               <Input
                 id="regenTotp"

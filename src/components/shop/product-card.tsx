@@ -1,5 +1,5 @@
 /**
- * ProductCard — „Probenblatt" (Specimen-Karte) im Chromatogramm-Stil
+ * ProductCard — Apotheke/Rx (Prescription Label) Stil
  *
  * Server-Component (keine `"use client"` directive). Vorher zog jedes Card-
  * Render Zustand (Cart-Store) + Toast in den Client-Bundle und zwang React
@@ -9,13 +9,6 @@
  * Jetzt: SSR-only HTML mit zwei Client-Islands (WishlistButton, AddButton).
  * Wenn der User nicht hovert / nichts klickt, läuft NULL Client-JS in der
  * Card.
- *
- * Aufbau wie ein Probenblatt aus dem Analyse-Protokoll:
- *  - Kopfzeile: Mono-Mikrozeile (Kategorie · Index "001 / 247" · Wishlist)
- *  - Media: Produktbild oder CSS-Vial-Fallback (kühles Laborglas)
- *  - Mess-Lineal (tick-rule) als Trenner zum Datenteil
- *  - Name in Fraunces, Spezifikationen als Mono-Tabelle mit Haarlinien
- *  - Fußzeile: Preis (Mono, tabular-nums) + Quick-Add-CTA
  *
  * Props-Signatur unverändert zur vorigen Version, damit alle Call-Sites
  * (Homepage Bestsellers, Related Products, Wishlist, Katalog) ohne
@@ -91,16 +84,21 @@ export function ProductCard({
       : formatPrice(minPrice);
 
   return (
-    <article
-      data-testid="product-card"
+    <div
       className={cn(
         "group relative flex flex-col",
         "bg-card border border-border rounded-sm",
-        // Ruhige, kühle Anhebung: Ink-Schatten + Viridian-Rand-Andeutung —
-        // dieselbe taktile Sprache wie Card variant="lift".
+        // ca. +20 % skaliert ggü. vorher (px-6/pt-7/pb-6) — gibt der
+        // Karte deutlich mehr Luft, Grid-Dichte bleibt erhalten weil
+        // die Spalten sich responsiv verteilen; die Karte wird also
+        // nicht breiter, sondern höher und visuell präsenter.
+        "px-7 pt-8 pb-7",
+        // Hover spricht jetzt die "lift"-Sprache der Card-Variante:
+        // warme Gold-Schlagschatten-Aura + Gold-Rand-Andeutung statt des
+        // neutralen Ink-Schattens — dieselbe taktile Anhebung wie bei den
+        // übrigen klickbaren Karten der Cinematic-Lab-Sprache.
         "transition-all duration-300 ease-out",
-        "hover:border-primary/40 hover:-translate-y-0.5",
-        "hover:shadow-[0_18px_40px_-28px_hsl(218_35%_7%/0.4)]",
+        "hover:border-primary/45 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-26px_hsl(45_60%_30%/0.5)]",
         "animate-fade-in",
       )}
     >
@@ -119,32 +117,53 @@ export function ProductCard({
         <span className="sr-only">{product.name}</span>
       </Link>
 
-      {/* Kopfzeile: Mono-Mikrozeile mit Haarlinie — Kategorie · Index ·
-          Wishlist. Liest wie die Kennzeile eines Probenblatts. */}
-      <div className="relative flex items-center justify-between gap-2 border-b border-border px-5 py-3 font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
+      {/* Perforierte Linien — typische "Prescription Label"-Optik.
+          Top liegt bei ~10px, Bottom bei ~10px — genug Abstand zum
+          Padding, damit sie als dekorative Fuge lesen, nicht als Border. */}
+      <div
+        aria-hidden
+        className="absolute left-0 right-0 top-2.5 h-px"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, hsl(var(--border)) 0 4px, transparent 4px 8px)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="absolute left-0 right-0 bottom-2.5 h-px"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, hsl(var(--border)) 0 4px, transparent 4px 8px)",
+        }}
+      />
+
+      {/* Head: Kategorie + Index + Wishlist */}
+      <div className="relative mb-6 flex items-center justify-between gap-2 font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate font-semibold text-primary-strong">
+          <span className="truncate text-primary-strong font-semibold">
             {product.category.name}
           </span>
           {product.isBestseller && (
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[2px] border border-primary/30 bg-accent px-1.5 py-0.5 text-[9px] font-bold tracking-[0.12em] text-primary-strong">
-              <span aria-hidden className="h-1 w-1 bg-primary" />
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-1.5 py-0.5 text-[9px] font-bold tracking-[0.12em] text-primary-strong">
+              <span aria-hidden className="h-1 w-1 rounded-full bg-primary" />
               Bestseller
             </span>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-2">
           {indexLabel && <span className="tabular-nums">{indexLabel}</span>}
           <WishlistCardSlot productId={product.id} />
         </div>
       </div>
 
       {/* Media — Produktbild oder Vial-Fallback.
-          Kein Lot-Label-Overlay (die Lot-Nummer steht unten in der
-          Spec-Tabelle). object-contain, damit freigestellte Vial-Bilder
-          nicht beschnitten werden. Hintergrund bewusst reines bg-card,
-          damit eine transparente Vial ohne grauen Rahmen "floated". */}
-      <div className="relative mx-auto my-6 h-[190px] w-full max-w-[240px] px-4">
+          Kein Lot-Label-Overlay mehr (die Lot-Nummer steht weiter unten
+          in der Spec-Row). object-contain, damit vom User geplante
+          freigestellte Vial-Bilder nicht beschnitten werden. Hintergrund
+          bewusst reines bg-card (weiß auf hellem Thema) ohne Gradient,
+          damit eine transparente Vial optisch ohne grauen Rahmen "floated"
+          und nicht mehr in einer Box sitzt. */}
+      <div className="relative mx-auto mb-6 h-[200px] w-full max-w-[252px]">
         {image ? (
           <div className="relative h-full w-full bg-card">
             <Image
@@ -158,83 +177,75 @@ export function ProductCard({
           </div>
         ) : (
           // Vial-Fallback als CSS-Gradient — nur wenn kein Produktbild da
-          // ist. Hält die Specimen-Karte kohärent statt "Kein Bild"-Text.
+          // ist. Keeps the "catalog card" coherent statt "Kein Bild"-Text.
           <VialFallback name={product.name} weight={product.weight} lot={coaLot} />
         )}
 
         {/* "Ausverkauft"-Overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/85 backdrop-blur-[2px]">
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-destructive">
+            <span className="font-mono text-[10px] tracking-[0.2em] uppercase font-semibold text-destructive">
               Ausverkauft
             </span>
           </div>
         )}
       </div>
 
-      {/* Mess-Lineal als Trenner zwischen Media und Datenteil —
-          Signatur-Detail der Protokoll-Sprache. */}
-      <div aria-hidden className="tick-rule mx-5" />
+      {/* Name */}
+      <h3 className="relative text-2xl font-semibold tracking-tight leading-tight line-clamp-1 group-hover:text-primary-strong transition-colors duration-300">
+        {product.name}
+      </h3>
 
-      <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
-        {/* Name in Fraunces — der einzige Serif-Moment der Karte */}
-        <h3 className="relative font-display text-[22px] font-medium leading-tight tracking-[-0.01em] line-clamp-1 transition-colors duration-300 group-hover:text-primary-strong">
-          {product.name}
-        </h3>
+      {/* Spec-Rows — nur gerenderte Zeilen, die auch Daten haben */}
+      <dl className="relative mt-3 space-y-2">
+        {product.weight && <SpecRow k="Menge" v={product.weight} />}
+        {coaPurity != null && (
+          <SpecRow k="Reinheit" v={`${coaPurity.toFixed(2)}%`} gold />
+        )}
+        {coaLot && <SpecRow k="Lot" v={coaLot} />}
+      </dl>
 
-        {/* Spezifikationen als Mono-Tabelle mit Haarlinien — nur Zeilen,
-            die auch Daten haben */}
-        <dl className="relative mt-3 divide-y divide-border border-y border-border">
-          {product.weight && <SpecRow k="Menge" v={product.weight} />}
-          {coaPurity != null && (
-            <SpecRow k="Reinheit" v={`${coaPurity.toFixed(2)} %`} accent />
-          )}
-          {coaLot && <SpecRow k="Lot" v={coaLot} />}
-        </dl>
-
-        {/* Fußzeile: Preis (Mono, tabular) + Quick-Add */}
-        <div className="relative mt-auto flex items-baseline justify-between gap-3 pt-4">
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono text-[22px] font-semibold leading-none tracking-tight tabular-nums">
-              {priceDisplay}
-            </span>
-            {!hasVariants && hasDiscount && (
-              <span className="font-mono text-xs text-muted-foreground line-through tabular-nums">
-                {formatPrice(product.compareAtPriceInCents!)}
-              </span>
-            )}
-          </div>
-
-          {/* Quick-Add nur bei Variant-freien, verfügbaren Produkten.
-              Blendet bei Hover/Fokus ein, ersetzt den Text-CTA, damit das
-              Zeilen-Layout stabil bleibt. Client-Island — der Rest der
-              Card ist SSR-only. */}
-          {!isOutOfStock && !hasVariants ? (
-            <ProductCardAddButton
-              productId={product.id}
-              name={product.name}
-              slug={product.slug}
-              priceInCents={product.priceInCents}
-              stock={product.stock}
-              image={image?.url ?? null}
-            />
-          ) : (
-            <span
-              className={cn(
-                "font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-strong",
-                "opacity-0 translate-x-2 transition-all duration-200",
-                "group-hover:opacity-100 group-hover:translate-x-0",
-                // Tastatur-Fokus: Karte ist der Link — bei Fokus den CTA
-                // sichtbar machen, sonst liegt der Fokus auf unsichtbarem Text.
-                "group-focus-within:opacity-100 group-focus-within:translate-x-0",
-              )}
-            >
-              Ansehen &rarr;
+      {/* Price + CTA */}
+      <div className="relative mt-auto pt-5 border-t border-border flex items-baseline justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold tracking-tight tabular-nums leading-none">
+            {priceDisplay}
+          </span>
+          {!hasVariants && hasDiscount && (
+            <span className="text-sm text-muted-foreground line-through tabular-nums">
+              {formatPrice(product.compareAtPriceInCents!)}
             </span>
           )}
         </div>
+
+        {/* Quick-Add nur bei Variant-freien, verfügbaren Produkten.
+            Slides in on hover, replaces the text-CTA to keep row layout
+            stable. Client-Island — der Rest der Card ist SSR-only. */}
+        {!isOutOfStock && !hasVariants ? (
+          <ProductCardAddButton
+            productId={product.id}
+            name={product.name}
+            slug={product.slug}
+            priceInCents={product.priceInCents}
+            stock={product.stock}
+            image={image?.url ?? null}
+          />
+        ) : (
+          <span
+            className={cn(
+              "font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary-strong",
+              "opacity-0 translate-x-2 transition-all duration-250",
+              "group-hover:opacity-100 group-hover:translate-x-0",
+              // Tastatur-Fokus: Karte ist der Link — bei Fokus den CTA
+              // sichtbar machen, sonst liegt der Fokus auf unsichtbarem Text.
+              "group-focus-within:opacity-100 group-focus-within:translate-x-0",
+            )}
+          >
+            Ansehen &rarr;
+          </span>
+        )}
       </div>
-    </article>
+    </div>
   );
 }
 
@@ -249,22 +260,20 @@ function WishlistCardSlot({ productId }: { productId: string }) {
     <div className="relative z-10 opacity-70 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
       <WishlistButton
         productId={productId}
-        className="h-8 w-8 rounded-[2px] bg-transparent hover:bg-muted"
+        className="h-9 w-9 bg-transparent hover:bg-muted"
       />
     </div>
   );
 }
 
-function SpecRow({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
+function SpecRow({ k, v, gold }: { k: string; v: string; gold?: boolean }) {
   return (
-    <div className="flex items-baseline justify-between py-1.5 font-mono text-[12.5px]">
-      <span className="uppercase tracking-[0.08em] text-[10.5px] text-muted-foreground">
-        {k}
-      </span>
+    <div className="flex items-baseline justify-between font-mono text-[13px]">
+      <span className="text-muted-foreground">{k}</span>
       <span
         className={cn(
-          "max-w-[60%] truncate text-right tabular-nums",
-          accent ? "font-semibold text-primary-strong" : "text-foreground",
+          "truncate max-w-[60%] text-right tabular-nums",
+          gold ? "text-primary-strong font-semibold" : "text-foreground",
         )}
       >
         {v}
@@ -282,33 +291,32 @@ function VialFallback({
   weight: string | null;
   lot: string | null;
 }) {
-  // CSS-Gradient-Vial als ruhiger Fallback — kühles Laborglas mit
-  // Viridian-Stich statt Bernstein. Das echte Produktbild hat Vorrang
-  // (Image-Branch oben); dieser Branch greift nur, wenn im Katalog noch
-  // kein Bild hinterlegt ist.
+  // CSS-Gradient-Vial als ruhiger Fallback. Das echte Produktbild hat
+  // Vorrang (Image-Branch oben) — dieser Branch greift nur wenn im
+  // Katalog noch kein Bild hinterlegt ist.
   return (
     <div
-      className="relative mx-auto h-full w-24 rounded-[4px_4px_2px_2px] transition-transform duration-500 ease-out group-hover:-rotate-3 group-hover:-translate-y-0.5"
+      className="relative mx-auto h-full w-24 rounded-[6px_6px_3px_3px] transition-transform duration-500 ease-out group-hover:-rotate-3 group-hover:-translate-y-0.5"
       style={{
         background:
-          "linear-gradient(to right, hsl(200 20% 55% / 0.25) 0%, hsl(186 28% 82%) 30%, hsl(180 32% 93%) 50%, hsl(186 28% 82%) 70%, hsl(200 20% 55% / 0.25) 100%)",
+          "linear-gradient(to right, hsl(45 40% 50% / 0.25) 0%, hsl(45 78% 78%) 30%, hsl(45 88% 90%) 50%, hsl(45 78% 78%) 70%, hsl(45 40% 50% / 0.25) 100%)",
         boxShadow:
-          "inset 0 0 16px hsl(192 35% 35% / 0.18), 0 6px 18px hsl(215 30% 25% / 0.12)",
+          "inset 0 0 16px hsl(45 60% 40% / 0.2), 0 6px 18px hsl(45 70% 40% / 0.12)",
       }}
       aria-hidden
     >
-      {/* Bördelkappe — kaltes Nachtblau statt Gummi-Braun */}
+      {/* Gummikappe */}
       <span
-        className="absolute -top-3 left-1/2 h-4 w-8 -translate-x-1/2 rounded-[2px]"
-        style={{ background: "hsl(218 30% 14%)" }}
+        className="absolute -top-3 left-1/2 -translate-x-1/2 h-4 w-8 rounded-sm"
+        style={{ background: "hsl(20 15% 20%)" }}
       />
-      {/* Etikett */}
-      <div className="absolute inset-x-0 bottom-[18%] top-[36%] flex flex-col justify-center border-y border-[hsl(196_18%_72%)] bg-background/95 px-1.5">
-        <p className="truncate text-center font-mono text-[8px] font-semibold leading-tight text-foreground">
+      {/* Label */}
+      <div className="absolute inset-x-0 top-[36%] bottom-[18%] bg-background/95 border-y border-[hsl(45_30%_70%)] px-1.5 flex flex-col justify-center">
+        <p className="font-mono text-[8px] font-semibold text-center text-foreground leading-tight truncate">
           {lot ?? name}
         </p>
         {weight && (
-          <p className="mt-0.5 text-center font-mono text-[7px] leading-tight text-primary-strong">
+          <p className="font-mono text-[7px] text-primary text-center leading-tight mt-0.5">
             {weight}
           </p>
         )}

@@ -27,50 +27,26 @@ const TRUST_SIGNALS = [
   { icon: FlaskConical, label: "CoA zu jeder Charge" },
 ] as const;
 
-/**
- * Footer — „Chromatogramm": dunkles Protokoll-Schlussblatt. Oben das
- * Mess-Lineal als Übergabe vom Seiteninhalt, dann ein editorialer
- * Claim-Block mit großer Fraunces-Marke, Link-Spalten, Specimen-Tags
- * und der Pflicht-Disclaimer als sauber gesetzte Fußnote.
- */
 export function Footer() {
   return (
     <footer className="section-ink relative grain-overlay">
       <div className="absolute inset-0 apo-grid opacity-50" aria-hidden />
       <div className="container relative pt-16 pb-10">
-        {/* Marken-Statement */}
-        <div className="flex flex-col gap-6 border-b border-ink-border pb-12 md:flex-row md:items-end md:justify-between">
-          <div>
-            <span className="eyebrow">Analyse-Protokoll · Ende</span>
-            <p className="display-title mt-4 text-4xl text-ink-foreground md:text-5xl">
-              {APP_NAME}
-              <span className="ml-3 font-display text-2xl italic text-ink-muted md:text-3xl">
-                — gemessen, nicht versprochen.
-              </span>
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            {TRUST_SIGNALS.map((signal) => (
-              <span key={signal.label} className="trust-pill">
-                <signal.icon className="h-3.5 w-3.5 text-primary" aria-hidden />
-                {signal.label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-x-8 gap-y-12 pt-12 md:grid-cols-12">
-          {/* Newsletter */}
+        <div className="grid grid-cols-2 gap-x-8 gap-y-12 md:grid-cols-12">
+          {/* Brand + Newsletter — editorialer Block, spannt die halbe Breite */}
           <div className="col-span-2 md:col-span-6 lg:col-span-5">
-            <span className="mono-label text-ink-muted">
-              Newsletter · neue Chargen &amp; COAs
-            </span>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-muted">
+            <span className="eyebrow">Gemessen, nicht versprochen</span>
+            <h3 className="display-title mt-4 text-2xl">{APP_NAME}</h3>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-muted">
               Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit.
               Jede Charge erhält eine Lot-Nummer und ein Analysezertifikat —
               verifizierbar, nicht behauptet.
             </p>
-            <div className="mt-6 max-w-sm">
+
+            <div className="mt-8 max-w-sm">
+              <span className="field-label text-ink-muted">
+                Newsletter · neue Chargen &amp; COAs
+              </span>
               <NewsletterForm />
             </div>
           </div>
@@ -117,10 +93,20 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="tick-rule mt-14" aria-hidden />
+        {/* Trust-Zeile */}
+        <div className="mt-14 flex flex-wrap items-center gap-3">
+          {TRUST_SIGNALS.map((signal) => (
+            <span key={signal.label} className="trust-pill">
+              <signal.icon className="h-3.5 w-3.5 text-primary" aria-hidden />
+              {signal.label}
+            </span>
+          ))}
+        </div>
+
+        <hr className="rule-gold mt-10" />
 
         {/* Disclaimer + Copyright */}
-        <div className="mt-8 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+        <div className="mt-10 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <p className="max-w-3xl text-xs leading-relaxed text-ink-muted">
             {RESEARCH_DISCLAIMER}
           </p>

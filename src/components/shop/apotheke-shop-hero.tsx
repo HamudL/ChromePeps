@@ -3,25 +3,23 @@ import { FeaturedProductCarousel } from "@/components/shop/featured-product-caro
 import type { FeaturedProductData } from "@/lib/products/featured";
 
 /**
- * Shop-Seitenkopf — kompakter, editorialer Protokoll-Kopf für /products
- * und Kategorie-Landings. Kein dunkles Hero-Theater mehr: helles Papier,
- * links Crumb (Mono) · Fraunces-Titel · Subline · Stat-Readouts · Mono-
- * Zähler; rechts optional die FeaturedProductCarousel als Ink-Einschub.
- * Abschluss: tick-rule (Mess-Lineal) über die volle Breite.
- *
+ * Apotheke-Hero — dunkles Top-Band für /products, Kategorie-Landings und
+ * (optional) Produktdetail. Links: Crumb · H1 (Fraunces-italic-Akzent
+ * auf einem Wort möglich) · Subline · Stats-Reihe. Rechts: optionale
+ * FeaturedProductCarousel (rotiert alle 20s zufällig durch den Pool).
  * Server Component ohne Interaktivität — der Carousel selbst ist
  * "use client" und übernimmt das Rotieren intern.
  *
- * Die Stats-Reihe ist flexibel — wenn keine echten Werte verfügbar sind
- * (z.B. noch keine COAs eingepflegt), wird sie automatisch ausgeblendet,
- * statt mit "0"-Zahlen zu werben.
+ * Die Stats-Reihe ist flexibel — wenn weniger als 2 echte Werte
+ * verfügbar sind (z.B. noch keine COAs eingepflegt), wird sie
+ * automatisch ausgeblendet, statt mit "0"-Zahlen zu werben.
  */
 
 interface HeroStat {
   value: string;
   /**
-   * Optionaler Suffix, der klein im Akzent neben dem Wert steht (z.B.
-   * "%" bei Ø Reinheit). Wird nicht in die Tabular-Numerik eingerechnet.
+   * Optionaler Suffix, der in gold/klein neben dem Wert steht (z.B. "%"
+   * bei Ø Reinheit). Wird nicht in die Tabular-Numerik eingerechnet.
    */
   suffix?: string;
   label: string;
@@ -38,11 +36,6 @@ interface ApothekeShopHeroProps {
    * zeigt der Carousel statisch dieses eine Produkt. Bei mehr rotiert er.
    */
   featured: FeaturedProductData[];
-  /**
-   * Optionaler Mono-Zähler unter dem Kopf, z.B. "247 Produkte · 5
-   * Kategorien". Bei undefined entfällt die Zeile.
-   */
-  counter?: string;
 }
 
 export function ApothekeShopHero({
@@ -51,62 +44,54 @@ export function ApothekeShopHero({
   subline,
   stats,
   featured,
-  counter,
 }: ApothekeShopHeroProps) {
-  const hasFeatured = featured.length > 0;
-
   return (
-    <section className="hero-ambient relative border-b border-border bg-background">
-      <div className="container relative pb-8 pt-10 md:pb-10 md:pt-14">
+    <section className="section-ink grain-overlay relative overflow-hidden border-b border-ink-border">
+      {/* Feines Grid-Muster im Hintergrund — typische Labor-Formular-Optik. */}
+      <div aria-hidden className="absolute inset-0 apo-grid pointer-events-none" />
+
+      <div className="container relative py-16 md:py-20 lg:py-24">
         <div
-          className={`grid items-start gap-10 ${
-            hasFeatured ? "lg:grid-cols-[1.15fr_0.85fr] lg:gap-14" : "lg:grid-cols-1"
+          className={`grid gap-10 lg:gap-16 ${
+            featured.length > 0 ? "lg:grid-cols-[1.2fr_1fr]" : "lg:grid-cols-1"
           }`}
         >
-          {/* Linke Spalte — Crumb, Titel, Subline, Readouts */}
-          <div className="min-w-0">
+          {/* Left column — Text + Stats */}
+          <div>
             {crumb.length > 0 && (
               <nav
                 aria-label="Breadcrumb"
-                className="mb-5 flex flex-wrap items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.18em]"
+                className="mb-7 flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.2em] uppercase text-primary"
               >
                 {crumb.map((segment, i) => (
                   <span key={`${segment}-${i}`} className="flex items-center gap-2">
-                    <span
-                      className={
-                        i === 0
-                          ? "font-semibold text-primary-strong"
-                          : "text-muted-foreground"
-                      }
-                    >
+                    <span className={i === 0 ? "text-primary" : "text-ink-muted"}>
                       {segment}
                     </span>
                     {i < crumb.length - 1 && (
-                      <span aria-hidden className="text-muted-foreground/60">
-                        /
-                      </span>
+                      <span className="text-ink-muted">/</span>
                     )}
                   </span>
                 ))}
               </nav>
             )}
 
-            <h1 className="display-title text-[clamp(2.1rem,4.2vw,3.4rem)] text-foreground">
+            <h1 className="text-[clamp(2.5rem,5vw,4.2rem)] font-semibold tracking-[-0.035em] leading-[1] text-ink-foreground">
               {title}
             </h1>
 
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+            <p className="mt-5 text-base leading-relaxed text-ink-muted max-w-lg">
               {subline}
             </p>
 
             {stats.length > 0 && (
-              <dl className="mt-7 flex flex-wrap gap-x-10 gap-y-4 border-t border-border pt-6">
+              <dl className="mt-8 pt-7 border-t border-ink-border flex flex-wrap gap-x-9 gap-y-4">
                 {stats.map((stat) => (
                   <div key={stat.label} className="min-w-0">
-                    <dd className="stat-value text-[26px]">
+                    <dd className="text-[28px] font-semibold tracking-[-0.02em] tabular-nums text-ink-foreground leading-none">
                       {stat.value}
                       {stat.suffix && (
-                        <span className="ml-0.5 text-sm font-semibold">
+                        <span className="text-primary text-sm ml-0.5 font-semibold">
                           {stat.suffix}
                         </span>
                       )}
@@ -116,24 +101,15 @@ export function ApothekeShopHero({
                 ))}
               </dl>
             )}
-
-            {counter && (
-              <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground tabular-nums">
-                {counter}
-              </p>
-            )}
           </div>
 
-          {/* Rechte Spalte — Featured-Produkt als Ink-Einschub (rotiert) */}
-          {hasFeatured && (
-            <div className="lg:pt-1.5">
+          {/* Right column — Featured Product (rotiert) */}
+          {featured.length > 0 && (
+            <div className="lg:pt-1">
               <FeaturedProductCarousel pool={featured} />
             </div>
           )}
         </div>
-
-        {/* Mess-Lineal als Abschluss des Seitenkopfs */}
-        <div aria-hidden className="tick-rule mt-8 md:mt-10" />
       </div>
     </section>
   );

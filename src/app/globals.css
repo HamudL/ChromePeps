@@ -2,105 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================
- * ChromePeps Designsystem — „Chromatogramm"
- * ------------------------------------------------------------
- * Kaltes Labor-Editorial: kühles Papier, tiefe Tinte, ein einziger
- * entschiedener Akzent in dunklem Viridian (Laborglas, oxidiertes
- * Chrom). Typografie: Fraunces (Serif-Display) gegen Instrument Sans
- * (präzise Grotesk) und IBM Plex Mono (Messdaten). Scharfe Radien,
- * Haarlinien, Mess-Ticks — die Ästhetik eines Analyse-Protokolls,
- * nicht die eines Marketing-Templates.
- * ============================================================ */
-
 @layer base {
   :root {
-    --background: 210 30% 98%;
-    --foreground: 217 30% 10%;
+    /* ChromePeps — Premium Gold/Amber + Dark Slate palette */
+    --background: 40 20% 98%;
+    --foreground: 20 14% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 217 30% 10%;
+    --card-foreground: 20 14% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 217 30% 10%;
+    --popover-foreground: 20 14% 10%;
 
-    /* Viridian — dunkles Laborglas-Grün. Als Fläche mit hellem Text
-       ~7,4:1, als Text auf Papier (--primary-strong) ~9:1. */
-    --primary: 173 75% 22%;
-    --primary-foreground: 180 25% 97%;
-    --primary-strong: 174 85% 16%;
+    --primary: 45 92% 41%;
+    /* WCAG-Fix (Option A): dunkles Ink statt Weiß auf Gold.
+       Weißer Text auf Gold lag bei nur 2,62:1 (1.4.3 AA verfehlt) —
+       dunkles Ink ergibt ~6,7:1 und sieht apotheken-edler aus. Das
+       .dark-Theme nutzt ohnehin schon dunkles primary-foreground. */
+    --primary-foreground: 20 14% 10%;
+    /* Dunkleres Gold für GOLD-TEXT auf hellem Grund (Links, aktive
+       Pills/TOC). Das helle --primary (41% L) als Text ergibt nur
+       ~2,5:1; 30% L ergibt ~4,6:1 (AA). Als bg bleibt --primary. */
+    --primary-strong: 45 92% 30%;
 
-    --secondary: 214 22% 93%;
-    --secondary-foreground: 217 30% 12%;
+    --secondary: 30 10% 92%;
+    --secondary-foreground: 20 14% 10%;
 
-    --muted: 213 22% 95%;
-    /* AA-konform auf --background (~6,4:1) — Captions/Labels bleiben
-       sichtbar de-emphasized. */
-    --muted-foreground: 216 12% 38%;
+    --muted: 30 10% 94%;
+    /* WCAG-AA: bei 44% Lightness gegen --background (#FAF8F5) lag der
+       Kontrast bei 4.32:1 — gerade UNTER 4.5:1 für Normaltext. Auf
+       38% gebumpt (~5.6:1). Sekundärtext (Captions/Labels) bleibt
+       sichtbar de-emphasized, ist aber jetzt AA-konform.
+       AUDIT_REPORT_v3 §6 PR 10. */
+    --muted-foreground: 20 6% 38%;
 
-    /* Mint-Wash — die einzige getönte Hintergrundfläche im hellen Thema. */
-    --accent: 172 32% 92%;
-    --accent-foreground: 174 70% 15%;
+    --accent: 40 20% 90%;
+    --accent-foreground: 20 14% 10%;
 
-    --destructive: 356 70% 44%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Erfolg/Positiv (Gratisversand, eingelöster Promo, „kostenlos"). */
-    --success: 152 60% 28%;
+    /* Erfolg/Positiv-Token (Gratisversand, eingelöster Promo, "kostenlos").
+       Ersetzt verstreute green-600/green-50-Hardcodes; ~4,7:1 auf weiß. */
+    --success: 142 45% 33%;
     --success-foreground: 0 0% 100%;
 
-    --border: 214 20% 88%;
-    --input: 214 20% 84%;
-    --ring: 173 75% 28%;
+    --border: 30 10% 88%;
+    --input: 30 10% 88%;
+    --ring: 45 92% 41%;
 
-    /* Scharfe, technische Radien: lg=4px, md=2px, sm=0. */
-    --radius: 0.25rem;
+    --radius: 0.5rem;
 
-    /* Ink — tiefes, kaltes Nachtblau für bewusste dunkle Einschübe
-       (Hero-Panels, Featured-Karten, Footer). NICHT das .dark-Theme. */
-    --ink: 218 35% 7%;
-    --ink-foreground: 210 24% 93%;
-    --ink-muted: 215 12% 62%;
-    --ink-border: 217 24% 16%;
+    /* Ink palette — für dunkle Akzent-Sections (Apotheke-Hero, Featured
+       Product Card, Terminal-Panels). NICHT das .dark-Theme — die
+       App-weite Light/Dark-Umschaltung bleibt separat; die Ink-Tokens
+       sind nur für bewusst dunkle Einschübe in hellem Kontext. */
+    --ink: 20 14% 4%;
+    --ink-foreground: 40 10% 92%;
+    --ink-muted: 30 6% 55%;
+    --ink-border: 20 10% 18%;
   }
 
   .dark {
-    --background: 218 30% 7%;
-    --foreground: 210 20% 92%;
+    --background: 20 14% 6%;
+    --foreground: 40 10% 92%;
 
-    --card: 218 26% 10%;
-    --card-foreground: 210 20% 92%;
+    --card: 20 12% 9%;
+    --card-foreground: 40 10% 92%;
 
-    --popover: 218 26% 10%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 20 12% 9%;
+    --popover-foreground: 40 10% 92%;
 
-    --primary: 166 58% 45%;
-    --primary-foreground: 218 35% 7%;
-    --primary-strong: 164 60% 64%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 20 14% 6%;
+    /* Auf dunklem Grund ist das helle Gold ohnehin gut lesbar — ein
+       Tick heller als --primary für Text-Links. */
+    --primary-strong: 45 90% 62%;
 
-    --secondary: 217 20% 14%;
-    --secondary-foreground: 210 16% 85%;
+    --secondary: 30 8% 14%;
+    --secondary-foreground: 40 10% 85%;
 
-    --muted: 217 18% 14%;
-    --muted-foreground: 214 10% 62%;
+    --muted: 20 10% 15%;
+    --muted-foreground: 30 6% 55%;
 
-    --accent: 172 28% 15%;
-    --accent-foreground: 168 45% 80%;
+    --accent: 30 8% 17%;
+    --accent-foreground: 40 10% 85%;
 
-    --destructive: 356 65% 56%;
+    --destructive: 0 62% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 45% 48%;
-    --success-foreground: 218 35% 7%;
+    --success: 142 50% 45%;
+    --success-foreground: 20 14% 6%;
 
-    --border: 217 20% 17%;
-    --input: 217 20% 19%;
-    --ring: 166 58% 45%;
-
-    --ink: 218 35% 5%;
-    --ink-foreground: 210 24% 93%;
-    --ink-muted: 215 12% 62%;
-    --ink-border: 217 24% 15%;
+    --border: 20 10% 18%;
+    --input: 20 10% 18%;
+    --ring: 45 93% 47%;
   }
 }
 
@@ -113,57 +109,31 @@
     @apply outline-2 outline-offset-2 outline-ring;
   }
 
-  ::selection {
-    background: hsl(var(--primary) / 0.18);
-  }
-
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "ss01" on;
   }
-}
-
-/* ------------------------------------------------------------
- * Dunkle Oberflächen rescopen die Akzent-Tokens auf helles Mint,
- * damit `text-primary` & Co. auf Ink automatisch lesbar bleiben.
- * Helle Karten INNERHALB einer Ink-Sektion setzen die Tokens
- * zurück (nur im Light-Theme nötig — im Dark-Theme ist bg-card
- * selbst dunkel).
- * ------------------------------------------------------------ */
-.section-ink,
-.section-dark,
-.card-ink {
-  --primary: 166 55% 50%;
-  --primary-strong: 164 60% 66%;
-  --primary-foreground: 218 35% 7%;
-  --ring: 166 55% 50%;
-}
-html:not(.dark) .section-ink .bg-card:not(.card-ink),
-html:not(.dark) .section-dark .bg-card:not(.card-ink) {
-  --primary: 173 75% 22%;
-  --primary-strong: 174 85% 16%;
-  --primary-foreground: 180 25% 97%;
-  --ring: 173 75% 28%;
 }
 
 @layer utilities {
-  /* Dunkle Sektion — für den hell/dunkel-Rhythmus. */
+  /* Dark section — for alternating light/dark rhythm */
   .section-dark {
-    background-color: hsl(218 32% 9%);
-    color: hsl(var(--ink-foreground));
+    background-color: hsl(20 14% 8%);
+    color: hsl(40 10% 92%);
   }
 
-  /* Tiefstes Ink für maximale Kontrast-Einschübe. */
+  /* Tieferes Ink-Dark als .section-dark — für Apotheke-Hero und
+     Featured-Boxes, wo der Kontrast zur hellen Seite maximal sein soll. */
   .section-ink {
     background-color: hsl(var(--ink));
     color: hsl(var(--ink-foreground));
   }
 
-  /* Technisches Millimeter-Raster für dunkle Media-/Hero-Flächen. */
+  /* Apotheke-Grid — feines 40px-Grid für Hero-/Media-Hintergründe,
+     typisches Lab-/Formular-Muster. */
   .apo-grid {
     background-image:
-      repeating-linear-gradient(0deg, transparent 0 40px, hsl(210 40% 70% / 0.05) 40px 41px),
-      repeating-linear-gradient(90deg, transparent 0 40px, hsl(210 40% 70% / 0.05) 40px 41px);
+      repeating-linear-gradient(0deg, transparent 0 40px, hsl(45 50% 50% / 0.04) 40px 41px),
+      repeating-linear-gradient(90deg, transparent 0 40px, hsl(45 50% 50% / 0.04) 40px 41px);
   }
   .apo-grid-light {
     background-image:
@@ -172,43 +142,51 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
     opacity: 0.4;
   }
 
-  /* Wortmarken-Verlauf — kaltes, poliertes Chrom. Statisch (keine
-     Endlos-Animation): die Marke steht, sie zappelt nicht. */
   .chrome-text {
     background: linear-gradient(
-      115deg,
-      hsl(216 20% 28%) 0%,
-      hsl(213 16% 52%) 22%,
-      hsl(210 24% 78%) 38%,
-      hsl(214 14% 44%) 55%,
-      hsl(210 22% 70%) 72%,
-      hsl(216 20% 30%) 100%
+      90deg,
+      hsl(40, 15%, 35%) 0%,
+      hsl(45, 30%, 55%) 15%,
+      hsl(40, 20%, 72%) 30%,
+      hsl(45, 25%, 42%) 45%,
+      hsl(40, 30%, 68%) 60%,
+      hsl(45, 20%, 50%) 75%,
+      hsl(40, 15%, 35%) 100%
     );
+    background-size: 200% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: chromeFlow 6s linear infinite;
   }
 
   .dark .chrome-text {
     background: linear-gradient(
-      115deg,
-      hsl(212 18% 58%) 0%,
-      hsl(210 26% 82%) 24%,
-      hsl(208 32% 94%) 40%,
-      hsl(212 18% 64%) 58%,
-      hsl(208 28% 88%) 76%,
-      hsl(212 18% 60%) 100%
+      90deg,
+      hsl(40, 15%, 50%) 0%,
+      hsl(45, 25%, 68%) 15%,
+      hsl(40, 30%, 85%) 30%,
+      hsl(45, 20%, 58%) 45%,
+      hsl(40, 25%, 80%) 60%,
+      hsl(45, 20%, 65%) 75%,
+      hsl(40, 15%, 50%) 100%
     );
+    background-size: 200% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: chromeFlow 6s linear infinite;
   }
 
-  /* Feines Punktraster für helle Flächen. */
+  @keyframes chromeFlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: -200% 50%; }
+  }
+
   .subtle-grid {
     background-image: radial-gradient(
       circle,
-      hsl(215 20% 70% / 0.35) 1px,
+      hsl(40, 15%, 78%, 0.3) 1px,
       transparent 1px
     );
     background-size: 24px 24px;
@@ -217,26 +195,52 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   .dark .subtle-grid {
     background-image: radial-gradient(
       circle,
-      hsl(214 16% 30% / 0.35) 1px,
+      hsl(40, 10%, 25%, 0.3) 1px,
       transparent 1px
     );
     background-size: 24px 24px;
   }
 
-  /* Hero-Fläche: kein driftendes Orb-Theater mehr — eine einzige,
-     ruhige Viridian-Tönung am oberen Rand. */
+  /* Hero ambient glow — slow drifting gradient orbs */
   .hero-ambient {
     position: relative;
     overflow: hidden;
   }
-  .hero-ambient::before {
+  .hero-ambient::before,
+  .hero-ambient::after {
     content: '';
     position: absolute;
-    inset: 0;
+    border-radius: 50%;
     pointer-events: none;
-    background:
-      radial-gradient(900px 420px at 18% -10%, hsl(var(--primary) / 0.07), transparent 70%),
-      radial-gradient(700px 360px at 92% 8%, hsl(214 30% 60% / 0.07), transparent 70%);
+    filter: blur(80px);
+    opacity: 0.07;
+  }
+  .hero-ambient::before {
+    width: 500px;
+    height: 500px;
+    background: hsl(45 80% 50%);
+    top: -150px;
+    right: -100px;
+    animation: ambientDrift1 20s ease-in-out infinite;
+  }
+  .hero-ambient::after {
+    width: 400px;
+    height: 400px;
+    background: hsl(30 40% 45%);
+    bottom: -100px;
+    left: -80px;
+    animation: ambientDrift2 25s ease-in-out infinite;
+  }
+
+  @keyframes ambientDrift1 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(-40px, 30px); }
+    66% { transform: translate(20px, -20px); }
+  }
+  @keyframes ambientDrift2 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(30px, -25px); }
+    66% { transform: translate(-20px, 15px); }
   }
 
   @keyframes fadeIn {
@@ -248,10 +252,16 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
     animation: fadeIn 0.3s ease-out both;
   }
 
-  /* ===== Reveal-Up ========================================================
-   * Reines CSS + ein globaler IntersectionObserver (RevealController):
-   * Elemente mit `reveal-up` bekommen `.in` sobald sie in den Viewport
-   * rollen. Above-the-fold wird sofort gesetzt. */
+  /* ===== Reveal-Up (FadeUp-Replacement) ====================================
+   * Ersatz für die alte Client-Component-basierte FadeUp. Die ContenT-
+   * Komponente rendert reines HTML mit Klasse `reveal-up`; ein einziger
+   * globaler IntersectionObserver (siehe RevealController) setzt `.in` auf
+   * Elemente sobald sie in den Viewport rollen. Above-the-fold wird sofort
+   * gesetzt, ohne Wait auf Scroll.
+   *
+   * Vorher: 16+ FadeUp-Instanzen pro Homepage = 16 Client-Components, 16
+   * useEffects, 16 IntersectionObserver, 16 setTimeouts. Jetzt: 0
+   * Hydration-Cost für die Animation selbst, 1 globaler IO. */
   .reveal-up {
     opacity: 0;
     transform: translateY(24px);
@@ -271,10 +281,56 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
       transition: none;
     }
   }
+
+  /* ===== Animations Demo Page ===== */
+  @keyframes animDemoDrift1 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(40px, -30px); }
+    66% { transform: translate(-20px, 20px); }
+  }
+  @keyframes animDemoDrift2 {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(-30px, 20px); }
+    66% { transform: translate(25px, -15px); }
+  }
+  @keyframes animDemoDrift3 {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, -30px); }
+  }
+  @keyframes animDemoHelixSpin {
+    from { transform: rotateY(0deg); }
+    to   { transform: rotateY(360deg); }
+  }
+  @keyframes animDemoGrainFlicker {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-3%, 2%); }
+    50% { transform: translate(2%, -1%); }
+    75% { transform: translate(-1%, 3%); }
+  }
+  @keyframes animDemoShimmerSweep {
+    0%   { transform: translateX(0) skewX(-12deg); }
+    100% { transform: translateX(600%) skewX(-12deg); }
+  }
+  .anim-demo-grain {
+    animation: animDemoGrainFlicker 1.6s steps(4) infinite;
+  }
+  .anim-demo-shimmer-btn .anim-demo-shimmer-sweep {
+    transform: translateX(0) skewX(-12deg);
+  }
+  .anim-demo-shimmer-btn:hover .anim-demo-shimmer-sweep {
+    animation: animDemoShimmerSweep 900ms ease-out;
+  }
 }
 
 /* ============================================================
  * Horizontale Scroll-Container (Filter-Bar / Kategorie-Pills)
+ * ------------------------------------------------------------
+ * `scrollbar-none` wurde referenziert, war aber nie definiert →
+ * die native (im Dark-Theme helle) Scrollleiste schlug durch.
+ * Hier die korrekte cross-browser Definition (Firefox +
+ * WebKit/Chromium/Edge) plus die Filter-Pill-Variante mit
+ * weichem Rand-Fade (Overflow-Hinweis) und dezentem neutralem
+ * Thumb. Farben über Theme-Tokens → funktioniert in Light & Dark.
  * ============================================================ */
 
 /* Scrollleiste vollständig ausblenden — Scrollen bleibt möglich. */
@@ -290,6 +346,8 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
 
 /* Rand-Fade + dezenter neutraler Thumb (Kategorie-Pills). */
 .scrollbar-fade {
+  /* Rand-Fade: nur horizontal (to right), alpha-basiert (#000) →
+     blendet links/rechts aus, beschneidet die Pills oben/unten nicht. */
   -webkit-mask-image: linear-gradient(
     to right,
     transparent 0,
@@ -305,9 +363,11 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
     transparent 100%
   );
   -webkit-overflow-scrolling: touch;
+  /* Firefox: dünne Leiste, neutraler Thumb auf transparenter Spur. */
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--border)) transparent;
 }
+/* Chromium / Safari / Edge — horizontale Leiste, dünn & neutral. */
 .scrollbar-fade::-webkit-scrollbar {
   height: 5px;
   background: transparent;
@@ -334,7 +394,13 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
 
 /* ============================================================
  * Progressive-Blur-Übergang zwischen hellen & dunklen Sektionen
- * (farbagnostisch, nur backdrop-filter — kein Layout-Shift).
+ * ------------------------------------------------------------
+ * Sitzt als Geschwister-Element ZWISCHEN zwei Sektionen, überlappt
+ * beide via negativer Margins + z-index und zeichnet die harte
+ * Farbkante in einen weichen, gestaffelten Frost (3 Blur-Ebenen).
+ * Nutzt nur backdrop-filter (keine Farben) → funktioniert für
+ * Light→Dark UND Dark→Light gleichermaßen, ohne Layout-Shift
+ * (height + negative Margin heben sich auf).
  * ============================================================ */
 .section-blur {
   position: relative;
@@ -346,6 +412,8 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   overflow: hidden;
   -webkit-backdrop-filter: blur(2px);
           backdrop-filter: blur(2px);
+  /* Blur scharf auf die Farbkante (Mitte) konzentriert; Ränder klar →
+     Text in den angrenzenden Sektionen (außerhalb ~±42px) bleibt scharf. */
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 60%, transparent);
           mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 60%, transparent);
 }
@@ -368,7 +436,10 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
           mask-image: linear-gradient(to bottom, transparent 42%, #000 50%, transparent 58%);
 }
 
-/* Footer-Variante: ragt nur ~18px nach oben, weit nach unten. */
+/* Footer-Variante: asymmetrisch — ragt nur ~18px nach OBEN in den Seiten-
+   Inhalt (weniger als jedes Sektions-Polster → blurrt nie Text) und reicht
+   weit nach UNTEN in den (großzügig gepolsterten) Footer. Für den globalen
+   Übergang letzte Sektion → Footer in layout.tsx. */
 .section-blur-footer {
   position: relative;
   width: 100%;
@@ -402,8 +473,15 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
 }
 
 /* ============================================================
- * Redaktionelle Komponenten-Klassen (Wissen, Shop, global)
- * ============================================================ */
+ * WISSEN — Komponenten-Klassen für /wissen-Routes
+ * ============================================================
+ * Aus design/wissen/styles.css portiert (Mockup-Lieferung von Claude
+ * Design). Globale Tokens (--ink*, .section-ink, .apo-grid, .subtle-grid)
+ * sind oben bereits definiert. Hier nur die Klassen die der Wissens-
+ * Bereich exklusiv nutzt: Mono-Labels, Buttons im redaktionellen Stil,
+ * Article-Body-Typo (.prose, da @tailwindcss/typography nicht installiert
+ * ist), Glossar, Pagination, Cover-Placeholder-Variants.
+ */
 
 .mono-label {
   font-family: var(--font-mono);
@@ -421,8 +499,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   font-weight: 700;
 }
 
-/* Akzent-Underline-Animation für Titel/Links auf Hover.
-   (Historischer Name aus dem Gold-Design — zeichnet jetzt Viridian.) */
+/* Gold-Underline-Animation für Article-Titles auf Hover */
 .gold-underline {
   background-image: linear-gradient(hsl(var(--primary)), hsl(var(--primary)));
   background-size: 0% 1px;
@@ -435,20 +512,19 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   background-size: 100% 1px;
 }
 
-/* Buttons im redaktionellen Stil (Body-CTAs außerhalb von shadcn).
-   btn-gold trägt aus historischen Gründen den Namen — rendert den
-   primären Viridian-CTA. */
+/* Buttons im redaktionellen Stil (NICHT shadcn-Button — die Mockup-
+ * Designs nutzen eigene Hierarchie für Body-CTAs). */
 .btn-gold {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+  color: hsl(var(--ink));
   font-weight: 600;
   font-size: 14px;
   padding: 11px 22px;
   border: 1px solid hsl(var(--primary));
-  border-radius: 2px;
+  border-radius: 4px;
   cursor: pointer;
   transition:
     background-color 180ms,
@@ -456,7 +532,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   letter-spacing: 0.005em;
 }
 .btn-gold:hover {
-  background: hsl(174 80% 17%);
+  background: hsl(45 92% 36%);
 }
 .btn-gold:active {
   transform: translateY(1px);
@@ -471,8 +547,8 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   font-weight: 500;
   font-size: 14px;
   padding: 10px 18px;
-  border: 1px solid hsl(var(--input));
-  border-radius: 2px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
   cursor: pointer;
   transition:
     border-color 180ms,
@@ -480,7 +556,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
 }
 .btn-ghost:hover {
   border-color: hsl(var(--foreground));
-  background: hsl(var(--secondary));
+  background: hsl(var(--accent));
 }
 
 .btn-ink {
@@ -499,14 +575,14 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   cursor: pointer;
 }
 .btn-ink:hover {
-  color: hsl(var(--primary));
+  color: hsl(var(--primary-strong));
 }
 
 .input-search {
   width: 100%;
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--input));
-  border-radius: 2px;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
   padding: 14px 16px 14px 46px;
   font-size: 15px;
   font-family: var(--font-sans);
@@ -518,10 +594,10 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
 .input-search:focus {
   outline: none;
   border-color: hsl(var(--primary));
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.14);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
 }
 
-/* Pill: Kategorie-Filter — eckiges Specimen-Tag statt runder Pille. */
+/* Pill: Kategorie-Filter im Hub */
 .pill {
   display: inline-flex;
   align-items: center;
@@ -531,7 +607,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 7px 14px;
-  border-radius: 2px;
+  border-radius: 999px;
   border: 1px solid hsl(var(--border));
   background: hsl(var(--card));
   color: hsl(var(--foreground));
@@ -562,7 +638,8 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   transform: translateY(-3px);
 }
 
-/* Cover-Placeholder — kühle Mess-Raster-Varianten statt Gold-Nebel. */
+/* Cover-Placeholder — wenn kein Cover-Image hinterlegt ist, render Glyph
+ * mit dezent-getöntem Background. Sechs Varianten + dark-Variante. */
 .cover-ph {
   position: relative;
   background: hsl(var(--card));
@@ -573,59 +650,175 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 30% 50%, hsl(var(--primary) / 0.08), transparent 50%),
-    radial-gradient(circle at 70% 60%, hsl(216 30% 40% / 0.08), transparent 50%),
-    repeating-linear-gradient(0deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px),
-    repeating-linear-gradient(90deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px);
+    radial-gradient(
+      circle at 30% 50%,
+      hsl(45 50% 50% / 0.1),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 70% 60%,
+      hsl(20 30% 30% / 0.1),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.025) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.025) 24px 24.5px
+    );
 }
 .cover-ph.v1::before {
   background-image:
-    radial-gradient(circle at 30% 40%, hsl(var(--primary) / 0.14), transparent 55%),
-    radial-gradient(circle at 70% 70%, hsl(216 30% 30% / 0.08), transparent 50%),
-    repeating-linear-gradient(0deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px),
-    repeating-linear-gradient(90deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px);
+    radial-gradient(
+      circle at 30% 40%,
+      hsl(45 60% 60% / 0.18),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 70% 70%,
+      hsl(20 30% 25% / 0.1),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    );
 }
 .cover-ph.v2::before {
   background-image:
-    radial-gradient(circle at 70% 30%, hsl(206 40% 50% / 0.13), transparent 55%),
-    radial-gradient(circle at 20% 80%, hsl(var(--primary) / 0.07), transparent 50%),
-    repeating-linear-gradient(0deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px),
-    repeating-linear-gradient(90deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px);
+    radial-gradient(
+      circle at 70% 30%,
+      hsl(200 30% 50% / 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 20% 80%,
+      hsl(45 40% 40% / 0.08),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    );
 }
 .cover-ph.v3::before {
   background-image:
-    radial-gradient(circle at 50% 50%, hsl(218 30% 14% / 0.16), transparent 55%),
-    repeating-linear-gradient(0deg, transparent 0 24px, hsl(217 30% 10% / 0.04) 24px 24.5px),
-    repeating-linear-gradient(90deg, transparent 0 24px, hsl(217 30% 10% / 0.04) 24px 24.5px);
+    radial-gradient(
+      circle at 50% 50%,
+      hsl(20 14% 12% / 0.18),
+      transparent 55%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.04) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.04) 24px 24.5px
+    );
 }
 .cover-ph.v4::before {
   background-image:
-    radial-gradient(circle at 80% 30%, hsl(174 50% 35% / 0.15), transparent 50%),
-    radial-gradient(circle at 25% 65%, hsl(222 35% 40% / 0.08), transparent 50%),
-    repeating-linear-gradient(0deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px),
-    repeating-linear-gradient(90deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px);
+    radial-gradient(
+      circle at 80% 30%,
+      hsl(45 70% 55% / 0.18),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 25% 65%,
+      hsl(0 30% 35% / 0.08),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    );
 }
 .cover-ph.v5::before {
   background-image:
-    radial-gradient(circle at 40% 60%, hsl(152 35% 35% / 0.1), transparent 55%),
-    radial-gradient(circle at 80% 20%, hsl(206 35% 45% / 0.1), transparent 50%),
-    repeating-linear-gradient(0deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px),
-    repeating-linear-gradient(90deg, transparent 0 24px, hsl(217 30% 10% / 0.03) 24px 24.5px);
+    radial-gradient(
+      circle at 40% 60%,
+      hsl(120 20% 35% / 0.1),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      hsl(45 50% 50% / 0.1),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.03) 24px 24.5px
+    );
 }
 .cover-ph.v6::before {
   background-image:
-    radial-gradient(circle at 60% 60%, hsl(190 35% 35% / 0.13), transparent 55%),
-    repeating-linear-gradient(0deg, transparent 0 24px, hsl(217 30% 10% / 0.04) 24px 24.5px),
-    repeating-linear-gradient(90deg, transparent 0 24px, hsl(217 30% 10% / 0.04) 24px 24.5px);
+    radial-gradient(
+      circle at 60% 60%,
+      hsl(30 50% 35% / 0.14),
+      transparent 55%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.04) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 0% / 0.04) 24px 24.5px
+    );
 }
 .cover-ph.dark {
   background-color: hsl(var(--ink));
 }
 .cover-ph.dark::before {
   background-image:
-    radial-gradient(circle at 30% 50%, hsl(166 55% 45% / 0.16), transparent 50%),
-    repeating-linear-gradient(0deg, transparent 0 24px, hsl(0 0% 100% / 0.04) 24px 24.5px),
-    repeating-linear-gradient(90deg, transparent 0 24px, hsl(0 0% 100% / 0.04) 24px 24.5px);
+    radial-gradient(
+      circle at 30% 50%,
+      hsl(45 60% 50% / 0.18),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24px,
+      hsl(0 0% 100% / 0.04) 24px 24.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 24px,
+      hsl(0 0% 100% / 0.04) 24px 24.5px
+    );
 }
 .cover-ph .glyph {
   position: absolute;
@@ -633,7 +826,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: hsl(218 30% 14% / 0.35);
+  color: hsl(20 14% 14% / 0.35);
 }
 .cover-ph.dark .glyph {
   color: hsl(var(--ink-foreground) / 0.5);
@@ -693,7 +886,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  border-radius: 3px;
   transition: all 140ms;
 }
 .letter-link:hover {
@@ -701,7 +894,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   color: hsl(var(--foreground));
 }
 .letter-link.active {
-  color: hsl(var(--primary-foreground));
+  color: hsl(var(--ink));
   background: hsl(var(--primary));
 }
 .letter-link.disabled {
@@ -757,7 +950,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 500;
-  border-radius: 2px;
+  border-radius: 3px;
   color: hsl(var(--muted-foreground));
   transition: all 160ms;
   cursor: pointer;
@@ -768,7 +961,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
 }
 .pagination-num.active {
   background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+  color: hsl(var(--ink));
   font-weight: 600;
 }
 
@@ -796,10 +989,10 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   margin-bottom: 4px;
 }
 .callout-info {
-  border-color: hsl(216 25% 45%);
+  border-color: var(--chrome-700, #58657e);
 }
 .callout-info strong.callout-title {
-  color: hsl(216 25% 38%);
+  color: var(--chrome-700, #58657e);
 }
 .callout-note {
   border-color: hsl(var(--primary));
@@ -809,16 +1002,16 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   color: hsl(var(--primary-strong));
 }
 .callout-warn {
-  border-color: hsl(356 60% 45%);
+  border-color: hsl(20 70% 45%);
   background: hsl(var(--muted));
 }
 .callout-warn strong.callout-title {
-  color: hsl(356 60% 38%);
+  color: hsl(20 70% 38%);
 }
 
-/* Article-Body — eigene scoped .prose-Klasse (kein
- * @tailwindcss/typography). Fraunces bringt echte Kursive mit —
- * Zitate und <em> dürfen wieder kursiv sein. */
+/* Article-Body — typografische States. NICHT @tailwindcss/typography
+ * (nicht installiert), sondern eigene scoped .prose-Klasse die exakt
+ * der Mockup-Typografie folgt. */
 .prose {
   font-family: var(--font-sans);
   color: hsl(var(--foreground));
@@ -828,9 +1021,9 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
 .prose h2 {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 34px;
+  font-size: 32px;
   letter-spacing: -0.01em;
-  line-height: 1.15;
+  line-height: 1.18;
   margin: 56px 0 16px;
   scroll-margin-top: 96px;
 }
@@ -872,7 +1065,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   transition: color 200ms;
 }
 .prose a:hover {
-  color: hsl(var(--primary-strong));
+  color: hsl(var(--primary));
 }
 .prose ul,
 .prose ol {
@@ -887,10 +1080,10 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   margin: 8px 0;
 }
 .prose ul li::before {
-  content: "—";
+  content: "#";
   position: absolute;
   left: 0;
-  top: 0;
+  top: 0.05em;
   font-family: var(--font-mono);
   font-size: 13px;
   color: hsl(var(--primary));
@@ -918,7 +1111,9 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   padding: 4px 0 4px 22px;
   border-left: 2px solid hsl(var(--primary));
   font-family: var(--font-display);
-  font-style: italic;
+  /* kein italic — Soft-Bio-Pharma-Stack hat keinen italic-Cut.
+     Display-Font (Comfortaa) + dezente Akzent-Farbe genügt. */
+  font-style: normal;
   font-size: 22px;
   line-height: 1.45;
   color: hsl(var(--foreground));
@@ -942,7 +1137,7 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   font-size: 0.86em;
   background: hsl(var(--muted));
   padding: 1px 6px;
-  border-radius: 2px;
+  border-radius: 3px;
   border: 1px solid hsl(var(--border));
   color: hsl(var(--foreground));
 }
@@ -1015,18 +1210,27 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
 .prose figcaption {
   margin-top: 10px;
   font-family: var(--font-mono);
+  /* kein italic — Soft-Bio-Pharma. Mono-Font + muted-Color reichen. */
   font-style: normal;
   font-size: 12px;
   letter-spacing: 0.04em;
   color: hsl(var(--muted-foreground));
   line-height: 1.5;
 }
+/* `*emphasis*` in Markdown wird zu <em>. Browser-Default ist italic,
+   das wollen wir aber komplett aus der Site raus haben. Ersatz:
+   medium-Weight statt italic — semantische Hervorhebung bleibt
+   sichtbar, ohne Soft-Bio-Pharma-Stack zu brechen. */
 .prose em,
 .prose i {
-  font-style: italic;
+  font-style: normal;
+  font-weight: 500;
 }
 
-/* FAQ-Answer-Markdown — kompaktere Variante von .prose. */
+/* FAQ-Answer-Markdown — kompaktere Variante von .prose, scoped auf
+ * die FAQ-Detail-Boxen. ReactMarkdown rendert P/UL/OL/A/STRONG/EM/CODE;
+ * die Defaults für muted-foreground-Text reichen nicht, weil Listen
+ * dann ohne Marker erscheinen würden. */
 .faq-answer p {
   margin: 0 0 8px;
 }
@@ -1054,14 +1258,14 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   transition: color 200ms;
 }
 .faq-answer a:hover {
-  color: hsl(var(--primary-strong));
+  color: hsl(var(--primary));
 }
 .faq-answer code {
   font-family: var(--font-mono);
   font-size: 0.86em;
   background: hsl(var(--muted));
   padding: 1px 5px;
-  border-radius: 2px;
+  border-radius: 3px;
   border: 1px solid hsl(var(--border));
   color: hsl(var(--foreground));
 }
@@ -1072,7 +1276,15 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
 
 /* ============================================================
  * Globaler prefers-reduced-motion Catch-All
- * ============================================================ */
+ * ------------------------------------------------------------
+ * Die JS-Animationen (3D-Logo, PeptideNetwork, Tilt, RevealController)
+ * prüfen reduced-motion bereits einzeln. Dieser Block fängt zusätzlich
+ * die rein per CSS laufenden Endlos-Animationen ab — vor allem
+ * .chrome-text (chromeFlow infinite auf jedem Logo/Heading),
+ * .hero-ambient-Drift und .animate-fade-in — damit Nutzer mit aktivierter
+ * OS-Einstellung "Bewegung reduzieren" keine Dauerbewegung mehr sehen.
+ * Greift ausschließlich bei gesetzter Einstellung; im Normalfall null
+ * Effekt. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1084,25 +1296,31 @@ html:not(.dark) .section-dark .bg-card:not(.card-ink) {
   }
 }
 
-/* /ueber-uns blendet den hellen RUO-Hinweisbanner NUR auf dieser Route
- * aus (dunkler Hero). */
+/* /ueber-uns (cinematische Brand-Seite) blendet den hellen RUO-Hinweisbanner
+ * aus dem (shop)-Layout NUR auf dieser Route aus — über dem dunklen Hero wirkt
+ * der Streifen deplatziert. Auf allen anderen Shop-Seiten bleibt er als
+ * Pflicht-Disclaimer sichtbar. Der :has()-Guard greift ausschließlich, wenn
+ * die /ueber-uns-Seite (data-ueber-uns) im DOM ist. */
 body:has([data-ueber-uns]) [aria-label="Forschungshinweis"] {
   display: none;
 }
 
 /* ============================================================
- * DESIGN-PRIMITIVES — „Chromatogramm", site-weit
+ * REDESIGN-PRIMITIVES — "Cinematic Lab", site-weit
  * ------------------------------------------------------------
- * Wiederverwendbare Bausteine der Protokoll-Sprache: Kicker mit
- * Mess-Strich, Haarlinien mit Ticks, Display-Titel in Fraunces,
- * Stat-Readouts, Specimen-Tags. Alles Token-basiert.
+ * Hebt die zuvor in /ueber-uns isolierten Stilmittel (Film-Grain,
+ * Gold-Akzent-Kicker, Console-Stats) auf globale, wiederverwendbare
+ * Utilities — damit Checkout, Auth, Dashboard & Co. dieselbe
+ * Premium-Sprache tragen wie die Brand-Referenzseite. Alles
+ * Token-basiert (Light/Dark/Ink) — keine Hardcodes.
  * ============================================================ */
 
-/* Sektions-Kicker: Mono-Label mit vorangestelltem Mess-Strich. */
+/* Sektions-Kicker: Mono-Label mit pulsierendem Gold-Punkt. Das
+   wiederkehrende "Eyebrow"-Element über Sektions-Headlines. */
 .eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.6rem;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
@@ -1112,31 +1330,33 @@ body:has([data-ueber-uns]) [aria-label="Forschungshinweis"] {
 }
 .eyebrow::before {
   content: "";
-  width: 18px;
-  height: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: hsl(var(--primary));
-  box-shadow: 0 3px 0 hsl(var(--primary) / 0.35);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.16);
 }
 .section-ink .eyebrow,
 .card-ink .eyebrow {
   color: hsl(var(--primary));
 }
 
-/* Sehr dezente Papier-Textur für dunkle Flächen (Eltern braucht
-   position:relative). Deutlich zurückgenommen ggü. dem alten Grain. */
+/* Film-Grain als site-weite Overlay-Utility (Eltern muss position
+   haben). Dezente Textur gegen den "flachen AI-Slop"-Look. */
 .grain-overlay::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.035;
+  opacity: 0.05;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 180px 180px;
 }
 
-/* Shine-Sweep für den Primär-CTA — läuft EINMAL beim Hover. */
+/* Shine-Sweep für den Gold-CTA (button variant="gold"). Läuft EINMAL
+   beim Hover über die Fläche — kein Dauer-Loop. */
 .btn-shine {
   position: relative;
   overflow: hidden;
@@ -1151,7 +1371,7 @@ body:has([data-ueber-uns]) [aria-label="Forschungshinweis"] {
   background: linear-gradient(
     100deg,
     transparent,
-    hsl(0 0% 100% / 0.25),
+    hsl(0 0% 100% / 0.35),
     transparent
   );
   transform: skewX(-18deg);
@@ -1166,50 +1386,24 @@ body:has([data-ueber-uns]) [aria-label="Forschungshinweis"] {
   100% { left: 130%; opacity: 0; }
 }
 
-/* Akzent-Haarlinie als Sektions-Trenner. (Historischer Name —
-   zeichnet jetzt eine Viridian-Linie, links verankert statt
-   symmetrisch verlaufend.) */
+/* Gold-Haarlinie als Sektions-/Karten-Trenner. Verläuft von
+   transparent zu Gold zu transparent — editorialer als border-t. */
 .rule-gold {
   height: 1px;
   border: 0;
   background: linear-gradient(
     90deg,
-    hsl(var(--primary) / 0.55),
-    hsl(var(--border)) 35%,
-    hsl(var(--border)) 100%
+    transparent,
+    hsl(var(--primary) / 0.5),
+    transparent
   );
 }
 
-/* Mess-Lineal: Haarlinie mit Ticks alle 24px — Signatur-Detail der
-   Protokoll-Sprache für Sektionsköpfe. */
-.tick-rule {
-  height: 7px;
-  background-image:
-    linear-gradient(to right, hsl(var(--border)), hsl(var(--border))),
-    repeating-linear-gradient(
-      90deg,
-      hsl(var(--muted-foreground) / 0.45) 0 1px,
-      transparent 1px 24px
-    );
-  background-size: 100% 1px, 100% 7px;
-  background-position: bottom left, bottom left;
-  background-repeat: no-repeat, repeat-x;
-}
-.section-ink .tick-rule,
-.card-ink .tick-rule {
-  background-image:
-    linear-gradient(to right, hsl(var(--ink-border)), hsl(var(--ink-border))),
-    repeating-linear-gradient(
-      90deg,
-      hsl(var(--ink-muted) / 0.5) 0 1px,
-      transparent 1px 24px
-    );
-}
-
-/* Console-Stat: große Display-Zahl + Mono-Key. */
+/* Console-Stat: große Display-Zahl + Mono-Key. Für Metrik-Kacheln
+   (Homepage, Checkout-Trust, Dashboard-Überblick). */
 .stat-value {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
   line-height: 1;
@@ -1231,7 +1425,8 @@ body:has([data-ueber-uns]) [aria-label="Forschungshinweis"] {
   color: hsl(var(--ink-muted));
 }
 
-/* Mono-Label für Formularfelder. */
+/* Mono-Prefix-Label für Formularfelder ([ VERSANDADRESSE ] etc.) —
+   bringt Labor-Präzision in die sonst generischen Formulare. */
 .field-label {
   display: block;
   font-family: var(--font-mono);
@@ -1243,52 +1438,34 @@ body:has([data-ueber-uns]) [aria-label="Forschungshinweis"] {
   margin-bottom: 0.5rem;
 }
 
-/* Konsistenter vertikaler Sektions-Rhythmus. */
+/* Konsistenter vertikaler Sektions-Rhythmus. Ein Sprachstandard statt
+   überall handgesetzter py-Werte. */
 .section-pad {
   padding-top: clamp(3.5rem, 8vw, 7rem);
   padding-bottom: clamp(3.5rem, 8vw, 7rem);
 }
 
-/* Headline-Umbruch ausbalancieren. */
+/* Headline-Umbruch ausbalancieren (verhindert "Waisen"-Wörter). */
 .text-balance {
   text-wrap: balance;
 }
 
-/* Display-Headline-Standard: Fraunces, eng, ausbalanciert. */
+/* Display-Headline-Standard: Comfortaa, eng, ausbalanciert. */
 .display-title {
   font-family: var(--font-display);
-  font-weight: 500;
-  letter-spacing: -0.015em;
-  line-height: 1.06;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
   text-wrap: balance;
 }
-.display-title em,
-.display-title i {
-  font-style: italic;
-  font-weight: 450;
-}
 
-/* Ghost-Index: riesige, fast unsichtbare Ordnungszahl (Sektionen,
-   Prozess-Schritte). */
-.index-ghost {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  color: hsl(var(--foreground) / 0.08);
-  user-select: none;
-}
-.section-ink .index-ghost,
-.card-ink .index-ghost {
-  color: hsl(var(--ink-foreground) / 0.09);
-}
-
-/* Loading-Shimmer für Skeletons (kühl statt Gold). */
+/* Gold-Loading-Shimmer für Skeletons (ersetzt das graue Default-Pulse
+   auf Marken-Flächen). */
 .shimmer-gold {
   background: linear-gradient(
     90deg,
     hsl(var(--muted)) 25%,
-    hsl(var(--primary) / 0.08) 37%,
+    hsl(var(--primary) / 0.12) 37%,
     hsl(var(--muted)) 63%
   );
   background-size: 400% 100%;
@@ -1299,14 +1476,14 @@ body:has([data-ueber-uns]) [aria-label="Forschungshinweis"] {
   100% { background-position: 0 50%; }
 }
 
-/* Specimen-Tag: kleines Vertrauenssignal (Icon + Mono-Text) —
-   eckig, wie ein Proben-Etikett. */
+/* Trust-Pille: kleines Vertrauenssignal (Icon + Mono-Text), für
+   Checkout-Header, PDP, Footer. */
 .trust-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.3rem 0.7rem;
-  border-radius: 2px;
+  border-radius: 999px;
   border: 1px solid hsl(var(--border));
   background: hsl(var(--card));
   font-family: var(--font-mono);

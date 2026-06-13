@@ -85,7 +85,7 @@ export default function ResetPasswordPage({
     <Card className="w-full max-w-md shadow-lg">
       <h1 className="sr-only">Neues Passwort setzen</h1>
       <CardHeader className="space-y-2">
-        <span className="eyebrow">NEUES PASSWORT</span>
+        <span className="eyebrow">[ NEUES PASSWORT ]</span>
         <CardTitle className="display-title text-3xl">Neues Passwort</CardTitle>
         <CardDescription>
           W&auml;hlen Sie ein starkes Passwort f&uuml;r Ihr Konto.
@@ -105,7 +105,7 @@ export default function ResetPasswordPage({
 
           <div className="space-y-2">
             <Label htmlFor="password" className="field-label">
-              Neues Passwort
+              [ Neues Passwort ]
             </Label>
             <Input
               id="password"
@@ -124,7 +124,7 @@ export default function ResetPasswordPage({
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword" className="field-label">
-              Passwort best&auml;tigen
+              [ Passwort best&auml;tigen ]
             </Label>
             <Input
               id="confirmPassword"

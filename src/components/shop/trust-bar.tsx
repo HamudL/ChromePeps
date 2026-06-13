@@ -1,17 +1,17 @@
 "use client";
 
 /**
- * Trust Bar — interaktive Specimen-Tags mit Evidence-Tooltips.
+ * Idea 04 — Trust Bar with evidence tooltips
  *
- * Eine Reihe eckiger Proben-Etiketten (Mono-Typo, 2px-Radius) auf der
- * Ink-Fläche im Anschluss an "Warum ChromePeps?". Jedes Tag ist
- * hover-/tap-bar und zeigt einen kurzen, konkreten Beleg statt einer
- * Floskel.
+ * Replaces the static Trust Bar on the homepage (grid of 4 icon+label cells)
+ * with an interactive pill row. Each pill is hoverable/tappable and reveals
+ * a short, specific piece of evidence. The bar lives inside a .section-dark
+ * container — we keep that context intact, only the pill styling is new.
  *
  * Accessibility:
- * - Jedes Tag ist ein <button> mit aria-describedby auf seinen Tooltip.
- * - Tooltip erscheint bei Hover, Fokus und Tap.
- * - ESC schließt offene Tooltips; Klick außerhalb ebenfalls.
+ * - Each pill is a <button> with aria-describedby pointing to its tooltip.
+ * - Tooltip appears on hover, focus, and tap.
+ * - ESC closes any open tooltip; click outside also closes.
  */
 
 import { useState, useRef, useEffect } from "react";
@@ -35,7 +35,7 @@ const PILLS: Pill[] = [
   },
   {
     icon: Truck,
-    label: "Gratis Versand ab 200 €",
+    label: "Gratis Versand ab 200\u00A0€",
     tipTitle: "DHL · 24 bis 48 h",
     tipBody:
       "Versand aus Deutschland werktags bis 15 Uhr am selben Tag. Ø Zustellzeit DE 1,3 Werktage.",
@@ -77,22 +77,16 @@ export function TrustBar() {
 
   return (
     // border-t setzt eine dezente Trennung zur vorgelagerten ink-Section
-    // ("Warum ChromePeps?"), damit die Vertrauens-Tags thematisch
+    // ("Warum ChromePeps?"), damit die Vertrauens-Pills thematisch
     // anschließen, ohne den Light/Dark-Rhythmus zu brechen.
-    <section
-      className="section-ink relative border-t border-ink-border/60"
-      aria-label="Belegbare Standards"
-    >
-      <div className="container pt-8 pb-14">
-        {/* Kicker links, Mess-Lineal füllt die Zeile — editorial statt
-            zentriert. */}
-        <div className="mb-6 flex items-center gap-6">
-          <span className="eyebrow shrink-0">Belegbare Standards</span>
-          <div className="tick-rule hidden min-w-0 flex-1 sm:block" aria-hidden />
+    <section className="section-ink relative border-t border-ink-border/60">
+      <div className="container pt-7 pb-14">
+        <div className="mb-6 flex justify-center">
+          <span className="eyebrow">Belegbare Standards</span>
         </div>
         <div
           ref={rootRef}
-          className="flex flex-wrap items-center gap-2 md:gap-3"
+          className="flex flex-wrap items-center justify-center gap-2 md:gap-3"
         >
           {PILLS.map((pill, i) => {
             const Icon = pill.icon;
@@ -109,18 +103,15 @@ export function TrustBar() {
                   onBlur={() => setOpenIndex(null)}
                   onClick={() => setOpenIndex(isOpen ? null : i)}
                   className={cn(
-                    // Eckiges Specimen-Tag statt runder Pille.
-                    "inline-flex items-center gap-2 rounded-[2px] px-3.5 py-2",
-                    "border border-ink-border bg-white/[0.04]",
-                    "font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink-foreground/90",
-                    "transition-colors duration-200",
-                    "hover:border-primary/60 hover:bg-primary/10 hover:text-ink-foreground",
-                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-                    isOpen &&
-                      "border-primary/60 bg-primary/10 text-ink-foreground"
+                    "inline-flex items-center gap-2 rounded-full px-3.5 py-2",
+                    "border border-white/10 bg-white/5 text-sm font-medium text-white/90",
+                    "transition-all duration-200",
+                    "hover:border-primary/50 hover:bg-primary/10 hover:text-white",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                    isOpen && "border-primary/50 bg-primary/10 text-white"
                   )}
                 >
-                  <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  <Icon className="h-4 w-4 text-primary shrink-0" />
                   <span className="whitespace-nowrap">{pill.label}</span>
                 </button>
 
@@ -128,24 +119,24 @@ export function TrustBar() {
                   id={`trust-tip-${i}`}
                   role="tooltip"
                   className={cn(
-                    "absolute bottom-full left-1/2 z-30 mb-3 -translate-x-1/2",
-                    "w-64 rounded-[2px] border border-ink-border bg-[hsl(218_35%_5%)] p-3.5",
-                    "shadow-[0_12px_40px_hsl(218_40%_2%/0.6)]",
-                    "pointer-events-none transition-all duration-200",
+                    "absolute left-1/2 -translate-x-1/2 bottom-full mb-3 z-30",
+                    "w-64 rounded-lg border border-primary/30 bg-[hsl(20_14%_4%)] p-3.5",
+                    "shadow-[0_12px_40px_hsl(0_0%_0%/0.5)]",
+                    "transition-all duration-200 pointer-events-none",
                     isOpen
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-1 opacity-0"
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-1"
                   )}
                 >
-                  <p className="mono-tag mb-1.5 text-primary">
+                  <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-primary font-semibold mb-1.5">
                     {pill.tipTitle}
                   </p>
-                  <p className="text-xs leading-relaxed text-ink-muted">
+                  <p className="text-xs leading-relaxed text-white/80">
                     {pill.tipBody}
                   </p>
                   <span
                     aria-hidden
-                    className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-[6px] border-transparent border-t-ink-border"
+                    className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-[6px] border-transparent border-t-primary/30"
                   />
                 </div>
               </div>

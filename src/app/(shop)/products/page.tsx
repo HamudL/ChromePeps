@@ -320,16 +320,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   }
 
   const year = new Date().getFullYear();
-  // Fraunces bringt echte Kursive mit — das Akzentwort darf wieder
-  // italic sein. Auf hellem Grund AA-konform über text-primary-strong.
   const heroTitle = search ? (
     <>
-      Suche. <em className="text-primary-strong">Gefiltert.</em>{" "}
+      Suche. <em className="not-italic text-primary">Gefiltert.</em>{" "}
       Versand aus Deutschland.
     </>
   ) : (
     <>
-      Rein. <em className="text-primary-strong">Verifiziert.</em>{" "}
+      Rein. <em className="not-italic text-primary">Verifiziert.</em>{" "}
       Versand aus Deutschland.
     </>
   );
@@ -346,9 +344,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         subline={heroSubline}
         stats={heroStats}
         featured={featured}
-        counter={`${total} ${total === 1 ? "Produkt" : "Produkte"} · ${
-          categories.length
-        } ${categories.length === 1 ? "Kategorie" : "Kategorien"}`}
       />
 
       <ShopFilterBar
@@ -361,43 +356,39 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       <section className="container py-10 md:py-14">
         {products.length > 0 ? (
           <>
-            {/* Meta-Row: Eyebrow + Fraunces-Titel + Mono-Stand, darunter
-                das Mess-Lineal als Abschluss der Zeile */}
-            <div className="mb-8">
-              <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pb-5">
-                <div className="min-w-0">
-                  <span className="eyebrow mb-2.5">
-                    {search ? "Suchergebnisse" : "Katalog"}
-                  </span>
-                  <h2 className="display-title text-[28px] md:text-[32px]">
-                    {pageTitle}
-                  </h2>
-                </div>
-                <div className="flex items-center gap-4">
-                  <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground tabular-nums">
-                    {total} {total === 1 ? "Produkt" : "Produkte"}
-                    {" \u00B7 Stand "}
-                    {formatStatsDate()}
-                  </p>
-                  {hasActiveFilters && (
-                    <Link
-                      href="/products"
-                      className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground hover:text-primary-strong underline underline-offset-4 decoration-dotted"
-                    >
-                      Reset
-                    </Link>
-                  )}
-                </div>
+            {/* Meta-Row: Eyebrow + Titel + Gesamt-Count */}
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-border pb-5">
+              <div className="min-w-0">
+                <span className="eyebrow mb-2.5">
+                  {search ? "Suchergebnisse" : "Katalog"}
+                </span>
+                <h2 className="font-serif text-[28px] md:text-[32px] font-medium tracking-[-0.02em] leading-none text-balance">
+                  {pageTitle}
+                </h2>
               </div>
-              <div aria-hidden className="tick-rule" />
+              <div className="flex items-center gap-4">
+                <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground tabular-nums">
+                  {total} {total === 1 ? "Produkt" : "Produkte"}
+                  {" \u00B7 Stand "}
+                  {formatStatsDate()}
+                </p>
+                {hasActiveFilters && (
+                  <Link
+                    href="/products"
+                    className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground hover:text-primary-strong underline underline-offset-4 decoration-dotted"
+                  >
+                    Reset
+                  </Link>
+                )}
+              </div>
             </div>
 
-            {/* Specimen-Grid */}
+            {/* Rx-Grid */}
             {/* Grid: auf Mobile (< 640 px) 1 Karte pro Zeile, damit die
-                Spec-Tabelle und der Name nicht abgeschnitten werden.
+                Rx-Spec-Rows und der Name nicht mehr abgeschnitten werden.
                 Ab sm: (640 px) darf die 2-Spalten-Ansicht zur\u00fcckkommen,
                 weil dort die Karten-Breite wieder reicht. */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {products.map((product, idx) => (
                 <ProductCard
                   key={product.id}
@@ -429,7 +420,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 md:py-32 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-sm border border-border bg-muted/40 text-muted-foreground mb-6">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-muted/40 text-muted-foreground mb-6">
               <PackageSearch className="h-7 w-7" strokeWidth={1.5} />
             </div>
             <span className="eyebrow mb-3">Kein Treffer</span>
