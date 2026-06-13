@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, ShoppingCart, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -58,22 +59,17 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-20">
+      <div className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto text-center space-y-6">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-border bg-card">
-            <ShoppingBag className="h-11 w-11 text-muted-foreground" />
+          <div className="mx-auto h-24 w-24 rounded-full bg-muted flex items-center justify-center">
+            <ShoppingBag className="h-12 w-12 text-muted-foreground" />
           </div>
-          <div className="space-y-3">
-            <span className="eyebrow justify-center">Warenkorb leer</span>
-            <h1 className="display-title text-3xl">
-              Ihr Warenkorb ist leer
-            </h1>
-          </div>
+          <h1 className="font-display text-3xl font-semibold tracking-[-0.02em]">Ihr Warenkorb ist leer</h1>
           <p className="text-muted-foreground">
             Sie haben noch keine Produkte in Ihren Warenkorb gelegt.
             Entdecken Sie unser Sortiment an hochwertigen Research Peptides.
           </p>
-          <Button variant="gold" size="lg" asChild>
+          <Button size="lg" asChild>
             <Link href="/products">
               Produkte entdecken
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -111,7 +107,7 @@ export default function CartPage() {
           {items.map((item) => {
             const itemSubtotal = item.priceInCents * item.quantity;
             return (
-              <Card variant="lift" key={`${item.productId}-${item.variantId}`}>
+              <Card key={`${item.productId}-${item.variantId}`}>
                 <CardContent className="p-4">
                   <div className="flex gap-4">
                     {/* Product Image */}
@@ -153,7 +149,7 @@ export default function CartPage() {
                             {formatPrice(item.priceInCents)} pro Stk.
                           </p>
                         </div>
-                        <p className="whitespace-nowrap text-right font-semibold tabular-nums">
+                        <p className="font-semibold text-right whitespace-nowrap">
                           {formatPrice(itemSubtotal)}
                         </p>
                       </div>
@@ -231,9 +227,8 @@ export default function CartPage() {
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardHeader>
-              <span className="eyebrow">Bestellübersicht</span>
-              <CardTitle className="display-title mt-2 text-lg">
-                Zusammenfassung
+              <CardTitle className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                Bestellübersicht
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -241,12 +236,12 @@ export default function CartPage() {
                 <span className="text-muted-foreground">
                   Zwischensumme ({items.reduce((s, i) => s + i.quantity, 0)} Artikel)
                 </span>
-                <span className="tabular-nums">{formatPrice(subtotal)}</span>
+                <span>{formatPrice(subtotal)}</span>
               </div>
 
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Versandkosten</span>
-                <span className="tabular-nums">
+                <span>
                   {isFreeShipping ? (
                     <span className="text-success font-medium">Kostenlos</span>
                   ) : (
@@ -298,15 +293,17 @@ export default function CartPage() {
                 </div>
               )}
 
-              <hr className="rule-gold" />
+              <Separator />
 
               <CartPromoInput />
 
-              <hr className="rule-gold" />
+              <Separator />
 
               <div className="flex items-baseline justify-between">
-                <span className="stat-key">Gesamt</span>
-                <span className="stat-value text-3xl">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                  Gesamt
+                </span>
+                <span className="text-2xl font-bold tabular-nums tracking-tight">
                   {isFreeShipping ? formatPrice(total) : <>ab {formatPrice(total)}</>}
                 </span>
               </div>
@@ -315,7 +312,7 @@ export default function CartPage() {
                 Alle Preise inkl. 19% MwSt.
               </p>
 
-              <Button variant="gold" className="w-full" size="lg" asChild>
+              <Button className="w-full" size="lg" asChild>
                 <Link href="/checkout">
                   Zur Kasse
                   <ArrowRight className="ml-2 h-4 w-4" />

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Phone, MapPin, Clock, ArrowRight } from "lucide-react";
+import { Mail, Phone, MapPin, Clock } from "lucide-react";
 import { SELLER_DETAILS } from "@/lib/constants";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { localBusinessJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
@@ -45,101 +43,89 @@ export default function KontaktPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }}
       />
+      <h1 className="text-3xl font-bold tracking-tight mb-2">Kontakt</h1>
+      <p className="text-sm text-muted-foreground mb-8">
+        Bei Fragen zu Produkten, Bestellungen oder Forschungsanwendungen
+        sind wir für Sie da.
+      </p>
 
-      <header>
-        <span className="eyebrow">[ KONTAKT ]</span>
-        <h1 className="display-title mt-3 text-4xl md:text-5xl">
-          Sprechen Sie mit uns
-        </h1>
-        <p className="mt-4 max-w-2xl text-muted-foreground">
-          Fragen zu Produkten, einer laufenden Bestellung oder einer
-          Forschungsanwendung? Wir antworten innerhalb eines Werktags — kein
-          Ticket-System, kein Bot.
-        </p>
-      </header>
-
-      {/* E-Mail als Ink-Fokus-CTA — der primäre, schnellste Kanal. */}
-      <Card variant="ink" className="card-ink mt-10 p-6 sm:p-7">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <span className="eyebrow">[ SCHNELLSTER WEG ]</span>
-            <p className="mt-2 font-mono text-lg text-ink-foreground">
-              {SELLER_DETAILS.email}
-            </p>
-            <p className="mt-1 text-sm text-ink-muted">
-              Antwort innerhalb von 24 Stunden an Werktagen.
-            </p>
+      <div className="grid sm:grid-cols-2 gap-4 mb-8">
+        <div className="border rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <Mail className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">E-Mail</h3>
           </div>
           {/* E-Mail kommt zentral aus SELLER_DETAILS — vorher stand hier
               ein kaputter mailto-Link mit "[TODO: …]"-Adresse. */}
-          <Button asChild variant="gold" size="lg" className="shrink-0 gap-2">
-            <a href={`mailto:${SELLER_DETAILS.email}`}>
-              E-Mail schreiben
-              <ArrowRight className="h-4 w-4" />
+          <p className="text-muted-foreground text-sm">
+            <a
+              href={`mailto:${SELLER_DETAILS.email}`}
+              className="underline"
+            >
+              {SELLER_DETAILS.email}
             </a>
-          </Button>
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Antwort innerhalb von 24 Stunden an Werktagen.
+          </p>
         </div>
-      </Card>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Card className="p-5">
-          <Phone className="h-5 w-5 text-primary-strong" />
-          <h2 className="mono-label mt-3 text-muted-foreground">Telefon</h2>
-          <p className="mt-1.5 text-sm">{SELLER_DETAILS.phone}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+        <div className="border rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <Phone className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Telefon</h3>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            {SELLER_DETAILS.phone}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
             Mo bis Fr, 9:00 bis 17:00 Uhr
           </p>
-        </Card>
+        </div>
 
-        <Card className="p-5">
-          <MapPin className="h-5 w-5 text-primary-strong" />
-          <h2 className="mono-label mt-3 text-muted-foreground">Postanschrift</h2>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+        <div className="border rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Postanschrift</h3>
+          </div>
+          <p className="text-muted-foreground text-sm">
             {SELLER_DETAILS.companyName}
             <br />
             {SELLER_DETAILS.streetLine1}
             <br />
             {SELLER_DETAILS.postalCodeCity}
           </p>
-        </Card>
+        </div>
 
-        <Card className="p-5">
-          <Clock className="h-5 w-5 text-primary-strong" />
-          <h2 className="mono-label mt-3 text-muted-foreground">
-            Geschäftszeiten
-          </h2>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+        <div className="border rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Geschäftszeiten</h3>
+          </div>
+          <p className="text-muted-foreground text-sm">
             Montag bis Freitag
             <br />
             9:00 bis 17:00 Uhr
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Shop rund um die Uhr bestellbar.
+          <p className="text-xs text-muted-foreground mt-1">
+            Bestellungen rund um die Uhr über den Shop möglich.
           </p>
-        </Card>
+        </div>
       </div>
 
-      <hr className="rule-gold my-10" />
-
-      <div className="space-y-2 text-sm text-muted-foreground">
+      <div className="border-t pt-6 text-sm text-muted-foreground space-y-2">
         <p>
           Für Fragen zu bestehenden Bestellungen halten Sie bitte Ihre{" "}
-          <strong className="text-foreground">Bestellnummer</strong> bereit.
-          Eingeloggte Kunden finden ihre Bestellhistorie unter{" "}
-          <Link
-            href="/dashboard/orders"
-            className="text-primary-strong underline-offset-2 hover:underline"
-          >
+          <strong>Bestellnummer</strong> bereit. Eingeloggte Kunden finden
+          ihre Bestellhistorie unter{" "}
+          <Link href="/dashboard/orders" className="underline">
             Mein Konto → Bestellungen
           </Link>
           .
         </p>
         <p>
           Vollständige Anbieterangaben finden Sie in unserem{" "}
-          <Link
-            href="/impressum"
-            className="text-primary-strong underline-offset-2 hover:underline"
-          >
+          <Link href="/impressum" className="underline">
             Impressum
           </Link>
           .

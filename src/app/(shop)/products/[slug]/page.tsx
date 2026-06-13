@@ -23,7 +23,6 @@ import { ReviewList, type ReviewListItem } from "@/components/shop/review-list";
 import { StarRating } from "@/components/shop/star-rating";
 import { ProductCard } from "@/components/shop/product-card";
 import { CertificateCard } from "@/components/shop/certificate-card";
-import { Card } from "@/components/ui/card";
 import { getRelatedProducts } from "@/lib/products/related";
 import { getBestsellerProductIds } from "@/lib/products/card";
 import type { Metadata } from "next";
@@ -370,7 +369,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             <FadeUp delay={0.1}>
               <div className="space-y-7">
                 {/* Kategorie + Index-Crumb (gold, mono) */}
-                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-primary-strong font-semibold">
+                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-primary font-semibold">
                   <Link
                     href={`/products/category/${product.category.slug}`}
                     className="hover:underline"
@@ -499,43 +498,40 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   Forschungseinrichtungen und qualifizierte Fachkräfte.
                 </div>
 
-                {/* Trust- & CoA-Block als bewusster dunkler Ink-Einschub —
-                    der Premium-Kontrastmoment im hellen Buy-Panel. CoA-
-                    Zusage oben, darunter die Vertrauenssignale als Mono-
-                    Pillen (card-ink themt eyebrow/trust-pill automatisch). */}
-                <Card variant="ink" className="card-ink overflow-hidden p-5">
-                  <div className="flex gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary/15 text-primary">
-                      <Mail className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-ink-foreground">
-                        Analysezertifikat inklusive
-                      </p>
-                      <p className="mt-0.5 text-xs text-ink-muted leading-relaxed">
-                        Das passende CoA erhalten Sie automatisch per E-Mail
-                        zusammen mit Ihrer Bestellung — unabhängig durch
-                        Janoshik verifiziert.
-                      </p>
-                    </div>
+                {/* CoA reminder callout — bleibt aus vorheriger Iteration */}
+                <div className="flex gap-3 rounded-sm border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary">
+                    <Mail className="h-4 w-4" />
                   </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">
+                      Analysezertifikat inklusive
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                      Das passende CoA erhalten Sie automatisch per E-Mail
+                      zusammen mit Ihrer Bestellung — unabhängig durch
+                      Janoshik verifiziert.
+                    </p>
+                  </div>
+                </div>
 
-                  {/* Trust-indicator row — als Mono-Pillen */}
-                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-ink-border pt-4">
-                    <span className="trust-pill">
-                      <ShieldCheck className="h-3 w-3 text-primary" aria-hidden />
-                      Janoshik HPLC-verifiziert
-                    </span>
-                    <span className="trust-pill">
-                      <Truck className="h-3 w-3 text-primary" aria-hidden />
-                      Versand aus Deutschland
-                    </span>
-                    <span className="trust-pill">
-                      <Mail className="h-3 w-3 text-primary" aria-hidden />
-                      CoA per E-Mail
-                    </span>
+                {/* Trust-indicator row */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                    <span>Janoshik HPLC-verifiziert</span>
                   </div>
-                </Card>
+                  <span className="text-muted-foreground/40">·</span>
+                  <div className="flex items-center gap-1.5">
+                    <Truck className="h-3.5 w-3.5 text-primary" />
+                    <span>Schneller Versand aus Deutschland</span>
+                  </div>
+                  <span className="text-muted-foreground/40">·</span>
+                  <div className="flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-primary" />
+                    <span>CoA per E-Mail</span>
+                  </div>
+                </div>
               </div>
             </FadeUp>
           </div>
@@ -549,8 +545,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             <>
               <FadeUp>
                 <div className="mb-8 max-w-2xl">
-                  <span className="eyebrow mb-2.5">Technische Daten</span>
-                  <h2 className="display-title text-2xl md:text-3xl">
+                  <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary mb-2">
+                    Technische Daten
+                  </p>
+                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
                     Spezifikationen
                   </h2>
                   <p className="mt-2 text-sm text-muted-foreground">
@@ -564,17 +562,17 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   {specs.map((spec) => (
                     <div
                       key={spec.label}
-                      className="group rounded-sm border border-border bg-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_14px_32px_-22px_hsl(45_60%_30%/0.45)]"
+                      className="group rounded-xl border bg-card p-4 transition-all duration-300 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5"
                     >
                       <div className="flex items-start gap-3 min-w-0">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary-strong transition-colors group-hover:bg-primary/15">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
                           {spec.icon}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
                             {spec.label}
                           </p>
-                          <p className="text-sm md:text-base font-semibold break-words mt-1">
+                          <p className="text-sm md:text-base font-semibold break-words mt-0.5">
                             {spec.value}
                           </p>
                         </div>
@@ -607,8 +605,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   />
                 </div>
                 <div className="max-w-md space-y-2 md:pt-6">
-                  <span className="eyebrow mb-1">Zertifikat dieser Charge</span>
-                  <h3 className="display-title text-xl md:text-2xl">
+                  <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary">
+                    Zertifikat dieser Charge
+                  </p>
+                  <h3 className="text-xl font-bold tracking-tight">
                     Unabhängig geprüft. Klick zum Umdrehen.
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
@@ -639,10 +639,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           <div className="container py-12 md:py-16">
             <div className="max-w-3xl">
               <FadeUp>
-                <p className="font-mono text-[11px] uppercase tracking-[0.18em] font-semibold text-primary mb-3">
+                <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary mb-2">
                   Über dieses Peptid
                 </p>
-                <h2 className="display-title text-2xl md:text-3xl mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6">
                   Beschreibung
                 </h2>
               </FadeUp>
@@ -663,8 +663,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         <FadeUp>
           <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <span className="eyebrow mb-2.5">Community</span>
-              <h2 className="display-title text-2xl md:text-3xl">
+              <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary mb-2">
+                Community
+              </p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
                 Bewertungen
                 <span className="ml-2 text-muted-foreground font-medium">
                   ({reviewsTotalCount})
@@ -727,10 +729,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           <div className="container py-12 md:py-16">
             <FadeUp>
               <div className="mb-10 max-w-2xl">
-                <p className="font-mono text-[11px] uppercase tracking-[0.18em] font-semibold text-primary mb-3">
+                <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary mb-2">
                   Auch interessant
                 </p>
-                <h2 className="display-title text-2xl md:text-3xl">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
                   Ähnliche Produkte
                 </h2>
                 <p className="mt-2 text-sm text-white/60">
@@ -790,7 +792,7 @@ function PdpSpec({
       </p>
       <p
         className={`mt-1 font-mono text-sm font-medium ${
-          gold ? "text-primary-strong font-semibold" : "text-foreground"
+          gold ? "text-primary font-semibold" : "text-foreground"
         }`}
       >
         {v}

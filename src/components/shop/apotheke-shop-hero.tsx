@@ -46,7 +46,7 @@ export function ApothekeShopHero({
   featured,
 }: ApothekeShopHeroProps) {
   return (
-    <section className="section-ink grain-overlay relative overflow-hidden border-b border-ink-border">
+    <section className="section-ink relative overflow-hidden border-b border-ink-border">
       {/* Feines Grid-Muster im Hintergrund — typische Labor-Formular-Optik. */}
       <div aria-hidden className="absolute inset-0 apo-grid pointer-events-none" />
 
@@ -96,7 +96,9 @@ export function ApothekeShopHero({
                         </span>
                       )}
                     </dd>
-                    <dt className="stat-key mt-1.5">{stat.label}</dt>
+                    <dt className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-ink-muted">
+                      {stat.label}
+                    </dt>
                   </div>
                 ))}
               </dl>

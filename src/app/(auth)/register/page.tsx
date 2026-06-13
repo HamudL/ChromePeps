@@ -120,12 +120,10 @@ export default function RegisterPage() {
   return (
     <Card className="w-full max-w-md shadow-lg">
       <h1 className="sr-only">{APP_NAME}-Konto erstellen</h1>
-      <CardHeader className="space-y-2">
-        <span className="eyebrow">[ NEUES KONTO ]</span>
-        <CardTitle className="display-title text-3xl">Konto erstellen</CardTitle>
+      <CardHeader className="text-center space-y-1">
+        <CardTitle className="text-2xl font-bold">Konto erstellen</CardTitle>
         <CardDescription>
-          Registrieren Sie sich bei {APP_NAME} — Forschungspeptide bestellen,
-          Bestellungen verfolgen, Analysezertifikate griffbereit.
+          Registrieren Sie sich bei {APP_NAME}, um Forschungspeptide zu bestellen.
         </CardDescription>
       </CardHeader>
 
@@ -142,9 +140,7 @@ export default function RegisterPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name" className="field-label">
-              [ Vollständiger Name ]
-            </Label>
+            <Label htmlFor="name">Vollständiger Name</Label>
             <Input
               id="name"
               name="name"
@@ -164,9 +160,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="field-label">
-              [ E-Mail ]
-            </Label>
+            <Label htmlFor="email">E-Mail</Label>
             <Input
               id="email"
               name="email"
@@ -186,9 +180,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="field-label">
-              [ Passwort ]
-            </Label>
+            <Label htmlFor="password">Passwort</Label>
             <Input
               id="password"
               name="password"
@@ -213,9 +205,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="field-label">
-              [ Passwort bestätigen ]
-            </Label>
+            <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
@@ -259,7 +249,6 @@ export default function RegisterPage() {
 
           <Button
             type="submit"
-            variant="gold"
             className="w-full gap-2"
             disabled={
               isPending || (captchaRequired && !captchaToken)

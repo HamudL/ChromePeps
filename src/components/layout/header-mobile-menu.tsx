@@ -31,11 +31,7 @@ export function HeaderMobileMenu({ links }: HeaderMobileMenuProps) {
         {/* Radix-Dialog braucht einen zugänglichen Namen — ohne Title
             warnt Radix und der Screenreader bekommt keinen Dialog-Namen. */}
         <SheetTitle className="sr-only">Hauptmenü</SheetTitle>
-        <span className="mono-label mt-1 block text-muted-foreground">
-          Navigation
-        </span>
-        <hr className="rule-gold mt-3" />
-        <nav aria-label="Hauptmenü" className="mt-6 flex flex-col">
+        <nav aria-label="Hauptmenü" className="flex flex-col gap-4 mt-8">
           {links.map((link) => {
             const active =
               link.href === "/"
@@ -49,8 +45,8 @@ export function HeaderMobileMenu({ links }: HeaderMobileMenuProps) {
                 aria-current={active ? "page" : undefined}
                 className={
                   active
-                    ? "relative border-l-2 border-primary py-2.5 pl-4 text-lg font-semibold text-primary-strong"
-                    : "border-l-2 border-transparent py-2.5 pl-4 text-lg font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+                    ? "text-lg font-semibold text-primary"
+                    : "text-lg font-medium hover:text-primary transition-colors"
                 }
               >
                 {link.label}

@@ -13,9 +13,6 @@ import {
   Check,
   Loader2,
   Search,
-  Lock,
-  PackageCheck,
-  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +22,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/store/cart-store";
 import { APP_NAME, type BankTransferInfo } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
@@ -142,58 +140,37 @@ export function CheckoutSuccessClient({
 
   return (
     <div className="container mx-auto px-4 py-16">
-      <div className="mx-auto max-w-lg">
-        <div className="mb-6 text-center">
-          <span className="eyebrow justify-center">
-            {isBankTransfer ? "Bestellung eingegangen" : "Bestellung bestätigt"}
-          </span>
-        </div>
-        <Card className="overflow-hidden shadow-lg">
-          <CardHeader className="pb-4 text-center">
-            <div
-              className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ring-8 ${
-                isBankTransfer
-                  ? "bg-primary/10 text-primary-strong ring-primary/[0.06]"
-                  : "bg-primary/15 text-primary-strong ring-primary/[0.08]"
-              }`}
-            >
+      <div className="max-w-lg mx-auto">
+        <Card className={`shadow-lg ${isBankTransfer ? "border-blue-200" : "border-green-200"}`}>
+          <CardHeader className="text-center pb-4">
+            <div className={`mx-auto mb-4 h-16 w-16 rounded-full flex items-center justify-center ${
+              isBankTransfer ? "bg-blue-100" : "bg-green-100"
+            }`}>
               {isBankTransfer ? (
-                <Building2 className="h-9 w-9" />
+                <Building2 className="h-10 w-10 text-blue-600" />
               ) : (
-                <CheckCircle2 className="h-9 w-9" />
+                <CheckCircle2 className="h-10 w-10 text-green-600" />
               )}
             </div>
-            <CardTitle className="display-title text-2xl md:text-3xl">
-              {isBankTransfer ? "Bestellung eingegangen" : "Vielen Dank für Ihre Bestellung"}
+            <CardTitle className="text-2xl">
+              {isBankTransfer ? "Bestellung eingegangen!" : "Bestellung bestätigt!"}
             </CardTitle>
             <CardDescription className="text-base">
               {isBankTransfer
                 ? "Ihre Bestellung ist eingegangen. Bitte überweisen Sie den Betrag, damit wir die Bestellung bearbeiten können."
-                : "Ihre Zahlung wurde erfolgreich verarbeitet. Eine Bestätigung ist auf dem Weg in Ihr Postfach."}
+                : "Vielen Dank für Ihre Bestellung. Ihre Zahlung wurde erfolgreich verarbeitet."}
             </CardDescription>
-            {!isBankTransfer && (
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                <span className="trust-pill">
-                  <Lock className="h-3 w-3" aria-hidden />
-                  SSL-verschlüsselt
-                </span>
-                <span className="trust-pill">
-                  <PackageCheck className="h-3 w-3" aria-hidden />
-                  Diskreter Versand
-                </span>
-              </div>
-            )}
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <hr className="rule-gold" />
+            <Separator />
 
             {isBankTransfer ? (
               <>
                 {/* Bank Transfer Details */}
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <Building2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-strong" />
+                    <Building2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium">Überweisungsdaten</p>
                       <p className="text-sm text-muted-foreground">
@@ -203,18 +180,18 @@ export function CheckoutSuccessClient({
                     </div>
                   </div>
 
-                  <div className="card-ink space-y-3 rounded-lg border border-ink-border bg-ink p-4 text-ink-foreground shadow-[0_20px_60px_-30px_hsl(20_14%_4%/0.8)]">
+                  <div className="rounded-md border bg-muted/50 p-4 space-y-3">
                     {/* Betrag */}
                     {totalCents > 0 && (
                       <div className="flex items-center justify-between">
-                        <span className="stat-key">Betrag</span>
-                        <span className="stat-value text-2xl">
+                        <span className="text-sm text-muted-foreground">Betrag</span>
+                        <span className="text-lg font-bold text-primary">
                           {formatPrice(totalCents)}
                         </span>
                       </div>
                     )}
 
-                    <hr className="rule-gold" />
+                    <Separator />
 
                     {/* Bank info rows — nur rendern, wenn eine echte
                         Bankverbindung konfiguriert ist. Alt-Bestellungen
@@ -249,11 +226,11 @@ export function CheckoutSuccessClient({
                         />
                       </>
                     ) : (
-                      <p className="text-sm text-ink-muted">
+                      <p className="text-sm text-muted-foreground">
                         Unsere Bankverbindung erhalten Sie vom Support unter{" "}
                         <a
                           href="mailto:support@chromepeps.com"
-                          className="text-primary underline underline-offset-2"
+                          className="underline"
                         >
                           support@chromepeps.com
                         </a>
@@ -261,26 +238,26 @@ export function CheckoutSuccessClient({
                       </p>
                     )}
 
-                    <hr className="rule-gold" />
+                    <Separator />
 
                     {/* Verwendungszweck */}
                     {orderNumber && (
                       <div>
-                        <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-primary">
+                        <span className="text-xs text-muted-foreground block mb-1">
                           Verwendungszweck
                         </span>
-                        <div className="flex items-center justify-between rounded-md border border-ink-border bg-white/[0.04] p-2 pl-3">
-                          <span className="font-mono text-sm font-bold text-ink-foreground">
+                        <div className="flex items-center justify-between bg-background rounded-md border p-2">
+                          <span className="font-mono font-bold text-sm">
                             {orderNumber}
                           </span>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-ink-foreground hover:bg-white/[0.08] hover:text-ink-foreground"
+                            className="h-7 w-7"
                             onClick={() => copyToClipboard(orderNumber, "ref")}
                           >
                             {copiedField === "ref" ? (
-                              <Check className="h-3.5 w-3.5 text-primary" />
+                              <Check className="h-3.5 w-3.5 text-green-600" />
                             ) : (
                               <Copy className="h-3.5 w-3.5" />
                             )}
@@ -290,12 +267,9 @@ export function CheckoutSuccessClient({
                     )}
                   </div>
 
-                  <div className="rounded-lg border border-primary/30 bg-primary/[0.06] p-3 text-sm">
-                    <p className="flex items-center gap-1.5 font-semibold text-foreground">
-                      <AlertCircle className="h-4 w-4 text-primary-strong" aria-hidden />
-                      Wichtig
-                    </p>
-                    <p className="mt-1 text-muted-foreground">
+                  <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-200">
+                    <p className="font-medium">Wichtig</p>
+                    <p className="mt-1">
                       Bitte verwenden Sie Ihre Bestellnummer als
                       Verwendungszweck, damit wir Ihre Überweisung der
                       Bestellung zuordnen können. Die Bearbeitung startet,
@@ -307,7 +281,7 @@ export function CheckoutSuccessClient({
             ) : (
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-3">
-                  <Package className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-strong" />
+                  <Package className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium">Wie geht es weiter?</p>
                     <p className="text-muted-foreground">
@@ -319,23 +293,23 @@ export function CheckoutSuccessClient({
                 </div>
 
                 {verifying ? (
-                  <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-3">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <div className="rounded-md border bg-muted/50 p-3 flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
                       Bestellung wird bestätigt…
                     </p>
                   </div>
                 ) : stripeOrder ? (
-                  <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 p-3">
-                    <span className="stat-key">Bestellnummer</span>
-                    <span className="font-mono text-sm font-bold tracking-wide">
+                  <div className="rounded-md border bg-muted/50 p-3">
+                    <p className="text-xs text-muted-foreground">Bestellnummer</p>
+                    <p className="font-mono font-bold text-sm mt-1">
                       {stripeOrder.orderNumber}
-                    </span>
+                    </p>
                   </div>
                 ) : sessionId ? (
-                  <div className="rounded-lg border border-border bg-muted/40 p-3">
-                    <p className="stat-key">Zahlungsreferenz</p>
-                    <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
+                  <div className="rounded-md border bg-muted/50 p-3">
+                    <p className="text-xs text-muted-foreground">Zahlungsreferenz</p>
+                    <p className="font-mono text-xs mt-1 break-all">
                       {sessionId}
                     </p>
                   </div>
@@ -343,10 +317,10 @@ export function CheckoutSuccessClient({
               </div>
             )}
 
-            <hr className="rule-gold" />
+            <Separator />
 
             <div className="space-y-3">
-              <Button variant="gold" className="w-full" size="lg" asChild>
+              <Button className="w-full" size="lg" asChild>
                 {isGuest ? (
                   <Link href="/order-status">
                     <Search className="mr-2 h-4 w-4" />
@@ -396,23 +370,19 @@ function BankDetailRow({
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="min-w-0">
-        <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-ink-muted">
-          {label}
-        </span>
-        <span
-          className={`text-sm font-medium text-ink-foreground ${mono ? "font-mono tracking-wide" : ""}`}
-        >
+        <span className="text-xs text-muted-foreground block">{label}</span>
+        <span className={`text-sm font-medium ${mono ? "font-mono" : ""}`}>
           {value}
         </span>
       </div>
       <Button
         variant="ghost"
         size="icon"
-        className="h-7 w-7 flex-shrink-0 text-ink-foreground hover:bg-white/[0.08] hover:text-ink-foreground"
+        className="h-7 w-7 flex-shrink-0"
         onClick={onCopy}
       >
         {copied ? (
-          <Check className="h-3.5 w-3.5 text-primary" />
+          <Check className="h-3.5 w-3.5 text-green-600" />
         ) : (
           <Copy className="h-3.5 w-3.5" />
         )}

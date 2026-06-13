@@ -24,26 +24,19 @@ export const dynamic = "force-dynamic";
 
 export default function DatenschutzPage() {
   return (
-    <div className="container max-w-3xl section-pad">
-      <header>
-        <span className="eyebrow">[ DATENSCHUTZ ]</span>
-        <h1 className="display-title mt-3 text-4xl md:text-5xl">
-          Datenschutzerklärung
-        </h1>
-        {/* Stand-Datum ist das tatsächliche Datum der letzten inhaltlichen
-            Änderung — bei Anpassungen der Erklärung manuell mitziehen.
-            new Date() (Abrufdatum) würde fälschlich tägliche Aktualität
-            suggerieren. */}
-        <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
-          Stand: 10. Juni 2026
-        </p>
-      </header>
+    <div className="container max-w-3xl py-12">
+      <h1 className="text-3xl font-bold tracking-tight mb-2">
+        Datenschutzerklärung
+      </h1>
+      {/* Stand-Datum ist das tatsächliche Datum der letzten inhaltlichen
+          Änderung — bei Anpassungen der Erklärung manuell mitziehen.
+          new Date() (Abrufdatum) würde fälschlich tägliche Aktualität
+          suggerieren. */}
+      <p className="text-sm text-muted-foreground mb-8">Stand: 10. Juni 2026</p>
 
-      <hr className="rule-gold my-10" />
-
-      <div className="space-y-8 text-[15px] leading-relaxed text-foreground/90">
+      <div className="space-y-6 text-sm leading-relaxed">
         <section>
-          <h2 className="display-title text-xl text-foreground">
+          <h2 className="text-lg font-semibold">
             1. Verantwortlicher im Sinne der Datenschutzgesetze
           </h2>
           {/* Verantwortlicher kommt zentral aus SELLER_DETAILS (env-basiert) —
@@ -56,14 +49,14 @@ export default function DatenschutzPage() {
             E-Mail:{" "}
             <a
               href={`mailto:${SELLER_DETAILS.email}`}
-              className="text-primary-strong underline-offset-2 hover:underline"
+              className="underline"
             >
               {SELLER_DETAILS.email}
             </a>
           </p>
           <p className="mt-2">
             Weitere Angaben entnehmen Sie bitte unserem{" "}
-            <Link href="/impressum" className="text-primary-strong underline-offset-2 hover:underline">
+            <Link href="/impressum" className="underline">
               Impressum
             </Link>
             .
@@ -71,7 +64,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="display-title text-xl text-foreground">2. Allgemeine Hinweise</h2>
+          <h2 className="text-lg font-semibold">2. Allgemeine Hinweise</h2>
           <p>
             Der Schutz Ihrer persönlichen Daten ist uns wichtig. Wir behandeln
             Ihre personenbezogenen Daten vertraulich und entsprechend der
@@ -83,11 +76,11 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="display-title text-xl text-foreground">
+          <h2 className="text-lg font-semibold">
             3. Erfassung und Verarbeitung personenbezogener Daten
           </h2>
 
-          <h3 className="mt-4 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-foreground">3.1 Besuch der Website</h3>
+          <h3 className="font-medium mt-3">3.1 Besuch der Website</h3>
           <p>
             Bei jedem Zugriff auf unsere Website werden automatisch Daten durch
             den Server erfasst und in sogenannten Server-Log-Dateien gespeichert:
@@ -105,7 +98,7 @@ export default function DatenschutzPage() {
             werden nach sieben Tagen automatisch gelöscht.
           </p>
 
-          <h3 className="mt-4 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-foreground">3.2 Benutzerkonto und Bestellung</h3>
+          <h3 className="font-medium mt-3">3.2 Benutzerkonto und Bestellung</h3>
           <p>
             Für die Abwicklung Ihrer Bestellung erheben wir folgende Daten:
             Name, E-Mail, Rechnungs- und Lieferanschrift, Bestellhistorie,
@@ -115,7 +108,7 @@ export default function DatenschutzPage() {
             Beachtung gesetzlicher Aufbewahrungspflichten (§ 147 AO, § 257 HGB).
           </p>
 
-          <h3 className="mt-4 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-foreground">3.3 Zahlungsabwicklung (Stripe)</h3>
+          <h3 className="font-medium mt-3">3.3 Zahlungsabwicklung (Stripe)</h3>
           <p>
             Für Kreditkarten- und sonstige Online-Zahlungen nutzen wir den
             Zahlungsdienstleister Stripe Payments Europe, Ltd., 1 Grand Canal
@@ -128,7 +121,7 @@ export default function DatenschutzPage() {
               href="https://stripe.com/de/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              className="break-words text-primary-strong underline-offset-2 hover:underline"
+              className="underline"
             >
               https://stripe.com/de/privacy
             </a>
@@ -137,7 +130,7 @@ export default function DatenschutzPage() {
 
           {BANK_TRANSFER_ENABLED && (
             <>
-              <h3 className="mt-4 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-foreground">3.4 Zahlung per Vorkasse</h3>
+              <h3 className="font-medium mt-3">3.4 Zahlung per Vorkasse</h3>
               <p>
                 Bei Wahl der Zahlungsart Vorkasse übermitteln wir Ihre
                 Bestellinformationen an unsere Bank zur Zuordnung der Zahlung.
@@ -147,7 +140,7 @@ export default function DatenschutzPage() {
             </>
           )}
 
-          <h3 className="mt-4 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-foreground">3.5 Kundenkonto und Session</h3>
+          <h3 className="font-medium mt-3">3.5 Kundenkonto und Session</h3>
           <p>
             Für die Anmeldung verwenden wir NextAuth mit einer Session, die über
             ein technisch notwendiges Cookie gehalten wird. Dieses Cookie ist
@@ -163,7 +156,7 @@ export default function DatenschutzPage() {
             Banner), Plausible läuft cookielos im Root-Layout. Die frühere
             Aussage "Statistik derzeit nicht im Einsatz" war falsch. */}
         <section>
-          <h2 className="display-title text-xl text-foreground">
+          <h2 className="text-lg font-semibold">
             4. Cookies und Statistik
           </h2>
           <p>
@@ -197,7 +190,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="display-title text-xl text-foreground">5. Ihre Rechte</h2>
+          <h2 className="text-lg font-semibold">5. Ihre Rechte</h2>
           <p>
             Sie haben gegenüber uns folgende Rechte hinsichtlich der Sie
             betreffenden personenbezogenen Daten:
@@ -218,7 +211,7 @@ export default function DatenschutzPage() {
             Zur Ausübung Ihrer Rechte genügt eine formlose Nachricht an{" "}
             <a
               href={`mailto:${SELLER_DETAILS.email}`}
-              className="text-primary-strong underline-offset-2 hover:underline"
+              className="underline"
             >
               {SELLER_DETAILS.email}
             </a>
@@ -229,7 +222,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="display-title text-xl text-foreground">6. SSL-/TLS-Verschlüsselung</h2>
+          <h2 className="text-lg font-semibold">6. SSL-/TLS-Verschlüsselung</h2>
           <p>
             Diese Website nutzt aus Sicherheitsgründen und zum Schutz der
             Übertragung vertraulicher Inhalte eine SSL-/TLS-Verschlüsselung. Sie
@@ -239,7 +232,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="display-title text-xl text-foreground">
+          <h2 className="text-lg font-semibold">
             7. Änderungen dieser Datenschutzerklärung
           </h2>
           <p>

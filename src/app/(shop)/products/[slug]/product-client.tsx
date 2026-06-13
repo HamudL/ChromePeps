@@ -54,8 +54,8 @@ export function ImageGallery({
 
   if (images.length === 0) {
     return (
-      <div className="aspect-square rounded-sm border border-border bg-muted flex items-center justify-center font-mono text-[10px] tracking-[0.16em] uppercase text-muted-foreground">
-        Kein Bild verfügbar
+      <div className="aspect-square rounded-lg border bg-muted flex items-center justify-center text-muted-foreground text-sm">
+        No Image Available
       </div>
     );
   }
@@ -97,11 +97,11 @@ export function ImageGallery({
               onClick={() => setSelected(i)}
               aria-label={`Bild ${i + 1} anzeigen`}
               className={cn(
-                "relative h-16 w-16 shrink-0 rounded-sm border overflow-hidden bg-card transition-all",
+                "relative h-16 w-16 shrink-0 rounded-md border overflow-hidden bg-muted transition-all",
                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                 i === selected
-                  ? "ring-2 ring-primary ring-offset-1 ring-offset-background border-primary"
-                  : "border-border opacity-60 hover:opacity-100 hover:border-primary/40"
+                  ? "ring-2 ring-primary border-primary"
+                  : "opacity-70 hover:opacity-100"
               )}
             >
               <Image
@@ -220,7 +220,7 @@ export function VariantBuyPanel({
       {/* Variant-Buttons */}
       {variants.length > 0 && (
         <div className="space-y-2">
-          <label className="field-label !mb-0">Variante wählen</label>
+          <label className="text-sm font-medium">Variante wählen</label>
           <div className="flex flex-wrap gap-2">
             {variants.map((variant) => {
               const outOfStock = variant.stock <= 0;
@@ -233,11 +233,11 @@ export function VariantBuyPanel({
                   aria-pressed={isSelected}
                   onClick={() => handleSelectVariant(variant)}
                   className={cn(
-                    "rounded-sm border border-border px-4 py-2 text-sm font-medium transition-all",
-                    "hover:border-primary hover:text-primary-strong",
+                    "rounded-md border px-4 py-2 text-sm font-medium transition-all",
+                    "hover:border-primary hover:text-primary",
                     "disabled:opacity-40 disabled:cursor-not-allowed",
                     isSelected &&
-                      "bg-primary text-primary-foreground border-primary shadow-[0_8px_24px_-12px_hsl(45_92%_41%/0.7)] hover:text-primary-foreground"
+                      "bg-primary text-primary-foreground border-primary hover:text-primary-foreground"
                   )}
                 >
                   {variant.name}
@@ -284,10 +284,8 @@ export function VariantBuyPanel({
 
       {/* Mengen-Wähler */}
       <div className="flex items-center gap-3">
-        <label className="font-mono text-[10.5px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
-          Menge
-        </label>
-        <div className="flex items-center border border-border rounded-sm">
+        <label className="text-sm font-medium">Menge</label>
+        <div className="flex items-center border rounded-md">
           <Button
             variant="ghost"
             size="icon"
@@ -320,7 +318,6 @@ export function VariantBuyPanel({
 
       {/* In den Warenkorb */}
       <Button
-        variant="gold"
         size="lg"
         className="w-full gap-2"
         disabled={isOutOfStock || needsVariant}
@@ -371,10 +368,10 @@ export function SequenceCopyBlock({ sequence }: { sequence: string }) {
   };
 
   return (
-    <div className="rounded-sm border border-border bg-card overflow-hidden">
+    <div className="rounded-xl border bg-card overflow-hidden">
       {/* Header bar */}
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/30 px-4 py-2.5">
-        <div className="flex items-center gap-2 font-mono text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 border-b bg-muted/30 px-4 py-2.5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
           <Dna className="h-3.5 w-3.5 text-primary" />
           Aminosäuresequenz
         </div>

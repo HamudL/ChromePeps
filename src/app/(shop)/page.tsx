@@ -220,50 +220,24 @@ export default async function HomePage() {
         />
         <div className="container relative py-24 md:py-32 lg:py-40">
           <FadeUp>
-            <div className="mx-auto max-w-3xl text-center flex flex-col items-center gap-7">
-              <span className="eyebrow">
-                Research-Use-Only · Janoshik-verifiziert · Est. 2026
-              </span>
-
+            <div className="mx-auto max-w-3xl text-center space-y-8">
               <HeroLogo />
 
-              <p className="text-lg md:text-xl text-muted-foreground max-w-xl text-balance">
-                Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit.
-                Jede Charge mit Lot-Nummer und Analysezertifikat — gemessen,
-                nicht versprochen.
+              <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto">
+                Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit. Jede Charge mit Analysezertifikat.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
-                <Button asChild variant="gold" size="xl">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+                <Button asChild size="lg" className="gap-2 px-8 h-12 text-base">
                   <Link href="/products">
-                    Zum Shop
-                    <ArrowRight />
+                    Shop
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="ink" size="xl">
+                <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base">
                   <Link href="/qualitaetskontrolle">Qualitätskontrolle</Link>
                 </Button>
               </div>
-
-              {/* Instrument-Readout: statische Vertrauens-Fakten (keine
-                  fabrizierten Metriken — die echten Zahlen stehen in der
-                  LiveMetrics-Sektion). Mono-Präzision direkt unter dem Hero. */}
-              <dl className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-5 border-t border-border/70 pt-7">
-                <div className="text-center">
-                  <dt className="stat-value text-2xl md:text-3xl">HPLC</dt>
-                  <dd className="stat-key mt-1.5">UV · 220 nm</dd>
-                </div>
-                <div aria-hidden className="hidden h-8 w-px bg-border sm:block" />
-                <div className="text-center">
-                  <dt className="stat-value text-2xl md:text-3xl">100 %</dt>
-                  <dd className="stat-key mt-1.5">3rd-Party verifiziert</dd>
-                </div>
-                <div aria-hidden className="hidden h-8 w-px bg-border sm:block" />
-                <div className="text-center">
-                  <dt className="stat-value text-2xl md:text-3xl">−24 °C</dt>
-                  <dd className="stat-key mt-1.5">Charge gelagert</dd>
-                </div>
-              </dl>
             </div>
           </FadeUp>
         </div>
@@ -279,73 +253,57 @@ export default async function HomePage() {
       {/* ── Übergang hell → dunkel (Progressive Blur) ── */}
       <SectionBlur />
 
-      {/* ── Warum ChromePeps? (ink) ── */}
-      <section className="section-ink relative grain-overlay">
-        <div className="absolute inset-0 apo-grid opacity-60" aria-hidden />
-        <div className="container relative section-pad">
-          <FadeUp className="max-w-2xl">
-            <span className="eyebrow">Warum ChromePeps</span>
-            <h2 className="display-title mt-4 text-3xl md:text-4xl lg:text-5xl">
-              Drei Versprechen, die wir belegen können.
+      {/* ── Warum ChromePeps? (dark) ── */}
+      <section className="section-dark">
+        <div className="container py-16 md:py-20">
+          <FadeUp>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-center mb-12">
+              Warum ChromePeps?
             </h2>
-            <p className="mt-4 max-w-prose text-ink-muted">
-              Kein Marketing-Vokabular, sondern überprüfbare Standards — vom
-              unabhängigen Labortest bis zum Zertifikat in Ihrem Postfach.
-            </p>
           </FadeUp>
 
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-px overflow-hidden rounded-xl border border-ink-border bg-ink-border/60">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[
               {
                 icon: Microscope,
-                index: "01",
                 title: "Drittlabor-geprüft",
-                desc: "Jede Charge wird durch Janoshik unabhängig per HPLC auf Reinheit getestet — vor der Freigabe, ohne Ausnahme.",
+                desc: "Jede Charge wird durch Janoshik unabhängig auf Reinheit getestet.",
                 link: "/qualitaetskontrolle",
                 linkText: "Qualitätskontrolle",
               },
               {
                 icon: CreditCard,
-                index: "02",
                 title: "Sichere Zahlung",
                 // Zahlarten-Aufzählung MUSS dem Vorkasse-Schalter folgen —
                 // eine beworbene, im Checkout aber nicht angebotene
                 // Zahlungsart ist irreführend (abmahnfähig).
                 desc: BANK_TRANSFER_ENABLED
-                  ? "Stripe, Apple Pay, Google Pay oder Banküberweisung — verschlüsselt, ohne dass Kartendaten bei uns liegen."
-                  : "Stripe, Apple Pay oder Google Pay — verschlüsselt, ohne dass Kartendaten bei uns liegen.",
+                  ? "Stripe, Apple Pay, Google Pay oder Banküberweisung."
+                  : "Stripe, Apple Pay oder Google Pay.",
                 link: "/zahlung",
                 linkText: "Zahlungsoptionen",
               },
               {
                 icon: Mail,
-                index: "03",
                 title: "CoA zu jeder Bestellung",
-                desc: "Das passende Analysezertifikat erhalten Sie automatisch per E-Mail mit Ihrer Bestellung — verifizierbar auf janoshik.com.",
+                desc: "Das passende Analysezertifikat erhalten Sie automatisch per E-Mail mit Ihrer Bestellung.",
                 link: "/qualitaetskontrolle",
                 linkText: "Qualitätskontrolle",
               },
             ].map((card, i) => (
-              <FadeUp
-                key={card.title}
-                delay={i * 0.08}
-                className="group flex h-full flex-col bg-ink p-7 transition-colors hover:bg-[hsl(20_14%_6%)]"
-              >
-                <div className="flex items-center justify-between">
-                  <card.icon className="h-7 w-7 text-primary" strokeWidth={1.6} />
-                  <span className="mono-tag text-ink-muted">{card.index}</span>
+              <FadeUp key={card.title} delay={i * 0.1}>
+                <div className="rounded-xl border border-white/10 bg-white/5 p-6 h-full flex flex-col">
+                  <card.icon className="h-8 w-8 text-primary mb-4" />
+                  <h3 className="font-semibold text-lg mb-2">{card.title}</h3>
+                  <p className="text-sm text-white/60 flex-1 mb-4">{card.desc}</p>
+                  <Link
+                    href={card.link}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    {card.linkText}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
-                <h3 className="mt-5 text-lg font-semibold">{card.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-muted">
-                  {card.desc}
-                </p>
-                <Link
-                  href={card.link}
-                  className="mono-label mt-5 inline-flex items-center gap-1.5 text-primary transition-colors hover:text-primary/80"
-                >
-                  {card.linkText}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
               </FadeUp>
             ))}
           </div>
@@ -362,55 +320,44 @@ export default async function HomePage() {
       <SectionBlur />
 
       {/* ── Qualitätsprozess (light) ── */}
-      <section className="container section-pad">
+      <section className="container py-16 md:py-20">
         <FadeUp>
-          <span className="eyebrow">Qualitätsprozess</span>
-          <h2 className="display-title mt-4 max-w-2xl text-3xl md:text-4xl lg:text-5xl">
-            Vom Wareneingang zum Etikett — in vier verifizierten Schritten.
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-center mb-4">
+            Unser Qualitätsprozess
           </h2>
-          <p className="mt-4 max-w-prose text-muted-foreground">
-            Keine Abkürzungen, keine „Sonderchargen“. Jeder Schritt ist
-            dokumentiert und nachvollziehbar.
+          <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
+            Vier Schritte für höchste Qualität
           </p>
         </FadeUp>
 
-        <ol className="mt-14 grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
           {[
-            { icon: Package, n: "01", title: "Chargen-Handling", desc: "Lagerung bei -24\u00B0C mit eindeutiger Lot-Nummer." },
-            { icon: Microscope, n: "02", title: "Janoshik-Test", desc: "HPLC-Analyse durch ein unabhängiges Drittlabor." },
-            { icon: ShieldCheck, n: "03", title: "Qualitätskontrolle", desc: "Nur Chargen, die alle Tests bestehen, werden freigegeben." },
-            { icon: Eye, n: "04", title: "Online verifizierbar", desc: "Ergebnisse öffentlich einsehbar auf janoshik.com." },
+            { icon: Package, n: "1", title: "Chargen-Handling", desc: "Lagerung bei -24\u00B0C mit eindeutiger Lot-Nummer" },
+            { icon: Microscope, n: "2", title: "Janoshik-Test", desc: "HPLC-Analyse durch unabhängiges Drittlabor" },
+            { icon: ShieldCheck, n: "3", title: "Qualitätskontrolle", desc: "Nur Chargen, die alle Tests bestehen, werden freigegeben" },
+            { icon: Eye, n: "4", title: "Online verifizierbar", desc: "Ergebnisse öffentlich einsehbar auf janoshik.com" },
           ].map((step, i) => (
-            <FadeUp
-              key={step.n}
-              as="li"
-              delay={i * 0.08}
-              className="relative border-t border-border pt-6"
-            >
-              <span
-                aria-hidden
-                className="absolute -top-px left-0 h-px w-12 bg-primary"
-              />
-              <div className="flex items-center justify-between">
-                <step.icon className="h-7 w-7 text-primary-strong" strokeWidth={1.6} />
-                <span className="stat-value text-3xl text-primary/25">
-                  {step.n}
-                </span>
+            <FadeUp key={step.n} delay={i * 0.1}>
+              <div className="text-center space-y-3">
+                <div className="mx-auto relative flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10">
+                  <step.icon className="h-7 w-7 text-primary" />
+                  <span className="absolute -top-2 -right-2 flex items-center justify-center h-6 w-6 rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    {step.n}
+                  </span>
+                </div>
+                <h3 className="font-semibold">{step.title}</h3>
+                <p className="text-sm text-muted-foreground">{step.desc}</p>
               </div>
-              <h3 className="mt-5 font-semibold">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {step.desc}
-              </p>
             </FadeUp>
           ))}
-        </ol>
+        </div>
 
-        <FadeUp delay={0.32}>
-          <div className="mt-12">
-            <Button asChild variant="outline">
+        <FadeUp delay={0.4}>
+          <div className="mt-10 text-center">
+            <Button asChild variant="outline" className="gap-2">
               <Link href="/qualitaetskontrolle">
-                So testen wir
-                <ArrowRight />
+                Mehr erfahren
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -419,57 +366,53 @@ export default async function HomePage() {
 
       {/* ── Kategorien ── */}
       {categories.length > 0 && (
-        <section className="container section-pad">
-          {/* Trenner zwischen zwei hellen Sektionen (Qualitätsprozess →
-              Kategorien) — editorialer als border-t. */}
-          <hr className="rule-gold mb-16" />
-          <FadeUp>
-            <span className="eyebrow">Sortiment</span>
-            <h2 className="display-title mt-4 max-w-2xl text-3xl md:text-4xl lg:text-5xl">
-              Nach Kategorie erkunden.
-            </h2>
-          </FadeUp>
+        <section className="border-t">
+          <div className="container py-16 md:py-20">
+            <FadeUp>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-center mb-12">
+                Nach Kategorie shoppen
+              </h2>
+            </FadeUp>
 
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((cat, i) => (
-              <FadeUp key={cat.id} delay={i * 0.08}>
-                <Link
-                  href={`/products/category/${cat.slug}`}
-                  className="group block h-full"
-                >
-                  <Card
-                    variant="lift"
-                    className="h-full cursor-pointer overflow-hidden"
-                  >
-                    <div className="relative h-48 overflow-hidden bg-muted">
-                      {cat.image ? (
-                        <Image
-                          src={cat.image}
-                          alt={cat.name}
-                          fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-muted">
-                          <FlaskConical className="h-12 w-12 text-muted-foreground/30" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categories.map((cat, i) => (
+                <FadeUp key={cat.id} delay={i * 0.08}>
+                  <Link href={`/products/category/${cat.slug}`}>
+                    <Card className="group overflow-hidden h-full hover:shadow-lg transition-all duration-300 cursor-pointer">
+                      <div className="relative h-48 bg-muted overflow-hidden">
+                        {cat.image ? (
+                          <Image
+                            src={cat.image}
+                            alt={cat.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-muted">
+                            <FlaskConical className="h-12 w-12 text-muted-foreground/30" />
+                          </div>
+                        )}
+                      </div>
+                      <CardContent className="p-5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                              {cat.name}
+                            </h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {cat._count.products}{" "}
+                              {cat._count.products === 1 ? "Produkt" : "Produkte"}
+                            </p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
-                      )}
-                      <span className="absolute left-4 top-4 trust-pill bg-background/85 backdrop-blur">
-                        {cat._count.products}{" "}
-                        {cat._count.products === 1 ? "Produkt" : "Produkte"}
-                      </span>
-                    </div>
-                    <CardContent className="flex items-center justify-between p-5">
-                      <h3 className="gold-underline text-lg font-semibold">
-                        {cat.name}
-                      </h3>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary" />
-                    </CardContent>
-                  </Card>
-                </Link>
-              </FadeUp>
-            ))}
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </FadeUp>
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -479,23 +422,14 @@ export default async function HomePage() {
         <>
         {/* ── Übergang hell → dunkel (Progressive Blur) ── */}
         <SectionBlur />
-        <section className="section-ink relative grain-overlay">
-          <div className="absolute inset-0 apo-grid opacity-50" aria-hidden />
-          <div className="container relative section-pad">
+        <section className="section-dark">
+          <div className="container py-16 md:py-20">
             <FadeUp>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="max-w-xl">
-                  <span className="eyebrow">Bestseller</span>
-                  <h2 className="display-title mt-4 text-3xl md:text-4xl lg:text-5xl">
-                    Was unsere Forscher am häufigsten bestellen.
-                  </h2>
-                </div>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="hidden shrink-0 border-ink-border bg-transparent text-ink-foreground hover:bg-white/10 hover:text-ink-foreground sm:inline-flex"
-                >
+              <div className="flex items-end justify-between mb-10">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+                  Bestseller
+                </h2>
+                <Button asChild variant="outline" size="sm" className="hidden sm:flex gap-1.5 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
                   <Link href="/products">
                     Alle Produkte <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -503,7 +437,7 @@ export default async function HomePage() {
               </div>
             </FadeUp>
 
-            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {bestsellers.map((product, i) => (
                 <FadeUp key={product.id} delay={i * 0.08}>
                   <ProductCard product={product} />
@@ -511,12 +445,8 @@ export default async function HomePage() {
               ))}
             </div>
 
-            <div className="mt-10 text-center sm:hidden">
-              <Button
-                asChild
-                variant="outline"
-                className="border-ink-border bg-transparent text-ink-foreground hover:bg-white/10 hover:text-ink-foreground"
-              >
+            <div className="mt-8 text-center sm:hidden">
+              <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
                 <Link href="/products">Alle Produkte</Link>
               </Button>
             </div>
@@ -532,13 +462,9 @@ export default async function HomePage() {
       <RecentlyViewed />
 
       {/* ── Disclaimer ── */}
-      <section className="container">
-        <hr className="rule-gold" />
-        <div className="mx-auto max-w-2xl py-10 text-center">
-          <span className="mono-label text-muted-foreground/70">
-            Research-Use-Only
-          </span>
-          <p className="mt-3 text-xs leading-relaxed text-muted-foreground/60">
+      <section className="border-t">
+        <div className="container py-8 text-center">
+          <p className="text-xs text-muted-foreground/60 max-w-2xl mx-auto leading-relaxed">
             {RESEARCH_DISCLAIMER}
           </p>
         </div>

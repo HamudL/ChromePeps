@@ -76,14 +76,11 @@ export function TrustBar() {
   }, []);
 
   return (
-    // border-t setzt eine dezente Trennung zur vorgelagerten ink-Section
-    // ("Warum ChromePeps?"), damit die Vertrauens-Pills thematisch
-    // anschließen, ohne den Light/Dark-Rhythmus zu brechen.
-    <section className="section-ink relative border-t border-ink-border/60">
-      <div className="container pt-7 pb-14">
-        <div className="mb-6 flex justify-center">
-          <span className="eyebrow">Belegbare Standards</span>
-        </div>
+    // border-t/white-5 setzt eine dezente Trennung zu einer vorgelagerten
+    // dark Section (z.B. "Warum ChromePeps?"), ohne aufzufallen wenn
+    // darüber eine light Section liegt.
+    <section className="section-dark border-t border-white/5">
+      <div className="container pt-6 pb-14">
         <div
           ref={rootRef}
           className="flex flex-wrap items-center justify-center gap-2 md:gap-3"

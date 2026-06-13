@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { KeyRound, Loader2, MailCheck } from "lucide-react";
+import { KeyRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,12 +54,8 @@ export default function ForgotPasswordPage() {
     return (
       <Card className="w-full max-w-md shadow-lg">
         <h1 className="sr-only">Passwort zurücksetzen — E-Mail versandt</h1>
-        <CardHeader className="space-y-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <MailCheck className="h-6 w-6 text-primary-strong" />
-          </div>
-          <span className="eyebrow">[ LINK UNTERWEGS ]</span>
-          <CardTitle className="display-title text-3xl">E-Mail versandt</CardTitle>
+        <CardHeader className="text-center space-y-1">
+          <CardTitle className="text-2xl font-bold">E-Mail versandt</CardTitle>
           <CardDescription>
             Pr&uuml;fen Sie Ihren Posteingang
           </CardDescription>
@@ -87,12 +83,10 @@ export default function ForgotPasswordPage() {
   return (
     <Card className="w-full max-w-md shadow-lg">
       <h1 className="sr-only">Passwort zurücksetzen</h1>
-      <CardHeader className="space-y-2">
-        <span className="eyebrow">[ ZUGANG WIEDERHERSTELLEN ]</span>
-        <CardTitle className="display-title text-3xl">Passwort vergessen?</CardTitle>
+      <CardHeader className="text-center space-y-1">
+        <CardTitle className="text-2xl font-bold">Passwort vergessen?</CardTitle>
         <CardDescription>
-          Geben Sie Ihre E-Mail-Adresse ein — wir senden Ihnen einen Link zum
-          Zur&uuml;cksetzen.
+          Wir senden Ihnen einen Link zum Zur&uuml;cksetzen
         </CardDescription>
       </CardHeader>
 
@@ -108,9 +102,7 @@ export default function ForgotPasswordPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="field-label">
-              [ E-Mail-Adresse ]
-            </Label>
+            <Label htmlFor="email">E-Mail-Adresse</Label>
             <Input
               id="email"
               name="email"
@@ -124,12 +116,7 @@ export default function ForgotPasswordPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4">
-          <Button
-            type="submit"
-            variant="gold"
-            className="w-full gap-2"
-            disabled={isPending}
-          >
+          <Button type="submit" className="w-full gap-2" disabled={isPending}>
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />

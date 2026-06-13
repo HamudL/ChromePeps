@@ -147,14 +147,20 @@ function OrderStatusInner() {
       {/* Hero */}
       <section className="relative hero-ambient border-b border-border/60">
         <div className="absolute inset-0 subtle-grid opacity-30" />
-        <div className="container relative py-12 md:py-16">
-          <span className="eyebrow">[ BESTELLSTATUS ]</span>
-          <h1 className="display-title mt-4 text-4xl md:text-5xl lg:text-6xl">
+        <div className="container relative py-10 md:py-14">
+          <Badge
+            variant="outline"
+            className="border-primary/30 bg-primary/5 px-3 py-1 text-xs mb-3"
+          >
+            <Package className="mr-1.5 h-3 w-3 text-primary" />
+            Bestellstatus
+          </Badge>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
             Bestellung verfolgen
           </h1>
-          <p className="mt-4 max-w-2xl text-base text-muted-foreground">
-            Bestellnummer und E-Mail-Adresse eingeben — wir zeigen dir in
-            Echtzeit, wo deine Sendung gerade steht.
+          <p className="mt-3 text-base text-muted-foreground max-w-2xl">
+            Bestellnummer und E-Mail-Adresse eingeben. Wir zeigen dir den
+            aktuellen Stand deiner Bestellung.
           </p>
         </div>
       </section>
@@ -165,9 +171,8 @@ function OrderStatusInner() {
           <div className="lg:col-span-1">
             <Card className="lg:sticky lg:top-24">
               <CardHeader>
-                <span className="eyebrow">[ TRACKING ]</span>
-                <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl">
-                  <Search className="h-5 w-5 text-primary-strong" />
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="h-5 w-5" />
                   Bestellung finden
                 </CardTitle>
                 <CardDescription>
@@ -178,9 +183,7 @@ function OrderStatusInner() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="orderNumber" className="field-label">
-                      [ Bestellnummer ]
-                    </Label>
+                    <Label htmlFor="orderNumber">Bestellnummer</Label>
                     <div className="relative">
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -194,9 +197,7 @@ function OrderStatusInner() {
                     </div>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="email" className="field-label">
-                      [ E-Mail-Adresse ]
-                    </Label>
+                    <Label htmlFor="email">E-Mail-Adresse</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -220,7 +221,6 @@ function OrderStatusInner() {
                   )}
                   <Button
                     type="submit"
-                    variant="gold"
                     className="w-full gap-2"
                     disabled={loading}
                   >
@@ -259,7 +259,7 @@ function OrderStatusInner() {
             Du hast ein Konto?{" "}
             <Link
               href="/login?callbackUrl=/dashboard"
-              className="font-medium text-primary-strong hover:underline"
+              className="text-primary hover:underline font-medium"
             >
               Einloggen
             </Link>{" "}
@@ -284,7 +284,7 @@ function OrderResult({ order }: { order: OrderStatusData }) {
         <CardContent className="p-6">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <p className="mono-label mb-1 text-muted-foreground">
+              <p className="text-xs uppercase tracking-[0.15em] font-semibold text-muted-foreground mb-1">
                 Bestellnummer
               </p>
               <p className="font-mono text-lg font-semibold">

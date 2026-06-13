@@ -195,8 +195,7 @@ export default function ProfilePage() {
       {/* Profil-Informationen */}
       <Card>
         <CardHeader>
-          <span className="eyebrow">Profil</span>
-          <CardTitle className="display-title mt-2 text-xl">Profil-Informationen</CardTitle>
+          <CardTitle>Profil-Informationen</CardTitle>
           <CardDescription>
             Aktualisieren Sie Ihren Namen und Ihre E-Mail-Adresse.
           </CardDescription>
@@ -205,9 +204,7 @@ export default function ProfilePage() {
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name" className="field-label">
-                  [ Name ]
-                </Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   value={name}
@@ -216,9 +213,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="field-label">
-                  [ E-Mail ]
-                </Label>
+                <Label htmlFor="email">E-Mail</Label>
                 <Input
                   id="email"
                   type="email"
@@ -234,7 +229,7 @@ export default function ProfilePage() {
               <p
                 className={
                   profileMessage.type === "success"
-                    ? "text-sm font-medium text-success"
+                    ? "text-sm text-green-600"
                     : "text-sm text-destructive"
                 }
               >
@@ -257,8 +252,7 @@ export default function ProfilePage() {
       {/* Passwort ändern */}
       <Card>
         <CardHeader>
-          <span className="eyebrow">Sicherheit</span>
-          <CardTitle className="display-title mt-2 text-xl">Passwort ändern</CardTitle>
+          <CardTitle>Passwort ändern</CardTitle>
           <CardDescription>
             Halten Sie Ihr Konto sicher mit einem starken Passwort.
           </CardDescription>
@@ -266,9 +260,7 @@ export default function ProfilePage() {
         <CardContent>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="currentPassword" className="field-label">
-                [ Aktuelles Passwort ]
-              </Label>
+              <Label htmlFor="currentPassword">Aktuelles Passwort</Label>
               <Input
                 id="currentPassword"
                 type="password"
@@ -279,9 +271,7 @@ export default function ProfilePage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="newPassword" className="field-label">
-                  [ Neues Passwort ]
-                </Label>
+                <Label htmlFor="newPassword">Neues Passwort</Label>
                 <Input
                   id="newPassword"
                   type="password"
@@ -292,9 +282,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="field-label">
-                  [ Neues Passwort bestätigen ]
-                </Label>
+                <Label htmlFor="confirmPassword">Neues Passwort bestätigen</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -309,7 +297,7 @@ export default function ProfilePage() {
               <p
                 className={
                   passwordMessage.type === "success"
-                    ? "text-sm font-medium text-success"
+                    ? "text-sm text-green-600"
                     : "text-sm text-destructive"
                 }
               >
@@ -379,9 +367,7 @@ export default function ProfilePage() {
           </AlertDialogHeader>
 
           <div className="space-y-2 py-2">
-            <Label htmlFor="deletePassword" className="field-label">
-              [ Aktuelles Passwort ]
-            </Label>
+            <Label htmlFor="deletePassword">Aktuelles Passwort</Label>
             <Input
               id="deletePassword"
               type="password"

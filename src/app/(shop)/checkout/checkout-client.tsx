@@ -19,10 +19,6 @@ import {
   LogIn,
   User as UserIcon,
   Mail,
-  Lock,
-  FlaskConical,
-  PackageCheck,
-  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/store/cart-store";
 import { CountrySelect } from "@/components/shop/country-select";
 import { formatPrice } from "@/lib/utils";
@@ -478,8 +475,8 @@ export function CheckoutClient({
   // Loading / auth states
   if (!mounted || authStatus === "loading") {
     return (
-      <div className="container mx-auto flex items-center justify-center px-4 py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container mx-auto px-4 py-16 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -487,21 +484,16 @@ export function CheckoutClient({
   // Empty cart
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-20">
+      <div className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto text-center space-y-6">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-border bg-card">
-            <ShoppingBag className="h-11 w-11 text-muted-foreground" />
+          <div className="mx-auto h-24 w-24 rounded-full bg-muted flex items-center justify-center">
+            <ShoppingBag className="h-12 w-12 text-muted-foreground" />
           </div>
-          <div className="space-y-3">
-            <span className="eyebrow justify-center">Warenkorb leer</span>
-            <h1 className="display-title text-3xl">
-              Noch nichts zum Bezahlen
-            </h1>
-          </div>
+          <h1 className="font-display text-3xl font-semibold tracking-[-0.02em]">Ihr Warenkorb ist leer</h1>
           <p className="text-muted-foreground">
             Legen Sie Produkte in den Warenkorb, bevor Sie zur Kasse gehen.
           </p>
-          <Button variant="gold" size="lg" asChild>
+          <Button size="lg" asChild>
             <Link href="/products">Produkte entdecken</Link>
           </Button>
         </div>
@@ -545,25 +537,13 @@ export function CheckoutClient({
 
   return (
     <div className="container mx-auto px-4 pt-8 pb-28 lg:pb-8">
-      <div className="mb-8 border-b border-border pb-6">
-        <span className="eyebrow">Sichere Kasse</span>
-        <h1 className="display-title mt-3 text-3xl md:text-4xl">
-          Bestellung abschließen
+      <div className="mb-8">
+        <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-strong">
+          Sichere Kasse
+        </p>
+        <h1 className="font-display text-3xl font-semibold leading-none tracking-[-0.02em] md:text-4xl">
+          Kasse
         </h1>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="trust-pill">
-            <Lock className="h-3 w-3" aria-hidden />
-            SSL-verschlüsselt
-          </span>
-          <span className="trust-pill">
-            <FlaskConical className="h-3 w-3" aria-hidden />
-            HPLC-verifiziert
-          </span>
-          <span className="trust-pill">
-            <PackageCheck className="h-3 w-3" aria-hidden />
-            Diskreter Versand
-          </span>
-        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -573,17 +553,17 @@ export function CheckoutClient({
               saved addresses + order history, but doesn't block
               checkout. Hidden for authenticated users. */}
           {isGuest && (
-            <div className="flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/[0.06] p-4">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-strong">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <LogIn className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">
-                  Sie bestellen als Gast
+                  Du bestellst als Gast
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Schon ein Konto? Mit Login sehen Sie Ihre Bestellhistorie
-                  und gespeicherte Adressen.
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Schon ein Konto? Mit Login siehst du deine
+                  Bestellhistorie und gespeicherte Adressen.
                 </p>
               </div>
               <Button
@@ -604,28 +584,25 @@ export function CheckoutClient({
           {isGuest && (
             <Card>
               <CardHeader>
-                <span className="eyebrow">Schritt 1 — Kontakt</span>
-                <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl">
-                  <UserIcon className="h-5 w-5 text-primary-strong" />
+                <CardTitle className="flex items-center gap-2">
+                  <UserIcon className="h-5 w-5" />
                   Kontaktdaten
                 </CardTitle>
                 <CardDescription>
                   Für Bestellbestätigung und Updates zum Versand.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="guestEmail" className="field-label">
-                    [ E-Mail-Adresse ]
-                  </Label>
+                  <Label htmlFor="guestEmail">E-Mail-Adresse</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="guestEmail"
                       type="email"
                       autoComplete="email"
                       required
-                      placeholder="ihre@e-mail.de"
+                      placeholder="du@beispiel.de"
                       value={guestEmail}
                       onChange={(e) => setGuestEmail(e.target.value)}
                       className="pl-9"
@@ -634,9 +611,7 @@ export function CheckoutClient({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="guestFirstName" className="field-label">
-                      [ Vorname ]
-                    </Label>
+                    <Label htmlFor="guestFirstName">Vorname</Label>
                     <Input
                       id="guestFirstName"
                       autoComplete="given-name"
@@ -646,9 +621,7 @@ export function CheckoutClient({
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="guestLastName" className="field-label">
-                      [ Nachname ]
-                    </Label>
+                    <Label htmlFor="guestLastName">Nachname</Label>
                     <Input
                       id="guestLastName"
                       autoComplete="family-name"
@@ -665,11 +638,8 @@ export function CheckoutClient({
           {/* Shipping Address Section */}
           <Card>
             <CardHeader>
-              <span className="eyebrow">
-                {isGuest ? "Schritt 2 — Lieferung" : "Schritt 1 — Lieferung"}
-              </span>
-              <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl">
-                <MapPin className="h-5 w-5 text-primary-strong" />
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
                 Lieferadresse
               </CardTitle>
               <CardDescription>
@@ -678,7 +648,7 @@ export function CheckoutClient({
                   : "Wählen Sie eine Lieferadresse für Ihre Bestellung."}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-5">
+            <CardContent className="space-y-4">
               {/* Guest inline address form — no "saved addresses"
                   for guests (nowhere to save to). They fill in a
                   one-time delivery address that persists only on
@@ -686,8 +656,8 @@ export function CheckoutClient({
               {isGuest ? (
                 <>
                   <div className="grid gap-2">
-                    <Label htmlFor="guestCompany" className="field-label">
-                      [ Firma — optional ]
+                    <Label htmlFor="guestCompany">
+                      Firma (optional)
                     </Label>
                     <Input
                       id="guestCompany"
@@ -699,8 +669,8 @@ export function CheckoutClient({
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="guestStreet" className="field-label">
-                      [ Straße und Hausnummer ]
+                    <Label htmlFor="guestStreet">
+                      Straße und Hausnummer
                     </Label>
                     <Input
                       id="guestStreet"
@@ -713,8 +683,8 @@ export function CheckoutClient({
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="guestStreet2" className="field-label">
-                      [ Adresszusatz — optional ]
+                    <Label htmlFor="guestStreet2">
+                      Adresszusatz (optional)
                     </Label>
                     <Input
                       id="guestStreet2"
@@ -726,9 +696,7 @@ export function CheckoutClient({
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="guestPostalCode" className="field-label">
-                        [ PLZ ]
-                      </Label>
+                      <Label htmlFor="guestPostalCode">PLZ</Label>
                       <Input
                         id="guestPostalCode"
                         autoComplete="postal-code"
@@ -743,9 +711,7 @@ export function CheckoutClient({
                       />
                     </div>
                     <div className="grid gap-2 col-span-2">
-                      <Label htmlFor="guestCity" className="field-label">
-                        [ Stadt ]
-                      </Label>
+                      <Label htmlFor="guestCity">Stadt</Label>
                       <Input
                         id="guestCity"
                         autoComplete="address-level2"
@@ -759,9 +725,7 @@ export function CheckoutClient({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="guestCountry" className="field-label">
-                        [ Land ]
-                      </Label>
+                      <Label htmlFor="guestCountry">Land</Label>
                       {/* CountrySelect fetcht selbst die aktiven shipping_rates.
                           Der parent-state `shippingRates` bleibt für den Live-
                           Versandpreis-Preview im Order-Summary erhalten. */}
@@ -775,8 +739,8 @@ export function CheckoutClient({
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="guestPhone" className="field-label">
-                        [ Telefon — optional ]
+                      <Label htmlFor="guestPhone">
+                        Telefon (optional)
                       </Label>
                       <Input
                         id="guestPhone"
@@ -796,11 +760,10 @@ export function CheckoutClient({
                   <div className="h-16 bg-muted animate-pulse rounded-md" />
                 </div>
               ) : addresses.length === 0 ? (
-                <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/30 py-8 text-center">
-                  <MapPin className="mx-auto h-10 w-10 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Noch keine Adresse hinterlegt. Fügen Sie eine Lieferadresse
-                    hinzu, um fortzufahren.
+                <div className="text-center py-6 space-y-3">
+                  <MapPin className="h-10 w-10 mx-auto text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    Keine Adressen gefunden. Fügen Sie eine Lieferadresse hinzu, um fortzufahren.
                   </p>
                 </div>
               ) : (
@@ -827,12 +790,8 @@ export function CheckoutClient({
                   </Select>
 
                   {selectedAddress && (
-                    <div className="space-y-1 rounded-lg border border-border bg-muted/40 p-4 text-sm">
-                      <p className="mb-1 flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-primary-strong">
-                        <MapPin className="h-3 w-3" aria-hidden />
-                        Liefert an
-                      </p>
-                      <p className="font-medium text-foreground">
+                    <div className="rounded-md border p-4 bg-muted/50 text-sm space-y-1">
+                      <p className="font-medium">
                         {selectedAddress.firstName} {selectedAddress.lastName}
                       </p>
                       {selectedAddress.company && (
@@ -884,11 +843,11 @@ export function CheckoutClient({
               )}
 
               {!isGuest && showAddressForm && (
-                <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+                <div className="space-y-4 rounded-md border bg-muted/30 p-4">
                   <div className="flex items-center justify-between">
-                    <span className="mono-label text-primary-strong">
+                    <h3 className="text-sm font-semibold">
                       Neue Lieferadresse
-                    </span>
+                    </h3>
                     <Button
                       type="button"
                       variant="ghost"
@@ -902,9 +861,7 @@ export function CheckoutClient({
 
                   <div className="grid gap-3">
                     <div className="grid gap-2">
-                      <Label htmlFor="label" className="field-label">
-                        [ Bezeichnung — optional ]
-                      </Label>
+                      <Label htmlFor="label">Bezeichnung (optional)</Label>
                       <Input
                         id="label"
                         placeholder="z.B. Zuhause, Büro, Labor"
@@ -917,9 +874,7 @@ export function CheckoutClient({
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="grid gap-2">
-                        <Label htmlFor="firstName" className="field-label">
-                          [ Vorname * ]
-                        </Label>
+                        <Label htmlFor="firstName">Vorname *</Label>
                         <Input
                           id="firstName"
                           autoComplete="given-name"
@@ -931,9 +886,7 @@ export function CheckoutClient({
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="lastName" className="field-label">
-                          [ Nachname * ]
-                        </Label>
+                        <Label htmlFor="lastName">Nachname *</Label>
                         <Input
                           id="lastName"
                           autoComplete="family-name"
@@ -947,9 +900,7 @@ export function CheckoutClient({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="company" className="field-label">
-                        [ Firma — optional ]
-                      </Label>
+                      <Label htmlFor="company">Firma (optional)</Label>
                       <Input
                         id="company"
                         autoComplete="organization"
@@ -961,9 +912,7 @@ export function CheckoutClient({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="street" className="field-label">
-                        [ Straße und Hausnummer * ]
-                      </Label>
+                      <Label htmlFor="street">Straße und Hausnummer *</Label>
                       <Input
                         id="street"
                         autoComplete="street-address"
@@ -976,9 +925,7 @@ export function CheckoutClient({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="street2" className="field-label">
-                        [ Adresszusatz — optional ]
-                      </Label>
+                      <Label htmlFor="street2">Adresszusatz (optional)</Label>
                       <Input
                         id="street2"
                         value={addressForm.street2}
@@ -990,9 +937,7 @@ export function CheckoutClient({
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="grid gap-2">
-                        <Label htmlFor="postalCode" className="field-label">
-                          [ PLZ * ]
-                        </Label>
+                        <Label htmlFor="postalCode">PLZ *</Label>
                         <Input
                           id="postalCode"
                           autoComplete="postal-code"
@@ -1004,9 +949,7 @@ export function CheckoutClient({
                         />
                       </div>
                       <div className="col-span-2 grid gap-2">
-                        <Label htmlFor="city" className="field-label">
-                          [ Stadt * ]
-                        </Label>
+                        <Label htmlFor="city">Stadt *</Label>
                         <Input
                           id="city"
                           autoComplete="address-level2"
@@ -1021,9 +964,7 @@ export function CheckoutClient({
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="grid gap-2">
-                        <Label htmlFor="state" className="field-label">
-                          [ Bundesland — optional ]
-                        </Label>
+                        <Label htmlFor="state">Bundesland (optional)</Label>
                         <Input
                           id="state"
                           value={addressForm.state}
@@ -1033,9 +974,7 @@ export function CheckoutClient({
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="country" className="field-label">
-                          [ Land * ]
-                        </Label>
+                        <Label htmlFor="country">Land *</Label>
                         <CountrySelect
                           id="country"
                           value={addressForm.country}
@@ -1046,9 +985,7 @@ export function CheckoutClient({
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="phone" className="field-label">
-                        [ Telefon — optional ]
-                      </Label>
+                      <Label htmlFor="phone">Telefon (optional)</Label>
                       <Input
                         id="phone"
                         type="tel"
@@ -1112,9 +1049,8 @@ export function CheckoutClient({
           {/* Promo Code Section */}
           <Card>
             <CardHeader>
-              <span className="eyebrow">Vorteil</span>
-              <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl">
-                <Tag className="h-5 w-5 text-primary-strong" />
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5" />
                 Gutscheincode
               </CardTitle>
               <CardDescription>
@@ -1174,11 +1110,8 @@ export function CheckoutClient({
           {/* Payment Method Section */}
           <Card>
             <CardHeader>
-              <span className="eyebrow">
-                {isGuest ? "Schritt 3 — Zahlung" : "Schritt 2 — Zahlung"}
-              </span>
-              <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl">
-                <CreditCard className="h-5 w-5 text-primary-strong" />
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
                 Zahlungsart
               </CardTitle>
               <CardDescription>
@@ -1192,84 +1125,69 @@ export function CheckoutClient({
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("STRIPE")}
-                  aria-pressed={paymentMethod === "STRIPE"}
-                  className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-all duration-200 ${
+                  className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
                     paymentMethod === "STRIPE"
-                      ? "border-primary bg-primary/[0.06] shadow-[0_8px_24px_-16px_hsl(45_92%_41%/0.7)]"
-                      : "border-border hover:border-primary/40"
+                      ? "border-primary bg-primary/5"
+                      : "border-muted hover:border-muted-foreground/30"
                   }`}
                 >
-                  {paymentMethod === "STRIPE" && (
-                    <Check className="absolute right-2 top-2 h-4 w-4 text-primary-strong" aria-hidden />
-                  )}
-                  <CreditCard className={`h-6 w-6 ${paymentMethod === "STRIPE" ? "text-primary-strong" : "text-muted-foreground"}`} />
-                  <span className={`text-sm font-semibold ${paymentMethod === "STRIPE" ? "text-foreground" : ""}`}>
+                  <CreditCard className={`h-6 w-6 ${paymentMethod === "STRIPE" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className={`text-sm font-medium ${paymentMethod === "STRIPE" ? "text-primary" : ""}`}>
                     Kredit-/Debitkarte
                   </span>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">via Stripe</span>
+                  <span className="text-xs text-muted-foreground">via Stripe</span>
                 </button>
                 {bankTransfer.enabled && (
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("BANK_TRANSFER")}
-                    aria-pressed={paymentMethod === "BANK_TRANSFER"}
-                    className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-all duration-200 ${
+                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
                       paymentMethod === "BANK_TRANSFER"
-                        ? "border-primary bg-primary/[0.06] shadow-[0_8px_24px_-16px_hsl(45_92%_41%/0.7)]"
-                        : "border-border hover:border-primary/40"
+                        ? "border-primary bg-primary/5"
+                        : "border-muted hover:border-muted-foreground/30"
                     }`}
                   >
-                    {paymentMethod === "BANK_TRANSFER" && (
-                      <Check className="absolute right-2 top-2 h-4 w-4 text-primary-strong" aria-hidden />
-                    )}
-                    <Building2 className={`h-6 w-6 ${paymentMethod === "BANK_TRANSFER" ? "text-primary-strong" : "text-muted-foreground"}`} />
-                    <span className={`text-sm font-semibold ${paymentMethod === "BANK_TRANSFER" ? "text-foreground" : ""}`}>
+                    <Building2 className={`h-6 w-6 ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className={`text-sm font-medium ${paymentMethod === "BANK_TRANSFER" ? "text-primary" : ""}`}>
                       Banküberweisung
                     </span>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Vorkasse</span>
+                    <span className="text-xs text-muted-foreground">Vorkasse</span>
                   </button>
                 )}
               </div>
 
               {paymentMethod === "STRIPE" ? (
-                <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3.5 text-sm">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" aria-hidden />
-                  <p className="text-muted-foreground">
-                    Sie werden zur sicheren Bezahlseite von Stripe weitergeleitet,
-                    um Ihre Zahlung abzuschließen. Wir akzeptieren alle gängigen
-                    Kredit- und Debitkarten.
-                  </p>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Sie werden zur sicheren Bezahlseite von Stripe weitergeleitet,
+                  um Ihre Zahlung abzuschließen. Wir akzeptieren alle gängigen
+                  Kredit- und Debitkarten.
+                </p>
               ) : (
-                <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-4 text-sm">
-                  <p className="flex items-center gap-2 font-semibold">
-                    <Building2 className="h-4 w-4 text-primary-strong" aria-hidden />
-                    Banküberweisung (Vorkasse)
-                  </p>
+                <div className="rounded-md border bg-muted/50 p-3 text-sm space-y-2">
+                  <p className="font-medium">Banküberweisung (Vorkasse)</p>
                   <p className="text-muted-foreground">
                     Nach Aufgabe der Bestellung erhalten Sie unsere Bankdaten.
                     Bitte überweisen Sie den Gesamtbetrag mit Ihrer
                     Bestellnummer als Verwendungszweck. Ihre Bestellung wird
                     nach Zahlungseingang bearbeitet.
                   </p>
-                  <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 pt-1 text-xs">
-                    <span className="font-mono uppercase tracking-[0.1em] text-muted-foreground">Bank</span>
-                    <span className="font-medium">{bankTransfer.bankName}</span>
-                    <span className="font-mono uppercase tracking-[0.1em] text-muted-foreground">Inhaber</span>
-                    <span className="font-medium">{bankTransfer.accountHolder}</span>
+                  <div className="grid grid-cols-2 gap-1 text-xs mt-2">
+                    <span className="text-muted-foreground">Bank:</span>
+                    <span>{bankTransfer.bankName}</span>
+                    <span className="text-muted-foreground">Kontoinhaber:</span>
+                    <span>{bankTransfer.accountHolder}</span>
                   </div>
                 </div>
               )}
 
               {checkoutError && (
-                <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                   <AlertCircle className="h-4 w-4 flex-shrink-0" />
                   {checkoutError}
                 </div>
               )}
 
               <Button
-                variant="gold"
                 className="w-full"
                 size="lg"
                 onClick={handleCheckout}
@@ -1282,24 +1200,18 @@ export function CheckoutClient({
                 ) : (
                   <Building2 className="mr-2 h-4 w-4" />
                 )}
-                {paymentMethod === "STRIPE" ? "Sicher bezahlen" : "Bestellung verbindlich aufgeben"}
+                {paymentMethod === "STRIPE" ? "Mit Stripe bezahlen" : "Bestellung aufgeben (Vorkasse)"}
               </Button>
-
-              <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
-                <Lock className="h-3 w-3" aria-hidden />
-                256-Bit-SSL · Keine Kartendaten auf unseren Servern
-              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column - Order Summary (Ink-Panel als Trust-Fokus) */}
+        {/* Right Column - Order Summary */}
         <div className="lg:col-span-1">
-          <Card variant="ink" className="card-ink sticky top-24 overflow-hidden">
+          <Card className="sticky top-24">
             <CardHeader>
-              <span className="eyebrow">Bestellübersicht</span>
-              <CardTitle className="display-title mt-2 text-lg text-ink-foreground">
-                Ihre Bestellung
+              <CardTitle className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                Bestellübersicht
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1310,7 +1222,7 @@ export function CheckoutClient({
                     key={`${item.productId}-${item.variantId}`}
                     className="flex gap-3"
                   >
-                    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border border-ink-border bg-white/[0.04]">
+                    <div className="relative h-14 w-14 rounded-md overflow-hidden bg-muted flex-shrink-0">
                       {item.image ? (
                         <Image
                           src={item.image}
@@ -1320,91 +1232,82 @@ export function CheckoutClient({
                           sizes="56px"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] text-ink-muted">
+                        <div className="h-full w-full flex items-center justify-center text-[10px] text-muted-foreground">
                           Kein Bild
                         </div>
                       )}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="line-clamp-1 text-sm font-medium text-ink-foreground">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium line-clamp-1">
                         {item.name}
                       </p>
                       {item.variantName && (
-                        <p className="text-xs text-ink-muted">
+                        <p className="text-xs text-muted-foreground">
                           {item.variantName}
                         </p>
                       )}
-                      <p className="text-xs text-ink-muted">
+                      <p className="text-xs text-muted-foreground">
                         Menge: {item.quantity}
                       </p>
                     </div>
-                    <p className="whitespace-nowrap text-sm font-medium tabular-nums text-ink-foreground">
+                    <p className="text-sm font-medium whitespace-nowrap">
                       {formatPrice(item.priceInCents * item.quantity)}
                     </p>
                   </div>
                 ))}
               </div>
 
-              <hr className="rule-gold" />
+              <Separator />
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink-muted">Zwischensumme</span>
-                  <span className="tabular-nums text-ink-foreground">{formatPrice(subtotal)}</span>
+                  <span className="text-muted-foreground">Zwischensumme</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="font-mono text-xs uppercase tracking-[0.1em] text-primary">
-                      Rabatt {appliedPromo?.code}
+                    <span className="text-success">
+                      Rabatt ({appliedPromo?.code})
                     </span>
-                    <span className="font-medium tabular-nums text-primary">
+                    <span className="text-success font-medium">
                       &minus;{formatPrice(discount)}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink-muted">Versand</span>
-                  <span className="tabular-nums">
+                  <span className="text-muted-foreground">Versand</span>
+                  <span>
                     {shipping === 0 ? (
-                      <span className="font-medium text-primary">Kostenlos</span>
+                      <span className="text-success font-medium">Kostenlos</span>
                     ) : (
-                      <span className="text-ink-foreground">{formatPrice(shipping)}</span>
+                      formatPrice(shipping)
                     )}
                   </span>
                 </div>
               </div>
 
-              <hr className="rule-gold" />
+              <Separator />
 
               <div className="flex items-baseline justify-between">
-                <span className="stat-key">Gesamt</span>
-                <span className="stat-value text-3xl">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                  Gesamt
+                </span>
+                <span className="text-2xl font-bold tabular-nums tracking-tight">
                   {formatPrice(total)}
                 </span>
               </div>
-              <p className="text-xs text-ink-muted">
+              <p className="text-xs text-muted-foreground">
                 Alle Preise inkl. 19% MwSt.
               </p>
 
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full border-ink-border bg-transparent text-ink-foreground hover:bg-white/[0.06] hover:text-ink-foreground"
+                className="w-full"
                 asChild
               >
                 <Link href="/cart">Warenkorb bearbeiten</Link>
               </Button>
-
-              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
-                <span className="trust-pill">
-                  <Lock className="h-3 w-3" aria-hidden />
-                  SSL
-                </span>
-                <span className="trust-pill">
-                  <PackageCheck className="h-3 w-3" aria-hidden />
-                  Diskret
-                </span>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -1416,11 +1319,12 @@ export function CheckoutClient({
       <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/85 lg:hidden">
         <div className="flex items-center justify-between gap-4">
           <div className="leading-tight">
-            <p className="stat-key">Gesamt</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+              Gesamt
+            </p>
             <p className="text-lg font-bold tabular-nums">{formatPrice(total)}</p>
           </div>
           <Button
-            variant="gold"
             size="lg"
             className="flex-1"
             onClick={handleCheckout}

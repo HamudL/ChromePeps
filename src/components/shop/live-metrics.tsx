@@ -35,18 +35,12 @@ export function LiveMetrics({ metrics }: LiveMetricsProps) {
   return (
     <section className="border-y bg-background">
       <div className="container py-14 md:py-16">
-        <div className="mb-10 flex justify-center">
-          <span className="eyebrow">Live aus dem Labor</span>
-        </div>
         {/* Flex-Layout statt fixes 3-col-Grid: bei 1 oder 2 Tiles sitzen
             sie nicht mehr linksbündig in einer unsichtbaren dritten
             Spalte, sondern werden immer zentriert dargestellt. */}
-        <div className="mx-auto flex flex-col items-stretch justify-center gap-px overflow-hidden rounded-xl border border-border bg-border md:flex-row md:flex-wrap">
+        <div className="flex flex-col md:flex-row md:flex-wrap items-center justify-center gap-10 md:gap-16 mx-auto">
           {metrics.map((m, i) => (
-            <div
-              key={m.label}
-              className="w-full bg-background px-8 py-8 md:w-auto md:min-w-[15rem] md:max-w-xs"
-            >
+            <div key={m.label} className="w-full md:w-auto md:min-w-[14rem] md:max-w-xs">
               <MetricTile metric={m} delay={i * 120} />
             </div>
           ))}
@@ -139,16 +133,20 @@ function MetricTile({ metric, delay }: { metric: Metric; delay: number }) {
   return (
     <div ref={ref} className="text-center">
       <div className="flex items-baseline justify-center">
-        <span className="stat-value text-5xl md:text-6xl">{formatted}</span>
+        <span className="text-5xl md:text-6xl font-bold tracking-tight tabular-nums leading-none text-foreground">
+          {formatted}
+        </span>
         {metric.suffix && (
-          <span className="ml-1 text-2xl font-semibold text-primary-strong md:text-3xl">
+          <span className="text-primary text-2xl md:text-3xl font-semibold ml-1">
             {metric.suffix}
           </span>
         )}
       </div>
-      <p className="stat-key mt-4">{metric.label}</p>
+      <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground mt-3">
+        {metric.label}
+      </p>
       {metric.sub && (
-        <p className="mt-1.5 text-xs text-muted-foreground/70">{metric.sub}</p>
+        <p className="text-xs text-muted-foreground/70 mt-1.5">{metric.sub}</p>
       )}
     </div>
   );
