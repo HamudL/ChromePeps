@@ -7,11 +7,8 @@ import { db } from "@/lib/db";
 import { faqPageJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 
 /**
- * /faq — Live-FAQ-Seite im Protokoll-Stil. Liest FAQCategories +
- * FAQItems aus der DB (gepflegt via /admin/wissen/faq) und rendert
- * kategorisiert: Mono-Indizes pro Frage (z. B. 02.04 = Kategorie 2,
- * Frage 4), Haarlinien statt Karten-Rahmen, native details/summary
- * als Accordion.
+ * /faq — Live-FAQ-Seite. Liest FAQCategories + FAQItems aus der DB
+ * (gepflegt via /admin/wissen/faq) und rendert kategorisiert.
  *
  * `force-dynamic` weil zur Build-Zeit keine DATABASE_URL existiert
  * (gleiches Pattern wie Homepage / Wissen-Hub).
@@ -49,7 +46,7 @@ export default async function FAQPage() {
   ]);
 
   return (
-    <div className="container max-w-3xl section-pad">
+    <div className="container max-w-3xl py-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(faqSchema) }}
@@ -61,33 +58,23 @@ export default async function FAQPage() {
         }}
       />
 
-      <header>
-        <div className="flex items-baseline justify-between gap-4 flex-wrap">
-          <span className="eyebrow">Wissensbasis · FAQ</span>
-          <span className="mono-tag text-muted-foreground" style={{ fontSize: 9.5 }}>
-            {allItems.length} Einträge
-          </span>
-        </div>
-        <h1 className="display-title mt-4 text-4xl md:text-5xl">
-          Häufig gestellte Fragen
-        </h1>
-        <p className="mt-4 max-w-2xl text-muted-foreground">
-          Antworten auf das, was Forscher vor der Bestellung wissen wollen —
-          von Versand und Zahlung über Lagerung bis zum Analysezertifikat.
-        </p>
-      </header>
-
-      <div className="tick-rule my-10" aria-hidden="true" />
+      <h1 className="text-3xl font-bold tracking-tight mb-2">
+        Häufig gestellte Fragen
+      </h1>
+      <p className="text-sm text-muted-foreground mb-8">
+        Hier finden Sie Antworten auf die häufigsten Fragen rund um
+        Bestellungen, Versand, Produkte und Ihr Kundenkonto.
+      </p>
 
       {categories.length === 0 ||
       categories.every((c) => c.items.length === 0) ? (
-        <div className="rounded-sm border border-dashed border-border p-8 text-center text-muted-foreground reveal-up">
+        <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
           <p>Aktuell sind keine FAQ-Einträge gepflegt.</p>
           <p className="mt-2 text-sm">
             Schreib uns gern direkt über unsere{" "}
             <Link
               href="/kontakt"
-              className="text-primary-strong underline-offset-2 hover:underline"
+              className="underline hover:text-foreground transition-colors"
             >
               Kontaktseite
             </Link>
@@ -95,59 +82,34 @@ export default async function FAQPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-14">
-          {categories.map((cat, ci) => {
+        <div className="space-y-12">
+          {categories.map((cat) => {
             if (cat.items.length === 0) return null;
-            const catNo = String(ci + 1).padStart(2, "0");
             return (
-              <section key={cat.id} className="reveal-up">
-                <header className="mb-5">
-                  <div className="flex items-baseline gap-4">
-                    <span
-                      aria-hidden="true"
-                      className="font-mono text-[11px] font-semibold text-primary-strong"
-                      style={{ letterSpacing: "0.16em" }}
-                    >
-                      {catNo}
-                    </span>
-                    <h2 className="display-title text-2xl md:text-[28px]">
-                      {cat.name}
-                    </h2>
-                    <span
-                      className="mono-tag text-muted-foreground ml-auto shrink-0"
-                      style={{ fontSize: 9.5 }}
-                    >
-                      {cat.items.length}{" "}
-                      {cat.items.length === 1 ? "Frage" : "Fragen"}
-                    </span>
-                  </div>
+              <section key={cat.id}>
+                <header className="mb-4">
+                  <h2 className="font-serif text-[24px] md:text-[28px] tracking-tight font-medium">
+                    {cat.name}
+                  </h2>
                   {cat.description && (
-                    <p className="mt-2 max-w-prose text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm text-muted-foreground max-w-prose">
                       {cat.description}
                     </p>
                   )}
-                  <div className="tick-rule mt-4" aria-hidden="true" />
                 </header>
-                <div className="border-b border-border">
-                  {cat.items.map((item, qi) => (
+                <div className="space-y-3">
+                  {cat.items.map((item) => (
                     <details
                       key={item.id}
-                      className="group border-t border-border"
+                      className="group border rounded-lg"
                     >
-                      <summary className="flex cursor-pointer list-none items-baseline gap-4 py-5 font-medium transition-colors hover:text-primary-strong">
-                        <span
-                          aria-hidden="true"
-                          className="shrink-0 font-mono text-[10.5px] text-muted-foreground tabular-nums group-open:text-primary-strong"
-                          style={{ letterSpacing: "0.08em" }}
-                        >
-                          {catNo}.{String(qi + 1).padStart(2, "0")}
-                        </span>
-                        <span className="flex-1">{item.question}</span>
-                        <span className="shrink-0 self-center text-muted-foreground transition-transform duration-300 group-open:rotate-180 group-open:text-primary-strong">
+                      <summary className="flex cursor-pointer items-center justify-between p-5 font-medium hover:bg-muted/50 transition-colors rounded-lg">
+                        <span className="pr-4">{item.question}</span>
+                        <span className="ml-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180">
                           &#9662;
                         </span>
                       </summary>
-                      <div className="faq-answer pb-6 pl-0 sm:pl-14 pr-2 sm:pr-8 text-sm leading-relaxed text-muted-foreground">
+                      <div className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed faq-answer">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {item.answer}
                         </ReactMarkdown>
@@ -161,14 +123,12 @@ export default async function FAQPage() {
         </div>
       )}
 
-      <hr className="rule-gold my-10" />
-
-      <div className="text-sm text-muted-foreground">
+      <div className="border-t pt-6 mt-12 text-sm text-muted-foreground">
         <p>
           Ihre Frage ist nicht dabei? Schreiben Sie uns über unsere{" "}
           <Link
             href="/kontakt"
-            className="text-primary-strong underline-offset-2 hover:underline"
+            className="underline hover:text-foreground transition-colors"
           >
             Kontaktseite
           </Link>

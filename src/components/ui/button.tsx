@@ -10,30 +10,20 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-sm hover:bg-primary-strong",
-        // Primäres Conversion-CTA der „Chromatogramm"-Sprache: volle
-        // Viridian-Fläche, heller Text, einmaliger Shine-Sweep beim
-        // Hover (btn-shine, globals.css). Der Variant-Name "gold" ist
-        // historisch — alle Call-Sites nutzen ihn als Haupt-CTA.
-        gold: "btn-shine bg-primary text-primary-foreground font-semibold shadow-[0_1px_0_hsl(0_0%_100%/0.12)_inset,0_10px_28px_-14px_hsl(var(--primary)/0.7)] hover:bg-primary-strong",
-        // Ink — tiefes Nachtblau als gewichtiger Sekundär-CTA auf
-        // hellen Flächen.
-        ink: "bg-ink text-ink-foreground border border-ink-border shadow-sm hover:border-primary/50 hover:bg-[hsl(218_32%_10%)]",
+          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/60",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary-strong underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
-        // XL — für Hero-/Hauptseiten-CTAs mit Präsenz.
-        xl: "h-12 rounded-md px-9 text-base [&_svg]:size-5",
         icon: "h-10 w-10",
       },
     },

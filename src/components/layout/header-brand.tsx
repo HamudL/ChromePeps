@@ -21,11 +21,11 @@ export function HeaderBrand() {
       aria-label={`${APP_NAME} Startseite`}
     >
       {!isHomepage && (
-        <span className="hidden font-display text-[22px] font-semibold tracking-tight chrome-text sm:inline">
+        <span className="hidden sm:inline text-xl font-bold tracking-tight chrome-text">
           {APP_NAME}
         </span>
       )}
-      <LogoIcon size={34} className="shrink-0" />
+      <LogoIcon size={36} className="shrink-0" />
     </Link>
   );
 }

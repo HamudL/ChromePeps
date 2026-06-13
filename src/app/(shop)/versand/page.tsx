@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Truck, Clock, Package, Globe } from "lucide-react";
 import { getActiveShippingRates } from "@/lib/shipping/rates";
 import { formatPrice } from "@/lib/utils";
 import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
@@ -18,19 +19,6 @@ export const metadata: Metadata = {
 // häufig genug dass volle Statisierung Drift erzeugt).
 export const dynamic = "force-dynamic";
 
-/** Nummerierter Abschnittskopf im Protokoll-Stil. */
-function SectionHead({ no, label, title }: { no: string; label: string; title: string }) {
-  return (
-    <header className="grid gap-x-8 sm:grid-cols-[64px_1fr]">
-      <span className="mono-label pt-1.5 text-primary-strong">{no}</span>
-      <div>
-        <span className="mono-label text-muted-foreground">{label}</span>
-        <h2 className="display-title mt-1.5 text-2xl">{title}</h2>
-      </div>
-    </header>
-  );
-}
-
 export default async function VersandPage() {
   const rates = await getActiveShippingRates();
   const deRate = rates.find((r) => r.countryCode === "DE");
@@ -38,50 +26,70 @@ export default async function VersandPage() {
 
   const dePriceStr = deRate ? formatPrice(deRate.priceInCents) : "5,99 €";
 
-  // Eckdaten als Protokollzeilen statt Icon-Karten.
-  const eckdaten: ReadonlyArray<[string, string, string]> = [
-    ["Versandkosten", `${dePriceStr} innerhalb Deutschlands`, "EU-weit kostenlos ab 200 EUR Warenwert"],
-    ["Lieferzeit", "2 bis 4 Werktage innerhalb Deutschlands", "3 bis 7 Werktage EU-Ausland"],
-    ["Verpackung", "Neutrale, diskrete Verpackung", "Stoßfest und versandsicher"],
-    ["Versandgebiet", "Deutschland und die gesamte EU", `${rates.length} Lieferländer`],
-  ];
-
   return (
-    <div className="container max-w-3xl section-pad">
-      <header>
-        <span className="eyebrow">Versand &amp; Lieferung</span>
-        <h1 className="display-title mt-3 text-4xl md:text-5xl">
-          Versand &amp; Lieferung
-        </h1>
-        <p className="mt-4 max-w-2xl text-muted-foreground">
-          Diskret verpackt, kühl versandt, EU-weit nachverfolgbar — alle
-          Konditionen zu Kosten, Laufzeiten und Lieferländern.
-        </p>
-      </header>
+    <div className="container max-w-3xl py-12">
+      <h1 className="text-3xl font-bold tracking-tight mb-2">
+        Versand &amp; Lieferung
+      </h1>
+      <p className="text-sm text-muted-foreground mb-8">
+        Alle Informationen zu Versandkosten, Lieferzeiten und Versandländern.
+      </p>
 
-      <div className="tick-rule mt-10" aria-hidden="true" />
-
-      {/* Eckdaten-Protokoll */}
-      <dl className="mb-14">
-        {eckdaten.map(([key, lineA, lineB]) => (
-          <div
-            key={key}
-            className="grid gap-x-10 gap-y-1.5 border-b border-border py-5 sm:grid-cols-[180px_1fr]"
-          >
-            <dt className="field-label !mb-0 pt-0.5">{key}</dt>
-            <dd className="text-sm leading-relaxed">
-              {lineA}
-              <br />
-              <span className="text-muted-foreground">{lineB}</span>
-            </dd>
+      <div className="space-y-6 text-sm leading-relaxed">
+        <div className="grid sm:grid-cols-2 gap-4 mb-8">
+          <div className="border rounded-lg p-4 flex items-start gap-3">
+            <Truck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold">Versandkosten</h3>
+              <p className="text-muted-foreground">
+                {dePriceStr} innerhalb Deutschlands
+              </p>
+              <p className="text-muted-foreground">
+                EU-weit kostenlos ab 200 EUR Warenwert
+              </p>
+            </div>
           </div>
-        ))}
-      </dl>
+          <div className="border rounded-lg p-4 flex items-start gap-3">
+            <Clock className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold">Lieferzeit</h3>
+              <p className="text-muted-foreground">
+                2 bis 4 Werktage innerhalb Deutschlands
+              </p>
+              <p className="text-muted-foreground">
+                3 bis 7 Werktage EU-Ausland
+              </p>
+            </div>
+          </div>
+          <div className="border rounded-lg p-4 flex items-start gap-3">
+            <Package className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold">Verpackung</h3>
+              <p className="text-muted-foreground">
+                Neutrale, diskrete Verpackung
+              </p>
+              <p className="text-muted-foreground">
+                Stoßfest und versandsicher
+              </p>
+            </div>
+          </div>
+          <div className="border rounded-lg p-4 flex items-start gap-3">
+            <Globe className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold">Versandgebiet</h3>
+              <p className="text-muted-foreground">
+                Deutschland und die gesamte EU
+              </p>
+              <p className="text-muted-foreground">
+                {rates.length} Lieferländer
+              </p>
+            </div>
+          </div>
+        </div>
 
-      <div className="space-y-12 text-sm leading-relaxed">
         <section>
-          <SectionHead no="01" label="Laufzeit" title="Lieferzeit" />
-          <p className="mt-3 sm:pl-[96px]">
+          <h2 className="text-lg font-semibold">Lieferzeit</h2>
+          <p>
             Die Lieferzeit beträgt, sofern beim jeweiligen Produkt nicht anders
             angegeben, innerhalb Deutschlands 2 bis 4 Werktage nach Zahlungseingang;
             für EU-Lieferungen rechnen Sie bitte mit 3 bis 7 Werktagen.
@@ -99,69 +107,62 @@ export default async function VersandPage() {
         </section>
 
         <section>
-          <SectionHead no="02" label="Tarife" title="Versandkosten pro Land" />
-          <div className="mt-3 sm:pl-[96px]">
-            <p>
-              Wir versenden in alle 27 EU-Mitgliedsstaaten. Ab einem Bestellwert
-              von <strong className="text-foreground">200 EUR</strong> ist der
-              Versand EU-weit{" "}
-              <strong className="text-foreground">kostenlos</strong>. Andernfalls
-              gelten folgende Pauschalen (brutto, inkl. MwSt.):
-            </p>
-            <div className="mt-4 overflow-x-auto border border-border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-foreground">
-                    <th className="mono-label px-4 py-2.5 text-left text-muted-foreground">
-                      Land
-                    </th>
-                    <th className="mono-label px-4 py-2.5 text-left text-muted-foreground">
-                      Code
-                    </th>
-                    <th className="mono-label px-4 py-2.5 text-right text-muted-foreground">
-                      Versandkosten
-                    </th>
+          <h2 className="text-lg font-semibold">Versandkosten pro Land</h2>
+          <p>
+            Wir versenden in alle 27 EU-Mitgliedsstaaten. Ab einem Bestellwert
+            von <strong>200 EUR</strong> ist der Versand EU-weit{" "}
+            <strong>kostenlos</strong>. Andernfalls gelten folgende Pauschalen
+            (brutto, inkl. MwSt.):
+          </p>
+          <div className="mt-4 overflow-x-auto rounded-lg border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium">Land</th>
+                  <th className="px-4 py-2 text-left font-medium">Code</th>
+                  <th className="px-4 py-2 text-right font-medium">
+                    Versandkosten
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {deRate && (
+                  <tr className="bg-primary/5">
+                    <td className="px-4 py-2 font-medium">
+                      {deRate.countryName}
+                    </td>
+                    <td className="px-4 py-2 font-mono text-xs">
+                      {deRate.countryCode}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {formatPrice(deRate.priceInCents)}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {deRate && (
-                    <tr className="bg-accent/60">
-                      <td className="px-4 py-2.5 font-medium">
-                        {deRate.countryName}
-                      </td>
-                      <td className="px-4 py-2.5 font-mono text-xs">
-                        {deRate.countryCode}
-                      </td>
-                      <td className="px-4 py-2.5 text-right font-mono tabular-nums">
-                        {formatPrice(deRate.priceInCents)}
-                      </td>
-                    </tr>
-                  )}
-                  {otherRates.map((r) => (
-                    <tr key={r.countryCode}>
-                      <td className="px-4 py-2.5">{r.countryName}</td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
-                        {r.countryCode}
-                      </td>
-                      <td className="px-4 py-2.5 text-right font-mono tabular-nums">
-                        {formatPrice(r.priceInCents)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Die endgültigen Versandkosten werden im Checkout anhand der
-              Lieferadresse berechnet und vor der Zahlung transparent
-              ausgewiesen.
-            </p>
+                )}
+                {otherRates.map((r) => (
+                  <tr key={r.countryCode}>
+                    <td className="px-4 py-2">{r.countryName}</td>
+                    <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
+                      {r.countryCode}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {formatPrice(r.priceInCents)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Die endgültigen Versandkosten werden im Checkout anhand der
+            Lieferadresse berechnet und vor der Zahlung transparent
+            ausgewiesen.
+          </p>
         </section>
 
         <section>
-          <SectionHead no="03" label="Carrier" title="Versanddienstleister" />
-          <p className="mt-3 sm:pl-[96px]">
+          <h2 className="text-lg font-semibold">Versanddienstleister</h2>
+          <p>
             Wir versenden über DHL. Sobald Ihre Bestellung verschickt wurde,
             erhalten Sie eine Versandbestätigung mit Sendungsnummer, über die
             Sie den Status Ihrer Lieferung jederzeit verfolgen können.
@@ -169,8 +170,8 @@ export default async function VersandPage() {
         </section>
 
         <section>
-          <SectionHead no="04" label="Handling" title="Lagerung" />
-          <p className="mt-3 sm:pl-[96px]">
+          <h2 className="text-lg font-semibold">Lagerung</h2>
+          <p>
             Bitte prüfen Sie den Zustand der Sendung unmittelbar nach Erhalt
             und lagern Sie die Produkte gemäß den Angaben auf dem jeweiligen
             Produktblatt (typischerweise bei minus 20 °C).
@@ -178,14 +179,14 @@ export default async function VersandPage() {
         </section>
 
         <section>
-          <SectionHead no="05" label="Außerhalb EU" title="Lieferung außerhalb der EU" />
-          <p className="mt-3 sm:pl-[96px]">
+          <h2 className="text-lg font-semibold">Lieferung außerhalb der EU</h2>
+          <p>
             Lieferungen in Nicht-EU-Länder (z.B. Schweiz, Vereinigtes
             Königreich) sind aktuell nicht über den Online-Shop verfügbar.
             Bitte wenden Sie sich für eine individuelle Anfrage direkt an{" "}
             <a
               href="mailto:support@chromepeps.com"
-              className="text-primary-strong underline-offset-2 hover:underline"
+              className="text-primary underline-offset-2 hover:underline"
             >
               support@chromepeps.com
             </a>

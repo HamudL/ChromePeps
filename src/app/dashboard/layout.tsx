@@ -12,14 +12,6 @@ export const metadata = {
   title: "Mein Konto",
 };
 
-/**
- * dashboard/layout — „Laborjournal des Kunden".
- *
- * Schlanke Konto-Kopfzeile (Brand, Bereichs-Label, E-Mail in Mono),
- * darunter ein Seitenkopf mit Fraunces-Titel + Mono-Metadaten und
- * Mess-Lineal. Navigation links als Protokoll-Index mit
- * Ordnungsnummern; Inhalte rechts.
- */
 export default async function DashboardLayout({
   children,
 }: {
@@ -37,19 +29,14 @@ export default async function DashboardLayout({
   const needsVerify = !!user && !user.emailVerified;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-border bg-background">
+    <div className="min-h-screen bg-muted/30">
+      <header className="sticky top-0 z-30 border-b bg-background">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
-          <Link
-            href="/"
-            className="mr-6 font-display text-lg font-semibold tracking-tight"
-          >
+          <Link href="/" className="mr-6 text-lg font-bold tracking-tight">
             {APP_NAME}
           </Link>
-          <span className="mono-label text-muted-foreground">
-            Laborjournal
-          </span>
-          <div className="ml-auto hidden font-mono text-xs text-muted-foreground sm:block">
+          <span className="text-sm text-muted-foreground">Mein Konto</span>
+          <div className="ml-auto text-sm text-muted-foreground">
             {session.user.email}
           </div>
         </div>
@@ -57,20 +44,8 @@ export default async function DashboardLayout({
 
       <ResearchBanner />
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        {/* Seitenkopf — Fraunces-Titel + Mono-Metadaten */}
-        <div className="mb-8">
-          <span className="eyebrow">Konto</span>
-          <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-            <h1 className="display-title text-2xl md:text-3xl">Mein Konto</h1>
-            <span className="mono-label normal-case tracking-normal text-muted-foreground">
-              {session.user.email}
-            </span>
-          </div>
-          <div className="tick-rule mt-5" aria-hidden />
-        </div>
-
-        <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-8 lg:flex-row">
           <aside className="w-full shrink-0 lg:w-56">
             <DashboardNav />
           </aside>

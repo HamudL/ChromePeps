@@ -1,50 +1,45 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 export const metadata = {
   // Kein "| ChromePeps"-Suffix - kommt vom title-Template des Root-Layouts
   // (sonst doppelter Brand-Suffix).
-  title: "E-Mail bestätigt",
+  title: "E-Mail best\u00e4tigt",
 };
 
 export default function VerifyEmailSuccessPage() {
   return (
-    <div className="hero-ambient flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md border border-border bg-card p-8">
-        {/* Protokoll-Kopfzeile */}
-        <div className="flex items-baseline justify-between gap-4">
-          <span className="mono-label text-muted-foreground">
-            E-Mail-Verifikation
-          </span>
-          <span className="mono-label text-success">Bestätigt</span>
-        </div>
-        <div className="tick-rule mt-4" aria-hidden="true" />
-
-        <div className="mt-6 flex items-start gap-3">
-          <CheckCircle2
-            className="mt-1 h-5 w-5 shrink-0 text-success"
-            aria-hidden="true"
-          />
-          <div>
-            <h1 className="display-title text-2xl">E-Mail bestätigt</h1>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Vielen Dank! Ihre E-Mail-Adresse wurde erfolgreich bestätigt.
-            </p>
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="text-center space-y-2">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
+            <CheckCircle2 className="h-6 w-6" />
           </div>
-        </div>
-
-        <p className="mt-5 border-t border-border pt-5 text-sm leading-relaxed text-muted-foreground">
+          <CardTitle className="text-2xl font-bold">
+            E-Mail bestätigt
+          </CardTitle>
+          <CardDescription>
+            Vielen Dank! Ihre E-Mail-Adresse wurde erfolgreich bestätigt.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center text-sm text-muted-foreground">
           Sie erhalten ab jetzt alle Bestell- und Kontobenachrichtigungen an
           Ihre hinterlegte Adresse.
-        </p>
-
-        <div className="mt-7">
-          <Button asChild variant="gold" className="w-full">
+        </CardContent>
+        <CardFooter>
+          <Button asChild className="w-full">
             <Link href="/dashboard">Zum Dashboard</Link>
           </Button>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

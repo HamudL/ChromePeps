@@ -289,16 +289,15 @@ export default async function CategoryLandingPage({
       <ApothekeShopHero
         crumb={heroCrumb}
         title={
-          // Fraunces-Kursive als Akzent; auf hellem Grund AA-konform
-          // über text-primary-strong.
-          <em className="text-primary-strong">{category.name}</em>
+          <>
+            <em className="not-italic text-primary">
+              {category.name}
+            </em>
+          </>
         }
         subline={heroSubline}
         stats={heroStats}
         featured={[]}
-        counter={`${total} ${total === 1 ? "Produkt" : "Produkte"} · ${
-          allCategories.length
-        } ${allCategories.length === 1 ? "Kategorie" : "Kategorien"}`}
       />
 
       <ShopFilterBar
@@ -314,37 +313,29 @@ export default async function CategoryLandingPage({
       <section className="container py-10 md:py-14">
         {productsWithBadges.length > 0 ? (
           <>
-            {/* Meta-Row: Eyebrow + Fraunces-Titel + Mono-Count, darunter
-                das Mess-Lineal als Abschluss der Zeile */}
-            <div className="mb-8">
-              <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pb-5">
-                <div className="min-w-0">
-                  <span className="eyebrow mb-2.5">Kategorie</span>
-                  <h2 className="display-title text-[28px] md:text-[32px]">
-                    Alle {category.name}
-                  </h2>
-                </div>
-                <div className="flex items-center gap-4">
-                  <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground tabular-nums">
-                    {total} {total === 1 ? "Produkt" : "Produkte"}
-                  </p>
-                  {hasActiveFilters && (
-                    <Link
-                      href={basePath}
-                      className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground hover:text-primary-strong underline underline-offset-4 decoration-dotted"
-                    >
-                      Reset
-                    </Link>
-                  )}
-                </div>
+            <div className="mb-8 flex items-baseline justify-between gap-6 border-b border-border pb-5">
+              <h2 className="font-serif text-[28px] md:text-[32px] font-medium tracking-[-0.02em] leading-none">
+                Alle {category.name}
+              </h2>
+              <div className="flex items-center gap-4">
+                <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground">
+                  {total} {total === 1 ? "Produkt" : "Produkte"}
+                </p>
+                {hasActiveFilters && (
+                  <Link
+                    href={basePath}
+                    className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground hover:text-primary underline underline-offset-4 decoration-dotted"
+                  >
+                    Reset
+                  </Link>
+                )}
               </div>
-              <div aria-hidden className="tick-rule" />
             </div>
 
             {/* Grid: 1 Karte auf Mobile (< 640 px), dann 2/3/4 ab sm/md/lg.
                 Spiegelt das Verhalten von /products und verhindert das
-                Abschneiden der Spec-Tabelle auf Smartphones. */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
+                Abschneiden der Spec-Rows auf Smartphones. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {productsWithBadges.map((product, idx) => (
                 <ProductCard
                   key={product.id}
@@ -372,11 +363,10 @@ export default async function CategoryLandingPage({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 md:py-32 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-sm border border-border bg-muted/40 text-muted-foreground mb-6">
-              <PackageSearch className="h-7 w-7" strokeWidth={1.5} />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-6">
+              <PackageSearch className="h-7 w-7 text-primary" />
             </div>
-            <span className="eyebrow mb-3">In Vorbereitung</span>
-            <h2 className="display-title text-2xl md:text-3xl mb-2">
+            <h2 className="text-2xl font-bold mb-2">
               Noch keine Produkte in {category.name}
             </h2>
             <p className="text-muted-foreground max-w-md mb-6 leading-relaxed">

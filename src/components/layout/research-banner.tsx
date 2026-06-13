@@ -9,12 +9,9 @@ import { FlaskConical } from "lucide-react";
  *  - rechtlich: der wichtigste Einzeiler ("Nur für Forschungszwecke")
  *    steht immer im Blickfeld, unabhängig davon ob der Nutzer den Footer-
  *    Disclaimer je gesehen hat.
- *  - visuell: schmaler heller Mono-Streifen mit feiner Unterlinie und
- *    Viridian-Akzent („Chromatogramm"). Kein X-Button — der Disclaimer
- *    soll nicht wegklickbar sein.
- *
- * WICHTIG: aria-label="Forschungshinweis" nicht umbenennen — die
- * :has()-Regel in globals.css (Ausblenden auf /ueber-uns) hängt daran.
+ *  - visuell: passt zum Apotheke-Stil (goldener Primary-Akzent, schmaler
+ *    heller Streifen mit feiner Unterlinie, Mono-Typo). Kein X-Button —
+ *    der Disclaimer soll nicht wegklickbar sein.
  *
  * Static Server Component — kein JS, kein State.
  */
@@ -23,20 +20,18 @@ export function ResearchBanner() {
     <div
       role="note"
       aria-label="Forschungshinweis"
-      className="border-b border-primary/15 bg-primary/[0.04]"
+      className="border-b border-primary/20 bg-primary/5"
     >
-      <div className="container flex items-center justify-center gap-2.5 py-2 text-center">
+      <div className="container flex items-center justify-center gap-2 py-2 text-center">
         <FlaskConical
-          className="h-3.5 w-3.5 shrink-0 text-primary"
+          className="h-3.5 w-3.5 text-primary shrink-0"
           aria-hidden
         />
-        <p className="font-mono text-[10.5px] uppercase leading-tight tracking-[0.14em]">
-          <span className="font-semibold text-primary-strong">
+        <p className="font-mono text-[10.5px] tracking-[0.12em] uppercase text-foreground/80 leading-tight">
+          <span className="text-primary font-semibold">
             Nur für Forschungszwecke
           </span>
-          <span aria-hidden className="mx-2.5 text-primary/40">
-            {"//"}
-          </span>
+          <span className="mx-2 text-muted-foreground/60">·</span>
           <span className="text-muted-foreground">
             Nicht für menschlichen Verzehr oder therapeutische Anwendung
           </span>
