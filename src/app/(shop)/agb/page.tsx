@@ -27,7 +27,7 @@ export default function AgbPage() {
   return (
     <div className="container max-w-3xl section-pad">
       <header>
-        <span className="eyebrow">[ RECHTLICHES ]</span>
+        <span className="eyebrow">Rechtliches</span>
         <h1 className="display-title mt-3 text-4xl md:text-5xl">
           Allgemeine Geschäftsbedingungen
         </h1>
@@ -36,9 +36,9 @@ export default function AgbPage() {
         </p>
       </header>
 
-      <hr className="rule-gold my-10" />
+      <div className="tick-rule mt-10" aria-hidden="true" />
 
-      <div className="space-y-8 text-[15px] leading-relaxed text-foreground/90">
+      <div className="mt-8 space-y-8 text-[15px] leading-relaxed text-foreground/90">
         <section>
           <h2 className="display-title text-xl text-foreground">§ 1 Geltungsbereich</h2>
           <p>
@@ -228,11 +228,12 @@ export default function AgbPage() {
           </p>
         </section>
 
-        <div className="mt-10 p-4 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg text-xs text-yellow-900 dark:text-yellow-200">
-          <strong>Hinweis:</strong> Dieser Text ist eine Vorlage und sollte vor
-          Live-Schaltung durch einen Anwalt geprüft und an die tatsächlichen
-          Geschäftsprozesse angepasst werden. Die Anbieterdaten kommen zentral
-          aus den <code>SELLER_*</code>-Umgebungsvariablen (siehe .env.example).
+        <div className="mt-10 border border-destructive/40 bg-destructive/5 p-4 text-xs leading-relaxed text-foreground/80">
+          <span className="mono-label mb-2 block text-destructive">Hinweis</span>
+          Dieser Text ist eine Vorlage und sollte vor Live-Schaltung durch
+          einen Anwalt geprüft und an die tatsächlichen Geschäftsprozesse
+          angepasst werden. Die Anbieterdaten kommen zentral aus den{" "}
+          <code>SELLER_*</code>-Umgebungsvariablen (siehe .env.example).
         </div>
       </div>
     </div>

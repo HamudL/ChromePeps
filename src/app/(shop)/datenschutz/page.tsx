@@ -26,7 +26,7 @@ export default function DatenschutzPage() {
   return (
     <div className="container max-w-3xl section-pad">
       <header>
-        <span className="eyebrow">[ DATENSCHUTZ ]</span>
+        <span className="eyebrow">Datenschutz</span>
         <h1 className="display-title mt-3 text-4xl md:text-5xl">
           Datenschutzerklärung
         </h1>
@@ -39,9 +39,9 @@ export default function DatenschutzPage() {
         </p>
       </header>
 
-      <hr className="rule-gold my-10" />
+      <div className="tick-rule mt-10" aria-hidden="true" />
 
-      <div className="space-y-8 text-[15px] leading-relaxed text-foreground/90">
+      <div className="mt-8 space-y-8 text-[15px] leading-relaxed text-foreground/90">
         <section>
           <h2 className="display-title text-xl text-foreground">
             1. Verantwortlicher im Sinne der Datenschutzgesetze
@@ -253,9 +253,11 @@ export default function DatenschutzPage() {
         {/* Hinweisbox nur solange noch Platzhalter sichtbar sind — sobald
             alle SELLER_*-Variablen gesetzt sind, verschwindet sie von selbst. */}
         {SELLER_DETAILS_INCOMPLETE && (
-          <div className="mt-10 p-4 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg text-xs text-yellow-900 dark:text-yellow-200">
-            <strong>Hinweis an den Seitenbetreiber:</strong> Felder mit{" "}
-            <code>[TODO: …]</code> kommen zentral aus den{" "}
+          <div className="mt-10 border border-destructive/40 bg-destructive/5 p-4 text-xs leading-relaxed text-foreground/80">
+            <span className="mono-label mb-2 block text-destructive">
+              Hinweis an den Seitenbetreiber
+            </span>
+            Felder mit <code>[TODO: …]</code> kommen zentral aus den{" "}
             <code>SELLER_*</code>-Umgebungsvariablen (siehe .env.example) und
             müssen vor Live-Schaltung gesetzt werden. Bei Einbindung weiterer
             Dienste (Sentry, Newsletter, etc.) muss diese Datenschutzerklärung

@@ -1,60 +1,82 @@
 import Link from "next/link";
-import { Home, Search, ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants";
 
+/**
+ * 404 — als Analyse-Protokoll inszeniert: „Probe nicht gefunden".
+ * Statische Server-Component, rendert ohne Shop-Header (Root-Segment).
+ */
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-md w-full text-center">
-        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          Fehler 404
-        </p>
-        <h1 className="mt-2 text-7xl font-bold chrome-text leading-none">
-          404
-        </h1>
-        <h2 className="mt-4 text-2xl font-bold tracking-tight">
-          Seite nicht gefunden
-        </h2>
-        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          Die von dir gesuchte Seite existiert nicht, wurde verschoben oder
-          befindet sich vorübergehend nicht im Sortiment. Schau dich gerne im
-          Shop um oder kehre zur Startseite zurück.
-        </p>
+    <div className="hero-ambient flex min-h-screen items-center justify-center bg-background px-4 py-16">
+      <div className="relative w-full max-w-md">
+        <div className="border border-border bg-card p-8 sm:p-10">
+          {/* Protokoll-Kopfzeile */}
+          <div className="flex items-baseline justify-between gap-4">
+            <span className="mono-label text-muted-foreground">
+              Analyse-Protokoll
+            </span>
+            <span className="mono-label text-destructive">Fehler 404</span>
+          </div>
+          <div className="tick-rule mt-4" aria-hidden="true" />
 
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button asChild>
-            <Link href="/">
-              <Home className="mr-2 h-4 w-4" />
-              Zur Startseite
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/products">
-              <Search className="mr-2 h-4 w-4" />
-              Produkte durchsuchen
-            </Link>
-          </Button>
-        </div>
-
-        <div className="mt-10 pt-6 border-t text-xs text-muted-foreground">
-          <p className="mb-2">
-            Brauchst du Hilfe?{" "}
-            <Link href="/kontakt" className="underline hover:text-foreground">
-              Kontaktiere uns
-            </Link>
+          <p className="index-ghost mt-6 text-7xl sm:text-8xl" aria-hidden="true">
+            404
           </p>
-          <p>&copy; {new Date().getFullYear()} {APP_NAME}</p>
+          <h1 className="display-title mt-2 text-3xl sm:text-4xl">
+            Probe nicht <em className="text-primary-strong">gefunden</em>.
+          </h1>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            Die angeforderte Seite existiert nicht, wurde verschoben oder
+            befindet sich vorübergehend nicht im Sortiment. Der Katalog führt
+            alle freigegebenen Chargen.
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button asChild variant="gold" className="gap-2">
+              <Link href="/products">
+                Katalog ansehen
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/">Zur Startseite</Link>
+            </Button>
+          </div>
+
+          <div className="mt-10 border-t border-border pt-5">
+            <dl className="space-y-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+              <div className="flex items-baseline justify-between gap-6">
+                <dt>Befund</dt>
+                <dd>Kein Treffer im Index</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-6">
+                <dt>Support</dt>
+                <dd>
+                  <Link
+                    href="/kontakt"
+                    className="text-primary-strong underline-offset-2 hover:underline"
+                  >
+                    Kontakt aufnehmen
+                  </Link>
+                </dd>
+              </div>
+            </dl>
+          </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-5 flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowLeft className="mr-1 h-3 w-3" />
+            <ArrowLeft className="mr-1.5 h-3 w-3" />
             Zurück
           </Link>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            &copy; {new Date().getFullYear()} {APP_NAME}
+          </p>
         </div>
       </div>
     </div>
