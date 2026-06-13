@@ -51,10 +51,8 @@ export function CartCrossSell() {
 
   return (
     <section className="mt-14 border-t border-border pt-10">
-      <p className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-strong">
-        Passt dazu
-      </p>
-      <h2 className="mb-6 font-display text-2xl font-semibold tracking-[-0.02em]">
+      <span className="eyebrow">Passt dazu</span>
+      <h2 className="display-title mb-6 mt-2 text-2xl">
         Das könnte Sie auch interessieren
       </h2>
 

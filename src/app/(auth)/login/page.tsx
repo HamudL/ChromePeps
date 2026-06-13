@@ -235,10 +235,10 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-lg">
+    <Card className="w-full max-w-md">
       <h1 className="sr-only">Bei {APP_NAME} anmelden</h1>
       <CardHeader className="space-y-2">
-        <span className="eyebrow">[ KONTO-ZUGANG ]</span>
+        <span className="eyebrow">Konto-Zugang</span>
         <CardTitle className="display-title text-3xl">
           Willkommen zurück
         </CardTitle>
@@ -248,13 +248,16 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
 
+      {/* Mess-Lineal — Signatur-Trenner zwischen Kopf und Formular */}
+      <div className="tick-rule mx-6 mb-5" aria-hidden />
+
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
             <div
               id="login-error"
               role="alert"
-              className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+              className="rounded-sm border border-destructive/40 border-l-2 border-l-destructive bg-destructive/10 p-3 text-sm text-destructive"
             >
               {error}
             </div>
@@ -265,7 +268,7 @@ export default function LoginPage() {
             <>
               <div className="space-y-2">
                 <Label htmlFor="email" className="field-label">
-                  [ E-Mail ]
+                  E-Mail
                 </Label>
                 <Input
                   id="email"
@@ -281,7 +284,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="field-label">
-                    [ Passwort ]
+                    Passwort
                   </Label>
                   <Link
                     href="/forgot-password"
@@ -325,7 +328,7 @@ export default function LoginPage() {
           {pendingCredentials && (
             <div className="space-y-2">
               <Label htmlFor="totpCode" className="field-label">
-                [ Zwei-Faktor-Code ]
+                Zwei-Faktor-Code
               </Label>
               <Input
                 id="totpCode"

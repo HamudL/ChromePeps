@@ -53,6 +53,7 @@ export default async function TwoFactorSettingsPage() {
           Zusätzlicher Schutz mit TOTP-Authenticator-App
           (Google Authenticator, Authy, 1Password, Bitwarden, …).
         </p>
+        <div className="tick-rule mt-4" aria-hidden />
       </div>
 
       {/* Status-Karte — Ink-Panel als bewusster Sicherheits-Fokus */}

@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
-import { Product3DTilt } from "@/components/shop/product-3d-tilt";
 
 /* ----------------------------------------------------------------
  * Image Gallery
+ * ----------------------------------------------------------------
+ * Ruhige Specimen-Abbildung: ein statisches Hauptbild plus
+ * Thumbnail-Leiste. Der frühere Pointer-Tilt-Effekt ist bewusst
+ * entfernt — das Dossier zeigt die Probe, es spielt nicht mit ihr.
  * ----------------------------------------------------------------*/
 
 interface GalleryImage {
@@ -20,32 +23,23 @@ interface GalleryImage {
 
 export function ImageGallery({
   images,
-  productName,
-  capColor,
   fit = "cover",
   frameless = false,
 }: {
   images: GalleryImage[];
-  productName?: string;
-  /**
-   * Cap-Farbe für das 3D-Vial-Modell (HEX). Default lila — passt für
-   * GLP-1-Familie. Falls Categorie-spezifisch gewünscht, siehe
-   * mapping in der Produkt-Page.
-   */
-  capColor?: string;
   /**
    * Wie das Bild in seinen Aspect-Square-Slot passt.
-   * - "cover" (default, für lifestyle/product-shots mit Hintergrund)
+   * - "cover" (für Lifestyle-/Produkt-Shots mit Hintergrund)
    * - "contain" (für freigestellte Vial-Bilder ohne Hintergrund —
-   *   verhindert Beschnitt und lässt ggf. einen Frame-Hintergrund
+   *   verhindert Beschnitt und lässt den Frame-Hintergrund
    *   drum herum sichtbar)
    */
   fit?: "cover" | "contain";
   /**
    * Entfernt den eigenen Gallery-Frame (Border + Background). Der
    * umgebende Container liefert dann den visuellen Rahmen — nützlich,
-   * wenn die Gallery z.B. innerhalb eines Apotheke-Media-Frames mit
-   * Grid-Pattern sitzen soll, damit der Pattern bis unter die
+   * wenn die Gallery innerhalb des Dossier-Media-Frames mit
+   * Raster-Pattern sitzt, damit das Pattern bis unter die
    * freigestellte Vial durchscheint.
    */
   frameless?: boolean;
@@ -54,7 +48,7 @@ export function ImageGallery({
 
   if (images.length === 0) {
     return (
-      <div className="aspect-square rounded-sm border border-border bg-muted flex items-center justify-center font-mono text-[10px] tracking-[0.16em] uppercase text-muted-foreground">
+      <div className="flex aspect-square items-center justify-center rounded-sm border border-border bg-muted font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
         Kein Bild verfügbar
       </div>
     );
@@ -63,29 +57,21 @@ export function ImageGallery({
   const fitClass = fit === "contain" ? "object-contain" : "object-cover";
   const mainFrame = frameless
     ? "relative aspect-square overflow-hidden"
-    : "relative aspect-square rounded-lg border bg-muted overflow-hidden";
+    : "relative aspect-square overflow-hidden rounded-sm border border-border bg-muted";
 
   return (
     <div className="space-y-3">
-      {/* Main image — 2D-Tilt-Effect für alle Bilder.
-          (Das echte 3D-Modell aus Product3DVialLazy/Product3DVial
-          ist im Repo vorhanden, aber rendert auf Production
-          unzuverlässig — die R3F-Scene initialisiert nicht
-          deterministisch auf einem Next-15 + React-19-Setup.
-          Code bleibt für eine spätere Iteration mit echtem GLB-
-          Asset stehen, ist aktuell aber nicht im Render-Path.) */}
+      {/* Hauptbild — statisch, priority für LCP. */}
       <div className={mainFrame}>
-        <Product3DTilt
+        <Image
           src={images[selected].url}
           alt={images[selected].alt}
-          fit={fit}
+          fill
+          className={fitClass}
+          sizes="(max-width: 1024px) 100vw, 50vw"
           priority
+          draggable={false}
         />
-      </div>
-      {/* productName, capColor sind hier ungenutzt — bleiben in den
-          Props als Vorbereitung für die nächste 3D-Iteration. */}
-      <div hidden aria-hidden>
-        {productName ?? ""} {capColor ?? ""}
       </div>
 
       {/* Thumbnails */}
@@ -96,12 +82,13 @@ export function ImageGallery({
               key={i}
               onClick={() => setSelected(i)}
               aria-label={`Bild ${i + 1} anzeigen`}
+              aria-pressed={i === selected}
               className={cn(
-                "relative h-16 w-16 shrink-0 rounded-sm border overflow-hidden bg-card transition-all",
-                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                "relative h-16 w-16 shrink-0 overflow-hidden rounded-sm border bg-card transition-all",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                 i === selected
-                  ? "ring-2 ring-primary ring-offset-1 ring-offset-background border-primary"
-                  : "border-border opacity-60 hover:opacity-100 hover:border-primary/40"
+                  ? "border-primary ring-1 ring-primary"
+                  : "border-border opacity-60 hover:border-primary/40 hover:opacity-100"
               )}
             >
               <Image
@@ -217,10 +204,10 @@ export function VariantBuyPanel({
 
   return (
     <div className="space-y-5">
-      {/* Variant-Buttons */}
+      {/* Varianten — eckige Specimen-Buttons mit Mono-Preis */}
       {variants.length > 0 && (
         <div className="space-y-2">
-          <label className="field-label !mb-0">Variante wählen</label>
+          <span className="field-label !mb-0">Variante wählen</span>
           <div className="flex flex-wrap gap-2">
             {variants.map((variant) => {
               const outOfStock = variant.stock <= 0;
@@ -233,17 +220,17 @@ export function VariantBuyPanel({
                   aria-pressed={isSelected}
                   onClick={() => handleSelectVariant(variant)}
                   className={cn(
-                    "rounded-sm border border-border px-4 py-2 text-sm font-medium transition-all",
-                    "hover:border-primary hover:text-primary-strong",
-                    "disabled:opacity-40 disabled:cursor-not-allowed",
-                    isSelected &&
-                      "bg-primary text-primary-foreground border-primary shadow-[0_8px_24px_-12px_hsl(45_92%_41%/0.7)] hover:text-primary-foreground"
+                    "rounded-sm border px-4 py-2.5 text-left text-sm font-medium transition-colors",
+                    "disabled:cursor-not-allowed disabled:opacity-40",
+                    isSelected
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card hover:border-primary hover:text-primary-strong"
                   )}
                 >
                   {variant.name}
                   <span
                     className={cn(
-                      "ml-1.5 text-xs",
+                      "ml-2 font-mono text-xs tabular-nums",
                       isSelected
                         ? "text-primary-foreground/80"
                         : "text-muted-foreground"
@@ -261,21 +248,21 @@ export function VariantBuyPanel({
         </div>
       )}
 
-      {/* Preis-Band (Apotheke-Stil) */}
-      <div className="flex items-baseline justify-between gap-4 py-5 border-y border-border">
-        <div className="flex items-baseline gap-3 flex-wrap">
-          <span className="text-[32px] font-bold tracking-[-0.02em] tabular-nums leading-none">
+      {/* Preis-Band — Messwert in Mono, tabular. */}
+      <div className="flex items-baseline justify-between gap-4 border-y border-border py-5">
+        <div className="flex flex-wrap items-baseline gap-3">
+          <span className="font-mono text-[30px] font-semibold leading-none tracking-tight tabular-nums">
             {selectedVariant
               ? formatPrice(selectedVariant.priceInCents)
               : priceDisplay}
           </span>
           {variants.length === 0 && hasSale && product.compareAtPriceInCents && (
-            <span className="text-base text-muted-foreground line-through tabular-nums">
+            <span className="font-mono text-base tabular-nums text-muted-foreground line-through">
               {formatPrice(product.compareAtPriceInCents)}
             </span>
           )}
         </div>
-        <p className="font-mono text-[10px] tracking-[0.1em] uppercase text-muted-foreground text-right max-w-[180px] leading-relaxed">
+        <p className="max-w-[180px] text-right font-mono text-[10px] uppercase leading-relaxed tracking-[0.1em] text-muted-foreground">
           Inkl. 19 % MwSt.
           <br />
           Gratis Versand ab 200 €
@@ -284,10 +271,17 @@ export function VariantBuyPanel({
 
       {/* Mengen-Wähler */}
       <div className="flex items-center gap-3">
-        <label className="font-mono text-[10.5px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
+        <span
+          id="pdp-qty-label"
+          className="font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
+        >
           Menge
-        </label>
-        <div className="flex items-center border border-border rounded-sm">
+        </span>
+        <div
+          role="group"
+          aria-labelledby="pdp-qty-label"
+          className="flex items-center rounded-sm border border-border"
+        >
           <Button
             variant="ghost"
             size="icon"
@@ -298,7 +292,7 @@ export function VariantBuyPanel({
           >
             <Minus className="h-3 w-3" />
           </Button>
-          <span className="w-10 text-center text-sm font-medium">
+          <span className="w-10 text-center font-mono text-sm font-medium tabular-nums">
             {quantity}
           </span>
           <Button
@@ -348,10 +342,10 @@ export function VariantBuyPanel({
 
 /* ----------------------------------------------------------------
  * Sequence Copy Block
- * A framed monospace display of the amino acid sequence with a
- * copy-to-clipboard button. Small convenience for researchers who
- * want to paste sequences straight into their lab notebook or
- * bioinformatics tool without retyping them.
+ * Gerahmte Mono-Darstellung der Aminosäuresequenz mit
+ * Copy-to-Clipboard-Button. Kleine Convenience für Forschende, die
+ * Sequenzen direkt ins Laborjournal oder Bioinformatik-Tool
+ * übernehmen wollen, ohne sie abzutippen.
  * ----------------------------------------------------------------*/
 
 export function SequenceCopyBlock({ sequence }: { sequence: string }) {
@@ -361,21 +355,21 @@ export function SequenceCopyBlock({ sequence }: { sequence: string }) {
     try {
       await navigator.clipboard.writeText(sequence);
       setCopied(true);
-      // Reset the "Copied" state after ~1.5 s so repeated copies
-      // still give visual feedback on each click.
+      // "Kopiert"-State nach ~1,5 s zurücksetzen, damit wiederholtes
+      // Kopieren bei jedem Klick visuelles Feedback gibt.
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // clipboard API can fail in insecure contexts (http:); in that
-      // case do nothing — the plain-text sequence is still visible.
+      // Clipboard-API kann in unsicheren Kontexten (http:) fehlschlagen;
+      // dann passiert nichts — die Sequenz bleibt als Text sichtbar.
     }
   };
 
   return (
-    <div className="rounded-sm border border-border bg-card overflow-hidden">
-      {/* Header bar */}
+    <div className="overflow-hidden rounded-sm border border-border bg-card">
+      {/* Kopfzeile */}
       <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/30 px-4 py-2.5">
         <div className="flex items-center gap-2 font-mono text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          <Dna className="h-3.5 w-3.5 text-primary" />
+          <Dna className="h-3.5 w-3.5 text-primary-strong" aria-hidden />
           Aminosäuresequenz
         </div>
         <Button
@@ -398,9 +392,9 @@ export function SequenceCopyBlock({ sequence }: { sequence: string }) {
           )}
         </Button>
       </div>
-      {/* Sequence body */}
+      {/* Sequenz */}
       <div className="overflow-x-auto p-4">
-        <code className="font-mono text-sm break-all leading-relaxed text-foreground/90">
+        <code className="break-all font-mono text-sm leading-relaxed text-foreground/90">
           {sequence}
         </code>
       </div>
