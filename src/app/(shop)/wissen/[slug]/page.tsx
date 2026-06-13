@@ -9,9 +9,7 @@ import { ArticleCard, type ArticleCardData } from "@/components/wissen/article-c
 import { ArticleBody } from "@/components/wissen/article-body";
 import { BatchInfoCard } from "@/components/wissen/batch-info-card";
 import { BlogPostViewTracker } from "@/components/wissen/blog-post-view-tracker";
-import { CategoryBadge } from "@/components/wissen/category-badge";
 import { CoverPlaceholder } from "@/components/wissen/cover-placeholder";
-import { MetaLine } from "@/components/wissen/meta-line";
 import { TocList } from "@/components/wissen/toc-list";
 import { extractToc } from "@/lib/wissen/extract-toc";
 import { articleJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
@@ -19,7 +17,9 @@ import { articleJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 /**
  * /wissen/[slug] — Wissens-Artikel-Detailseite.
  *
- * 3-Spalten-Layout auf xl+ (TOC links, Body Mitte, Quellen rechts),
+ * Ruhige Lese-Ansicht: Artikelkopf mit Eyebrow/Kategorie, Fraunces-
+ * Titel, Protokoll-Metazeile (Autor · Datum · Lesezeit), darunter
+ * 3-Spalten-Layout auf xl+ (TOC links, Body Mitte, Begriffe rechts),
  * 2-Spalten auf lg, Mobile mit collapsible TOC oben.
  *
  * On-Demand-ISR (seit der Header session-frei ist): leeres
@@ -144,9 +144,9 @@ export default async function WissenArticlePage({ params }: Props) {
       />
       <BlogPostViewTracker slug={post.slug} />
 
-      {/* Header */}
+      {/* Artikelkopf */}
       <header className="border-b border-border">
-        <div className="container pt-10 pb-12 md:pt-14 md:pb-16">
+        <div className="container pt-10 pb-12 md:pt-14 md:pb-14">
           {/* Breadcrumb */}
           <nav
             aria-label="Breadcrumb"
@@ -167,11 +167,17 @@ export default async function WissenArticlePage({ params }: Props) {
             <span className="text-foreground line-clamp-1">{post.title}</span>
           </nav>
 
-          <div className="mt-6 flex items-center gap-3 flex-wrap">
-            <CategoryBadge color="gold">{post.category.name}</CategoryBadge>
+          {/* Eyebrow: Kategorie als Kicker mit Mess-Strich. */}
+          <div className="mt-8">
+            <Link
+              href={`/wissen/kategorie/${post.category.slug}`}
+              className="eyebrow hover:text-primary transition-colors"
+            >
+              {post.category.name}
+            </Link>
           </div>
 
-          <h1 className="mt-5 font-serif text-[40px] md:text-[60px] lg:text-[68px] leading-[1.04] tracking-[-0.02em] font-medium max-w-[22ch]">
+          <h1 className="mt-5 display-title text-[40px] md:text-[58px] lg:text-[66px] max-w-[22ch]">
             {titleParts}
           </h1>
 
@@ -179,48 +185,61 @@ export default async function WissenArticlePage({ params }: Props) {
             {post.excerpt}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-3">
-            <span
-              aria-hidden="true"
-              className="shrink-0 inline-flex items-center justify-center font-mono text-[12px] font-semibold text-foreground"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "9999px",
-                background: "hsl(20 14% 92%)",
-                border: "1px solid hsl(var(--border))",
-              }}
-            >
-              {initials(post.author.name)}
-            </span>
-            <span
-              className="font-mono text-[12.5px] font-semibold"
-              style={{ letterSpacing: "0.02em" }}
-            >
-              {post.author.name}
-            </span>
-            {post.author.title && (
-              <>
-                <span aria-hidden="true" className="opacity-40">
-                  ·
-                </span>
-                <span
-                  className="mono-label text-muted-foreground"
-                  style={{ fontSize: 10.5 }}
+          {/* Protokoll-Metazeile: Autor · Datum · Lesezeit als Mono-Felder
+              zwischen Haarlinien. */}
+          <dl className="mt-9 border-y border-border grid grid-cols-2 md:flex md:flex-wrap gap-x-12 gap-y-4 py-4">
+            <div>
+              <dt className="mono-tag text-muted-foreground" style={{ fontSize: 9.5 }}>
+                Autor
+              </dt>
+              <dd
+                className="mt-1 font-mono text-[12.5px] font-semibold"
+                style={{ letterSpacing: "0.02em" }}
+              >
+                {post.author.name}
+                {post.author.title && (
+                  <span className="block font-normal text-muted-foreground text-[10.5px] mt-0.5">
+                    {post.author.title}
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="mono-tag text-muted-foreground" style={{ fontSize: 9.5 }}>
+                Datum
+              </dt>
+              <dd
+                className="mt-1 font-mono text-[12.5px] tabular-nums"
+                style={{ letterSpacing: "0.02em" }}
+              >
+                {dateLabel}
+              </dd>
+            </div>
+            <div>
+              <dt className="mono-tag text-muted-foreground" style={{ fontSize: 9.5 }}>
+                Lesezeit
+              </dt>
+              <dd
+                className="mt-1 font-mono text-[12.5px] tabular-nums"
+                style={{ letterSpacing: "0.02em" }}
+              >
+                {post.readingMinutes} min
+              </dd>
+            </div>
+            {updatedLabel && (
+              <div>
+                <dt className="mono-tag text-muted-foreground" style={{ fontSize: 9.5 }}>
+                  Aktualisiert
+                </dt>
+                <dd
+                  className="mt-1 font-mono text-[12.5px] tabular-nums"
+                  style={{ letterSpacing: "0.02em" }}
                 >
-                  {post.author.title}
-                </span>
-              </>
+                  {updatedLabel}
+                </dd>
+              </div>
             )}
-            <span aria-hidden="true" className="opacity-40">
-              ·
-            </span>
-            <MetaLine
-              time={`${post.readingMinutes} min`}
-              date={dateLabel}
-              updated={updatedLabel ?? undefined}
-            />
-          </div>
+          </dl>
         </div>
 
         {/* Cover */}
@@ -325,7 +344,7 @@ export default async function WissenArticlePage({ params }: Props) {
                       <li key={s}>
                         <Link
                           href={`/wissen/glossar#${s}`}
-                          className="font-mono text-[12px] text-foreground hover:text-primary"
+                          className="font-mono text-[12px] text-foreground hover:text-primary-strong"
                           style={{ letterSpacing: "0.02em" }}
                         >
                           → {s}
@@ -345,12 +364,12 @@ export default async function WissenArticlePage({ params }: Props) {
         <section className="border-t border-border">
           <div className="container py-10 md:py-14">
             <div className="grid grid-cols-1 md:grid-cols-[80px_1fr] gap-6 max-w-[820px]">
-              <div className="w-20 h-20 rounded-full bg-[hsl(20_14%_92%)] border border-border inline-flex items-center justify-center font-mono text-[18px] font-semibold">
+              <div className="w-20 h-20 rounded-sm bg-secondary border border-border inline-flex items-center justify-center font-mono text-[18px] font-semibold">
                 {initials(post.author.name)}
               </div>
               <div>
-                <p className="mono-tag text-muted-foreground">Autor</p>
-                <h3 className="mt-1 font-serif text-[24px] tracking-tight font-medium">
+                <span className="eyebrow">Autor</span>
+                <h3 className="mt-2 font-serif text-[24px] tracking-tight font-medium">
                   {post.author.name}
                 </h3>
                 <p className="mt-2 text-[15px] leading-relaxed text-foreground/85 max-w-[60ch]">
@@ -374,14 +393,15 @@ export default async function WissenArticlePage({ params }: Props) {
       {related.length > 0 && (
         <section className="border-t border-border">
           <div className="container py-14 md:py-20">
-            <div className="flex items-baseline justify-between mb-8">
-              <h2 className="font-serif text-[26px] md:text-[30px] tracking-tight font-medium">
+            <div className="flex items-baseline justify-between gap-4 mb-3">
+              <h2 className="display-title text-[26px] md:text-[30px]">
                 Weiterlesen
               </h2>
               <span className="mono-tag text-muted-foreground">
                 {related.length} verwandte Artikel
               </span>
             </div>
+            <div className="tick-rule mb-9" aria-hidden="true" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-12">
               {related.map((p) => (
                 <ArticleCard
@@ -397,11 +417,11 @@ export default async function WissenArticlePage({ params }: Props) {
 
       {/* CTA */}
       {post.featuredBatchProductSlug && (
-        <section className="border-t border-border bg-[hsl(40_20%_96%)]">
+        <section className="border-t border-border bg-accent/50">
           <div className="container py-10 md:py-12">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <span className="mono-tag text-primary">
+                <span className="mono-tag text-primary-strong">
                   Lieferbar · Charge online verifizierbar
                 </span>
                 <p className="mt-2 font-serif text-[22px] md:text-[24px] tracking-tight font-medium">
@@ -474,14 +494,13 @@ function renderTitleWithEmphasis(
   if (!emphasis) return title;
   const idx = title.indexOf(emphasis);
   if (idx === -1) return title;
-  // Gold-Akzent statt Italic — Soft-Bio-Pharma-Stack hat keine
-  // Italic-Display-Cut. Wir behalten <em> für Semantik (Screenreader,
-  // SEO), unstylen den Default-Italic und nutzen eine Brand-Gold-
-  // Color als visueller Akzent.
+  // Fraunces bringt echte Kursive mit — das <em> bleibt semantisch
+  // (Screenreader, SEO) und rendert über .display-title als kursiver
+  // Viridian-Akzent.
   return (
     <>
       {title.slice(0, idx)}
-      <em className="not-italic text-primary">{emphasis}</em>
+      <em className="text-primary-strong">{emphasis}</em>
       {title.slice(idx + emphasis.length)}
     </>
   );

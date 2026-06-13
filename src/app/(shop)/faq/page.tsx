@@ -7,8 +7,11 @@ import { db } from "@/lib/db";
 import { faqPageJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 
 /**
- * /faq — Live-FAQ-Seite. Liest FAQCategories + FAQItems aus der DB
- * (gepflegt via /admin/wissen/faq) und rendert kategorisiert.
+ * /faq — Live-FAQ-Seite im Protokoll-Stil. Liest FAQCategories +
+ * FAQItems aus der DB (gepflegt via /admin/wissen/faq) und rendert
+ * kategorisiert: Mono-Indizes pro Frage (z. B. 02.04 = Kategorie 2,
+ * Frage 4), Haarlinien statt Karten-Rahmen, native details/summary
+ * als Accordion.
  *
  * `force-dynamic` weil zur Build-Zeit keine DATABASE_URL existiert
  * (gleiches Pattern wie Homepage / Wissen-Hub).
@@ -59,8 +62,13 @@ export default async function FAQPage() {
       />
 
       <header>
-        <span className="eyebrow">[ WISSENSBASIS ]</span>
-        <h1 className="display-title mt-3 text-4xl md:text-5xl">
+        <div className="flex items-baseline justify-between gap-4 flex-wrap">
+          <span className="eyebrow">Wissensbasis · FAQ</span>
+          <span className="mono-tag text-muted-foreground" style={{ fontSize: 9.5 }}>
+            {allItems.length} Einträge
+          </span>
+        </div>
+        <h1 className="display-title mt-4 text-4xl md:text-5xl">
           Häufig gestellte Fragen
         </h1>
         <p className="mt-4 max-w-2xl text-muted-foreground">
@@ -69,11 +77,11 @@ export default async function FAQPage() {
         </p>
       </header>
 
-      <hr className="rule-gold my-10" />
+      <div className="tick-rule my-10" aria-hidden="true" />
 
       {categories.length === 0 ||
       categories.every((c) => c.items.length === 0) ? (
-        <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground reveal-up">
+        <div className="rounded-sm border border-dashed border-border p-8 text-center text-muted-foreground reveal-up">
           <p>Aktuell sind keine FAQ-Einträge gepflegt.</p>
           <p className="mt-2 text-sm">
             Schreib uns gern direkt über unsere{" "}
@@ -90,31 +98,56 @@ export default async function FAQPage() {
         <div className="space-y-14">
           {categories.map((cat, ci) => {
             if (cat.items.length === 0) return null;
+            const catNo = String(ci + 1).padStart(2, "0");
             return (
               <section key={cat.id} className="reveal-up">
                 <header className="mb-5">
-                  <span className="mono-label text-muted-foreground">
-                    {String(ci + 1).padStart(2, "0")} · Kategorie
-                  </span>
-                  <h2 className="display-title mt-2 text-2xl md:text-[28px]">
-                    {cat.name}
-                  </h2>
+                  <div className="flex items-baseline gap-4">
+                    <span
+                      aria-hidden="true"
+                      className="font-mono text-[11px] font-semibold text-primary-strong"
+                      style={{ letterSpacing: "0.16em" }}
+                    >
+                      {catNo}
+                    </span>
+                    <h2 className="display-title text-2xl md:text-[28px]">
+                      {cat.name}
+                    </h2>
+                    <span
+                      className="mono-tag text-muted-foreground ml-auto shrink-0"
+                      style={{ fontSize: 9.5 }}
+                    >
+                      {cat.items.length}{" "}
+                      {cat.items.length === 1 ? "Frage" : "Fragen"}
+                    </span>
+                  </div>
                   {cat.description && (
-                    <p className="mt-1.5 max-w-prose text-sm text-muted-foreground">
+                    <p className="mt-2 max-w-prose text-sm text-muted-foreground">
                       {cat.description}
                     </p>
                   )}
+                  <div className="tick-rule mt-4" aria-hidden="true" />
                 </header>
-                <div className="divide-y divide-border rounded-lg border border-border">
-                  {cat.items.map((item) => (
-                    <details key={item.id} className="group">
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 font-medium transition-colors hover:text-primary-strong">
-                        <span>{item.question}</span>
-                        <span className="shrink-0 text-muted-foreground transition-transform duration-300 group-open:rotate-180 group-open:text-primary-strong">
+                <div className="border-b border-border">
+                  {cat.items.map((item, qi) => (
+                    <details
+                      key={item.id}
+                      className="group border-t border-border"
+                    >
+                      <summary className="flex cursor-pointer list-none items-baseline gap-4 py-5 font-medium transition-colors hover:text-primary-strong">
+                        <span
+                          aria-hidden="true"
+                          className="shrink-0 font-mono text-[10.5px] text-muted-foreground tabular-nums group-open:text-primary-strong"
+                          style={{ letterSpacing: "0.08em" }}
+                        >
+                          {catNo}.{String(qi + 1).padStart(2, "0")}
+                        </span>
+                        <span className="flex-1">{item.question}</span>
+                        <span className="shrink-0 self-center text-muted-foreground transition-transform duration-300 group-open:rotate-180 group-open:text-primary-strong">
                           &#9662;
                         </span>
                       </summary>
-                      <div className="faq-answer px-5 pb-5 text-sm leading-relaxed text-muted-foreground">
+                      <div className="faq-answer pb-6 pl-0 sm:pl-14 pr-2 sm:pr-8 text-sm leading-relaxed text-muted-foreground">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {item.answer}
                         </ReactMarkdown>

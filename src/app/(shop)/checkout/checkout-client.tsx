@@ -10,15 +10,13 @@ import {
   MapPin,
   Plus,
   CreditCard,
-  ShoppingBag,
+  ArrowRight,
   AlertCircle,
   Tag,
   X,
   Check,
   Building2,
   LogIn,
-  User as UserIcon,
-  Mail,
   Lock,
   FlaskConical,
   PackageCheck,
@@ -86,6 +84,31 @@ const INITIAL_ADDRESS_FORM = {
   company: "",
   isDefault: false,
 };
+
+// Nummerierter Abschnittskopf des Checkout-Protokolls: Mono-Ordnungszahl,
+// Display-Titel, Mess-Lineal als Unterkante.
+function SectionHead({
+  index,
+  title,
+  description,
+}: {
+  index: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <CardHeader className="pb-4">
+      <div className="flex items-baseline gap-3">
+        <span className="font-mono text-sm font-semibold tabular-nums text-primary-strong">
+          {index}
+        </span>
+        <CardTitle className="display-title text-xl">{title}</CardTitle>
+      </div>
+      {description ? <CardDescription>{description}</CardDescription> : null}
+      <div className="tick-rule !mt-3" aria-hidden />
+    </CardHeader>
+  );
+}
 
 // Client-Teil des Checkouts. Die Vorkasse-Infos kommen als Prop vom
 // Server-Wrapper (page.tsx): BANK_*-Env wird zur LAUFZEIT auf dem
@@ -488,22 +511,26 @@ export function CheckoutClient({
   if (items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-20">
-        <div className="max-w-md mx-auto text-center space-y-6">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-border bg-card">
-            <ShoppingBag className="h-11 w-11 text-muted-foreground" />
+        <div className="mx-auto max-w-md">
+          <div className="tick-rule" aria-hidden />
+          <div className="space-y-6 py-12 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-md border border-border bg-card text-muted-foreground">
+              <FlaskConical className="h-7 w-7" strokeWidth={1.5} />
+            </div>
+            <div className="space-y-3">
+              <span className="eyebrow justify-center">Warenkorb leer</span>
+              <h1 className="display-title text-3xl">
+                Noch nichts zum Bezahlen
+              </h1>
+            </div>
+            <p className="text-muted-foreground">
+              Legen Sie Produkte in den Warenkorb, bevor Sie zur Kasse gehen.
+            </p>
+            <Button variant="gold" size="lg" asChild>
+              <Link href="/products">Produkte entdecken</Link>
+            </Button>
           </div>
-          <div className="space-y-3">
-            <span className="eyebrow justify-center">Warenkorb leer</span>
-            <h1 className="display-title text-3xl">
-              Noch nichts zum Bezahlen
-            </h1>
-          </div>
-          <p className="text-muted-foreground">
-            Legen Sie Produkte in den Warenkorb, bevor Sie zur Kasse gehen.
-          </p>
-          <Button variant="gold" size="lg" asChild>
-            <Link href="/products">Produkte entdecken</Link>
-          </Button>
+          <div className="tick-rule" aria-hidden />
         </div>
       </div>
     );
@@ -543,9 +570,14 @@ export function CheckoutClient({
     setAddressForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Nummerierung der Protokoll-Abschnitte: Gäste sehen zusätzlich den
+  // Kontakt-Block als 01, danach verschieben sich Adresse/Zahlung.
+  const stepAddress = isGuest ? "02" : "01";
+  const stepPayment = isGuest ? "03" : "02";
+
   return (
     <div className="container mx-auto px-4 pt-8 pb-28 lg:pb-8">
-      <div className="mb-8 border-b border-border pb-6">
+      <header className="mb-8">
         <span className="eyebrow">Sichere Kasse</span>
         <h1 className="display-title mt-3 text-3xl md:text-4xl">
           Bestellung abschließen
@@ -564,17 +596,18 @@ export function CheckoutClient({
             Diskreter Versand
           </span>
         </div>
-      </div>
+        <div className="tick-rule mt-5" aria-hidden />
+      </header>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left Column - Address & Payment */}
+        {/* Linke Spalte — Kontakt, Adresse, Zahlung */}
         <div className="lg:col-span-2 space-y-6">
           {/* Guest-mode banner: softly suggests logging in for
               saved addresses + order history, but doesn't block
               checkout. Hidden for authenticated users. */}
           {isGuest && (
-            <div className="flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/[0.06] p-4">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-strong">
+            <div className="flex items-center gap-3 rounded-md border border-primary/25 bg-primary/[0.06] p-4">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary/15 text-primary-strong">
                 <LogIn className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
@@ -603,39 +636,30 @@ export function CheckoutClient({
               somewhere to go. */}
           {isGuest && (
             <Card>
-              <CardHeader>
-                <span className="eyebrow">Schritt 1 — Kontakt</span>
-                <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl">
-                  <UserIcon className="h-5 w-5 text-primary-strong" />
-                  Kontaktdaten
-                </CardTitle>
-                <CardDescription>
-                  Für Bestellbestätigung und Updates zum Versand.
-                </CardDescription>
-              </CardHeader>
+              <SectionHead
+                index="01"
+                title="Kontakt"
+                description="Für Bestellbestätigung und Updates zum Versand."
+              />
               <CardContent className="space-y-5">
                 <div className="grid gap-2">
                   <Label htmlFor="guestEmail" className="field-label">
-                    [ E-Mail-Adresse ]
+                    E-Mail-Adresse
                   </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="guestEmail"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      placeholder="ihre@e-mail.de"
-                      value={guestEmail}
-                      onChange={(e) => setGuestEmail(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
+                  <Input
+                    id="guestEmail"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    placeholder="ihre@e-mail.de"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="guestFirstName" className="field-label">
-                      [ Vorname ]
+                      Vorname
                     </Label>
                     <Input
                       id="guestFirstName"
@@ -647,7 +671,7 @@ export function CheckoutClient({
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="guestLastName" className="field-label">
-                      [ Nachname ]
+                      Nachname
                     </Label>
                     <Input
                       id="guestLastName"
@@ -664,20 +688,15 @@ export function CheckoutClient({
 
           {/* Shipping Address Section */}
           <Card>
-            <CardHeader>
-              <span className="eyebrow">
-                {isGuest ? "Schritt 2 — Lieferung" : "Schritt 1 — Lieferung"}
-              </span>
-              <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl">
-                <MapPin className="h-5 w-5 text-primary-strong" />
-                Lieferadresse
-              </CardTitle>
-              <CardDescription>
-                {isGuest
+            <SectionHead
+              index={stepAddress}
+              title="Versandadresse"
+              description={
+                isGuest
                   ? "Wohin soll die Bestellung geliefert werden?"
-                  : "Wählen Sie eine Lieferadresse für Ihre Bestellung."}
-              </CardDescription>
-            </CardHeader>
+                  : "Wählen Sie eine Lieferadresse für Ihre Bestellung."
+              }
+            />
             <CardContent className="space-y-5">
               {/* Guest inline address form — no "saved addresses"
                   for guests (nowhere to save to). They fill in a
@@ -687,7 +706,7 @@ export function CheckoutClient({
                 <>
                   <div className="grid gap-2">
                     <Label htmlFor="guestCompany" className="field-label">
-                      [ Firma — optional ]
+                      Firma — optional
                     </Label>
                     <Input
                       id="guestCompany"
@@ -700,7 +719,7 @@ export function CheckoutClient({
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="guestStreet" className="field-label">
-                      [ Straße und Hausnummer ]
+                      Straße und Hausnummer
                     </Label>
                     <Input
                       id="guestStreet"
@@ -714,7 +733,7 @@ export function CheckoutClient({
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="guestStreet2" className="field-label">
-                      [ Adresszusatz — optional ]
+                      Adresszusatz — optional
                     </Label>
                     <Input
                       id="guestStreet2"
@@ -727,7 +746,7 @@ export function CheckoutClient({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="guestPostalCode" className="field-label">
-                        [ PLZ ]
+                        PLZ
                       </Label>
                       <Input
                         id="guestPostalCode"
@@ -744,7 +763,7 @@ export function CheckoutClient({
                     </div>
                     <div className="grid gap-2 col-span-2">
                       <Label htmlFor="guestCity" className="field-label">
-                        [ Stadt ]
+                        Stadt
                       </Label>
                       <Input
                         id="guestCity"
@@ -760,7 +779,7 @@ export function CheckoutClient({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="guestCountry" className="field-label">
-                        [ Land ]
+                        Land
                       </Label>
                       {/* CountrySelect fetcht selbst die aktiven shipping_rates.
                           Der parent-state `shippingRates` bleibt für den Live-
@@ -776,7 +795,7 @@ export function CheckoutClient({
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="guestPhone" className="field-label">
-                        [ Telefon — optional ]
+                        Telefon — optional
                       </Label>
                       <Input
                         id="guestPhone"
@@ -792,11 +811,11 @@ export function CheckoutClient({
                 </>
               ) : loadingAddresses ? (
                 <div className="space-y-3">
-                  <div className="h-10 bg-muted animate-pulse rounded-md" />
-                  <div className="h-16 bg-muted animate-pulse rounded-md" />
+                  <div className="h-10 shimmer-gold rounded-sm" />
+                  <div className="h-16 shimmer-gold rounded-sm" />
                 </div>
               ) : addresses.length === 0 ? (
-                <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/30 py-8 text-center">
+                <div className="space-y-3 rounded-md border border-dashed border-border bg-muted/30 py-8 text-center">
                   <MapPin className="mx-auto h-10 w-10 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
                     Noch keine Adresse hinterlegt. Fügen Sie eine Lieferadresse
@@ -827,7 +846,7 @@ export function CheckoutClient({
                   </Select>
 
                   {selectedAddress && (
-                    <div className="space-y-1 rounded-lg border border-border bg-muted/40 p-4 text-sm">
+                    <div className="space-y-1 rounded-md border border-border bg-muted/40 p-4 text-sm">
                       <p className="mb-1 flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-primary-strong">
                         <MapPin className="h-3 w-3" aria-hidden />
                         Liefert an
@@ -884,7 +903,7 @@ export function CheckoutClient({
               )}
 
               {!isGuest && showAddressForm && (
-                <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+                <div className="space-y-4 rounded-md border border-border bg-muted/30 p-4">
                   <div className="flex items-center justify-between">
                     <span className="mono-label text-primary-strong">
                       Neue Lieferadresse
@@ -903,7 +922,7 @@ export function CheckoutClient({
                   <div className="grid gap-3">
                     <div className="grid gap-2">
                       <Label htmlFor="label" className="field-label">
-                        [ Bezeichnung — optional ]
+                        Bezeichnung — optional
                       </Label>
                       <Input
                         id="label"
@@ -918,7 +937,7 @@ export function CheckoutClient({
                     <div className="grid grid-cols-2 gap-3">
                       <div className="grid gap-2">
                         <Label htmlFor="firstName" className="field-label">
-                          [ Vorname * ]
+                          Vorname *
                         </Label>
                         <Input
                           id="firstName"
@@ -932,7 +951,7 @@ export function CheckoutClient({
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="lastName" className="field-label">
-                          [ Nachname * ]
+                          Nachname *
                         </Label>
                         <Input
                           id="lastName"
@@ -948,7 +967,7 @@ export function CheckoutClient({
 
                     <div className="grid gap-2">
                       <Label htmlFor="company" className="field-label">
-                        [ Firma — optional ]
+                        Firma — optional
                       </Label>
                       <Input
                         id="company"
@@ -962,7 +981,7 @@ export function CheckoutClient({
 
                     <div className="grid gap-2">
                       <Label htmlFor="street" className="field-label">
-                        [ Straße und Hausnummer * ]
+                        Straße und Hausnummer *
                       </Label>
                       <Input
                         id="street"
@@ -977,7 +996,7 @@ export function CheckoutClient({
 
                     <div className="grid gap-2">
                       <Label htmlFor="street2" className="field-label">
-                        [ Adresszusatz — optional ]
+                        Adresszusatz — optional
                       </Label>
                       <Input
                         id="street2"
@@ -991,7 +1010,7 @@ export function CheckoutClient({
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="grid gap-2">
                         <Label htmlFor="postalCode" className="field-label">
-                          [ PLZ * ]
+                          PLZ *
                         </Label>
                         <Input
                           id="postalCode"
@@ -1005,7 +1024,7 @@ export function CheckoutClient({
                       </div>
                       <div className="col-span-2 grid gap-2">
                         <Label htmlFor="city" className="field-label">
-                          [ Stadt * ]
+                          Stadt *
                         </Label>
                         <Input
                           id="city"
@@ -1022,7 +1041,7 @@ export function CheckoutClient({
                     <div className="grid grid-cols-2 gap-3">
                       <div className="grid gap-2">
                         <Label htmlFor="state" className="field-label">
-                          [ Bundesland — optional ]
+                          Bundesland — optional
                         </Label>
                         <Input
                           id="state"
@@ -1034,7 +1053,7 @@ export function CheckoutClient({
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="country" className="field-label">
-                          [ Land * ]
+                          Land *
                         </Label>
                         <CountrySelect
                           id="country"
@@ -1047,7 +1066,7 @@ export function CheckoutClient({
 
                     <div className="grid gap-2">
                       <Label htmlFor="phone" className="field-label">
-                        [ Telefon — optional ]
+                        Telefon — optional
                       </Label>
                       <Input
                         id="phone"
@@ -1079,7 +1098,10 @@ export function CheckoutClient({
                     </div>
 
                     {addressError && (
-                      <div className="flex items-center gap-2 text-sm text-destructive">
+                      <div
+                        role="alert"
+                        className="flex items-center gap-2 text-sm text-destructive"
+                      >
                         <AlertCircle className="h-4 w-4 flex-shrink-0" />
                         {addressError}
                       </div>
@@ -1109,17 +1131,23 @@ export function CheckoutClient({
             </CardContent>
           </Card>
 
-          {/* Promo Code Section */}
+          {/* Promo Code Section — bewusst ohne Ordnungszahl, ein
+              optionaler Einschub zwischen den Pflichtschritten. */}
           <Card>
-            <CardHeader>
-              <span className="eyebrow">Vorteil</span>
-              <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl">
-                <Tag className="h-5 w-5 text-primary-strong" />
-                Gutscheincode
-              </CardTitle>
+            <CardHeader className="pb-4">
+              <div className="flex items-baseline gap-3">
+                <Tag
+                  className="h-4 w-4 self-center text-primary-strong"
+                  aria-hidden
+                />
+                <CardTitle className="display-title text-xl">
+                  Gutscheincode
+                </CardTitle>
+              </div>
               <CardDescription>
                 Sie haben einen Rabattcode? Hier einlösen.
               </CardDescription>
+              <div className="tick-rule !mt-3" aria-hidden />
             </CardHeader>
             <CardContent className="space-y-3">
               {appliedPromo ? (
@@ -1129,7 +1157,7 @@ export function CheckoutClient({
                     <span className="font-mono font-medium">
                       {appliedPromo.code}
                     </span>
-                    <span className="text-success">
+                    <span className="font-mono tabular-nums text-success">
                       &minus;{formatPrice(appliedPromo.discountAmount)}
                     </span>
                   </div>
@@ -1137,6 +1165,7 @@ export function CheckoutClient({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
+                    aria-label="Gutscheincode entfernen"
                     onClick={removePromo}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -1146,6 +1175,7 @@ export function CheckoutClient({
                 <div className="flex gap-2">
                   <Input
                     placeholder="Code eingeben"
+                    aria-label="Gutscheincode"
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
                     onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
@@ -1166,25 +1196,20 @@ export function CheckoutClient({
                 </div>
               )}
               {promoError && (
-                <p className="text-sm text-destructive">{promoError}</p>
+                <p role="alert" className="text-sm text-destructive">
+                  {promoError}
+                </p>
               )}
             </CardContent>
           </Card>
 
           {/* Payment Method Section */}
           <Card>
-            <CardHeader>
-              <span className="eyebrow">
-                {isGuest ? "Schritt 3 — Zahlung" : "Schritt 2 — Zahlung"}
-              </span>
-              <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl">
-                <CreditCard className="h-5 w-5 text-primary-strong" />
-                Zahlungsart
-              </CardTitle>
-              <CardDescription>
-                Wählen Sie Ihre bevorzugte Zahlungsart.
-              </CardDescription>
-            </CardHeader>
+            <SectionHead
+              index={stepPayment}
+              title="Zahlung"
+              description="Wählen Sie Ihre bevorzugte Zahlungsart."
+            />
             <CardContent className="space-y-4">
               {/* Payment method toggle — Vorkasse erscheint nur, wenn sie
                   aktiviert UND eine echte Bankverbindung hinterlegt ist. */}
@@ -1193,9 +1218,9 @@ export function CheckoutClient({
                   type="button"
                   onClick={() => setPaymentMethod("STRIPE")}
                   aria-pressed={paymentMethod === "STRIPE"}
-                  className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-all duration-200 ${
+                  className={`relative flex flex-col items-center gap-2 rounded-md border-2 p-4 text-center transition-all duration-200 ${
                     paymentMethod === "STRIPE"
-                      ? "border-primary bg-primary/[0.06] shadow-[0_8px_24px_-16px_hsl(45_92%_41%/0.7)]"
+                      ? "border-primary bg-primary/[0.06] shadow-[0_8px_24px_-16px_hsl(var(--primary)/0.6)]"
                       : "border-border hover:border-primary/40"
                   }`}
                 >
@@ -1213,9 +1238,9 @@ export function CheckoutClient({
                     type="button"
                     onClick={() => setPaymentMethod("BANK_TRANSFER")}
                     aria-pressed={paymentMethod === "BANK_TRANSFER"}
-                    className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-all duration-200 ${
+                    className={`relative flex flex-col items-center gap-2 rounded-md border-2 p-4 text-center transition-all duration-200 ${
                       paymentMethod === "BANK_TRANSFER"
-                        ? "border-primary bg-primary/[0.06] shadow-[0_8px_24px_-16px_hsl(45_92%_41%/0.7)]"
+                        ? "border-primary bg-primary/[0.06] shadow-[0_8px_24px_-16px_hsl(var(--primary)/0.6)]"
                         : "border-border hover:border-primary/40"
                     }`}
                   >
@@ -1232,7 +1257,7 @@ export function CheckoutClient({
               </div>
 
               {paymentMethod === "STRIPE" ? (
-                <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3.5 text-sm">
+                <div className="flex items-start gap-3 rounded-md border border-border bg-muted/30 p-3.5 text-sm">
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" aria-hidden />
                   <p className="text-muted-foreground">
                     Sie werden zur sicheren Bezahlseite von Stripe weitergeleitet,
@@ -1241,7 +1266,7 @@ export function CheckoutClient({
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-4 text-sm">
+                <div className="space-y-3 rounded-md border border-border bg-muted/40 p-4 text-sm">
                   <p className="flex items-center gap-2 font-semibold">
                     <Building2 className="h-4 w-4 text-primary-strong" aria-hidden />
                     Banküberweisung (Vorkasse)
@@ -1262,7 +1287,10 @@ export function CheckoutClient({
               )}
 
               {checkoutError && (
-                <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                <div
+                  role="alert"
+                  className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+                >
                   <AlertCircle className="h-4 w-4 flex-shrink-0" />
                   {checkoutError}
                 </div>
@@ -1293,24 +1321,25 @@ export function CheckoutClient({
           </Card>
         </div>
 
-        {/* Right Column - Order Summary (Ink-Panel als Trust-Fokus) */}
+        {/* Rechte Spalte — Bestellübersicht als Beleg (Ink-Panel) */}
         <div className="lg:col-span-1">
           <Card variant="ink" className="card-ink sticky top-24 overflow-hidden">
-            <CardHeader>
+            <CardHeader className="pb-4">
               <span className="eyebrow">Bestellübersicht</span>
               <CardTitle className="display-title mt-2 text-lg text-ink-foreground">
                 Ihre Bestellung
               </CardTitle>
+              <div className="tick-rule !mt-3" aria-hidden />
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Items List */}
-              <div className="space-y-3">
+              {/* Positionen mit Haarlinien */}
+              <ul className="divide-y divide-ink-border">
                 {items.map((item) => (
-                  <div
+                  <li
                     key={`${item.productId}-${item.variantId}`}
-                    className="flex gap-3"
+                    className="flex gap-3 py-3 first:pt-0 last:pb-0"
                   >
-                    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border border-ink-border bg-white/[0.04]">
+                    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-sm border border-ink-border bg-white/[0.04]">
                       {item.image ? (
                         <Image
                           src={item.image}
@@ -1330,31 +1359,31 @@ export function CheckoutClient({
                         {item.name}
                       </p>
                       {item.variantName && (
-                        <p className="text-xs text-ink-muted">
+                        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted">
                           {item.variantName}
                         </p>
                       )}
-                      <p className="text-xs text-ink-muted">
-                        Menge: {item.quantity}
+                      <p className="font-mono text-[11px] tabular-nums text-ink-muted">
+                        {item.quantity} × {formatPrice(item.priceInCents)}
                       </p>
                     </div>
-                    <p className="whitespace-nowrap text-sm font-medium tabular-nums text-ink-foreground">
+                    <p className="whitespace-nowrap font-mono text-sm font-medium tabular-nums text-ink-foreground">
                       {formatPrice(item.priceInCents * item.quantity)}
                     </p>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
 
               <hr className="rule-gold" />
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
+              <div className="space-y-2 font-mono text-xs">
+                <div className="flex items-baseline justify-between gap-3">
                   <span className="text-ink-muted">Zwischensumme</span>
                   <span className="tabular-nums text-ink-foreground">{formatPrice(subtotal)}</span>
                 </div>
                 {discount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="font-mono text-xs uppercase tracking-[0.1em] text-primary">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="uppercase tracking-[0.1em] text-primary">
                       Rabatt {appliedPromo?.code}
                     </span>
                     <span className="font-medium tabular-nums text-primary">
@@ -1362,29 +1391,28 @@ export function CheckoutClient({
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm">
+                <div className="flex items-baseline justify-between gap-3">
                   <span className="text-ink-muted">Versand</span>
-                  <span className="tabular-nums">
-                    {shipping === 0 ? (
-                      <span className="font-medium text-primary">Kostenlos</span>
-                    ) : (
-                      <span className="text-ink-foreground">{formatPrice(shipping)}</span>
-                    )}
-                  </span>
+                  {shipping === 0 ? (
+                    <span className="font-medium text-primary">Kostenlos</span>
+                  ) : (
+                    <span className="tabular-nums text-ink-foreground">{formatPrice(shipping)}</span>
+                  )}
                 </div>
               </div>
 
-              <hr className="rule-gold" />
-
-              <div className="flex items-baseline justify-between">
-                <span className="stat-key">Gesamt</span>
-                <span className="stat-value text-3xl">
-                  {formatPrice(total)}
-                </span>
+              {/* Summenzeile mit Doppellinie — Belegabschluss */}
+              <div className="border-t-[3px] border-double border-ink-foreground/50 pt-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="stat-key">Gesamt</span>
+                  <span className="font-mono text-2xl font-semibold tabular-nums text-ink-foreground">
+                    {formatPrice(total)}
+                  </span>
+                </div>
+                <p className="mt-1 text-right text-xs text-ink-muted">
+                  Alle Preise inkl. 19% MwSt.
+                </p>
               </div>
-              <p className="text-xs text-ink-muted">
-                Alle Preise inkl. 19% MwSt.
-              </p>
 
               <Button
                 variant="outline"
@@ -1399,6 +1427,10 @@ export function CheckoutClient({
                 <span className="trust-pill">
                   <Lock className="h-3 w-3" aria-hidden />
                   SSL
+                </span>
+                <span className="trust-pill">
+                  <FlaskConical className="h-3 w-3" aria-hidden />
+                  CoA
                 </span>
                 <span className="trust-pill">
                   <PackageCheck className="h-3 w-3" aria-hidden />
@@ -1417,7 +1449,7 @@ export function CheckoutClient({
         <div className="flex items-center justify-between gap-4">
           <div className="leading-tight">
             <p className="stat-key">Gesamt</p>
-            <p className="text-lg font-bold tabular-nums">{formatPrice(total)}</p>
+            <p className="font-mono text-lg font-bold tabular-nums">{formatPrice(total)}</p>
           </div>
           <Button
             variant="gold"
@@ -1434,6 +1466,7 @@ export function CheckoutClient({
               <Building2 className="mr-2 h-4 w-4" />
             )}
             {paymentMethod === "STRIPE" ? "Bezahlen" : "Bestellen"}
+            <ArrowRight className="ml-1 hidden h-4 w-4 sm:inline" aria-hidden />
           </Button>
         </div>
       </div>

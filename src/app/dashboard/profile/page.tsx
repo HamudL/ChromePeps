@@ -206,7 +206,7 @@ export default function ProfilePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name" className="field-label">
-                  [ Name ]
+                  Name
                 </Label>
                 <Input
                   id="name"
@@ -217,7 +217,7 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className="field-label">
-                  [ E-Mail ]
+                  E-Mail
                 </Label>
                 <Input
                   id="email"
@@ -232,6 +232,7 @@ export default function ProfilePage() {
 
             {profileMessage && (
               <p
+                role={profileMessage.type === "error" ? "alert" : "status"}
                 className={
                   profileMessage.type === "success"
                     ? "text-sm font-medium text-success"
@@ -267,7 +268,7 @@ export default function ProfilePage() {
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="currentPassword" className="field-label">
-                [ Aktuelles Passwort ]
+                Aktuelles Passwort
               </Label>
               <Input
                 id="currentPassword"
@@ -280,7 +281,7 @@ export default function ProfilePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="newPassword" className="field-label">
-                  [ Neues Passwort ]
+                  Neues Passwort
                 </Label>
                 <Input
                   id="newPassword"
@@ -293,7 +294,7 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="field-label">
-                  [ Neues Passwort bestätigen ]
+                  Neues Passwort bestätigen
                 </Label>
                 <Input
                   id="confirmPassword"
@@ -307,6 +308,7 @@ export default function ProfilePage() {
 
             {passwordMessage && (
               <p
+                role={passwordMessage.type === "error" ? "alert" : "status"}
                 className={
                   passwordMessage.type === "success"
                     ? "text-sm font-medium text-success"
@@ -334,7 +336,8 @@ export default function ProfilePage() {
           versehentlich auf den Button klickt. */}
       <Card className="border-destructive/30">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
+          <span className="mono-label text-destructive">Gefahrenzone</span>
+          <CardTitle className="display-title mt-2 flex items-center gap-2 text-xl text-destructive">
             <AlertTriangle className="h-5 w-5" />
             Konto löschen
           </CardTitle>
@@ -380,7 +383,7 @@ export default function ProfilePage() {
 
           <div className="space-y-2 py-2">
             <Label htmlFor="deletePassword" className="field-label">
-              [ Aktuelles Passwort ]
+              Aktuelles Passwort
             </Label>
             <Input
               id="deletePassword"
@@ -392,7 +395,9 @@ export default function ProfilePage() {
               autoFocus
             />
             {deleteError && (
-              <p className="text-sm text-destructive">{deleteError}</p>
+              <p role="alert" className="text-sm text-destructive">
+                {deleteError}
+              </p>
             )}
           </div>
 

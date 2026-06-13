@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { SELLER_DETAILS } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -17,11 +18,34 @@ export const metadata: Metadata = {
 // Rendering hier ohnehin praktisch kostenlos.
 export const dynamic = "force-dynamic";
 
+/** Rechtstext-Abschnitt mit dekorativer Mono-Ordnungszahl in der Marginalie. */
+function LegalSection({
+  no,
+  title,
+  children,
+}: {
+  no: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="grid gap-x-8 gap-y-2 border-b border-border py-7 last:border-b-0 sm:grid-cols-[64px_1fr]">
+      <span className="mono-label pt-1 text-primary-strong" aria-hidden="true">
+        {no}
+      </span>
+      <div>
+        <h2 className="display-title text-xl text-foreground">{title}</h2>
+        <div className="mt-2">{children}</div>
+      </div>
+    </section>
+  );
+}
+
 export default function WiderrufPage() {
   return (
     <div className="container max-w-3xl section-pad">
       <header>
-        <span className="eyebrow">[ WIDERRUFSRECHT ]</span>
+        <span className="eyebrow">Widerrufsrecht</span>
         <h1 className="display-title mt-3 text-4xl md:text-5xl">
           Widerrufsbelehrung
         </h1>
@@ -30,11 +54,10 @@ export default function WiderrufPage() {
         </p>
       </header>
 
-      <hr className="rule-gold my-10" />
+      <div className="tick-rule mt-10" aria-hidden="true" />
 
-      <div className="space-y-8 text-[15px] leading-relaxed text-foreground/90">
-        <section>
-          <h2 className="display-title text-xl text-foreground">Widerrufsrecht</h2>
+      <div className="text-[15px] leading-relaxed text-foreground/90">
+        <LegalSection no="01" title="Widerrufsrecht">
           <p>
             Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen
             diesen Vertrag zu widerrufen. Die Widerrufsfrist beträgt vierzehn
@@ -47,7 +70,7 @@ export default function WiderrufPage() {
           </p>
           {/* Widerrufsadressat kommt zentral aus SELLER_DETAILS (env-basiert) —
               identisch mit Impressum und Rechnungs-PDF. */}
-          <p className="mt-1 pl-4">
+          <p className="mt-2 border-l-2 border-primary/40 pl-4">
             {SELLER_DETAILS.companyName}
             <br />
             {SELLER_DETAILS.streetLine1}
@@ -76,10 +99,9 @@ export default function WiderrufPage() {
             Mitteilung über die Ausübung des Widerrufsrechts vor Ablauf der
             Widerrufsfrist absenden.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="display-title text-xl text-foreground">Folgen des Widerrufs</h2>
+        <LegalSection no="02" title="Folgen des Widerrufs">
           <p>
             Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen,
             die wir von Ihnen erhalten haben, einschließlich der Lieferkosten
@@ -116,12 +138,12 @@ export default function WiderrufPage() {
             Eigenschaften und Funktionsweise der Waren nicht notwendigen Umgang
             mit ihnen zurückzuführen ist.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="display-title text-xl text-foreground">
-            Ausschluss bzw. vorzeitiges Erlöschen des Widerrufsrechts
-          </h2>
+        <LegalSection
+          no="03"
+          title="Ausschluss bzw. vorzeitiges Erlöschen des Widerrufsrechts"
+        >
           <p>
             Das Widerrufsrecht besteht nicht bzw. erlischt vorzeitig bei
             folgenden Verträgen:
@@ -152,15 +174,15 @@ export default function WiderrufPage() {
             BGB fallen. Gegebenenfalls erlischt das Widerrufsrecht nach
             Öffnung der Versiegelung vorzeitig.]
           </p>
-        </section>
+        </LegalSection>
 
-        <section className="border-t pt-6">
-          <h2 className="display-title text-xl text-foreground">Muster-Widerrufsformular</h2>
+        <LegalSection no="04" title="Muster-Widerrufsformular">
           <p className="text-xs text-muted-foreground mb-3">
             Wenn Sie den Vertrag widerrufen wollen, füllen Sie bitte dieses
             Formular aus und senden Sie es zurück.
           </p>
-          <div className="border rounded-lg p-4 bg-muted/30 space-y-2">
+          {/* Formular als Protokollblock — Mono-Satz wie ein Vordruck. */}
+          <div className="space-y-2 border border-border bg-muted/40 p-5 font-mono text-[13px] leading-relaxed">
             <p>
               An
               <br />
@@ -181,14 +203,14 @@ export default function WiderrufPage() {
             <p>Anschrift des/der Verbraucher(s): __________________</p>
             <p>Unterschrift des/der Verbraucher(s) (nur bei Mitteilung auf Papier)</p>
             <p>Datum: __________________</p>
-            <p className="text-xs">(*) Unzutreffendes streichen.</p>
+            <p className="text-xs text-muted-foreground">(*) Unzutreffendes streichen.</p>
           </div>
-        </section>
+        </LegalSection>
 
-        <div className="mt-10 p-4 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg text-xs text-yellow-900 dark:text-yellow-200">
-          <strong>Hinweis:</strong> Anwaltliche Prüfung vor Live-Schaltung
-          dringend empfohlen, insbesondere der Hygieneausschluss für versiegelte
-          Peptide.
+        <div className="mt-10 border border-destructive/40 bg-destructive/5 p-4 text-xs leading-relaxed text-foreground/80">
+          <span className="mono-label mb-2 block text-destructive">Hinweis</span>
+          Anwaltliche Prüfung vor Live-Schaltung dringend empfohlen,
+          insbesondere der Hygieneausschluss für versiegelte Peptide.
         </div>
       </div>
     </div>

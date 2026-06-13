@@ -30,9 +30,11 @@ export function WishlistButton({ productId, className }: WishlistButtonProps) {
       onClick={() => toggle(productId)}
       aria-label={active ? "Von Merkliste entfernen" : "Zur Merkliste hinzufügen"}
     >
+      {/* Aktiv-Zustand im kalten Karmin des Designsystems (--destructive)
+          statt warmem red-500 — bleibt als „gemerkt" eindeutig lesbar. */}
       <Heart
         className={`h-4 w-4 transition-colors ${
-          active ? "fill-red-500 text-red-500" : "text-muted-foreground"
+          active ? "fill-destructive text-destructive" : "text-muted-foreground"
         }`}
       />
     </Button>

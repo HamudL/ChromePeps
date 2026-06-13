@@ -1,22 +1,8 @@
 /**
- * Statischer, typisierter Content der /ueber-uns Seite. Texte 1:1 aus der
- * früheren design-body.ts übernommen. Live-Werte (Lot/Reinheit/Datum/Counter)
- * kommen NICHT von hier, sondern als UeberUnsData-Props aus page.tsx.
+ * Statischer, typisierter Content der /ueber-uns Seite. Live-Werte
+ * (Lot/Reinheit/Datum/Counter) kommen NICHT von hier, sondern als
+ * UeberUnsData-Props aus page.tsx.
  */
-
-/** Chromatogramm-Sub-Nav: Sektionen als HPLC-Peaks (id muss den section-ids entsprechen). */
-export const NAV_SECTIONS = [
-  { id: "top", label: "01 Hero", peakX: 60 },
-  { id: "manifest", label: "02 Manifest", peakX: 180 },
-  { id: "story", label: "03 Vial", peakX: 320 },
-  { id: "prozess", label: "04 Prozess", peakX: 460 },
-  { id: "labor", label: "05 Labor", peakX: 610 },
-  { id: "zahlen", label: "06 Zahlen", peakX: 750 },
-  { id: "roadmap", label: "07 Roadmap", peakX: 870 },
-  { id: "kontakt", label: "08 Kontakt", peakX: 960 },
-] as const;
-
-export const NAV_HEIGHTS = [8, 14, 18, 16, 36, 14, 12, 9] as const;
 
 /**
  * Manifest: unsere Grundsätze als echtes Manifest (nummerierte Bekenntnisse,
@@ -224,9 +210,9 @@ export const ROADMAP_ROWS: RoadmapRow[] = [
 ];
 
 /** Kontakt-Firmendaten (Reihenfolge wie im Original). Die "TODO:self"-Werte
- *  für USt-ID/HR sind nur Marker — Kontakt.tsx (Server-Component) ersetzt sie
+ *  für USt-ID/HR sind nur Marker — page.tsx (Server-Component) ersetzt sie
  *  beim Rendern durch SELLER_DETAILS (env-basiert). Nicht hier importieren:
- *  data.ts wird auch von Client-Komponenten geladen, wo SELLER_*-Env fehlt. */
+ *  SELLER_*-Variablen existieren nur server-seitig. */
 export const KONTAKT_FACTS: ReadonlyArray<[string, string]> = [
   ["Rechtsträger", "ChromePeps UG (haftungsbeschränkt)"],
   ["Sitz", "Baden-Württemberg, DE"],

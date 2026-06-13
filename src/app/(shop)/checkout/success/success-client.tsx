@@ -16,6 +16,7 @@ import {
   Lock,
   PackageCheck,
   AlertCircle,
+  FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,7 +136,7 @@ export function CheckoutSuccessClient({
   if (!mounted) {
     return (
       <div className="container mx-auto px-4 py-16 flex items-center justify-center">
-        <div className="h-64 w-full max-w-lg bg-muted animate-pulse rounded-lg" />
+        <div className="h-64 w-full max-w-lg shimmer-gold rounded-sm" />
       </div>
     );
   }
@@ -145,22 +146,25 @@ export function CheckoutSuccessClient({
       <div className="mx-auto max-w-lg">
         <div className="mb-6 text-center">
           <span className="eyebrow justify-center">
-            {isBankTransfer ? "Bestellung eingegangen" : "Bestellung bestätigt"}
+            {isBankTransfer
+              ? "Protokoll angelegt · Zahlung ausstehend"
+              : "Protokoll abgeschlossen"}
           </span>
         </div>
-        <Card className="overflow-hidden shadow-lg">
-          <CardHeader className="pb-4 text-center">
+        <Card className="overflow-hidden">
+          <div className="tick-rule" aria-hidden />
+          <CardHeader className="pb-4 pt-8 text-center">
             <div
-              className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ring-8 ${
+              className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-md border ${
                 isBankTransfer
-                  ? "bg-primary/10 text-primary-strong ring-primary/[0.06]"
-                  : "bg-primary/15 text-primary-strong ring-primary/[0.08]"
+                  ? "border-primary/30 bg-primary/10 text-primary-strong"
+                  : "border-primary/30 bg-primary/15 text-primary-strong"
               }`}
             >
               {isBankTransfer ? (
-                <Building2 className="h-9 w-9" />
+                <Building2 className="h-8 w-8" strokeWidth={1.5} />
               ) : (
-                <CheckCircle2 className="h-9 w-9" />
+                <CheckCircle2 className="h-8 w-8" strokeWidth={1.5} />
               )}
             </div>
             <CardTitle className="display-title text-2xl md:text-3xl">
@@ -186,6 +190,30 @@ export function CheckoutSuccessClient({
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {/* Bestellnummer als zentrale Protokoll-Kennung. Bei Stripe
+                erst nach verify-session bekannt — bis dahin Spinner bzw.
+                Zahlungsreferenz als Fallback (Webhook legt die Order
+                trotzdem an). */}
+            {isBankTransfer && orderNumber ? (
+              <OrderNumberBlock value={orderNumber} />
+            ) : verifying ? (
+              <div className="flex items-center justify-center gap-2 rounded-md border border-border bg-muted/40 p-4">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">
+                  Bestellung wird bestätigt…
+                </p>
+              </div>
+            ) : stripeOrder ? (
+              <OrderNumberBlock value={stripeOrder.orderNumber} />
+            ) : sessionId ? (
+              <div className="rounded-md border border-border bg-muted/40 p-4 text-center">
+                <p className="stat-key">Zahlungsreferenz</p>
+                <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
+                  {sessionId}
+                </p>
+              </div>
+            ) : null}
+
             <hr className="rule-gold" />
 
             {isBankTransfer ? (
@@ -203,12 +231,12 @@ export function CheckoutSuccessClient({
                     </div>
                   </div>
 
-                  <div className="card-ink space-y-3 rounded-lg border border-ink-border bg-ink p-4 text-ink-foreground shadow-[0_20px_60px_-30px_hsl(20_14%_4%/0.8)]">
+                  <div className="card-ink space-y-3 rounded-md border border-ink-border bg-ink p-4 text-ink-foreground shadow-[0_20px_60px_-30px_hsl(218_35%_5%/0.8)]">
                     {/* Betrag */}
                     {totalCents > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="stat-key">Betrag</span>
-                        <span className="stat-value text-2xl">
+                        <span className="font-mono text-2xl font-semibold tabular-nums text-ink-foreground">
                           {formatPrice(totalCents)}
                         </span>
                       </div>
@@ -269,7 +297,7 @@ export function CheckoutSuccessClient({
                         <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-primary">
                           Verwendungszweck
                         </span>
-                        <div className="flex items-center justify-between rounded-md border border-ink-border bg-white/[0.04] p-2 pl-3">
+                        <div className="flex items-center justify-between rounded-sm border border-ink-border bg-white/[0.04] p-2 pl-3">
                           <span className="font-mono text-sm font-bold text-ink-foreground">
                             {orderNumber}
                           </span>
@@ -277,6 +305,7 @@ export function CheckoutSuccessClient({
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-ink-foreground hover:bg-white/[0.08] hover:text-ink-foreground"
+                            aria-label="Verwendungszweck kopieren"
                             onClick={() => copyToClipboard(orderNumber, "ref")}
                           >
                             {copiedField === "ref" ? (
@@ -290,7 +319,7 @@ export function CheckoutSuccessClient({
                     )}
                   </div>
 
-                  <div className="rounded-lg border border-primary/30 bg-primary/[0.06] p-3 text-sm">
+                  <div className="rounded-md border border-primary/30 bg-primary/[0.06] p-3 text-sm">
                     <p className="flex items-center gap-1.5 font-semibold text-foreground">
                       <AlertCircle className="h-4 w-4 text-primary-strong" aria-hidden />
                       Wichtig
@@ -303,45 +332,38 @@ export function CheckoutSuccessClient({
                     </p>
                   </div>
                 </div>
+
+                {/* Nächste Schritte — Vorkasse-Pfad */}
+                <NextSteps
+                  steps={[
+                    "Gesamtbetrag mit Bestellnummer als Verwendungszweck überweisen.",
+                    "Wir bestätigen den Zahlungseingang per E-Mail.",
+                    "Versand mit Tracking-Nummer und CoA-PDF je Charge.",
+                  ]}
+                />
               </>
             ) : (
-              <div className="space-y-3 text-sm">
-                <div className="flex items-start gap-3">
-                  <Package className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-strong" />
-                  <div>
-                    <p className="font-medium">Wie geht es weiter?</p>
-                    <p className="text-muted-foreground">
-                      Wir bereiten Ihre Bestellung für den Versand vor. Sie
-                      erhalten eine Versandbestätigung mit Tracking-Nummer
-                      per E-Mail, sobald die Sendung unterwegs ist.
-                    </p>
-                  </div>
-                </div>
-
-                {verifying ? (
-                  <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-3">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">
-                      Bestellung wird bestätigt…
-                    </p>
-                  </div>
-                ) : stripeOrder ? (
-                  <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 p-3">
-                    <span className="stat-key">Bestellnummer</span>
-                    <span className="font-mono text-sm font-bold tracking-wide">
-                      {stripeOrder.orderNumber}
-                    </span>
-                  </div>
-                ) : sessionId ? (
-                  <div className="rounded-lg border border-border bg-muted/40 p-3">
-                    <p className="stat-key">Zahlungsreferenz</p>
-                    <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
-                      {sessionId}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
+              <NextSteps
+                steps={[
+                  "Bestellbestätigung per E-Mail — mit allen Positionen.",
+                  "Wir bereiten Ihre Bestellung für den Versand vor.",
+                  "Versandbestätigung mit Tracking-Nummer, sobald die Sendung unterwegs ist.",
+                ]}
+              />
             )}
+
+            {/* CoA-Hinweis — das zentrale Qualitätsversprechen direkt
+                nach dem Kauf sichtbar machen. */}
+            <div className="flex items-start gap-3 rounded-md border border-border bg-muted/30 p-3.5 text-sm">
+              <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" aria-hidden />
+              <p className="text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  Analysenzertifikat (CoA):
+                </span>{" "}
+                Zu jeder Charge erhalten Sie das HPLC-geprüfte CoA als PDF
+                mit Lot-Nummer per E-Mail.
+              </p>
+            </div>
 
             <hr className="rule-gold" />
 
@@ -380,6 +402,39 @@ export function CheckoutSuccessClient({
   );
 }
 
+/* Bestellnummer groß in Mono — die Protokoll-Kennung der Bestellung. */
+function OrderNumberBlock({ value }: { value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-muted/40 px-4 py-5 text-center">
+      <p className="stat-key">Bestellnummer</p>
+      <p className="mt-2 break-all font-mono text-2xl font-bold tracking-wide md:text-3xl">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+/* Nummerierte Mess-Schritte: was nach der Bestellung passiert. */
+function NextSteps({ steps }: { steps: string[] }) {
+  return (
+    <div>
+      <p className="mono-label mb-3 text-muted-foreground">
+        Nächste Schritte
+      </p>
+      <ol className="space-y-2.5">
+        {steps.map((step, i) => (
+          <li key={i} className="flex items-baseline gap-3 text-sm">
+            <span className="font-mono text-xs font-semibold tabular-nums text-primary-strong">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span className="text-muted-foreground">{step}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 function BankDetailRow({
   label,
   value,
@@ -409,6 +464,7 @@ function BankDetailRow({
         variant="ghost"
         size="icon"
         className="h-7 w-7 flex-shrink-0 text-ink-foreground hover:bg-white/[0.08] hover:text-ink-foreground"
+        aria-label={`${label} kopieren`}
         onClick={onCopy}
       >
         {copied ? (

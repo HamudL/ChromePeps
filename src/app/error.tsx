@@ -27,31 +27,40 @@ export default function Error({
   console.error("[PageError]", error.message, error.stack);
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4">
-      <div className="max-w-lg w-full space-y-4 text-center">
-        <h2 className="text-2xl font-bold text-destructive">
-          Something went wrong
+    <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
+      <div className="w-full max-w-lg border border-border bg-card p-8 sm:p-10">
+        {/* Protokoll-Kopfzeile */}
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="mono-label text-muted-foreground">
+            Analyse-Protokoll
+          </span>
+          <span className="mono-label text-destructive">Laufzeitfehler</span>
+        </div>
+        <div className="tick-rule mt-4" aria-hidden="true" />
+
+        <h2 className="display-title mt-6 text-3xl">
+          Messung <em className="text-primary-strong">unterbrochen</em>.
         </h2>
-        <p className="text-muted-foreground">
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           {isDev
-            ? error.message || "An unexpected error occurred."
-            : "An unexpected error occurred. Please try again or contact support."}
+            ? error.message || "Ein unerwarteter Fehler ist aufgetreten."
+            : "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support."}
         </p>
         {error.digest && (
-          <p className="text-xs text-muted-foreground">
-            Reference: <code>{error.digest}</code>
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+            Referenz: <code className="normal-case">{error.digest}</code>
           </p>
         )}
         {isDev && error.stack && (
-          <pre className="text-left bg-muted rounded-lg p-4 overflow-auto text-xs max-h-60 mt-4">
+          <pre className="mt-5 max-h-60 overflow-auto border border-ink-border bg-ink p-4 text-left font-mono text-xs leading-relaxed text-ink-foreground">
             {error.stack}
           </pre>
         )}
         <button
           onClick={reset}
-          className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="btn-gold mt-7"
         >
-          Try again
+          Erneut versuchen
         </button>
       </div>
     </div>

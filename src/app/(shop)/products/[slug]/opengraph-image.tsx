@@ -15,7 +15,7 @@ import { APP_NAME } from "@/lib/constants";
  *       Preis (Arvo italic, gold, 38px)
  *       Lab-Cert-Block (PURITY/SIZE/LOT/FORMAT, JetBrains Mono)
  *   - Rechte Spalte (723-1200):
- *       Radial-Gradient-Background mit purple Glow
+ *       Radial-Gradient-Background mit Viridian-Glow
  *       Vial-Bild (product.images[0])
  *       "RESEARCH USE ONLY"-Footer
  *
@@ -46,21 +46,24 @@ export const alt = "ChromePeps Produkt";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Farbpalette (1:1 aus dem V3-Lab-Certificate-Design extrahiert).
+// Farbpalette „Chromatogramm" — kaltes Nachtblau (Ink) statt des alten
+// V3-Schwarz, Akzent in Viridian/Mint statt Gold. Die Keys `gold`/
+// `goldSoft` behalten ihren historischen Namen (analog btn-gold/
+// rule-gold in globals.css), rendern aber den Mint-Akzent.
 const COLORS = {
-  bgDark: "#08080a",
-  paneRightFrom: "#1a1b20",
-  paneRightTo: "#0a0a0c",
-  glowPurple: "rgba(150, 90, 200, 0.20)",
-  offWhite: "#f5f3ee",
-  textPrimary: "rgba(245, 243, 238, 0.92)",
-  textMuted45: "rgba(255, 255, 255, 0.45)",
-  textMuted60: "rgba(255, 255, 255, 0.60)",
-  textMuted35: "rgba(255, 255, 255, 0.35)",
-  textMuted30: "rgba(255, 255, 255, 0.30)",
-  gold: "#d6a854",
-  goldSoft: "rgba(214, 168, 84, 0.85)",
-  borderHairline: "rgba(255, 255, 255, 0.08)",
+  bgDark: "#0c1220",
+  paneRightFrom: "#16202f",
+  paneRightTo: "#0a101c",
+  glowViridian: "rgba(20, 150, 130, 0.20)",
+  offWhite: "#eef2f7",
+  textPrimary: "rgba(238, 242, 247, 0.92)",
+  textMuted45: "rgba(220, 232, 248, 0.45)",
+  textMuted60: "rgba(220, 232, 248, 0.60)",
+  textMuted35: "rgba(220, 232, 248, 0.35)",
+  textMuted30: "rgba(220, 232, 248, 0.30)",
+  gold: "#46c2a5",
+  goldSoft: "rgba(70, 194, 165, 0.85)",
+  borderHairline: "rgba(180, 200, 230, 0.10)",
 } as const;
 
 async function loadFontsAndAssets() {
@@ -264,7 +267,7 @@ export default async function ProductOGImage({
               width="9"
               height="9"
               viewBox="0 0 9 9"
-              fill="rgba(214, 168, 84, 0.85)"
+              fill={COLORS.goldSoft}
               xmlns="http://www.w3.org/2000/svg"
             >
               <path d="M4.5 0 L9 4.5 L4.5 9 L0 4.5 Z" />
@@ -359,7 +362,7 @@ export default async function ProductOGImage({
             backgroundImage: `radial-gradient(circle, ${COLORS.paneRightFrom} 0%, ${COLORS.paneRightTo} 80%)`,
           }}
         >
-          {/* Purple Glow hinter dem Vial */}
+          {/* Viridian-Glow hinter dem Vial */}
           <div
             style={{
               position: "absolute",
@@ -369,7 +372,7 @@ export default async function ProductOGImage({
               height: 320,
               display: "flex",
               borderRadius: "50%",
-              backgroundImage: `radial-gradient(circle, ${COLORS.glowPurple} 0%, rgba(0,0,0,0) 65%)`,
+              backgroundImage: `radial-gradient(circle, ${COLORS.glowViridian} 0%, rgba(0,0,0,0) 65%)`,
             }}
           />
 

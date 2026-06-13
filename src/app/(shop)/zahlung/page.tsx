@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CreditCard, Landmark, Shield, CheckCircle2 } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { BANK_DETAILS, BANK_TRANSFER_ENABLED } from "@/lib/constants";
 
@@ -20,11 +20,55 @@ export const metadata: Metadata = {
 // Rendering hier ohnehin praktisch kostenlos.
 export const dynamic = "force-dynamic";
 
+/** Nummerierter Abschnittskopf im Protokoll-Stil (identisch zu /versand). */
+function SectionHead({ no, label, title }: { no: string; label: string; title: string }) {
+  return (
+    <header className="grid gap-x-8 sm:grid-cols-[64px_1fr]">
+      <span className="mono-label pt-1.5 text-primary-strong">{no}</span>
+      <div>
+        <span className="mono-label text-muted-foreground">{label}</span>
+        <h2 className="display-title mt-1.5 text-2xl">{title}</h2>
+      </div>
+    </header>
+  );
+}
+
 export default function ZahlungPage() {
+  // Abschnittsnummern verschieben sich, wenn Vorkasse deaktiviert ist.
+  const no = (i: number) => String(BANK_TRANSFER_ENABLED ? i : i - 1).padStart(2, "0");
+
+  // Eckdaten als Protokollzeilen — konsistent zur Versand-Seite.
+  const eckdaten: ReadonlyArray<readonly [string, string, string]> = [
+    ...(BANK_TRANSFER_ENABLED
+      ? ([
+          [
+            "Vorkasse",
+            "Banküberweisung auf unser Konto",
+            "Versand nach Zahlungseingang",
+          ],
+        ] as const)
+      : []),
+    [
+      "Kreditkarte",
+      "Visa, Mastercard, American Express (Stripe)",
+      "Sofortiger Versand nach Zahlungsfreigabe",
+    ],
+    [
+      "Sicherheit",
+      "SSL/TLS-verschlüsselte Übertragung",
+      "PCI-DSS-zertifizierter Zahlungsdienstleister",
+    ],
+    [
+      "Steuern",
+      "Alle Preise inkl. 19 % MwSt.",
+      "Rechnung automatisch per E-Mail",
+    ],
+  ];
+
   return (
     <div className="container max-w-3xl section-pad">
       <header>
-        <span className="eyebrow">[ ZAHLUNG ]</span>
+        <span className="eyebrow">Zahlung</span>
         <h1 className="display-title mt-3 text-4xl md:text-5xl">
           Zahlungsmethoden
         </h1>
@@ -34,68 +78,67 @@ export default function ZahlungPage() {
         </p>
       </header>
 
-      <hr className="rule-gold my-10" />
+      <div className="tick-rule mt-10" aria-hidden="true" />
 
-      <div className="space-y-6 text-sm leading-relaxed">
-        <div className={`grid gap-4 ${BANK_TRANSFER_ENABLED ? "sm:grid-cols-2" : ""}`}>
-          {BANK_TRANSFER_ENABLED && (
-            <Card className="p-5">
-              <Landmark className="h-5 w-5 text-primary-strong" />
-              <h2 className="mt-3 font-semibold">Vorkasse / Überweisung</h2>
-              <p className="mt-1.5 text-muted-foreground">
-                Überweisen Sie den Rechnungsbetrag auf unser Bankkonto. Versand
-                erfolgt nach Zahlungseingang.
-              </p>
-            </Card>
-          )}
-          <Card className="p-5">
-            <CreditCard className="h-5 w-5 text-primary-strong" />
-            <h2 className="mt-3 font-semibold">Kreditkarte (Stripe)</h2>
-            <p className="mt-1.5 text-muted-foreground">
-              Visa, Mastercard und American Express. Sofortiger Versand nach
-              Zahlungsfreigabe.
-            </p>
-          </Card>
-        </div>
+      {/* Eckdaten-Protokoll */}
+      <dl className="mb-14">
+        {eckdaten.map(([key, lineA, lineB]) => (
+          <div
+            key={key}
+            className="grid gap-x-10 gap-y-1.5 border-b border-border py-5 sm:grid-cols-[180px_1fr]"
+          >
+            <dt className="field-label !mb-0 pt-0.5">{key}</dt>
+            <dd className="text-sm leading-relaxed">
+              {lineA}
+              <br />
+              <span className="text-muted-foreground">{lineB}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
 
+      <div className="space-y-12 text-sm leading-relaxed">
         {BANK_TRANSFER_ENABLED && (
           <section>
-            <span className="mono-label text-muted-foreground">
-              01 · Vorkasse
-            </span>
-            <h2 className="display-title mt-2 text-xl">
-              Vorkasse per Banküberweisung
-            </h2>
-            <p className="mt-2">
-              Bei Wahl der Zahlungsart Vorkasse senden wir Ihnen unmittelbar nach
-              Bestellabschluss eine Auftragsbestätigung mit unseren Bankdaten. Die
-              Ware wird versendet, sobald der Rechnungsbetrag vollständig auf
-              unserem Konto eingegangen ist. Bitte geben Sie bei der Überweisung
-              Ihre Bestellnummer als Verwendungszweck an, damit wir die Zahlung
-              schnell zuordnen können.
-            </p>
-            <Card variant="ink" className="card-ink mt-4 p-5">
-              <span className="eyebrow">[ UNSERE BANKVERBINDUNG ]</span>
-              <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 font-mono text-sm sm:grid-cols-[auto_1fr]">
-                <dt className="text-ink-muted">Kontoinhaber</dt>
-                <dd className="text-ink-foreground">{BANK_DETAILS.accountHolder}</dd>
-                <dt className="text-ink-muted">IBAN</dt>
-                <dd className="text-ink-foreground">{BANK_DETAILS.iban}</dd>
-                <dt className="text-ink-muted">BIC</dt>
-                <dd className="text-ink-foreground">{BANK_DETAILS.bic}</dd>
-                <dt className="text-ink-muted">Bank</dt>
-                <dd className="text-ink-foreground">{BANK_DETAILS.bankName}</dd>
-              </dl>
-            </Card>
+            <SectionHead no="01" label="Vorkasse" title="Vorkasse per Banküberweisung" />
+            <div className="mt-3 sm:pl-[96px]">
+              <p>
+                Bei Wahl der Zahlungsart Vorkasse senden wir Ihnen unmittelbar nach
+                Bestellabschluss eine Auftragsbestätigung mit unseren Bankdaten. Die
+                Ware wird versendet, sobald der Rechnungsbetrag vollständig auf
+                unserem Konto eingegangen ist. Bitte geben Sie bei der Überweisung
+                Ihre Bestellnummer als Verwendungszweck an, damit wir die Zahlung
+                schnell zuordnen können.
+              </p>
+              <Card variant="ink" className="mt-5 p-5">
+                <span className="eyebrow">Unsere Bankverbindung</span>
+                <div className="tick-rule mt-4" aria-hidden="true" />
+                <dl className="mt-1 font-mono text-[13px]">
+                  {(
+                    [
+                      ["Kontoinhaber", BANK_DETAILS.accountHolder],
+                      ["IBAN", BANK_DETAILS.iban],
+                      ["BIC", BANK_DETAILS.bic],
+                      ["Bank", BANK_DETAILS.bankName],
+                    ] as const
+                  ).map(([k, v]) => (
+                    <div
+                      key={k}
+                      className="grid gap-x-6 gap-y-0.5 border-b border-ink-border py-2.5 last:border-b-0 sm:grid-cols-[140px_1fr]"
+                    >
+                      <dt className="mono-label !text-[10.5px] text-ink-muted">{k}</dt>
+                      <dd className="break-all text-ink-foreground">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Card>
+            </div>
           </section>
         )}
 
         <section>
-          <span className="mono-label text-muted-foreground">
-            {BANK_TRANSFER_ENABLED ? "02" : "01"} · Karte
-          </span>
-          <h2 className="display-title mt-2 text-xl">Kreditkarte über Stripe</h2>
-          <p className="mt-2">
+          <SectionHead no={no(2)} label="Karte" title="Kreditkarte über Stripe" />
+          <p className="mt-3 sm:pl-[96px]">
             Wir akzeptieren Visa, Mastercard und American Express. Die Zahlung
             wird über den PCI-DSS-zertifizierten Zahlungsdienstleister Stripe
             abgewickelt. Ihre Zahlungsdaten werden verschlüsselt direkt an
@@ -106,42 +149,31 @@ export default function ZahlungPage() {
         </section>
 
         <section>
-          <span className="mono-label text-muted-foreground">Sicherheit</span>
-          <h2 className="display-title mt-2 text-xl">Wie wir Ihre Zahlung schützen</h2>
-          <ul className="mt-3 list-none space-y-2.5">
-            <li className="flex items-start gap-2.5">
-              <Shield className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-              <span>
-                Alle Datenübertragungen sind SSL/TLS-verschlüsselt (HTTPS).
-              </span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <Shield className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-              <span>
-                Zahlungsabwicklung über PCI-DSS-zertifizierten Anbieter
-                (Stripe).
-              </span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-              <span>
-                Keine Speicherung von Kreditkartendaten auf unseren Servern.
-              </span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-              <span>
-                Transparente Preisangaben inklusive aller gesetzlichen
-                Abgaben.
-              </span>
-            </li>
+          <SectionHead no={no(3)} label="Sicherheit" title="Wie wir Ihre Zahlung schützen" />
+          <ul className="mt-3 list-none space-y-0 sm:pl-[96px]">
+            {[
+              "Alle Datenübertragungen sind SSL/TLS-verschlüsselt (HTTPS).",
+              "Zahlungsabwicklung über PCI-DSS-zertifizierten Anbieter (Stripe).",
+              "Keine Speicherung von Kreditkartendaten auf unseren Servern.",
+              "Transparente Preisangaben inklusive aller gesetzlichen Abgaben.",
+            ].map((item) => (
+              <li
+                key={item}
+                className="flex items-start gap-3 border-b border-border py-3 last:border-b-0"
+              >
+                <ShieldCheck
+                  className="mt-0.5 h-4 w-4 shrink-0 text-success"
+                  aria-hidden="true"
+                />
+                <span>{item}</span>
+              </li>
+            ))}
           </ul>
         </section>
 
         <section>
-          <span className="mono-label text-muted-foreground">Steuer</span>
-          <h2 className="display-title mt-2 text-xl">Mehrwertsteuer</h2>
-          <p className="mt-2">
+          <SectionHead no={no(4)} label="Steuer" title="Mehrwertsteuer" />
+          <p className="mt-3 sm:pl-[96px]">
             Alle Preise verstehen sich inklusive der gesetzlichen
             Mehrwertsteuer von 19 %. Eine ordnungsgemäße Rechnung mit
             ausgewiesener MwSt. erhalten Sie automatisch per E-Mail und steht

@@ -118,10 +118,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-lg">
+    <Card className="w-full max-w-md">
       <h1 className="sr-only">{APP_NAME}-Konto erstellen</h1>
       <CardHeader className="space-y-2">
-        <span className="eyebrow">[ NEUES KONTO ]</span>
+        <span className="eyebrow">Neues Konto</span>
         <CardTitle className="display-title text-3xl">Konto erstellen</CardTitle>
         <CardDescription>
           Registrieren Sie sich bei {APP_NAME} — Forschungspeptide bestellen,
@@ -129,13 +129,16 @@ export default function RegisterPage() {
         </CardDescription>
       </CardHeader>
 
+      {/* Mess-Lineal — Signatur-Trenner zwischen Kopf und Formular */}
+      <div className="tick-rule mx-6 mb-5" aria-hidden />
+
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
             <div
               id="register-error"
               role="alert"
-              className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+              className="rounded-sm border border-destructive/40 border-l-2 border-l-destructive bg-destructive/10 p-3 text-sm text-destructive"
             >
               {error}
             </div>
@@ -143,7 +146,7 @@ export default function RegisterPage() {
 
           <div className="space-y-2">
             <Label htmlFor="name" className="field-label">
-              [ Vollständiger Name ]
+              Vollständiger Name
             </Label>
             <Input
               id="name"
@@ -165,7 +168,7 @@ export default function RegisterPage() {
 
           <div className="space-y-2">
             <Label htmlFor="email" className="field-label">
-              [ E-Mail ]
+              E-Mail
             </Label>
             <Input
               id="email"
@@ -187,7 +190,7 @@ export default function RegisterPage() {
 
           <div className="space-y-2">
             <Label htmlFor="password" className="field-label">
-              [ Passwort ]
+              Passwort
             </Label>
             <Input
               id="password"
@@ -214,7 +217,7 @@ export default function RegisterPage() {
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword" className="field-label">
-              [ Passwort bestätigen ]
+              Passwort bestätigen
             </Label>
             <Input
               id="confirmPassword"

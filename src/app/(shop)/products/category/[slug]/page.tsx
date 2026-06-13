@@ -289,15 +289,16 @@ export default async function CategoryLandingPage({
       <ApothekeShopHero
         crumb={heroCrumb}
         title={
-          <>
-            <em className="not-italic text-primary">
-              {category.name}
-            </em>
-          </>
+          // Fraunces-Kursive als Akzent; auf hellem Grund AA-konform
+          // über text-primary-strong.
+          <em className="text-primary-strong">{category.name}</em>
         }
         subline={heroSubline}
         stats={heroStats}
         featured={[]}
+        counter={`${total} ${total === 1 ? "Produkt" : "Produkte"} · ${
+          allCategories.length
+        } ${allCategories.length === 1 ? "Kategorie" : "Kategorien"}`}
       />
 
       <ShopFilterBar
@@ -313,32 +314,37 @@ export default async function CategoryLandingPage({
       <section className="container py-10 md:py-14">
         {productsWithBadges.length > 0 ? (
           <>
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-border pb-5">
-              <div className="min-w-0">
-                <span className="eyebrow mb-2.5">Kategorie</span>
-                <h2 className="font-serif text-[28px] md:text-[32px] font-medium tracking-[-0.02em] leading-none text-balance">
-                  Alle {category.name}
-                </h2>
+            {/* Meta-Row: Eyebrow + Fraunces-Titel + Mono-Count, darunter
+                das Mess-Lineal als Abschluss der Zeile */}
+            <div className="mb-8">
+              <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pb-5">
+                <div className="min-w-0">
+                  <span className="eyebrow mb-2.5">Kategorie</span>
+                  <h2 className="display-title text-[28px] md:text-[32px]">
+                    Alle {category.name}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-4">
+                  <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground tabular-nums">
+                    {total} {total === 1 ? "Produkt" : "Produkte"}
+                  </p>
+                  {hasActiveFilters && (
+                    <Link
+                      href={basePath}
+                      className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground hover:text-primary-strong underline underline-offset-4 decoration-dotted"
+                    >
+                      Reset
+                    </Link>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground tabular-nums">
-                  {total} {total === 1 ? "Produkt" : "Produkte"}
-                </p>
-                {hasActiveFilters && (
-                  <Link
-                    href={basePath}
-                    className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground hover:text-primary-strong underline underline-offset-4 decoration-dotted"
-                  >
-                    Reset
-                  </Link>
-                )}
-              </div>
+              <div aria-hidden className="tick-rule" />
             </div>
 
             {/* Grid: 1 Karte auf Mobile (< 640 px), dann 2/3/4 ab sm/md/lg.
                 Spiegelt das Verhalten von /products und verhindert das
-                Abschneiden der Spec-Rows auf Smartphones. */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                Abschneiden der Spec-Tabelle auf Smartphones. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
               {productsWithBadges.map((product, idx) => (
                 <ProductCard
                   key={product.id}
@@ -366,7 +372,7 @@ export default async function CategoryLandingPage({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 md:py-32 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-muted/40 text-muted-foreground mb-6">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-sm border border-border bg-muted/40 text-muted-foreground mb-6">
               <PackageSearch className="h-7 w-7" strokeWidth={1.5} />
             </div>
             <span className="eyebrow mb-3">In Vorbereitung</span>

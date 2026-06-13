@@ -54,16 +54,9 @@ const GoogleAnalytics = dynamic(
   { ssr: false },
 );
 
-const MouseSpotlight = dynamic(
-  () =>
-    import("@/components/shop/mouse-spotlight").then((m) => m.MouseSpotlight),
-  { ssr: false },
-);
-
 export function DeferredShopWidgets() {
   return (
     <>
-      <MouseSpotlight />
       <AnnouncementBar />
       <CookieBanner />
       <GoogleAnalytics />
