@@ -22,32 +22,18 @@ function FadeUp({
   children,
   delay = 0,
   className,
-  as: Tag = "div",
 }: {
   children: ReactNode;
   delay?: number;
   className?: string;
-  /**
-   * Wrapper-Element. Default "div". Wird auf "li" gesetzt, wenn FadeUp
-   * direkt in einer <ol>/<ul> sitzt — sonst entstünde eine Liste mit
-   * Nicht-Listen-Kindern (invalide Semantik, Screenreader meldet 0
-   * Einträge). Bewusst auf die zwei genutzten Tags begrenzt, damit TS
-   * die Element-Props (className/style/children) sauber auflöst.
-   */
-  as?: "div" | "li";
 }) {
   // `style` setzt nur die per-Instanz-Variable. CSS verwendet sie als
   // animation-delay-Wert.
   const style: CSSProperties & { ["--fade-delay"]?: string } =
     delay > 0 ? { ["--fade-delay"]: `${delay}s` } : {};
 
-  const cls = `reveal-up ${className ?? ""}`;
-  return Tag === "li" ? (
-    <li className={cls} style={style}>
-      {children}
-    </li>
-  ) : (
-    <div className={cls} style={style}>
+  return (
+    <div className={`reveal-up ${className ?? ""}`} style={style}>
       {children}
     </div>
   );

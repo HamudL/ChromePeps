@@ -235,21 +235,14 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md shadow-lg">
       <h1 className="sr-only">Bei {APP_NAME} anmelden</h1>
-      <CardHeader className="space-y-2">
-        <span className="eyebrow">Konto-Zugang</span>
-        <CardTitle className="display-title text-3xl">
-          Willkommen zurück
-        </CardTitle>
+      <CardHeader className="text-center space-y-1">
+        <CardTitle className="text-2xl font-bold">Willkommen zurück</CardTitle>
         <CardDescription>
-          Melden Sie sich bei Ihrem {APP_NAME}-Konto an — Bestellverlauf,
-          Adressen und CoA-Archiv warten.
+          Melden Sie sich bei Ihrem {APP_NAME}-Konto an
         </CardDescription>
       </CardHeader>
-
-      {/* Mess-Lineal — Signatur-Trenner zwischen Kopf und Formular */}
-      <div className="tick-rule mx-6 mb-5" aria-hidden />
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -257,7 +250,7 @@ export default function LoginPage() {
             <div
               id="login-error"
               role="alert"
-              className="rounded-sm border border-destructive/40 border-l-2 border-l-destructive bg-destructive/10 p-3 text-sm text-destructive"
+              className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
             >
               {error}
             </div>
@@ -267,9 +260,7 @@ export default function LoginPage() {
           {!pendingCredentials && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="email" className="field-label">
-                  E-Mail
-                </Label>
+                <Label htmlFor="email">E-Mail</Label>
                 <Input
                   id="email"
                   name="email"
@@ -283,9 +274,7 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="field-label">
-                    Passwort
-                  </Label>
+                  <Label htmlFor="password">Passwort</Label>
                   <Link
                     href="/forgot-password"
                     className="text-xs text-muted-foreground hover:text-foreground hover:underline"
@@ -327,9 +316,7 @@ export default function LoginPage() {
           {/* Stufe 2: TOTP-Code (oder Recovery-Code) */}
           {pendingCredentials && (
             <div className="space-y-2">
-              <Label htmlFor="totpCode" className="field-label">
-                Zwei-Faktor-Code
-              </Label>
+              <Label htmlFor="totpCode">Zwei-Faktor-Code</Label>
               <Input
                 id="totpCode"
                 name="totpCode"
@@ -366,7 +353,6 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col gap-4">
           <Button
             type="submit"
-            variant="gold"
             className="w-full gap-2"
             disabled={isPending || (captchaRequired && !captchaToken)}
           >

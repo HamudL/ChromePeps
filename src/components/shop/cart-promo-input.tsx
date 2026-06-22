@@ -86,9 +86,7 @@ export function CartPromoInput() {
             <Check className="h-4 w-4 shrink-0 text-success" aria-hidden />
             <span className="font-mono font-medium">{promoCode}</span>
             {discount != null ? (
-              <span className="font-mono tabular-nums text-success">
-                −{formatPrice(discount)}
-              </span>
+              <span className="text-success">−{formatPrice(discount)}</span>
             ) : (
               <span className="text-xs text-muted-foreground">
                 wird an der Kasse eingelöst
@@ -138,11 +136,7 @@ export function CartPromoInput() {
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Anwenden"}
         </Button>
       </div>
-      {error && (
-        <p role="alert" className="mt-1.5 text-xs text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
     </div>
   );
 }

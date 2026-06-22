@@ -26,8 +26,8 @@ const config: Config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          // Dunkleres (light) bzw. helleres (dark) Viridian für lesbaren
-          // AKZENT-TEXT auf Hintergrund — siehe --primary-strong in globals.css.
+          // Dunkleres (light) bzw. helleres (dark) Gold für lesbaren
+          // GOLD-TEXT auf Hintergrund — siehe --primary-strong in globals.css.
           strong: "hsl(var(--primary-strong))",
         },
         success: {
@@ -110,15 +110,17 @@ const config: Config = {
         pop: "pop 0.3s ease-out",
       },
       fontFamily: {
-        // Semantische Namen — Schrift-Stack ist „Chromatogramm"
-        // (Instrument Sans + Fraunces + IBM Plex Mono).
+        // Semantische Namen — Schrift-Stack ist „Soft Bio-Pharma"
+        // (DM Sans + Comfortaa + DM Mono), gewählt aus /fonts-demo.
         // Wird per next/font/google in layout.tsx geladen und als
         // --font-sans / --font-display / --font-mono exposed.
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
-        display: ["var(--font-display)", "Georgia", "serif"],
-        // `serif`-Alias zeigt auf denselben Display-Slot — Fraunces
-        // ist eine echte Serif, der Alias ist jetzt wörtlich korrekt.
+        display: ["var(--font-display)", "var(--font-sans)", "sans-serif"],
+        // `serif` als Alias auf --font-display behalten — Backwards-
+        // Compat für Komponenten die explizit `font-serif` nutzen
+        // (z.B. Apotheke-Hero-Italic-Akzent). Comfortaa ist zwar kein
+        // Serif, aber der Display-Slot bleibt der „besondere" Font.
         serif: ["var(--font-display)", "Georgia", "serif"],
       },
     },

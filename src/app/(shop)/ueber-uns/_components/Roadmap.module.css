@@ -1,0 +1,117 @@
+.roadmap {
+  padding: 96px 0;
+  position: relative;
+}
+.inner {
+  position: relative;
+  z-index: 2;
+}
+.head {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.head h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(36px, 4.2vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 14px 0 12px;
+  color: var(--c-ink-fg);
+}
+.sub {
+  color: hsl(40 10% 70%);
+  font-size: 17px;
+  max-width: 56ch;
+  margin: 0 auto;
+}
+.tl {
+  max-width: 1080px;
+  margin: 0 auto;
+  background: hsl(40 10% 92% / 0.03);
+  border: 1px solid var(--c-ink-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.row {
+  display: grid;
+  grid-template-columns: 140px 1.4fr 1.8fr 110px;
+  gap: 24px;
+  padding: 22px 28px;
+  border-bottom: 1px solid var(--c-ink-border);
+  align-items: center;
+  transition: background 0.3s;
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.row:hover {
+  background: hsl(45 92% 41% / 0.05);
+}
+.q {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-ink-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.q .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  flex-shrink: 0;
+}
+.future .q .dot {
+  background: transparent;
+  border: 1.5px dashed var(--c-ink-muted);
+}
+.current .q .dot {
+  background: var(--c-ink);
+  border: 2px solid var(--c-primary);
+  box-shadow: 0 0 0 4px hsl(45 92% 41% / 0.18);
+}
+.current .q {
+  color: var(--c-primary);
+}
+.t {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--c-ink-fg);
+}
+.d {
+  font-size: 14.5px;
+  color: hsl(40 10% 70%);
+  line-height: 1.5;
+}
+.s {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-ink-muted);
+  text-align: right;
+}
+.current .s {
+  color: var(--c-primary);
+}
+.future {
+  opacity: 0.65;
+}
+@media (max-width: 1024px) {
+  .row {
+    grid-template-columns: 110px 1fr;
+    row-gap: 8px;
+  }
+  .row .d,
+  .row .s {
+    grid-column: 2;
+  }
+  .s {
+    text-align: left;
+  }
+}

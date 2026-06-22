@@ -13,11 +13,10 @@ export function StarRating({ rating }: { rating: number }) {
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
-          strokeWidth={1.5}
           className={`h-4 w-4 ${
             i < Math.round(rating)
-              ? "fill-primary text-primary"
-              : "fill-muted text-input"
+              ? "fill-yellow-400 text-yellow-400"
+              : "fill-muted text-muted"
           }`}
         />
       ))}

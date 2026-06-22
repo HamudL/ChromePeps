@@ -58,9 +58,12 @@ export default async function WissenGlossarPage() {
         }}
       />
 
-      {/* Seitenkopf */}
+      {/* Hero */}
       <section className="border-b border-border relative overflow-hidden">
-        <div className="absolute inset-0 apo-grid-light" aria-hidden="true" />
+        <div
+          className="absolute inset-0 apo-grid opacity-100"
+          aria-hidden="true"
+        />
         <div className="container relative py-16 md:py-24">
           <nav
             aria-label="Breadcrumb"
@@ -74,10 +77,12 @@ export default async function WissenGlossarPage() {
             <span className="text-foreground">Glossar</span>
           </nav>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-end mt-7">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-end mt-5">
             <div>
-              <span className="eyebrow">Nachschlagewerk · A–Z</span>
-              <h1 className="mt-4 display-title text-[60px] md:text-[88px] leading-[0.95]">
+              <span className="mono-tag text-primary">
+                Nachschlagewerk · A–Z
+              </span>
+              <h1 className="mt-3 font-serif text-[60px] md:text-[88px] leading-[0.95] tracking-[-0.025em] font-medium">
                 Glossar.
               </h1>
               <p className="mt-5 max-w-[58ch] text-[16px] leading-relaxed text-foreground/85">
@@ -86,28 +91,26 @@ export default async function WissenGlossarPage() {
                 Live-Suche in Begriff und Definition.
               </p>
             </div>
-            {/* Mono-Readout: Bestand + letzter Stand. */}
-            <dl className="flex md:flex-col gap-x-10 gap-y-5 md:text-right md:pb-1">
+            <dl
+              className="font-mono text-[12px] flex md:flex-col gap-5 md:text-right"
+              style={{ letterSpacing: "0.02em" }}
+            >
               <div>
-                <dt className="stat-key">Einträge</dt>
-                <dd className="stat-value mt-1.5 text-3xl">
+                <dt className="mono-tag text-muted-foreground">Einträge</dt>
+                <dd className="mt-1 text-[28px] font-semibold tabular-nums">
                   {terms.length}
                 </dd>
               </div>
               {lastUpdate && (
                 <div>
-                  <dt className="stat-key">Stand</dt>
-                  <dd
-                    className="mt-1.5 font-mono text-[13px] tabular-nums"
-                    style={{ letterSpacing: "0.02em" }}
-                  >
+                  <dt className="mono-tag text-muted-foreground">Update</dt>
+                  <dd className="mt-1 text-[13px]">
                     {lastUpdate.toLocaleDateString("de-DE")}
                   </dd>
                 </div>
               )}
             </dl>
           </div>
-          <div className="tick-rule mt-10" aria-hidden="true" />
         </div>
       </section>
 

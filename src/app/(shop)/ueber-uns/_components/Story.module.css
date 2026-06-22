@@ -1,0 +1,255 @@
+.story {
+  position: relative;
+  padding: 96px 0 0;
+  background: var(--c-bg);
+}
+.heading {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 56px;
+}
+.heading h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(36px, 4.2vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 14px 0 14px;
+  color: var(--c-fg);
+}
+.heading p {
+  font-size: 17px;
+  color: var(--c-muted);
+  margin: 0;
+}
+.inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+.stageWrap {
+  position: sticky;
+  /* sticky-Box füllt den Viewport unter dem Header und zentriert das Vial
+     vertikal, statt es oben (top:130) anzupinnen. */
+  top: 64px;
+  height: calc(100svh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stage {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 1px 2px hsl(20 14% 4% / 0.3),
+    0 24px 48px -16px hsl(20 14% 4% / 0.5);
+}
+.stage::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, hsl(42 90% 50% / 0.16), transparent 62%);
+  filter: blur(30px);
+  pointer-events: none;
+  z-index: 0;
+}
+.gridbg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 40px, hsl(45 50% 50% / 0.06) 40px 41px),
+    repeating-linear-gradient(90deg, transparent 0 40px, hsl(45 50% 50% / 0.06) 40px 41px);
+  pointer-events: none;
+}
+.holder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.holder img {
+  max-height: 76%;
+  width: auto;
+  filter: drop-shadow(0 30px 36px hsl(20 14% 4% / 0.2));
+}
+.scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--t, 0) * 100%);
+  height: 1px;
+  background: var(--c-primary);
+  box-shadow: 0 0 14px 2px hsl(45 92% 41% / 0.5);
+  pointer-events: none;
+}
+.progress {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+.progress .bar {
+  flex: 1;
+  height: 1px;
+  background: var(--c-border);
+  position: relative;
+}
+.progress .bar i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--c-primary);
+  width: 0%;
+}
+.annot {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--c-fg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.annot.show {
+  opacity: 1;
+}
+.annot b {
+  color: var(--c-primary-soft);
+  font-weight: 600;
+}
+.annot .ln {
+  display: block;
+  height: 1px;
+  background: var(--c-fg);
+}
+.annot.left {
+  left: 14px;
+}
+.annot.left .ln {
+  width: 80px;
+}
+.annot.right {
+  right: 14px;
+  flex-direction: row-reverse;
+}
+.annot.right .ln {
+  width: 80px;
+}
+.a1 {
+  top: 14%;
+}
+.a2 {
+  top: 36%;
+}
+.a3 {
+  top: 60%;
+}
+.a4 {
+  top: 80%;
+}
+.panels {
+  display: flex;
+  flex-direction: column;
+}
+/* Jeder Panel füllt eine Viewport-Höhe und zentriert seinen Text vertikal,
+   damit er auf gleicher Höhe wie das sticky-zentrierte Vial einläuft (statt
+   halb oben aus dem Bild zu starten). */
+.panel {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.panel h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  margin: 14px 0 16px;
+  color: var(--c-fg);
+}
+.panel p {
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--c-muted);
+  max-width: 50ch;
+  margin: 0;
+}
+.panel p b {
+  color: var(--c-fg);
+  font-weight: 600;
+}
+.panel dl {
+  margin: 24px 0 0;
+  padding: 16px 18px;
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+}
+.panel dl > div {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.panel dt {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  flex: 0 0 96px;
+}
+.panel dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--c-fg);
+}
+@media (max-width: 1024px) {
+  .inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .stageWrap {
+    position: relative;
+    top: 0;
+    height: auto;
+    display: block;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .panels {
+    gap: 12vh;
+    padding-top: 4vh;
+  }
+  .panel {
+    min-height: auto;
+    display: block;
+  }
+}

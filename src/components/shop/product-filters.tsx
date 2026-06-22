@@ -1,14 +1,15 @@
 "use client";
 
 /**
- * Produkt-Filter-UI — Chromatogramm-Stil (eckige Specimen-Tags)
+ * Produkt-Filter-UI — Apotheke/Rx-Stil
  *
  * Alles URL-driven (Query-Params), damit Pagination, Bookmarks und
  * Server-Rendering kompatibel bleiben. Keine Store-Abhängigkeit.
  *
- * - CategoryPills: eckige Tags mit inline-Count, führt auf /products/category/slug
- * - SortSelect: Mono-Dropdown "Sortierung: Neueste ⇵"
- * - QuickFilterChip: Toggle-Tag für Boolean-URL-Filter (inStock etc.)
+ * - CategoryPills: Pills mit inline-Count, führt auf /products/category/slug
+ * - SortSelect: Mono-Dropdown "Sortieren: Neueste ⇵"
+ * - QuickFilterChip: Toggle-Chip für Boolean-URL-Filter (inStock etc.)
+ * - FilterBar: Sticky Container, kombiniert alle drei
  */
 
 import Link from "next/link";
@@ -31,25 +32,22 @@ interface Category {
   _count: { products: number };
 }
 
-// Eckiges Filter-Tag — identische Sprache wie .pill (globals.css),
-// hier als Tailwind-Komposition, damit aktive/inaktive Zustände über
-// cn() kombinierbar bleiben.
 const chipBase =
-  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.08em] font-medium transition-colors";
+  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 font-mono text-[11px] tracking-[0.05em] font-medium transition-colors";
 const chipInactive =
-  "border-border bg-card text-foreground hover:border-foreground";
+  "border-border bg-card text-foreground hover:border-primary";
 const chipActive =
-  "border-primary bg-accent text-primary-strong";
+  "border-foreground bg-foreground text-background hover:bg-foreground/90";
 
 function countTint(isActive: boolean) {
   return cn(
-    "text-[10px] tabular-nums",
-    isActive ? "text-primary-strong/60" : "text-muted-foreground"
+    "text-[10.5px] tabular-nums",
+    isActive ? "text-background/60" : "text-muted-foreground"
   );
 }
 
 /**
- * Kategorie-Tags mit Count. "Alle" verlinkt auf `/products`,
+ * Kategorie-Pills mit Count-Badge. "Alle" verlinkt auf `/products`,
  * einzelne Kategorien auf `/products/category/{slug}`. Der aktive
  * Zustand wird anhand der übergebenen `currentCategory` (Slug oder
  * undefined = Alle) gesetzt.
@@ -93,7 +91,7 @@ export function CategoryPills({
 }
 
 /**
- * Toggle-Tag für einen boolean URL-Query-Param (z.B. inStock=true oder
+ * Toggle-Chip für einen boolean URL-Query-Param (z.B. inStock=true oder
  * minPurity=99). Klick fügt den Param hinzu / entfernt ihn; resettet
  * Page-Counter auf 1. `onValue` kann statt "true" einen eigenen Wert
  * setzen (z.B. "99" bei minPurity).
@@ -133,7 +131,6 @@ export function QuickFilterChip({
       aria-pressed={isActive}
       className={cn(chipBase, isActive ? chipActive : chipInactive)}
     >
-      {isActive && <span aria-hidden className="h-1 w-1 bg-primary" />}
       {label}
     </button>
   );
@@ -167,28 +164,26 @@ export function SortSelect({
 
   const SORT_LABELS: Record<string, string> = {
     newest: "Neueste",
-    price_asc: "Preis ↗",
-    price_desc: "Preis ↘",
-    name_asc: "Name A–Z",
-    name_desc: "Name Z–A",
+    price_asc: "Preis \u2197",
+    price_desc: "Preis \u2198",
+    name_asc: "Name A\u2013Z",
+    name_desc: "Name Z\u2013A",
   };
 
   return (
     <Select value={currentSort} onValueChange={updateSort}>
       <SelectTrigger
         className={cn(
-          "h-8 w-auto gap-2 rounded-[2px] border-transparent bg-transparent px-2 font-mono text-[11px] uppercase tracking-[0.08em]",
+          "h-8 w-auto gap-2 border-transparent bg-transparent px-2 font-mono text-[11px] tracking-[0.05em]",
           "text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0",
           "[&>svg]:hidden" // Standard-Chevron ersetzen wir unten durch ChevronsUpDown
         )}
       >
-        <span className="text-muted-foreground">Sortierung:</span>
-        <span className="text-foreground">
-          <SelectValue />
-        </span>
+        <span className="text-muted-foreground">Sortieren:</span>
+        <SelectValue />
         <ChevronsUpDown className="h-3 w-3 opacity-60" aria-hidden />
       </SelectTrigger>
-      <SelectContent className="rounded-[2px]">
+      <SelectContent>
         {PRODUCT_SORT_OPTIONS.map((opt) => (
           <SelectItem
             key={opt.value}

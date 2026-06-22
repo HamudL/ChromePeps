@@ -1,0 +1,204 @@
+.card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px hsl(20 14% 4% / 0.03),
+    0 24px 60px -20px hsl(20 14% 4% / 0.1);
+  position: relative;
+}
+.head {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-bottom: 1px solid var(--c-border);
+}
+.cell {
+  padding: 14px 16px;
+  border-right: 1px solid var(--c-border);
+  font-family: var(--font-mono);
+}
+.cell:last-child {
+  border-right: 0;
+}
+.k {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+.v {
+  font-size: 12.5px;
+  color: var(--c-fg);
+  margin-top: 4px;
+}
+.v.pass {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-primary-soft);
+  font-weight: 600;
+}
+.v.pass::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  box-shadow: 0 0 0 2px hsl(45 92% 41% / 0.22);
+}
+.stage {
+  position: relative;
+  padding: 32px 32px 48px;
+  background: var(--c-bg);
+}
+.stage svg {
+  width: 100%;
+  height: 320px;
+  display: block;
+  overflow: visible;
+}
+.stage .grid line {
+  stroke: var(--c-border);
+  stroke-width: 0.5;
+}
+.axisLine {
+  stroke: var(--c-fg);
+  stroke-width: 0.8;
+  opacity: 0.4;
+}
+.baseline {
+  stroke: var(--c-muted);
+  stroke-width: 0.4;
+}
+.trace {
+  fill: none;
+  stroke: var(--c-primary);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 4px hsl(45 90% 55% / 0.5));
+}
+.traceFill {
+  fill: hsl(45 92% 45% / 0.22);
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+.marker {
+  stroke: var(--c-fg);
+  stroke-dasharray: 3 3;
+  opacity: 0.5;
+}
+.label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  fill: var(--c-fg);
+}
+.label.dim {
+  fill: var(--c-muted);
+}
+.axisTick {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--c-muted);
+}
+.yLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--c-muted);
+}
+.stamp {
+  position: absolute;
+  right: 56px;
+  top: 70px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--c-primary-soft);
+  border: 2.5px solid var(--c-primary-soft);
+  padding: 10px 16px;
+  border-radius: 4px;
+  transform: rotate(-7deg) scale(0.5);
+  opacity: 0;
+  font-size: 17px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition:
+    transform 0.5s cubic-bezier(0.7, -0.4, 0.3, 1.4),
+    opacity 0.3s;
+  background: hsl(40 20% 98% / 0.7);
+}
+.stamp.in {
+  opacity: 0.92;
+  transform: rotate(-7deg) scale(1);
+}
+.stamp small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  margin-top: 3px;
+  opacity: 0.8;
+}
+.stamp::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1px solid var(--c-primary-soft);
+  border-radius: 6px;
+  pointer-events: none;
+}
+.foot {
+  display: grid;
+  grid-template-columns: 2.4fr 1fr;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-card);
+}
+.notes {
+  padding: 16px 24px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.65;
+  color: var(--c-muted);
+}
+.notes b {
+  color: var(--c-fg);
+  font-weight: 600;
+}
+.footCta {
+  border-left: 1px solid var(--c-border);
+  display: flex;
+}
+.footCta a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  padding: 16px 22px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--c-fg);
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.footCta a:hover {
+  background: var(--c-fg);
+  color: var(--c-bg);
+}
+@media (max-width: 1024px) {
+  .head {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cell {
+    border-bottom: 1px solid var(--c-border);
+  }
+}
+@media (max-width: 640px) {
+  .stamp {
+    right: 16px;
+    top: 30px;
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+}

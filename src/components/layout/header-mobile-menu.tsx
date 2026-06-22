@@ -31,12 +31,8 @@ export function HeaderMobileMenu({ links }: HeaderMobileMenuProps) {
         {/* Radix-Dialog braucht einen zugänglichen Namen — ohne Title
             warnt Radix und der Screenreader bekommt keinen Dialog-Namen. */}
         <SheetTitle className="sr-only">Hauptmenü</SheetTitle>
-        <span className="mono-label mt-1 block text-muted-foreground">
-          Navigation
-        </span>
-        <hr className="rule-gold mt-3" />
-        <nav aria-label="Hauptmenü" className="mt-6 flex flex-col">
-          {links.map((link, i) => {
+        <nav aria-label="Hauptmenü" className="flex flex-col gap-4 mt-8">
+          {links.map((link) => {
             const active =
               link.href === "/"
                 ? pathname === "/"
@@ -49,22 +45,10 @@ export function HeaderMobileMenu({ links }: HeaderMobileMenuProps) {
                 aria-current={active ? "page" : undefined}
                 className={
                   active
-                    ? "relative flex items-baseline gap-3 border-l-2 border-primary py-2.5 pl-4 text-lg font-semibold text-primary-strong"
-                    : "flex items-baseline gap-3 border-l-2 border-transparent py-2.5 pl-4 text-lg font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+                    ? "text-lg font-semibold text-primary"
+                    : "text-lg font-medium hover:text-primary transition-colors"
                 }
               >
-                {/* Index-Nummer — dieselbe Protokoll-Gliederung wie die
-                    Desktop-Navigation. */}
-                <span
-                  aria-hidden
-                  className={
-                    active
-                      ? "font-mono text-[10px] tracking-[0.1em] text-primary-strong"
-                      : "font-mono text-[10px] tracking-[0.1em] text-muted-foreground/60"
-                  }
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </span>
                 {link.label}
               </Link>
             );

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { formatPrice } from "@/lib/utils";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/constants";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableHeader,
@@ -14,17 +16,17 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { OrderStatusTag } from "@/components/dashboard/order-status-tag";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import { Package } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
-/**
- * Bestellverlauf — die Protokoll-Tabelle des Laborjournals: Mono-
- * Bestellnummern als Einträge, eckige Status-Tags, tabellarische
- * Beträge.
- */
 export default async function DashboardOrdersPage(props: {
   searchParams: Promise<{ page?: string }>;
 }) {
@@ -57,16 +59,13 @@ export default async function DashboardOrdersPage(props: {
   if (orders.length === 0 && currentPage === 1) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-sm border border-border bg-muted/50">
-            <Package className="h-7 w-7 text-muted-foreground" />
-          </div>
-          <span className="eyebrow justify-center">Bestellungen</span>
-          <h2 className="display-title mt-2 mb-2 text-xl">Noch keine Bestellungen</h2>
+        <CardContent className="flex flex-col items-center justify-center py-16">
+          <Package className="mb-4 h-12 w-12 text-muted-foreground" />
+          <h2 className="mb-2 text-lg font-semibold">Noch keine Bestellungen</h2>
           <p className="mb-6 text-sm text-muted-foreground">
             Sobald Sie eine Bestellung aufgeben, erscheint sie hier.
           </p>
-          <Button variant="gold" asChild>
+          <Button asChild>
             <Link href="/products">Produkte entdecken</Link>
           </Button>
         </CardContent>
@@ -76,30 +75,23 @@ export default async function DashboardOrdersPage(props: {
 
   return (
     <div className="space-y-6">
-      {/* Abschnittskopf — Mono-Metadaten rechtsbündig zur Haarlinie */}
-      <div>
-        <span className="eyebrow">Verlauf</span>
-        <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-          <h2 className="display-title text-2xl">Meine Bestellungen</h2>
-          <span className="mono-label text-muted-foreground">
-            {total === 1 ? "1 Eintrag" : `${total} Einträge`}
-            {totalPages > 1 && ` · Seite ${currentPage}/${totalPages}`}
-          </span>
-        </div>
-        <div className="tick-rule mt-4" aria-hidden />
-      </div>
-
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <CardTitle>Meine Bestellungen</CardTitle>
+          <CardDescription>
+            {total === 1 ? "1 Bestellung" : `${total} Bestellungen`} insgesamt
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Bestellnr.</TableHead>
-                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Datum</TableHead>
-                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Status</TableHead>
-                  <TableHead className="font-mono text-[10px] uppercase tracking-[0.12em]">Positionen</TableHead>
-                  <TableHead className="text-right font-mono text-[10px] uppercase tracking-[0.12em]">Gesamt</TableHead>
+                  <TableHead>Bestellnr.</TableHead>
+                  <TableHead>Datum</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Positionen</TableHead>
+                  <TableHead className="text-right">Gesamt</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -108,23 +100,28 @@ export default async function DashboardOrdersPage(props: {
                     <TableCell>
                       <Link
                         href={`/dashboard/orders/${order.id}`}
-                        className="font-mono font-medium text-primary-strong underline-offset-4 group-hover:underline"
+                        className="font-medium text-primary underline-offset-4 group-hover:underline"
                       >
                         {order.orderNumber}
                       </Link>
                     </TableCell>
-                    <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
+                    <TableCell className="text-muted-foreground">
                       {format(new Date(order.createdAt), "dd.MM.yyyy")}
                     </TableCell>
                     <TableCell>
-                      <OrderStatusTag status={order.status} />
+                      <Badge
+                        variant="secondary"
+                        className={ORDER_STATUS_COLORS[order.status] ?? ""}
+                      >
+                        {ORDER_STATUS_LABELS[order.status] ?? order.status}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {order.items.length === 1
                         ? order.items[0].productName
                         : `${order.items.length} Positionen`}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm font-medium tabular-nums">
+                    <TableCell className="text-right font-medium">
                       {formatPrice(order.totalInCents)}
                     </TableCell>
                   </TableRow>
@@ -134,8 +131,8 @@ export default async function DashboardOrdersPage(props: {
           </div>
 
           {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-              <p className="font-mono text-xs tabular-nums text-muted-foreground">
+            <div className="mt-6 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
                 Seite {currentPage} von {totalPages}
               </p>
               <div className="flex gap-2">

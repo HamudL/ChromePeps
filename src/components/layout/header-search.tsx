@@ -45,7 +45,9 @@ export function HeaderSearch() {
         </Button>
       </DialogTrigger>
       <DialogContent className="top-[18%] translate-y-0 sm:max-w-xl">
-        <DialogTitle className="field-label !mb-0">Produktsuche</DialogTitle>
+        <DialogTitle className="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          Produktsuche
+        </DialogTitle>
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -59,11 +61,11 @@ export function HeaderSearch() {
               aria-label="Suchbegriff"
             />
           </div>
-          <Button type="submit" variant="gold" size="lg">
+          <Button type="submit" size="lg">
             Suchen
           </Button>
         </form>
-        <p className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted-foreground">
+        <p className="font-mono text-[10.5px] tracking-[0.1em] uppercase text-muted-foreground">
           Durchsucht Name · Beschreibung · CAS-Nummer · SKU
         </p>
       </DialogContent>

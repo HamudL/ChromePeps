@@ -1,23 +1,23 @@
 "use client";
 
 /**
- * Cart-Sheet als kompaktes Bestellprotokoll.
+ * Idea 05 — Cart Sheet as "lab receipt"
  *
- * Gleiche Zustand-Verdrahtung, gleiche Controls — die Präsentation folgt
- * der Beleg-Sprache: Positionen als Protokollzeilen mit Haarlinien, Mono-
- * Beträge, Summenblock mit Netto/Versand/MwSt.-Aufschlüsselung und
- * Doppellinie über dem Gesamtbetrag. Der "Inklusive"-Block macht das
- * CoA-Versprechen genau im Kaufmoment sichtbar.
+ * Same Zustand wiring, same controls, different presentation. The footer
+ * becomes a proper receipt with dashed dividers, subtotal / shipping / VAT
+ * breakdown (estimated from subtotal), and an "Included" block that surfaces
+ * differentiators (CoA PDF per item, cold shipping, 14-day right of
+ * withdrawal) at the exact moment the user decides to buy.
  *
- * Preise sind Brutto — der MwSt.-Anteil wird aus dem Gesamtbetrag
- * herausgerechnet (nicht aufgeschlagen). Versand nutzt die kanonischen
- * Konstanten aus `lib/order/calculate-totals` — ändert sich dort die
- * Geschäftsregel, folgt die Quittung automatisch.
+ * Prices already include VAT, so the VAT share is derived from the gross
+ * total (not added on top). Shipping uses the canonical constants from
+ * `lib/order/calculate-totals` — if you change the business rule there,
+ * the cart receipt follows automatically.
  */
 
 import Link from "next/link";
 import Image from "next/image";
-import { Minus, Plus, Trash2, ShoppingBag, Check, Lock } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Check } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -74,24 +74,14 @@ export function CartSheet() {
         </SheetHeader>
 
         {items.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-5 px-8 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
-              <ShoppingBag className="h-7 w-7" strokeWidth={1.5} />
-            </div>
-            <div className="space-y-1.5">
-              <p className="mono-tag text-primary-strong">
-                Protokoll · 0 Positionen
-              </p>
-              <p className="text-base font-semibold tracking-tight">
-                Noch keine Peptide ausgewählt
-              </p>
-              <p className="mx-auto max-w-[16rem] text-sm text-muted-foreground leading-relaxed">
-                Jede Charge HPLC&#8209;geprüft, mit CoA&#8209;PDF und Lot&#8209;Nummer
-                per E&#8209;Mail. Entdecken Sie das Sortiment.
-              </p>
-            </div>
-            <Button variant="gold" onClick={closeCart} asChild>
-              <Link href="/products">Sortiment entdecken</Link>
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-muted-foreground">
+            <ShoppingBag className="h-12 w-12" />
+            <p className="font-medium">Ihr Warenkorb ist leer</p>
+            <p className="text-sm text-center">
+              Entdecken Sie unser Sortiment an hochwertigen Research Peptides.
+            </p>
+            <Button variant="outline" onClick={closeCart} asChild>
+              <Link href="/products">Produkte entdecken</Link>
             </Button>
           </div>
         ) : (
@@ -101,49 +91,44 @@ export function CartSheet() {
                 Subtotal kommen aus derselben Quelle wie die Receipt-Werte. */}
             <FreeShippingProgress subtotal={totalPrice} />
 
-            {/* Positionen als Protokollzeilen mit Haarlinien */}
-            <div className="flex-1 overflow-y-auto px-6">
-              <ul className="divide-y divide-border">
+            {/* Items list */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <div className="space-y-4">
                 {items.map((item) => (
-                  <li
+                  <div
                     key={`${item.productId}-${item.variantId}`}
-                    className="flex gap-4 py-4"
+                    className="flex gap-4"
                   >
-                    <div className="relative h-20 w-20 rounded-sm overflow-hidden border border-border bg-card flex-shrink-0">
+                    <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
                       {item.image ? (
                         <Image
                           src={item.image}
                           alt={item.name}
                           fill
-                          className="object-contain p-1"
+                          className="object-cover"
                           sizes="80px"
                         />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center font-mono text-[9px] tracking-[0.1em] uppercase text-muted-foreground">
+                        <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
                           Kein Bild
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3">
-                        <Link
-                          href={`/products/${item.slug}`}
-                          onClick={closeCart}
-                          className="text-sm font-semibold tracking-tight hover:text-primary-strong transition-colors line-clamp-1"
-                        >
-                          {item.name}
-                        </Link>
-                        <span className="whitespace-nowrap font-mono text-sm font-semibold tabular-nums">
-                          {formatPrice(item.priceInCents * item.quantity)}
-                        </span>
-                      </div>
+                      <Link
+                        href={`/products/${item.slug}`}
+                        onClick={closeCart}
+                        className="text-sm font-medium hover:underline line-clamp-1"
+                      >
+                        {item.name}
+                      </Link>
                       {item.variantName && (
-                        <p className="font-mono text-[10px] tracking-[0.08em] uppercase text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground">
                           {item.variantName}
                         </p>
                       )}
-                      <p className="mt-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
-                        {formatPrice(item.priceInCents)} / Stk.
+                      <p className="text-sm font-semibold mt-1 tabular-nums">
+                        {formatPrice(item.priceInCents)}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Button
@@ -162,7 +147,7 @@ export function CartSheet() {
                           <Minus className="h-3 w-3" aria-hidden="true" />
                         </Button>
                         <span
-                          className="text-sm w-6 text-center font-mono tabular-nums"
+                          className="text-sm w-6 text-center font-mono"
                           aria-label={`Menge: ${item.quantity}`}
                         >
                           {item.quantity}
@@ -202,12 +187,12 @@ export function CartSheet() {
                         </Button>
                       </div>
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
 
-            {/* Beleg-Footer */}
+            {/* Receipt footer */}
             <SheetFooter className="flex-col gap-0 sm:flex-col p-0 border-t bg-muted/30">
               <div className="px-6 py-5 space-y-1.5">
                 <ReceiptRow
@@ -221,12 +206,13 @@ export function CartSheet() {
                 />
                 <ReceiptRow k="MwSt. 19 %" v={formatPrice(vatShare)} />
 
-                {/* Doppellinie über dem Gesamtbetrag — Belegabschluss */}
-                <div className="mt-3 border-t-[3px] border-double border-foreground/80 pt-2 flex items-baseline justify-between">
-                  <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-foreground font-semibold">
+                <DashedDivider />
+
+                <div className="flex items-baseline justify-between pt-1">
+                  <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
                     Gesamt
                   </span>
-                  <span className="font-mono text-2xl font-bold tracking-tight tabular-nums">
+                  <span className="text-2xl font-bold tracking-tight tabular-nums">
                     {formatPrice(totalPrice)}
                   </span>
                 </div>
@@ -237,7 +223,7 @@ export function CartSheet() {
                     waren im Design-Handoff Platzhalter, gehören aber
                     inhaltlich nicht in die Sheet-Quittung. */}
                 <div className="mt-4 pt-4 border-t border-dashed">
-                  <p className="mono-tag text-primary-strong mb-2">
+                  <p className="font-mono text-[9.5px] tracking-[0.15em] uppercase text-primary font-semibold mb-2">
                     Zusätzlich inklusive
                   </p>
                   <ul className="space-y-1">
@@ -250,7 +236,6 @@ export function CartSheet() {
 
               <div className="px-6 py-4 border-t space-y-2 bg-background">
                 <Button
-                  variant="gold"
                   className="w-full gap-2"
                   size="lg"
                   onClick={closeCart}
@@ -268,12 +253,6 @@ export function CartSheet() {
                 >
                   <Link href="/cart">Warenkorb ansehen</Link>
                 </Button>
-                {/* Vertrauenssignal direkt am Bezahl-Moment — Mono-Zeile
-                    in der Sprache der site-weiten .trust-pill. */}
-                <p className="flex items-center justify-center gap-1.5 pt-1 font-mono text-[10px] tracking-[0.12em] uppercase text-muted-foreground">
-                  <Lock className="h-3 w-3 text-primary-strong" strokeWidth={2.5} aria-hidden />
-                  SSL&#8209;verschlüsselter Checkout
-                </p>
               </div>
             </SheetFooter>
           </>
@@ -310,10 +289,23 @@ function ReceiptRow({
   );
 }
 
+function DashedDivider() {
+  return (
+    <div
+      aria-hidden
+      className="h-px my-2"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(90deg, hsl(var(--border)) 0, hsl(var(--border)) 4px, transparent 4px, transparent 8px)",
+      }}
+    />
+  );
+}
+
 function IncludedItem({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex items-center gap-2 text-xs text-muted-foreground">
-      <Check className="h-3 w-3 text-primary-strong shrink-0" strokeWidth={3} />
+      <Check className="h-3 w-3 text-primary shrink-0" strokeWidth={3} />
       {children}
     </li>
   );
@@ -344,7 +336,7 @@ function FreeShippingProgress({ subtotal }: { subtotal: number }) {
             bis zum Gratisversand
           </p>
           <div
-            className="h-1.5 w-full overflow-hidden rounded-sm bg-muted"
+            className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
             role="progressbar"
             aria-valuenow={pct}
             aria-valuemin={0}
@@ -352,7 +344,7 @@ function FreeShippingProgress({ subtotal }: { subtotal: number }) {
             aria-label="Fortschritt bis zum Gratisversand"
           >
             <div
-              className="h-full bg-primary transition-all duration-500 ease-out"
+              className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
               style={{ width: `${pct}%` }}
             />
           </div>

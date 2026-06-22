@@ -7,12 +7,11 @@ import { CoverPlaceholder } from "./cover-placeholder";
 
 /**
  * ArticleCard in drei Varianten:
- *  - grid (default): Karte im Hub-/Related-Grid — Cover, Haarlinie,
- *    Mono-Metadaten (Kategorie / Lesezeit), Fraunces-Titel
- *  - list: redaktioneller Zeilen-Eintrag (Kategorie-Listen, Hub-Index)
- *    mit optionaler Mono-Ordnungszahl links und Cover-Thumbnail rechts
- *  - featured: großes asymmetrisches Lead-Stück auf Ink (Hub) — Text
- *    links (5/12), Cover rechts (7/12), Protokoll-Fußzeile mit Ticks
+ *  - grid (default): Card im 3-Spalten-Hub-Grid
+ *  - list: Magazinstil-Eintrag mit Cover-Thumbnail links + Body rechts
+ *          (Kategorie-Listen)
+ *  - featured: große Ink-Card mit Cover-Image, "Featured"-Badge,
+ *              Outline-Kategorie und Weiterlesen-CTA (Hub-Hero)
  *
  * Pure server component — kein Client-State.
  */
@@ -34,11 +33,9 @@ export interface ArticleCardData {
 interface Props {
   article: ArticleCardData;
   variant?: "grid" | "list" | "featured";
-  /** Laufende Nummer für die list-Variante (Mono-Index, 1-basiert). */
-  index?: number;
 }
 
-export function ArticleCard({ article, variant = "grid", index }: Props) {
+export function ArticleCard({ article, variant = "grid" }: Props) {
   const href = `/wissen/${article.slug}`;
   const dateLabel = formatDate(article.publishedAt);
   const timeLabel = `${article.readingMinutes} min`;
@@ -47,28 +44,17 @@ export function ArticleCard({ article, variant = "grid", index }: Props) {
     return (
       <Link
         href={href}
-        className="article-card group flex gap-5 md:gap-7 py-7 items-start border-b border-border"
+        className="article-card group flex gap-6 py-7 items-start border-b border-border"
       >
-        {typeof index === "number" && (
-          <span
-            aria-hidden="true"
-            className="hidden sm:block shrink-0 font-mono text-[12px] font-medium text-muted-foreground tabular-nums pt-1.5 w-7"
-            style={{ letterSpacing: "0.04em" }}
-          >
-            {String(index).padStart(2, "0")}
-          </span>
-        )}
+        <div className="shrink-0">
+          <CoverFor article={article} aspect="1/1" />
+        </div>
         <div className="flex-1 min-w-0" style={{ paddingTop: 2 }}>
-          <div className="flex items-baseline gap-3 flex-wrap mb-2.5">
-            <span className="mono-tag text-primary-strong" style={{ fontSize: 10 }}>
-              {article.category.name}
-            </span>
-            <span
-              className="font-mono text-[10px] text-muted-foreground"
-              style={{ letterSpacing: "0.08em" }}
-            >
-              {timeLabel}
-            </span>
+          <div
+            className="mono-label text-muted-foreground mb-2"
+            style={{ fontSize: 10 }}
+          >
+            <span className="text-primary">{article.category.name}</span>
           </div>
           <h3 className="font-serif text-[24px] md:text-[26px] leading-[1.18] tracking-tight font-medium">
             <span className="gold-underline">{article.title}</span>
@@ -77,11 +63,12 @@ export function ArticleCard({ article, variant = "grid", index }: Props) {
             {article.excerpt}
           </p>
           <div className="mt-3">
-            <MetaLine author={article.authorName} date={dateLabel} />
+            <MetaLine
+              author={article.authorName}
+              time={timeLabel}
+              date={dateLabel}
+            />
           </div>
-        </div>
-        <div className="hidden sm:block shrink-0 w-[116px] md:w-[132px]">
-          <CoverFor article={article} aspect="1/1" />
         </div>
       </Link>
     );
@@ -91,40 +78,37 @@ export function ArticleCard({ article, variant = "grid", index }: Props) {
     return (
       <Link
         href={href}
-        className="article-card group section-ink rounded-sm border border-ink-border block overflow-hidden transition-colors hover:border-primary/50"
+        className="group section-ink rounded-sm border border-ink-border block overflow-hidden transition-colors hover:border-primary/50"
       >
-        <div className="grid grid-cols-1 md:grid-cols-12">
-          {/* Asymmetrie: Text 5/12 links, Cover 7/12 rechts. */}
-          <div className="md:col-span-5 md:order-1 p-7 md:p-10 flex flex-col">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <span className="mono-tag text-primary" style={{ letterSpacing: "0.2em" }}>
-                Leitartikel
-              </span>
-              <CategoryBadge color="ink">{article.category.name}</CategoryBadge>
-            </div>
-            <h2 className="mt-6 display-title text-[32px] md:text-[38px] lg:text-[42px] text-ink-foreground">
-              <span className="gold-underline">{article.title}</span>
-            </h2>
-            <p className="mt-4 text-[15px] md:text-[15.5px] text-ink-muted leading-relaxed max-w-[52ch]">
-              {article.excerpt}
-            </p>
-            <div className="mt-auto pt-8">
-              <div className="tick-rule mb-4" aria-hidden="true" />
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <MetaLine
-                  author={article.authorName}
-                  time={timeLabel}
-                  date={dateLabel}
-                  dark
-                />
-                <span className="btn-ink inline-flex items-center gap-2">
-                  Weiterlesen <ArrowRight size={12} />
-                </span>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-5">
+          <div className="md:col-span-2 relative">
+            <CoverFor article={article} aspect="4/3" forceDark />
+            <div
+              className="absolute top-4 left-4 mono-tag bg-primary text-ink px-2.5 py-1 rounded-sm"
+              style={{ letterSpacing: "0.18em" }}
+            >
+              Featured
             </div>
           </div>
-          <div className="md:col-span-7 md:order-2 relative border-b md:border-b-0 md:border-l border-ink-border order-first">
-            <CoverFor article={article} aspect="16/10" forceDark />
+          <div className="md:col-span-3 p-7 md:p-10 flex flex-col">
+            <CategoryBadge color="ink">{article.category.name}</CategoryBadge>
+            <h2 className="mt-5 font-serif text-[34px] md:text-[40px] leading-[1.08] tracking-tight font-medium text-ink-foreground">
+              <span className="gold-underline">{article.title}</span>
+            </h2>
+            <p className="mt-4 text-[15.5px] md:text-[16px] text-ink-muted leading-relaxed max-w-[58ch]">
+              {article.excerpt}
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+              <MetaLine
+                author={article.authorName}
+                time={timeLabel}
+                date={dateLabel}
+                dark
+              />
+              <span className="btn-ink inline-flex items-center gap-2">
+                Weiterlesen <ArrowRight size={12} />
+              </span>
+            </div>
           </div>
         </div>
       </Link>
@@ -135,18 +119,8 @@ export function ArticleCard({ article, variant = "grid", index }: Props) {
   return (
     <Link href={href} className="article-card group block">
       <CoverFor article={article} aspect="16/10" />
-      <div className="mt-4 border-t border-foreground/80 pt-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="mono-tag text-primary-strong" style={{ fontSize: 10 }}>
-            {article.category.name}
-          </span>
-          <span
-            className="font-mono text-[10px] text-muted-foreground"
-            style={{ letterSpacing: "0.08em" }}
-          >
-            {timeLabel}
-          </span>
-        </div>
+      <div className="pt-4">
+        <CategoryBadge>{article.category.name}</CategoryBadge>
         <h3 className="mt-3 font-serif text-[22px] leading-[1.2] tracking-tight font-medium line-clamp-2">
           <span className="gold-underline">{article.title}</span>
         </h3>
@@ -154,7 +128,11 @@ export function ArticleCard({ article, variant = "grid", index }: Props) {
           {article.excerpt}
         </p>
         <div className="mt-3">
-          <MetaLine author={article.authorName} date={dateLabel} />
+          <MetaLine
+            author={article.authorName}
+            time={timeLabel}
+            date={dateLabel}
+          />
         </div>
       </div>
     </Link>

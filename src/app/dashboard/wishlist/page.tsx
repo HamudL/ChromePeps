@@ -36,15 +36,10 @@ export default async function WishlistPage() {
   return (
     <div className="space-y-6">
       <div>
-        <span className="eyebrow">Gemerkt</span>
-        <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-          <h2 className="display-title text-2xl">Merkliste</h2>
-          <span className="mono-label text-muted-foreground">
-            {products.length}{" "}
-            {products.length === 1 ? "Produkt" : "Produkte"} gespeichert
-          </span>
-        </div>
-        <div className="tick-rule mt-4" aria-hidden />
+        <h1 className="text-2xl font-bold tracking-tight">Merkliste</h1>
+        <p className="text-muted-foreground">
+          {products.length} {products.length === 1 ? "Produkt" : "Produkte"} gespeichert
+        </p>
       </div>
 
       {products.length > 0 ? (
@@ -54,13 +49,10 @@ export default async function WishlistPage() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 py-16 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-sm border border-border bg-card">
-            <Heart className="h-7 w-7 text-muted-foreground/50" />
-          </div>
-          <span className="eyebrow justify-center">Gemerkt</span>
-          <p className="display-title mt-2 text-lg">Ihre Merkliste ist leer</p>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+        <div className="text-center py-16 text-muted-foreground">
+          <Heart className="mx-auto h-10 w-10 mb-3 text-muted-foreground/40" />
+          <p className="text-lg font-medium">Ihre Merkliste ist leer</p>
+          <p className="text-sm mt-1">
             Klicken Sie auf das Herz-Symbol bei einem Produkt, um es hier zu speichern.
           </p>
         </div>

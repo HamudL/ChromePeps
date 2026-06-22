@@ -1,0 +1,122 @@
+.prozess {
+  padding: 96px 0;
+  position: relative;
+}
+.inner {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+.inner h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(36px, 4.2vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 14px 0 12px;
+  color: var(--c-ink-fg);
+}
+.sub {
+  font-size: 17px;
+  color: hsl(40 10% 70%);
+  max-width: 56ch;
+  margin: 0 auto 48px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.step {
+  background: hsl(40 10% 92% / 0.04);
+  border: 1px solid var(--c-ink-border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: left;
+  position: relative;
+  transition:
+    transform 0.3s,
+    border-color 0.3s,
+    background 0.3s;
+}
+.step:hover {
+  transform: translateY(-3px);
+  border-color: hsl(45 92% 41% / 0.45);
+  background: hsl(40 10% 92% / 0.06);
+}
+.iconWrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(45 92% 41% / 0.12);
+  border-radius: 14px;
+  margin-bottom: 18px;
+}
+.iconWrap svg {
+  width: 28px;
+  height: 28px;
+  color: var(--c-primary);
+}
+.stepN {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 26px;
+  height: 26px;
+  background: var(--c-primary);
+  color: var(--c-ink);
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.step h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0 0 8px;
+  color: var(--c-ink-fg);
+}
+.step p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: hsl(40 10% 70%);
+  margin: 0;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+.tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border: 1px solid var(--c-ink-border);
+  border-radius: 4px;
+  color: var(--c-ink-muted);
+}
+.tagPass {
+  color: var(--c-primary);
+  border-color: hsl(45 92% 41% / 0.5);
+}
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

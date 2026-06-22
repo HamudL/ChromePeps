@@ -1,9 +1,11 @@
 "use client";
 
 /**
- * Live Metrics — Readout-Band im Protokoll-Stil: links der Kicker mit
- * Einordnung, rechts die Messwerte als Readouts mit Haarlinien-Trennern.
- * Sitzt als schmales Band direkt unter dem Hero.
+ * Idea 08 — Live Metrics with count-up animation
+ *
+ * Drop this between the Trust Bar and "Warum ChromePeps?" on the homepage.
+ * Light-mode section — matches the existing container rhythm between the
+ * dark trust bar and the dark "Warum" block.
  *
  * `metrics` ist bewusst ein Pflicht-Prop OHNE Default: hier standen früher
  * erfundene DEFAULTS (247 Chargen, 99,12 %, 12.480 Bestellungen), die bei
@@ -31,32 +33,17 @@ export function LiveMetrics({ metrics }: LiveMetricsProps) {
   // komplett (die Homepage rendert sie ohnehin nur bei vorhandenen Tiles).
   if (metrics.length === 0) return null;
   return (
-    <section
-      className="border-y border-border bg-background"
-      aria-label="Kennzahlen aus dem Labor"
-    >
-      <div className="container py-12 md:py-14">
-        <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
-          <div className="max-w-xs">
-            <span className="eyebrow">Live aus dem Labor</span>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Aggregiert aus allen veröffentlichten Analysezertifikaten —
-              keine Schätzwerte.
-            </p>
-          </div>
-
-          {/* Readouts in einer Protokoll-Zeile, getrennt durch Haarlinien
-              (Mobile: gestapelt mit horizontalen Linien). */}
-          <div className="flex flex-col divide-y divide-border sm:flex-row sm:divide-x sm:divide-y-0">
-            {metrics.map((m, i) => (
-              <div
-                key={m.label}
-                className="py-6 first:pt-0 last:pb-0 sm:px-10 sm:py-0 sm:first:pl-0 sm:last:pr-0"
-              >
-                <MetricTile metric={m} delay={i * 120} />
-              </div>
-            ))}
-          </div>
+    <section className="border-y bg-background">
+      <div className="container py-14 md:py-16">
+        {/* Flex-Layout statt fixes 3-col-Grid: bei 1 oder 2 Tiles sitzen
+            sie nicht mehr linksbündig in einer unsichtbaren dritten
+            Spalte, sondern werden immer zentriert dargestellt. */}
+        <div className="flex flex-col md:flex-row md:flex-wrap items-center justify-center gap-10 md:gap-16 mx-auto">
+          {metrics.map((m, i) => (
+            <div key={m.label} className="w-full md:w-auto md:min-w-[14rem] md:max-w-xs">
+              <MetricTile metric={m} delay={i * 120} />
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -144,20 +131,22 @@ function MetricTile({ metric, delay }: { metric: Metric; delay: number }) {
   })();
 
   return (
-    <div ref={ref}>
-      <div className="flex items-baseline">
-        <span className="stat-value text-4xl md:text-5xl">{formatted}</span>
+    <div ref={ref} className="text-center">
+      <div className="flex items-baseline justify-center">
+        <span className="text-5xl md:text-6xl font-bold tracking-tight tabular-nums leading-none text-foreground">
+          {formatted}
+        </span>
         {metric.suffix && (
-          <span className="ml-1 text-xl font-semibold text-primary-strong md:text-2xl">
+          <span className="text-primary text-2xl md:text-3xl font-semibold ml-1">
             {metric.suffix}
           </span>
         )}
       </div>
-      <p className="stat-key mt-3">{metric.label}</p>
+      <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted-foreground mt-3">
+        {metric.label}
+      </p>
       {metric.sub && (
-        <p className="mt-1.5 font-mono text-[10px] tracking-[0.08em] text-muted-foreground/70">
-          {metric.sub}
-        </p>
+        <p className="text-xs text-muted-foreground/70 mt-1.5">{metric.sub}</p>
       )}
     </div>
   );

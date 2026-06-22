@@ -1,131 +1,58 @@
 import Link from "next/link";
-import { BadgeCheck, FlaskConical, ShieldCheck } from "lucide-react";
 import { APP_NAME, RESEARCH_DISCLAIMER } from "@/lib/constants";
 import { NewsletterForm } from "@/components/shop/newsletter-form";
 
-const SERVICE_LINKS = [
-  { href: "/kontakt", label: "Kontakt" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/ueber-uns", label: "Über uns" },
-  { href: "/qualitaetskontrolle", label: "Qualitätskontrolle" },
-  { href: "/order-status", label: "Bestellung verfolgen" },
-  { href: "/versand", label: "Versand" },
-  { href: "/zahlung", label: "Zahlung" },
-  { href: "/dashboard", label: "Mein Konto" },
-] as const;
-
-const LEGAL_LINKS = [
-  { href: "/impressum", label: "Impressum" },
-  { href: "/datenschutz", label: "Datenschutz" },
-  { href: "/agb", label: "AGB" },
-  { href: "/widerruf", label: "Widerruf" },
-] as const;
-
-const TRUST_SIGNALS = [
-  { icon: BadgeCheck, label: "HPLC · Janoshik-geprüft" },
-  { icon: ShieldCheck, label: "Sichere Zahlung" },
-  { icon: FlaskConical, label: "CoA zu jeder Charge" },
-] as const;
-
-/**
- * Footer — „Chromatogramm": dunkles Protokoll-Schlussblatt. Oben das
- * Mess-Lineal als Übergabe vom Seiteninhalt, dann ein editorialer
- * Claim-Block mit großer Fraunces-Marke, Link-Spalten, Specimen-Tags
- * und der Pflicht-Disclaimer als sauber gesetzte Fußnote.
- */
 export function Footer() {
   return (
-    <footer className="section-ink relative grain-overlay">
-      <div className="absolute inset-0 apo-grid opacity-50" aria-hidden />
-      <div className="container relative pt-16 pb-10">
-        {/* Marken-Statement */}
-        <div className="flex flex-col gap-6 border-b border-ink-border pb-12 md:flex-row md:items-end md:justify-between">
-          <div>
-            <span className="eyebrow">Analyse-Protokoll · Ende</span>
-            <p className="display-title mt-4 text-4xl text-ink-foreground md:text-5xl">
-              {APP_NAME}
-              <span className="ml-3 font-display text-2xl italic text-ink-muted md:text-3xl">
-                — gemessen, nicht versprochen.
-              </span>
+    <footer className="section-dark">
+      <div className="container pt-16 pb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="col-span-2 space-y-3">
+            <h3 className="text-lg font-bold chrome-text">{APP_NAME}</h3>
+            <p className="text-sm text-white/50 max-w-sm">
+              Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit. Jede Charge wird mit Analysezertifikat ausgeliefert.
             </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            {TRUST_SIGNALS.map((signal) => (
-              <span key={signal.label} className="trust-pill">
-                <signal.icon className="h-3.5 w-3.5 text-primary" aria-hidden />
-                {signal.label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-x-8 gap-y-12 pt-12 md:grid-cols-12">
-          {/* Newsletter */}
-          <div className="col-span-2 md:col-span-6 lg:col-span-5">
-            <span className="mono-label text-ink-muted">
-              Newsletter · neue Chargen &amp; COAs
-            </span>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-muted">
-              Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit.
-              Jede Charge erhält eine Lot-Nummer und ein Analysezertifikat —
-              verifizierbar, nicht behauptet.
-            </p>
-            <div className="mt-6 max-w-sm">
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-medium text-white/80">Newsletter</p>
               <NewsletterForm />
             </div>
           </div>
 
-          {/* Spacer-Spalte auf Desktop für redaktionelle Asymmetrie */}
-          <div className="hidden lg:col-span-1 lg:block" aria-hidden />
-
           {/* Service */}
-          <div className="md:col-span-3">
-            <span className="mono-label text-ink-muted">Service</span>
-            <nav
-              aria-label="Service"
-              className="mt-5 flex flex-col gap-2.5 text-sm text-ink-muted"
-            >
-              {SERVICE_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="w-fit gold-underline transition-colors hover:text-ink-foreground"
-                >
-                  {link.label}
-                </Link>
-              ))}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-white/80">Service</h4>
+            <nav aria-label="Service" className="flex flex-col gap-2 text-sm text-white/60">
+              <Link href="/kontakt" className="hover:text-white transition-colors">Kontakt</Link>
+              <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
+              <Link href="/ueber-uns" className="hover:text-white transition-colors">Über uns</Link>
+              <Link href="/qualitaetskontrolle" className="hover:text-white transition-colors">Qualitätskontrolle</Link>
+              <Link href="/order-status" className="hover:text-white transition-colors">Bestellung verfolgen</Link>
+              <Link href="/versand" className="hover:text-white transition-colors">Versand</Link>
+              <Link href="/zahlung" className="hover:text-white transition-colors">Zahlung</Link>
+              <Link href="/dashboard" className="hover:text-white transition-colors">Mein Konto</Link>
             </nav>
           </div>
 
           {/* Legal */}
-          <div className="md:col-span-3">
-            <span className="mono-label text-ink-muted">Rechtliches</span>
-            <nav
-              aria-label="Rechtliches"
-              className="mt-5 flex flex-col gap-2.5 text-sm text-ink-muted"
-            >
-              {LEGAL_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="w-fit gold-underline transition-colors hover:text-ink-foreground"
-                >
-                  {link.label}
-                </Link>
-              ))}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-white/80">Rechtliches</h4>
+            <nav aria-label="Rechtliches" className="flex flex-col gap-2 text-sm text-white/60">
+              <Link href="/impressum" className="hover:text-white transition-colors">Impressum</Link>
+              <Link href="/datenschutz" className="hover:text-white transition-colors">Datenschutz</Link>
+              <Link href="/agb" className="hover:text-white transition-colors">AGB</Link>
+              <Link href="/widerruf" className="hover:text-white transition-colors">Widerruf</Link>
             </nav>
           </div>
         </div>
 
-        <div className="tick-rule mt-14" aria-hidden />
-
-        {/* Disclaimer + Copyright */}
-        <div className="mt-8 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <p className="max-w-3xl text-xs leading-relaxed text-ink-muted">
+        {/* Disclaimer */}
+        <div className="mt-8 pt-8 border-t border-white/10">
+          <p className="text-xs text-white/60 text-center max-w-3xl mx-auto">
             {RESEARCH_DISCLAIMER}
           </p>
-          <p className="mono-tag shrink-0 text-ink-muted/80">
-            &copy; {new Date().getFullYear()} {APP_NAME}
+          <p className="text-xs text-white/50 text-center mt-4">
+            &copy; {new Date().getFullYear()} {APP_NAME}. Alle Rechte vorbehalten.
           </p>
         </div>
       </div>

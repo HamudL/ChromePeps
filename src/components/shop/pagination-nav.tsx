@@ -2,10 +2,10 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 /**
- * Numerische Pagination im Protokoll-Stil (nutzt die .pagination-num-
- * Klassen aus globals.css): Mess-Lineal (tick-rule) als oberer Abschluss,
- * Mono-Stand "Seite 02 / 12" und die Zahlenreihe darunter. Vereinheitlicht
- * die Pagination-Sprache zwischen /products, /products/category und /wissen.
+ * Numerische Pagination im Apotheke/Wissen-Stil (nutzt die .pagination-num-
+ * Klassen aus globals.css). Ersetzt die reine Prev/Next-Variante auf den
+ * Produkt-Listings und vereinheitlicht die Pagination-Sprache zwischen
+ * /products, /products/category und /wissen.
  *
  * Server-Component: `buildHref` ist eine reine Funktion, die pro Seitenzahl
  * eine URL baut — bleibt im RSC, keine Serialisierungsgrenze.
@@ -36,76 +36,71 @@ export function PaginationNav({
   const pages = pageWindow(currentPage, totalPages);
 
   return (
-    <nav className="mt-14" aria-label="Pagination">
-      {/* Mess-Lineal als oberer Abschluss + Mono-Stand der Blätterung */}
-      <div aria-hidden className="tick-rule" />
-      <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground tabular-nums">
-        Seite {String(currentPage).padStart(2, "0")} /{" "}
-        {String(totalPages).padStart(2, "0")}
-      </p>
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-        {currentPage > 1 ? (
-          <Link
-            href={buildHref(currentPage - 1)}
-            rel="prev"
-            aria-label="Vorherige Seite"
-            className="pagination-num inline-flex w-auto items-center gap-1.5 px-3"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Zurück
-          </Link>
-        ) : (
-          <span
-            aria-hidden
-            className="pagination-num inline-flex w-auto cursor-not-allowed items-center gap-1.5 px-3 opacity-30"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Zurück
-          </span>
-        )}
+    <nav
+      className="mt-14 flex flex-wrap items-center justify-center gap-2 border-t border-border pt-8"
+      aria-label="Pagination"
+    >
+      {currentPage > 1 ? (
+        <Link
+          href={buildHref(currentPage - 1)}
+          rel="prev"
+          aria-label="Vorherige Seite"
+          className="pagination-num inline-flex w-auto items-center gap-1.5 px-3"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Zurück
+        </Link>
+      ) : (
+        <span
+          aria-hidden
+          className="pagination-num inline-flex w-auto cursor-not-allowed items-center gap-1.5 px-3 opacity-30"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Zurück
+        </span>
+      )}
 
-        {pages.map((p, i) =>
-          p === "ellipsis" ? (
-            <span
-              key={`ellipsis-${i}`}
-              aria-hidden
-              className="px-1 font-mono text-xs text-muted-foreground/50"
-            >
-              …
-            </span>
-          ) : (
-            <Link
-              key={p}
-              href={buildHref(p)}
-              aria-current={p === currentPage ? "page" : undefined}
-              aria-label={`Seite ${p}`}
-              className={`pagination-num ${p === currentPage ? "active" : ""}`}
-            >
-              {p}
-            </Link>
-          ),
-        )}
-
-        {currentPage < totalPages ? (
-          <Link
-            href={buildHref(currentPage + 1)}
-            rel="next"
-            aria-label="Nächste Seite"
-            className="pagination-num inline-flex w-auto items-center gap-1.5 px-3"
-          >
-            Weiter
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        ) : (
+      {pages.map((p, i) =>
+        p === "ellipsis" ? (
           <span
+            key={`ellipsis-${i}`}
             aria-hidden
-            className="pagination-num inline-flex w-auto cursor-not-allowed items-center gap-1.5 px-3 opacity-30"
+            className="px-1 font-mono text-xs text-muted-foreground/50"
           >
-            Weiter
-            <ArrowRight className="h-3.5 w-3.5" />
+            …
           </span>
-        )}
-      </div>
+        ) : (
+          <Link
+            key={p}
+            href={buildHref(p)}
+            aria-current={p === currentPage ? "page" : undefined}
+            aria-label={`Seite ${p}`}
+            className={`pagination-num ${p === currentPage ? "active" : ""}`}
+          >
+            {p}
+          </Link>
+        ),
+      )}
+
+      {currentPage < totalPages ? (
+        <Link
+          href={buildHref(currentPage + 1)}
+          rel="next"
+          aria-label="Nächste Seite"
+          className="pagination-num inline-flex w-auto items-center gap-1.5 px-3"
+        >
+          Weiter
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      ) : (
+        <span
+          aria-hidden
+          className="pagination-num inline-flex w-auto cursor-not-allowed items-center gap-1.5 px-3 opacity-30"
+        >
+          Weiter
+          <ArrowRight className="h-3.5 w-3.5" />
+        </span>
+      )}
     </nav>
   );
 }

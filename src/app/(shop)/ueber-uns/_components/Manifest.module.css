@@ -1,0 +1,148 @@
+/* Manifest: full-viewport Bekenntnis. Dunkle "ink"-Welt, Gold als einziges
+   Signal, editoriale Hairline-Grundsätze. Tokens kommen aus shared.module.css
+   (.page) bzw. global (.section-ink setzt --ink Hintergrund/Foreground). */
+.manifest {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(112px, 16vh, 176px) 0;
+  overflow: hidden;
+}
+.inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(52px, 8vh, 96px);
+}
+
+/* ---------- Glaubenssatz ---------- */
+.head {
+  /* KEIN max-width hier: "ch" rechnet gegen die 16px-Schrift dieses Wrappers,
+     nicht gegen die große Headline, und würde sie Wort für Wort umbrechen.
+     Der Zeilenumbruch wird stattdessen per <br /> im Markup gesetzt. */
+  max-width: 100%;
+}
+.creed {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(38px, 5vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  margin: 20px 0 0;
+  color: var(--c-ink-fg);
+}
+
+/* ---------- Grundsätze ---------- */
+.tenets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--c-ink-border);
+}
+.tenet {
+  position: relative;
+  display: grid;
+  grid-template-columns: clamp(54px, 7vw, 108px) 1fr;
+  gap: clamp(18px, 4vw, 64px);
+  align-items: baseline;
+  padding: clamp(22px, 3.4vh, 38px) clamp(4px, 1.4vw, 20px);
+  border-bottom: 1px solid var(--c-ink-border);
+  transition: background-color 0.35s ease;
+}
+/* Goldene Kante, die beim Hover über die obere Trennlinie wächst. */
+.tenet::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -1px;
+  height: 1px;
+  width: 0;
+  background: var(--c-primary);
+  transition: width 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.tenet:hover {
+  background-color: hsl(45 92% 41% / 0.04);
+}
+.tenet:hover::after {
+  width: 100%;
+}
+.num {
+  font-family: var(--font-mono);
+  font-size: clamp(14px, 1.5vw, 19px);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--c-primary);
+  opacity: 0.5;
+  font-feature-settings: "tnum" on;
+  transition: opacity 0.35s ease;
+}
+.tenet:hover .num {
+  opacity: 1;
+}
+.statement {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(21px, 2.7vw, 38px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: var(--c-ink-fg);
+}
+.detail {
+  margin: 12px 0 0;
+  font-size: clamp(14px, 1.2vw, 16.5px);
+  line-height: 1.65;
+  color: var(--c-ink-muted);
+  max-width: 62ch;
+}
+
+/* ---------- Signatur ---------- */
+.sign {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.signLine {
+  height: 1px;
+  width: clamp(40px, 8vw, 104px);
+  background: var(--c-primary);
+}
+.signText {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(18px, 2vw, 27px);
+  letter-spacing: -0.01em;
+  color: var(--c-ink-fg);
+}
+.signMark {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--c-primary);
+}
+
+@media (max-width: 720px) {
+  .head {
+    max-width: none;
+  }
+  .tenet {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .num {
+    font-size: 13px;
+  }
+  .signMark {
+    margin-left: 0;
+    width: 100%;
+  }
+}

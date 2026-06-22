@@ -34,19 +34,16 @@ export function AnnouncementBar() {
 
   if (!text || !visible) return null;
 
-  // Schmaler Mono-Streifen auf Ink — kaltes Nachtblau, kein Verlauf.
   return (
     <div
-      className={`relative overflow-hidden border-b border-ink-border bg-ink px-8 py-1.5 text-center text-ink-foreground transition-all duration-300 ease-out ${
-        closing ? "max-h-0 py-0 opacity-0" : "max-h-12 opacity-100"
+      className={`relative bg-gradient-to-r from-ink via-[hsl(20_10%_12%)] to-ink text-ink-foreground text-center text-xs py-1.5 px-8 transition-all duration-300 ease-out overflow-hidden ${
+        closing ? "max-h-0 opacity-0 py-0" : "max-h-12 opacity-100"
       }`}
     >
-      <span className="font-mono text-[10.5px] uppercase leading-tight tracking-[0.14em]">
-        {text}
-      </span>
+      <span className="tracking-wide">{text}</span>
       <button
         onClick={handleDismiss}
-        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-ink-muted transition-colors hover:bg-white/10 hover:text-ink-foreground"
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-white/10 transition-colors"
         aria-label="Hinweis schließen"
       >
         <X className="h-3 w-3" />

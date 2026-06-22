@@ -3,10 +3,9 @@ import { cn } from "@/lib/utils";
 
 /**
  * Mono-Tag-Badge für Kategorie-Labels in Article-Cards und
- * Article-Headers — eckiges Specimen-Etikett. Vier Farb-Varianten:
- * default (Card auf Border), gold (historischer Name; Viridian-Outline
- * auf Mint-Wash), ink (Outline auf dunklem Bg), solid (Viridian-Fläche
- * für Featured-Markierungen).
+ * Article-Headers. Vier Farb-Varianten: default (white auf border),
+ * gold (Outline + warm-bg), ink (Outline auf dunklem Bg), solid
+ * (Gold-Fläche, für Featured-Markierung).
  */
 
 interface Props {
@@ -17,9 +16,9 @@ interface Props {
 
 const VARIANTS: Record<NonNullable<Props["color"]>, string> = {
   default: "border-border bg-card text-foreground/85",
-  gold: "border-primary/50 bg-accent text-primary-strong",
+  gold: "border-primary bg-amber-50/80 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400",
   ink: "border-primary/50 bg-transparent text-primary",
-  solid: "bg-primary text-primary-foreground border-primary",
+  solid: "bg-primary text-ink border-primary",
 };
 
 export function CategoryBadge({
