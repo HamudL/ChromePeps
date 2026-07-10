@@ -219,11 +219,17 @@ else
   log "SSL certificate already exists for $DOMAIN"
 fi
 
-# Auto-renew cron
-if ! crontab -l 2>/dev/null | grep -q certbot; then
-  (crontab -l 2>/dev/null; echo "0 3 * * * certbot renew --quiet --deploy-hook 'docker restart chromepeps-nginx'") | crontab -
-  log "SSL auto-renewal cron job added"
-fi
+# Auto-renew cron.
+# WICHTIG: certbot merkt sich vom Erst-Setup die standalone-Methode, die
+# Port 80 exklusiv braucht — der nginx-Container belegt Port 80 aber
+# dauerhaft. Ohne pre/post-Hooks schlägt deshalb JEDE automatische
+# Erneuerung still fehl und das Zertifikat läuft nach 90 Tagen ab
+# (NET::ERR_CERT_DATE_INVALID). Die Hooks laufen nur, wenn tatsächlich
+# erneuert wird (alle ~60 Tage), nicht bei jedem nächtlichen Lauf.
+# Eine evtl. vorhandene alte certbot-Zeile wird ersetzt statt behalten.
+CRON_LINE="0 3 * * * certbot renew --quiet --pre-hook 'docker stop chromepeps-nginx' --post-hook 'docker start chromepeps-nginx'"
+(crontab -l 2>/dev/null | grep -v 'certbot renew'; echo "$CRON_LINE") | crontab -
+log "SSL auto-renewal cron job installed (nginx pre/post hooks)"
 
 # =============================================================================
 # 8. Clone Project & Start Stack

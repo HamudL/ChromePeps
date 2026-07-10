@@ -275,6 +275,17 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script_stop: true
-          command_timeout: 5m
+          # 10m statt 5m: fix-ssl-renewal.sh kann eine echte Zertifikats-
+          # erneuerung enthalten (nginx-Stop + certbot + Start), zusätzlich
+          # zum eigentlichen Deploy.
+          command_timeout: 10m
           script: |
+            # Erst pullen, damit fix-ssl-renewal.sh in der aktuellen Version
+            # vorliegt — deploy.sh pullt zwar auch, aber erst nach seinem
+            # Start (ein laufendes Bash-Skript liest die alte Datei weiter).
+            cd /opt/chromepeps && git pull origin main
+            # SSL VOR dem Deploy reparieren: ein abgelaufenes Zertifikat
+            # darf nicht an einem später fehlschlagenden Deploy-Schritt
+            # hängen bleiben.
+            cd /opt/chromepeps/docker && bash fix-ssl-renewal.sh
             cd /opt/chromepeps/docker && bash deploy.sh
