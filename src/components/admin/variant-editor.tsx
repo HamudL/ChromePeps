@@ -39,6 +39,16 @@ const EMPTY_VARIANT: VariantRow = {
 export function VariantEditor({ variants, onChange }: VariantEditorProps) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<VariantRow>({ ...EMPTY_VARIANT });
+  // Roh-Eingabestrings der Preisfelder je Zeile, solange sie aktiv editiert
+  // werden. Ohne diesen Puffer würde der Anzeigewert bei JEDEM Tastendruck aus
+  // priceInCents via toFixed(2) neu formatiert — Zwischenstände wie "10." oder
+  // "10.5" springen dann zurück und präzise Eingaben werden unzuverlässig. Der
+  // Puffer wird onBlur wieder verworfen, sodass der Wert normal aus den Props
+  // abgeleitet und auf zwei Nachkommastellen normalisiert wird.
+  const [priceDrafts, setPriceDrafts] = useState<Record<number, string>>({});
+  const [draftPriceStr, setDraftPriceStr] = useState("0.00");
+
+  const eurToCents = (raw: string) => Math.round((parseFloat(raw) || 0) * 100);
 
   const updateVariant = (index: number, field: keyof VariantRow, value: string | number | boolean) => {
     const updated = [...variants];
@@ -48,12 +58,16 @@ export function VariantEditor({ variants, onChange }: VariantEditorProps) {
 
   const removeVariant = (index: number) => {
     onChange(variants.filter((_, i) => i !== index));
+    // Zeilenindizes verschieben sich beim Entfernen → Preis-Puffer verwerfen,
+    // damit kein Draft an der falschen Zeile klebt.
+    setPriceDrafts({});
   };
 
   const addVariant = () => {
     if (!draft.name || !draft.sku) return;
     onChange([...variants, { ...draft }]);
     setDraft({ ...EMPTY_VARIANT });
+    setDraftPriceStr("0.00");
     setAdding(false);
   };
 
@@ -96,9 +110,18 @@ export function VariantEditor({ variants, onChange }: VariantEditorProps) {
                       type="number"
                       step="0.01"
                       min="0"
-                      value={(v.priceInCents / 100).toFixed(2)}
-                      onChange={(e) =>
-                        updateVariant(i, "priceInCents", Math.round(parseFloat(e.target.value || "0") * 100))
+                      value={priceDrafts[i] ?? (v.priceInCents / 100).toFixed(2)}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setPriceDrafts((p) => ({ ...p, [i]: raw }));
+                        updateVariant(i, "priceInCents", eurToCents(raw));
+                      }}
+                      onBlur={() =>
+                        setPriceDrafts((p) => {
+                          const next = { ...p };
+                          delete next[i];
+                          return next;
+                        })
                       }
                       className="h-8 text-sm w-24"
                     />
@@ -166,13 +189,12 @@ export function VariantEditor({ variants, onChange }: VariantEditorProps) {
                 type="number"
                 step="0.01"
                 min="0"
-                value={(draft.priceInCents / 100).toFixed(2)}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    priceInCents: Math.round(parseFloat(e.target.value || "0") * 100),
-                  }))
-                }
+                value={draftPriceStr}
+                onChange={(e) => {
+                  setDraftPriceStr(e.target.value);
+                  setDraft((d) => ({ ...d, priceInCents: eurToCents(e.target.value) }));
+                }}
+                onBlur={() => setDraftPriceStr((draft.priceInCents / 100).toFixed(2))}
                 className="h-8 text-sm"
               />
             </div>

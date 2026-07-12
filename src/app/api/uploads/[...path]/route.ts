@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
-import { join, normalize, extname } from "path";
+import { join, resolve, sep, extname } from "path";
 
 const UPLOADS_DIR = join(process.cwd(), "public", "uploads");
 
@@ -19,10 +19,22 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await params;
-  const filePath = normalize(join(UPLOADS_DIR, ...path));
 
-  // Path traversal protection
-  if (!filePath.startsWith(UPLOADS_DIR)) {
+  // ".."-Segmente und Null-Bytes direkt ablehnen (Defense-in-Depth gegen
+  // Path-Traversal), bevor der Pfad überhaupt aufgelöst wird.
+  for (const segment of path) {
+    if (segment.includes("\0") || segment === "..") {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+  }
+
+  const filePath = resolve(UPLOADS_DIR, ...path);
+
+  // Path-Traversal-Schutz: der aufgelöste absolute Pfad muss das Uploads-
+  // Verzeichnis selbst oder ein echtes Kind davon sein. Der abschließende
+  // path.sep verhindert, dass ein Geschwister-Verzeichnis wie
+  // ".../uploads-backup" den reinen Prefix-Check fälschlich besteht.
+  if (filePath !== UPLOADS_DIR && !filePath.startsWith(UPLOADS_DIR + sep)) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 

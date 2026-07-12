@@ -40,15 +40,33 @@ log() { echo "[$(date '+%H:%M:%S')] $*"; }
 log "=== ChromePeps Deploy ==="
 
 # 1. Backup database before deploy
+# Die Deploy-Dumps enthalten dieselbe Kunden-PII wie das Nacht-Backup und
+# werden daher analog zu docker/backup/pg-backup.sh AES-256-verschlüsselt
+# (openssl enc -aes-256-cbc -pbkdf2). Der Schlüssel kommt aus
+# BACKUP_ENCRYPTION_KEY in der .env (oben via `source` exportiert) — dieselbe
+# Variable wie im Nacht-Backup. Fehlt der Key, wird das Deploy-Backup
+# übersprungen (statt einen Klartext-Dump abzulegen).
 log "[1/5] Backing up database..."
 BACKUP_DIR="/opt/chromepeps/backups"
 mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-if docker compose exec -T postgres pg_dump -U chromepeps chromepeps 2>/dev/null | gzip > "$BACKUP_DIR/deploy_$TIMESTAMP.sql.gz"; then
-  log "  Backup saved: deploy_$TIMESTAMP.sql.gz ($(du -h "$BACKUP_DIR/deploy_$TIMESTAMP.sql.gz" | cut -f1))"
-  ls -t "$BACKUP_DIR"/deploy_*.sql.gz 2>/dev/null | tail -n +15 | xargs rm -f 2>/dev/null || true
+if [ -z "${BACKUP_ENCRYPTION_KEY:-}" ]; then
+  log "  WARNING: BACKUP_ENCRYPTION_KEY fehlt in .env — überspringe Deploy-Backup (kein unverschlüsselter Dump). Continuing deploy..."
 else
-  log "  WARNING: Backup failed (DB might not be running). Continuing deploy..."
+  BACKUP_FILE="$BACKUP_DIR/deploy_$TIMESTAMP.sql.gz.enc"
+  # pg_dump → gzip → openssl AES-256 (pipefail bricht die Pipe ab, wenn
+  # pg_dump/gzip/openssl fehlschlägt). Der Klartext-Dump berührt nie die Platte.
+  if docker compose exec -T postgres pg_dump -U chromepeps chromepeps 2>/dev/null \
+      | gzip \
+      | openssl enc -aes-256-cbc -pbkdf2 -salt -pass "pass:$BACKUP_ENCRYPTION_KEY" -out "$BACKUP_FILE"; then
+    log "  Backup saved: deploy_$TIMESTAMP.sql.gz.enc ($(du -h "$BACKUP_FILE" | cut -f1))"
+    ls -t "$BACKUP_DIR"/deploy_*.sql.gz.enc 2>/dev/null | tail -n +15 | xargs rm -f 2>/dev/null || true
+  else
+    # Partielle/kaputte Ausgabe entfernen, damit kein unbrauchbarer Rest bleibt.
+    rm -f "$BACKUP_FILE"
+    log "  WARNING: Backup failed (DB might not be running). Continuing deploy..."
+  fi
 fi
 
 # 2. Pull latest code (needed for prisma schema + docker-compose.yml changes)

@@ -104,6 +104,24 @@ export async function GET(req: NextRequest) {
     where.createdAt = { gte: twelveMonthsAgo };
   }
   if (statusFilter && statusFilter !== "ALL") {
+    // Whitelist gegen die OrderStatus-Enum — ein ungültiger Wert würde sonst
+    // bei db.order.findMany einen Prisma-Validierungsfehler (500) auslösen.
+    // Mirror des includes-Checks im Order-PATCH-Handler.
+    const validStatuses = [
+      "PENDING",
+      "PROCESSING",
+      "SHIPPED",
+      "DELIVERED",
+      "CANCELLED",
+      "REFUNDED",
+      "ARCHIVED",
+    ];
+    if (!validStatuses.includes(statusFilter)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid status filter" },
+        { status: 400 }
+      );
+    }
     where.status = statusFilter as Prisma.EnumOrderStatusFilter;
   }
 

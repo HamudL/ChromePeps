@@ -43,7 +43,7 @@ describe("organizationJsonLd / websiteJsonLd", () => {
     expect(org["@type"]).toBe("Organization");
     expect(org.name).toBe(APP_NAME);
     expect(org.url).toBe(BASE);
-    expect(org.logo).toBe(`${BASE}/icon`);
+    expect(org.logo).toBe(`${BASE}/logo.png`);
   });
 
   it("WebSite enthält die SearchAction für die Sitelinks-Searchbox", () => {

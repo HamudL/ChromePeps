@@ -69,21 +69,26 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
+  // currentPassword ist nur Re-Auth-Nachweis für die E-Mail-Änderung und
+  // darf NICHT als DB-Feld geschrieben werden — daher aus den eigentlichen
+  // Profildaten heraustrennen, bevor sie in db.user.update fließen.
+  const { currentPassword, ...profileData } = parsed.data;
+
   // Ändert sich die E-Mail wirklich? (Vorher: jeder PATCH mit email-Feld
   // behielt den alten emailVerified-Status — die neue Adresse war nie
   // verifiziert, galt aber als verifiziert.) Ein findMany beantwortet
   // "aktuelle E-Mail?" UND "neue Adresse vergeben?" in EINEM Roundtrip.
   let emailChanged = false;
-  if (parsed.data.email) {
+  if (profileData.email) {
     const rows = await db.user.findMany({
       where: {
-        OR: [{ id: session.user.id }, { email: parsed.data.email }],
+        OR: [{ id: session.user.id }, { email: profileData.email }],
       },
-      select: { id: true, email: true },
+      select: { id: true, email: true, passwordHash: true },
     });
     const current = rows.find((r) => r.id === session.user.id);
     const conflict = rows.find((r) => r.id !== session.user.id);
-    emailChanged = !!current && current.email !== parsed.data.email;
+    emailChanged = !!current && current.email !== profileData.email;
 
     if (emailChanged && conflict) {
       return NextResponse.json(
@@ -91,18 +96,70 @@ export async function PATCH(req: NextRequest) {
         { status: 409 }
       );
     }
+
+    // Re-Authentifizierung bei tatsächlicher E-Mail-Änderung: Ohne sie
+    // könnte ein übernommenes Session-Cookie die Login-Adresse umbiegen und
+    // anschließend via Passwort-Reset das Konto dauerhaft kapern. Analog zu
+    // Passwortwechsel (PUT) und Konto-Löschung (DELETE) wird deshalb das
+    // aktuelle Passwort gegen den DB-Hash geprüft. Reine Namensänderungen
+    // (kein emailChanged) bleiben davon unberührt.
+    if (emailChanged) {
+      if (!currentPassword) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Aktuelles Passwort ist für eine E-Mail-Änderung erforderlich.",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Google-/OAuth-Konten ohne Passwort-Hash können sich nicht per
+      // Passwort re-authentifizieren — klare 400-Meldung statt eines
+      // Crashs in bcrypt.compare(hash=undefined).
+      if (!current?.passwordHash) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "E-Mail-Änderung ist für Konten ohne Passwort nicht möglich. Bitte kontaktieren Sie den Support: support@chromepeps.com",
+          },
+          { status: 400 }
+        );
+      }
+
+      const isValid = await bcrypt.compare(
+        currentPassword,
+        current.passwordHash
+      );
+      if (!isValid) {
+        return NextResponse.json(
+          { success: false, error: "Aktuelles Passwort ist falsch." },
+          { status: 400 }
+        );
+      }
+    }
   }
 
   const user = await db.user.update({
     where: { id: session.user.id },
     data: {
-      ...parsed.data,
+      ...profileData,
       // Neue Adresse ist unverifiziert, bis der Bestätigungs-Link
       // geklickt wurde.
       ...(emailChanged ? { emailVerified: null } : {}),
     },
     select: { id: true, name: true, email: true, image: true, role: true },
   });
+
+  // Nach erfolgreicher E-Mail-Änderung alle bestehenden Sessions
+  // invalidieren (sessionVersion-Bump, analog zum Passwortwechsel in PUT):
+  // ein gestohlenes Cookie verliert damit den Zugriff. Der legitime Nutzer
+  // meldet sich danach einmal neu an.
+  if (emailChanged) {
+    await invalidateUserSessions(session.user.id);
+  }
 
   // Verifizierungs-Mail an die NEUE Adresse — fire-and-forget, der
   // Profil-Update selbst ist bereits committed.

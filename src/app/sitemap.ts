@@ -47,6 +47,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           orderBy: { updatedAt: "desc" },
         }),
         db.category.findMany({
+          // Nur Kategorien mit mindestens einem aktiven Produkt: leere
+          // Kategorien rendern mit HTTP 200 Thin-Content (Soft-404) und
+          // gehoeren nicht in die Sitemap.
+          where: { products: { some: { isActive: true } } },
           select: { slug: true, updatedAt: true },
           orderBy: { sortOrder: "asc" },
         }),
@@ -56,6 +60,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           orderBy: { publishedAt: "desc" },
         }),
         db.blogCategory.findMany({
+          // Nur Blog-Kategorien mit mindestens einem veroeffentlichten
+          // Post (publishedAt != null) — analog zur Produkt-Kategorie-
+          // Filterung, um leere Thin-Content-Seiten auszuschliessen.
+          where: { posts: { some: { publishedAt: { not: null } } } },
           select: { slug: true, updatedAt: true },
           orderBy: { sortOrder: "asc" },
         }),

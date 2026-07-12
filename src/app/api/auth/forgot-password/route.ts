@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { forgotPasswordSchema } from "@/validators/auth";
@@ -7,6 +8,13 @@ import { getClientIp } from "@/lib/client-ip";
 import { generatePasswordResetToken } from "@/lib/password-reset";
 import { sendPasswordResetEmail } from "@/lib/mail/send";
 import { PASSWORD_RESET_TOKEN_TTL_MS } from "@/lib/constants";
+
+// Fester, gültiger bcrypt-Hash (cost 12) ausschließlich für den
+// Constant-Time-Dummy-Vergleich bei NICHT existierenden Konten. Muss ein
+// echter bcrypt-Hash sein, sonst kehrt bcrypt.compare sofort zurück und die
+// Zeitangleichung entfällt. Entspricht KEINEM realen Passwort.
+const DUMMY_PASSWORD_HASH =
+  "$2b$12$96jNl9gRahjQn8.xENkm1.nT26kh1bKwSvgTj1fa4OrLRuJ.gUSz6";
 
 /**
  * POST /api/auth/forgot-password
@@ -45,8 +53,11 @@ export async function POST(req: NextRequest) {
 
   const user = await db.user.findUnique({ where: { email } });
 
-  // Constant-time semantics: always do the "pretend to process" branch even
-  // if the user doesn't exist, so response times are similar.
+  // Konstante-Zeit-Semantik gegen User-Enumeration: Der existierende Pfad
+  // leistet DB-Writes + (awaited) Mailversand. Damit die Antwortzeit keinen
+  // Rückschluss auf die Existenz eines Kontos erlaubt, verrichtet der
+  // Nicht-existiert-Zweig unten vergleichbare bcrypt-Arbeit. Die einheitliche
+  // Erfolgsantwort bleibt in beiden Fällen identisch.
   if (user) {
     try {
       const { rawToken, tokenHash } = generatePasswordResetToken();
@@ -82,6 +93,17 @@ export async function POST(req: NextRequest) {
       // Log but don't expose to client — we never reveal whether the email
       // exists or whether the mail send succeeded.
       console.error("[forgot-password] internal error:", err);
+    }
+  } else {
+    // Kein Konto zu dieser Adresse: bewusst vergleichbare bcrypt-Arbeit
+    // leisten (Dummy-Vergleich gegen einen konstanten Hash), damit die
+    // Antwortzeit sich nicht messbar vom Versandpfad unterscheidet und so
+    // keine Konto-Enumeration ermöglicht. Das Ergebnis ist stets false und
+    // wird verworfen.
+    try {
+      await bcrypt.compare(email, DUMMY_PASSWORD_HASH);
+    } catch {
+      /* Ergebnis irrelevant — nur die investierte Zeit zählt. */
     }
   }
 

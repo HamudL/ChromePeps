@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { db, isPrismaUniqueError } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { cacheGet, cacheSet, cacheDelPattern } from "@/lib/redis";
@@ -178,44 +178,60 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const product = await db.product.create({
-    data: {
-      ...productData,
-      slug,
-      images: images ? { createMany: { data: images } } : undefined,
-      variants: variants ? { createMany: { data: variants } } : undefined,
-      // Bei Create kennen wir den eigenen Produkt-ID noch nicht, also
-      // verlinken wir die Komponenten ohne explizites parentProductId-
-      // Mapping — Prisma setzt den parent über die Nested-Relation.
-      components:
-        components && components.length > 0
-          ? {
-              createMany: {
-                data: components.map((c, idx) => ({
-                  componentProductId: c.componentProductId,
-                  sortOrder: c.sortOrder ?? idx,
-                })),
-              },
-            }
-          : undefined,
-    },
-    include: {
-      images: true,
-      variants: true,
-      category: true,
-    },
-  });
+  try {
+    const product = await db.product.create({
+      data: {
+        ...productData,
+        slug,
+        images: images ? { createMany: { data: images } } : undefined,
+        variants: variants ? { createMany: { data: variants } } : undefined,
+        // Bei Create kennen wir den eigenen Produkt-ID noch nicht, also
+        // verlinken wir die Komponenten ohne explizites parentProductId-
+        // Mapping — Prisma setzt den parent über die Nested-Relation.
+        components:
+          components && components.length > 0
+            ? {
+                createMany: {
+                  data: components.map((c, idx) => ({
+                    componentProductId: c.componentProductId,
+                    sortOrder: c.sortOrder ?? idx,
+                  })),
+                },
+              }
+            : undefined,
+      },
+      include: {
+        images: true,
+        variants: true,
+        category: true,
+      },
+    });
 
-  await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
-  // Homepage-Caches (Bestsellers + Categories) werden bei jeder
-  // Produkt-Änderung mit invalidiert — neuer Bestseller muss sofort
-  // auf der Startseite sichtbar sein, sonst verwirrt es den Admin
-  // bei Stichproben.
-  await cacheDelPattern("homepage:*");
-  // Shop-Kategorie-Liste: ihr Active-Product-Count ändert sich durch
-  // ein neues Produkt.
-  await invalidateShopCategoriesCache();
-  revalidatePath("/products");
+    await cacheDelPattern(`${CACHE_KEYS.PRODUCTS_LIST}:*`);
+    // Homepage-Caches (Bestsellers + Categories) werden bei jeder
+    // Produkt-Änderung mit invalidiert — neuer Bestseller muss sofort
+    // auf der Startseite sichtbar sein, sonst verwirrt es den Admin
+    // bei Stichproben.
+    await cacheDelPattern("homepage:*");
+    // Shop-Kategorie-Liste: ihr Active-Product-Count ändert sich durch
+    // ein neues Produkt.
+    await invalidateShopCategoriesCache();
+    revalidatePath("/products");
 
-  return NextResponse.json({ success: true, data: product }, { status: 201 });
+    return NextResponse.json({ success: true, data: product }, { status: 201 });
+  } catch (err: unknown) {
+    // Slug-Kollision: der findUnique-Check oben deckt nur den nicht-
+    // parallelen Fall ab. Bei zwei gleichzeitigen POSTs mit demselben
+    // abgeleiteten Slug (oder zwei Namen, die auf denselben Slug
+    // slugifizieren) wirft der zweite create ein P2002 — sauberer 409
+    // statt unbehandeltem 500, konsistent mit dem P2002-Handling in
+    // reviews/shipping/stripe.
+    if (isPrismaUniqueError(err)) {
+      return NextResponse.json(
+        { success: false, error: "A product with this name already exists" },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 }

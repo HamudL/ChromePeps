@@ -43,6 +43,8 @@ export async function generateMetadata({
   const resolvedParams = await searchParams;
   const categorySlug = resolvedParams.category;
   const search = resolvedParams.search;
+  // Gleiche Normalisierung wie in der Page-Komponente unten.
+  const page = Math.max(1, parseInt(resolvedParams.page ?? "1", 10) || 1);
 
   let title = "Produkte";
   let description =
@@ -60,7 +62,8 @@ export async function generateMetadata({
         category.description ??
         `Entdecken Sie unsere Auswahl an ${category.name} für wissenschaftliche Forschung.`;
       // Kanonisch ist die neue Category-Landing-Route; die
-       // Query-Variante bleibt als funktionaler Alias erhalten.
+       // Query-Variante bleibt als funktionaler Alias erhalten. Die
+       // Paginierung dieser Route kanonisiert die Landing-Page selbst.
        canonical = `/products/category/${categorySlug}`;
     }
   } else if (search) {
@@ -68,6 +71,11 @@ export async function generateMetadata({
     // Gleiche typografischen Anführungszeichen wie im sichtbaren
     // Seitentext (heroSubline) — kein Mix aus „…“ und "...".
     description = `Suchergebnisse für „${search}“ im ChromePeps-Katalog.`;
+  } else if (page > 1) {
+    // Paginierte Tiefe der Haupt-Produktliste selbstreferenzierend
+    // kanonisieren (/products?page=2 statt Kollaps auf Seite 1). Filter
+    // (search/inStock/sort/minPurity) bleiben bewusst aus der Canonical.
+    canonical = `/products?page=${page}`;
   }
 
   return {

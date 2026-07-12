@@ -92,6 +92,11 @@ export async function getBestsellerProductIds(
         order: {
           createdAt: { gte: since },
           paymentStatus: "SUCCEEDED",
+          // Admin-Testbestellungen (POST /api/admin/orders/test) haben
+          // paymentStatus SUCCEEDED, dürfen aber das öffentliche
+          // Bestseller-Ranking (Badges + Hero-Produkt) nicht verfälschen —
+          // konsistent mit allen anderen Order-Zählungen (siehe admin/stats).
+          isTestOrder: false,
         },
       },
       _sum: { quantity: true },

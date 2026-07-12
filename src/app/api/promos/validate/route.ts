@@ -28,7 +28,21 @@ export async function POST(req: NextRequest) {
     );
   }
   const code = ((body.code ?? "") as string).trim().toUpperCase();
-  const subtotalInCents = (body.subtotalInCents ?? 0) as number;
+  // subtotalInCents defensiv validieren statt blind `as number` zu casten —
+  // ein String/NaN würde sonst in checkPromoApplicability zu einem
+  // NaN-Rabatt (als JSON null) führen. Fehlend → 0 (Default), ungültig → 400.
+  const rawSubtotalInCents = body.subtotalInCents ?? 0;
+  if (
+    typeof rawSubtotalInCents !== "number" ||
+    !Number.isFinite(rawSubtotalInCents) ||
+    rawSubtotalInCents < 0
+  ) {
+    return NextResponse.json(
+      { success: false, error: "Ungültiger Warenkorbwert." },
+      { status: 400 }
+    );
+  }
+  const subtotalInCents = rawSubtotalInCents;
   const rawGuestEmail =
     typeof body.guestEmail === "string" ? body.guestEmail.trim().toLowerCase() : "";
 

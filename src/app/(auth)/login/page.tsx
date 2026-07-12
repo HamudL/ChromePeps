@@ -123,6 +123,17 @@ function errorMessageFor(code: string): string {
   }
 }
 
+/**
+ * Open-Redirect-Schutz: Ein aus der URL stammender callbackUrl darf nur als
+ * same-origin RELATIVER Pfad übernommen werden. Akzeptiert wird nur ein Wert,
+ * der mit GENAU EINEM "/" beginnt — also NICHT mit "//" (protokoll-relativ,
+ * führt auf fremde Hosts) und NICHT mit "/\" (wird von Browsern wie "//"
+ * behandelt). Alles andere fällt sicher auf "/" zurück.
+ */
+function safeCallbackUrl(raw: string | null): string {
+  return raw && /^\/(?![/\\])/.test(raw) ? raw : "/";
+}
+
 export default function LoginPage() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +212,9 @@ export default function LoginPage() {
 
       if (result.ok) {
         const params = new URLSearchParams(window.location.search);
-        window.location.href = params.get("callbackUrl") ?? "/";
+        // Nur validierte, same-origin relative Pfade als Redirect zulassen
+        // (Open-Redirect-Schutz) — sonst Fallback auf die Startseite.
+        window.location.href = safeCallbackUrl(params.get("callbackUrl"));
       } else if (result.error === "TwoFactorRequired") {
         // Stufe 2 aktivieren — Email/Password merken, TOTP-Eingabe
         // einblenden. Kein Error-Banner: das ist ein erwarteter Step.

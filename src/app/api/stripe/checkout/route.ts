@@ -10,6 +10,7 @@ import { absoluteUrl } from "@/lib/utils";
 import { checkPromoApplicability } from "@/lib/order/promo-applicability";
 import { FREE_SHIPPING_THRESHOLD_CENTS } from "@/lib/order/calculate-totals";
 import { resolveShippingRate } from "@/lib/shipping/rates";
+import { addressSchema } from "@/validators/address";
 
 /**
  * POST /api/stripe/checkout — create a Stripe Checkout Session.
@@ -137,6 +138,20 @@ export async function POST(req: NextRequest) {
     ) {
       return NextResponse.json(
         { success: false, error: "Lieferadresse unvollständig." },
+        { status: 400 }
+      );
+    }
+    // Nach der Vollständigkeits-/Typprüfung zusätzlich strikt gegen das
+    // zentrale addressSchema validieren (max-Längen für Straße/Ort/PLZ,
+    // 2-stelliger ISO-Ländercode) — konsistent mit dem Auth-Adress-Pfad.
+    // Vorher wurde die Gast-Lieferadresse nur per `typeof` geprüft, sodass
+    // beliebig lange Strings / ungültige Ländercodes ungefiltert via
+    // db.address.create in der DB landen konnten. Nur die Validierung wird
+    // ergänzt; die (validierten) Rohwerte werden unverändert weiterverwendet.
+    const guestAddressCheck = addressSchema.safeParse(guestShipping);
+    if (!guestAddressCheck.success) {
+      return NextResponse.json(
+        { success: false, error: "Lieferadresse ungültig." },
         { status: 400 }
       );
     }

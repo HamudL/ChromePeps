@@ -33,6 +33,12 @@ services:
     image: postgres:16-alpine
     container_name: chromepeps-db
     restart: unless-stopped
+    # Speicher-Cap gegen den OOM-Killer auf dem 1,8-GB-VPS. Postgres läuft mit
+    # konservativen Stock-Defaults (shared_buffers 128MB, work_mem 4MB); 512m
+    # gibt Puffer für Autovacuum-/Sort-Spikes, ohne App/Redis/nginx zu
+    # verdrängen (Summe der Caps: 512+512+320+128 = ~1,47 GB, plus OS-Reserve).
+    mem_limit: 512m
+    memswap_limit: 768m
     # SECURITY: Kein env_file mehr — das lud ALLE App-Secrets (Stripe, Auth,
     # Resend, …) in den Postgres-Container (Blast-Radius bei Container-
     # Kompromittierung). Postgres braucht nur seine drei POSTGRES_*-Werte.
@@ -57,6 +63,12 @@ services:
     image: redis:7-alpine
     container_name: chromepeps-redis
     restart: unless-stopped
+    # Prozess-RSS-Cap knapp über der Datensatz-Grenze (--maxmemory 256mb, s.
+    # command unten): deckt den COW-Overhead des BGREWRITEAOF-Forks (appendonly)
+    # ab, ohne den OOM-Killer zu triggern. maxmemory begrenzt nur die Keys,
+    # nicht den Prozess-RSS.
+    mem_limit: 320m
+    memswap_limit: 384m
     volumes:
       - redisdata:/data
     healthcheck:

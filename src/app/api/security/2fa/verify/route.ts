@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { auth, invalidateUserSessions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseJsonBody } from "@/lib/api/parse-json-body";
 import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
@@ -96,6 +96,13 @@ export async function POST(req: NextRequest) {
       totpRecoveryCodes: hashed,
     },
   });
+
+  // Bestehende Sessions invalidieren (sessionVersion-Bump), analog zu
+  // Passwort-Wechsel/-Reset. Wer 2FA aktiviert, um einen Eindringling mit
+  // gestohlenem Cookie auszusperren, erreicht das nur, wenn vor der
+  // Aktivierung ausgestellte Sessions wirklich verworfen werden. Der
+  // Aktivierende meldet sich danach einmal neu an.
+  await invalidateUserSessions(user.id);
 
   // Audit-Log: 2FA-Aktivierung ist sicherheitsrelevant.
   await writeAuditLog(req, {
