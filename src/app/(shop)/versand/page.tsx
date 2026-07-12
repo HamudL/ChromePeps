@@ -186,7 +186,7 @@ export default async function VersandPage() {
             Bitte wenden Sie sich für eine individuelle Anfrage direkt an{" "}
             <a
               href="mailto:support@chromepeps.com"
-              className="text-primary underline-offset-2 hover:underline"
+              className="text-primary-strong underline-offset-2 hover:underline"
             >
               support@chromepeps.com
             </a>

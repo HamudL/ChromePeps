@@ -28,7 +28,7 @@ export function ResearchBanner() {
           aria-hidden
         />
         <p className="font-mono text-[10.5px] tracking-[0.12em] uppercase text-foreground/80 leading-tight">
-          <span className="text-primary font-semibold">
+          <span className="text-primary-strong font-semibold">
             Nur für Forschungszwecke
           </span>
           <span className="mx-2 text-muted-foreground/60">·</span>

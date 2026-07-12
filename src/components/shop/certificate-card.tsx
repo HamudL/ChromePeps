@@ -89,7 +89,7 @@ export function CertificateCard({
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-primary font-semibold">
+                <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-primary-strong font-semibold">
                   Certificate of Analysis
                 </p>
                 <p className="font-mono text-sm text-foreground mt-1.5">{lot}</p>
@@ -113,7 +113,7 @@ export function CertificateCard({
                 <span className="text-4xl sm:text-5xl font-bold tracking-tight tabular-nums leading-none">
                   {purityDisplay}
                 </span>
-                <span className="text-primary text-sm ml-1 font-semibold">%</span>
+                <span className="text-primary-strong text-sm ml-1 font-semibold">%</span>
               </div>
               <p className="font-mono text-[10.5px] text-muted-foreground mt-2 leading-relaxed">
                 {method} · {lab} · {testedAt}

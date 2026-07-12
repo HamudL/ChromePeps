@@ -185,7 +185,7 @@ export function CheckoutSuccessClient({
                     {totalCents > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Betrag</span>
-                        <span className="text-lg font-bold text-primary">
+                        <span className="text-lg font-bold text-primary-strong">
                           {formatPrice(totalCents)}
                         </span>
                       </div>

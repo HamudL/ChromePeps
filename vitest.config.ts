@@ -22,7 +22,11 @@ export default defineConfig({
     include: ["src/__tests__/**/*.test.{ts,tsx}"],
     coverage: {
       provider: "v8",
-      include: ["src/lib/**", "src/store/**", "src/components/**"],
+      // validators/** sind pure Zod-Schemas und gehören in die Messung
+      // (der frühere Kommentar nannte sie, ohne sie einzuschließen). Ohne
+      // eigenen Threshold, um das CI-Gate nicht an noch fehlender Abdeckung
+      // scheitern zu lassen — die Sichtbarkeit im Report ist der Gewinn.
+      include: ["src/lib/**", "src/store/**", "src/components/**", "src/validators/**"],
       exclude: [
         "**/*.d.ts",
         "**/node_modules/**",
@@ -45,9 +49,10 @@ export default defineConfig({
       // zu brechen. AUDIT_REPORT_v3 §6 PR 3.
       thresholds: {
         // Pro Pfad-Bereich differenziert: lib/** ist die meistgetestete
-        // Schicht (Helpers, Validation), validators/** sollte hoch sein
-        // weil pure Funktionen, components/** ist UI und schwerer
-        // automatisiert testbar.
+        // Schicht (Helpers, Validation), components/** ist UI und schwerer
+        // automatisiert testbar (bewusst ohne harten Threshold). validators/**
+        // wird gemessen (siehe include), bekommt aber noch keinen Threshold,
+        // bis eigene Schema-Tests die Abdeckung tragen.
         "src/lib/**": { lines: 40, functions: 40, branches: 50, statements: 40 },
         "src/store/**": { lines: 50, functions: 50, branches: 60, statements: 50 },
       },

@@ -402,7 +402,7 @@ export default function LoginPage() {
                 Noch kein Konto?{" "}
                 <Link
                   href="/register"
-                  className="text-primary font-medium hover:underline"
+                  className="text-primary-strong font-medium hover:underline"
                 >
                   Jetzt registrieren
                 </Link>

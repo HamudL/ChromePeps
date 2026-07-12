@@ -149,7 +149,7 @@ export default function ResetPasswordPage({
           <p className="text-sm text-muted-foreground text-center">
             <Link
               href="/login"
-              className="text-primary font-medium hover:underline"
+              className="text-primary-strong font-medium hover:underline"
             >
               Zur&uuml;ck zum Login
             </Link>

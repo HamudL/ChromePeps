@@ -136,7 +136,7 @@ export function ProductCard({
       {/* Head: Kategorie + Index + Wishlist */}
       <div className="relative mb-6 flex items-center justify-between gap-2 font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-primary font-semibold">
+          <span className="truncate text-primary-strong font-semibold">
             {product.category.name}
           </span>
           {product.isBestseller && (
@@ -229,7 +229,7 @@ export function ProductCard({
         ) : (
           <span
             className={cn(
-              "font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary",
+              "font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary-strong",
               "opacity-0 translate-x-2 transition-all duration-250",
               "group-hover:opacity-100 group-hover:translate-x-0",
               // Tastatur-Fokus: Karte ist der Link — bei Fokus den CTA
@@ -269,7 +269,7 @@ function SpecRow({ k, v, gold }: { k: string; v: string; gold?: boolean }) {
       <span
         className={cn(
           "truncate max-w-[60%] text-right",
-          gold ? "text-primary font-semibold" : "text-foreground",
+          gold ? "text-primary-strong font-semibold" : "text-foreground",
         )}
       >
         {v}
@@ -312,7 +312,7 @@ function VialFallback({
           {lot ?? name}
         </p>
         {weight && (
-          <p className="font-mono text-[7px] text-primary text-center leading-tight mt-0.5">
+          <p className="font-mono text-[7px] text-primary-strong text-center leading-tight mt-0.5">
             {weight}
           </p>
         )}

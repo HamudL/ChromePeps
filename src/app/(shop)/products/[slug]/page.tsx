@@ -369,7 +369,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             <FadeUp delay={0.1}>
               <div className="space-y-7">
                 {/* Kategorie + Index-Crumb (gold, mono) */}
-                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-primary font-semibold">
+                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-primary-strong font-semibold">
                   <Link
                     href={`/products/category/${product.category.slug}`}
                     className="hover:underline"
@@ -545,7 +545,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             <>
               <FadeUp>
                 <div className="mb-8 max-w-2xl">
-                  <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary mb-2">
+                  <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary-strong mb-2">
                     Technische Daten
                   </p>
                   <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -605,7 +605,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   />
                 </div>
                 <div className="max-w-md space-y-2 md:pt-6">
-                  <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary">
+                  <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary-strong">
                     Zertifikat dieser Charge
                   </p>
                   <h3 className="text-xl font-bold tracking-tight">
@@ -663,7 +663,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         <FadeUp>
           <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary mb-2">
+              <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary-strong mb-2">
                 Community
               </p>
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -792,7 +792,7 @@ function PdpSpec({
       </p>
       <p
         className={`mt-1 font-mono text-sm font-medium ${
-          gold ? "text-primary font-semibold" : "text-foreground"
+          gold ? "text-primary-strong font-semibold" : "text-foreground"
         }`}
       >
         {v}

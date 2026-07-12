@@ -282,7 +282,7 @@ export default function RegisterPage() {
             Bereits ein Konto?{" "}
             <Link
               href="/login"
-              className="text-primary font-medium hover:underline"
+              className="text-primary-strong font-medium hover:underline"
             >
               Anmelden
             </Link>

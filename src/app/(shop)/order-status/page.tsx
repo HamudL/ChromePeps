@@ -259,7 +259,7 @@ function OrderStatusInner() {
             Du hast ein Konto?{" "}
             <Link
               href="/login?callbackUrl=/dashboard"
-              className="text-primary hover:underline font-medium"
+              className="text-primary-strong hover:underline font-medium"
             >
               Einloggen
             </Link>{" "}
@@ -545,7 +545,7 @@ function SummaryRow({
       <span
         className={`tabular-nums ${
           accent === "discount"
-            ? "text-primary font-medium"
+            ? "text-primary-strong font-medium"
             : bold
               ? "text-base font-semibold"
               : ""

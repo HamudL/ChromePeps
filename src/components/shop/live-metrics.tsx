@@ -137,7 +137,7 @@ function MetricTile({ metric, delay }: { metric: Metric; delay: number }) {
           {formatted}
         </span>
         {metric.suffix && (
-          <span className="text-primary text-2xl md:text-3xl font-semibold ml-1">
+          <span className="text-primary-strong text-2xl md:text-3xl font-semibold ml-1">
             {metric.suffix}
           </span>
         )}

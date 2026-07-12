@@ -60,7 +60,7 @@ export function ProductCardAddButton({
       onClick={handleAddToCart}
       aria-label={`${name} in den Warenkorb`}
       className={cn(
-        "inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary",
+        "inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.15em] uppercase font-semibold text-primary-strong",
         // z-10 hebt den Button über das Karten-Link-Overlay (z-[1]),
         // sonst würde jeder Klick die Produktseite öffnen.
         "relative z-10",

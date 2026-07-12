@@ -100,7 +100,7 @@ export default async function DashboardOrdersPage(props: {
                     <TableCell>
                       <Link
                         href={`/dashboard/orders/${order.id}`}
-                        className="font-medium text-primary underline-offset-4 group-hover:underline"
+                        className="font-medium text-primary-strong underline-offset-4 group-hover:underline"
                       >
                         {order.orderNumber}
                       </Link>

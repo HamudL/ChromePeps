@@ -134,7 +134,7 @@ export default function ForgotPasswordPage() {
             Passwort doch erinnert?{" "}
             <Link
               href="/login"
-              className="text-primary font-medium hover:underline"
+              className="text-primary-strong font-medium hover:underline"
             >
               Zum Login
             </Link>
