@@ -13,6 +13,10 @@ export const metadata = {
   // Kein "| ChromePeps"-Suffix - kommt vom title-Template des Root-Layouts
   // (sonst doppelter Brand-Suffix).
   title: "Best\u00e4tigung fehlgeschlagen",
+  // Reine Funktions-/Token-Seite (Zustand haengt an Query-Params) \u2192
+  // noindex, damit kein Thin-Content im Google-Index landet. Analog
+  // order-status/layout.tsx und den (auth)-Layouts.
+  robots: { index: false, follow: true },
 };
 
 const REASON_MESSAGES: Record<string, string> = {

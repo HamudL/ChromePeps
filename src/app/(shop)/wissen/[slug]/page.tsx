@@ -401,7 +401,7 @@ export default async function WissenArticlePage({ params }: Props) {
           <div className="container py-10 md:py-12">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <span className="mono-tag text-primary">
+                <span className="mono-tag text-primary-strong">
                   Lieferbar · Charge online verifizierbar
                 </span>
                 <p className="mt-2 font-serif text-[22px] md:text-[24px] tracking-tight font-medium">

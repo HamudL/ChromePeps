@@ -7,6 +7,10 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  // Kein `X-Powered-By: Next.js`-Header ausliefern — unnötiger Framework-
+  // Fingerprint. nginx reicht Upstream-Header durch (kein proxy_hide_header),
+  // daher muss Next den Header selbst unterdrücken.
+  poweredByHeader: false,
   async rewrites() {
     return [
       {
@@ -168,10 +172,6 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
-      },
-      {
-        protocol: "https",
-        hostname: "*.edgeone.app",
       },
     ],
   },

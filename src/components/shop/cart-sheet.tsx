@@ -223,7 +223,7 @@ export function CartSheet() {
                     waren im Design-Handoff Platzhalter, gehören aber
                     inhaltlich nicht in die Sheet-Quittung. */}
                 <div className="mt-4 pt-4 border-t border-dashed">
-                  <p className="font-mono text-[9.5px] tracking-[0.15em] uppercase text-primary font-semibold mb-2">
+                  <p className="font-mono text-[9.5px] tracking-[0.15em] uppercase text-primary-strong font-semibold mb-2">
                     Zusätzlich inklusive
                   </p>
                   <ul className="space-y-1">

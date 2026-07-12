@@ -44,10 +44,15 @@ export function FeaturedProductCarousel({ pool, intervalMs = 20_000 }: Props) {
       return;
     }
 
+    // Das verschachtelte Fade-Timeout muss beim Teardown mit-abgeräumt
+    // werden — sonst feuert es nach Unmount/Dep-Wechsel innerhalb des
+    // 500-ms-Fensters und ruft setIndex/setVisible auf einer nicht mehr
+    // gemounteten Komponente auf.
+    let fadeTimeout: number | undefined;
     const id = window.setInterval(() => {
       // Fade-Out → nach 500 ms neuer Index → Fade-In
       setVisible(false);
-      window.setTimeout(() => {
+      fadeTimeout = window.setTimeout(() => {
         setIndex((prev) => {
           if (pool.length === 1) return 0;
           // Random, aber NICHT denselben Eintrag wie zuletzt.
@@ -59,7 +64,10 @@ export function FeaturedProductCarousel({ pool, intervalMs = 20_000 }: Props) {
       }, 500);
     }, intervalMs);
 
-    return () => window.clearInterval(id);
+    return () => {
+      window.clearInterval(id);
+      if (fadeTimeout !== undefined) window.clearTimeout(fadeTimeout);
+    };
   }, [pool.length, intervalMs]);
 
   if (pool.length === 0) return null;

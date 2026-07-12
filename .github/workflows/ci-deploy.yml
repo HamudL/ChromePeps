@@ -47,6 +47,14 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
         continue-on-error: true
 
+      # Blockierend: NUR CRITICAL-CVEs in Prod-Dependencies lassen den Job (und
+      # damit PR/Deploy) scheitern. High/Moderate bleiben im Schritt oben
+      # sichtbar, ohne den Deploy an nicht sofort fixbaren Advisories zu
+      # blockieren — aber eine kritische Prod-Lücke wird zum harten Gate.
+      # Kein continue-on-error: dieser Schritt DARF den Job fehlschlagen lassen.
+      - name: npm audit (prod deps, block on critical)
+        run: npm audit --omit=dev --audit-level=critical
+
   # ──────────────────────────────────────────────
   # 2. Unit & Component Tests
   # ──────────────────────────────────────────────

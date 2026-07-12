@@ -235,7 +235,14 @@ const styles = StyleSheet.create({
 // -------- Helpers --------
 
 function formatDate(d: Date): string {
-  return new Intl.DateTimeFormat("de-DE", { dateStyle: "long" }).format(d);
+  // Explizit Europe/Berlin — dieselbe Zeitzone, aus der der Nummernkreis das
+  // Jahr ableitet (src/lib/invoice/number.ts). Ohne fixierte Zone würde das
+  // Datum in der Prozess-Zeitzone gerendert und könnte am Jahreswechsel vom
+  // Jahr der Rechnungsnummer abweichen.
+  return new Intl.DateTimeFormat("de-DE", {
+    dateStyle: "long",
+    timeZone: "Europe/Berlin",
+  }).format(d);
 }
 
 /** Convert gross price to net (remove 19% VAT) */

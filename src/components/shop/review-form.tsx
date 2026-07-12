@@ -154,14 +154,26 @@ export function ReviewForm({
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            // role="alert" sorgt dafür, dass dynamisch eingeblendete Fehler
+            // von Screenreadern angesagt werden (WCAG 4.1.3); die id verknüpft
+            // die Meldung mit dem betroffenen Bewertungs-Feld.
+            <div
+              id="review-form-error"
+              role="alert"
+              className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+            >
               {error}
             </div>
           )}
 
           <div className="space-y-2">
-            <Label>Sterne</Label>
-            <div className="flex items-center gap-1">
+            <Label id="review-rating-label">Sterne</Label>
+            <div
+              role="group"
+              aria-labelledby="review-rating-label"
+              aria-describedby={error ? "review-form-error" : undefined}
+              className="flex items-center gap-1"
+            >
               {Array.from({ length: 5 }, (_, i) => {
                 const value = i + 1;
                 const active = (hoverRating || rating) >= value;

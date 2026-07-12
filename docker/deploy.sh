@@ -40,15 +40,33 @@ log() { echo "[$(date '+%H:%M:%S')] $*"; }
 log "=== ChromePeps Deploy ==="
 
 # 1. Backup database before deploy
+# Die Deploy-Dumps enthalten dieselbe Kunden-PII wie das Nacht-Backup und
+# werden daher analog zu docker/backup/pg-backup.sh AES-256-verschlüsselt
+# (openssl enc -aes-256-cbc -pbkdf2). Der Schlüssel kommt aus
+# BACKUP_ENCRYPTION_KEY in der .env (oben via `source` exportiert) — dieselbe
+# Variable wie im Nacht-Backup. Fehlt der Key, wird das Deploy-Backup
+# übersprungen (statt einen Klartext-Dump abzulegen).
 log "[1/5] Backing up database..."
 BACKUP_DIR="/opt/chromepeps/backups"
 mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-if docker compose exec -T postgres pg_dump -U chromepeps chromepeps 2>/dev/null | gzip > "$BACKUP_DIR/deploy_$TIMESTAMP.sql.gz"; then
-  log "  Backup saved: deploy_$TIMESTAMP.sql.gz ($(du -h "$BACKUP_DIR/deploy_$TIMESTAMP.sql.gz" | cut -f1))"
-  ls -t "$BACKUP_DIR"/deploy_*.sql.gz 2>/dev/null | tail -n +15 | xargs rm -f 2>/dev/null || true
+if [ -z "${BACKUP_ENCRYPTION_KEY:-}" ]; then
+  log "  WARNING: BACKUP_ENCRYPTION_KEY fehlt in .env — überspringe Deploy-Backup (kein unverschlüsselter Dump). Continuing deploy..."
 else
-  log "  WARNING: Backup failed (DB might not be running). Continuing deploy..."
+  BACKUP_FILE="$BACKUP_DIR/deploy_$TIMESTAMP.sql.gz.enc"
+  # pg_dump → gzip → openssl AES-256 (pipefail bricht die Pipe ab, wenn
+  # pg_dump/gzip/openssl fehlschlägt). Der Klartext-Dump berührt nie die Platte.
+  if docker compose exec -T postgres pg_dump -U chromepeps chromepeps 2>/dev/null \
+      | gzip \
+      | openssl enc -aes-256-cbc -pbkdf2 -salt -pass "pass:$BACKUP_ENCRYPTION_KEY" -out "$BACKUP_FILE"; then
+    log "  Backup saved: deploy_$TIMESTAMP.sql.gz.enc ($(du -h "$BACKUP_FILE" | cut -f1))"
+    ls -t "$BACKUP_DIR"/deploy_*.sql.gz.enc 2>/dev/null | tail -n +15 | xargs rm -f 2>/dev/null || true
+  else
+    # Partielle/kaputte Ausgabe entfernen, damit kein unbrauchbarer Rest bleibt.
+    rm -f "$BACKUP_FILE"
+    log "  WARNING: Backup failed (DB might not be running). Continuing deploy..."
+  fi
 fi
 
 # 2. Pull latest code (needed for prisma schema + docker-compose.yml changes)
@@ -92,6 +110,35 @@ fi
 #       (b) "no changes". Wenn (a) nichts hatte (z.B. ad-hoc Schema-
 #       Tweaks ohne Migration), pflegt (b) sie ein.
 log "[4/5] Applying database schema..."
+
+# Baseline-Adoption (einmalig, selbstheilend): Die Migrations-Historie wurde
+# zu einer einzigen Baseline-Migration (00000000000000_baseline) gesquasht,
+# weil die alte 14-teilige Kette auf einer frischen DB nicht mehr anwendbar
+# war. Die bestehende Prod-DB hat aber bereits alle Tabellen (via db push)
+# und die ALTEN Migrationsnamen in _prisma_migrations. Ohne diesen Guard
+# würde `migrate deploy` die Baseline als "pending" sehen und ihre CREATE
+# TABLEs gegen bereits existierende Tabellen laufen lassen → harter Abbruch.
+# Der Guard markiert die Baseline als applied (OHNE ihre SQL auszuführen),
+# WENN die Kern-Tabellen existieren, die Baseline aber noch nicht vermerkt
+# ist. Auf einer frischen DB (keine _prisma_migrations / keine products-
+# Tabelle) greift der Guard NICHT — dort wendet migrate deploy die Baseline
+# regulär an. Idempotent: nach dem ersten Deploy ist die Baseline vermerkt
+# und der Guard ist ein No-op. Lokal gegen frische UND prod-artige DB verifiziert.
+BASELINE_MIGRATION="00000000000000_baseline"
+ADOPT_SQL="SELECT CASE
+  WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='_prisma_migrations')
+   AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='products')
+   AND NOT EXISTS (SELECT 1 FROM _prisma_migrations WHERE migration_name='${BASELINE_MIGRATION}')
+  THEN 'adopt' ELSE 'skip' END;"
+NEEDS_ADOPT=$(docker compose exec -T postgres psql -U chromepeps -d chromepeps -tAc "$ADOPT_SQL" 2>/dev/null | tr -d '[:space:]' || true)
+if [ "$NEEDS_ADOPT" = "adopt" ]; then
+  log "  Baseline noch nicht vermerkt, Tabellen existieren → markiere ${BASELINE_MIGRATION} als applied (kein Re-Create)."
+  if ! docker compose run --rm --no-deps -T app npx prisma migrate resolve --applied "$BASELINE_MIGRATION"; then
+    log "ERROR: Baseline-Adoption (migrate resolve) fehlgeschlagen. Alter Container serviert weiter. Abbruch."
+    exit 1
+  fi
+fi
+
 if ! docker compose run --rm --no-deps -T app npx prisma migrate deploy; then
   log "ERROR: prisma migrate deploy failed. Old app container is still serving. Aborting deploy."
   exit 1

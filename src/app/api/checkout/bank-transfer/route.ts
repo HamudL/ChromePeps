@@ -118,7 +118,23 @@ export async function POST(req: NextRequest) {
     priceInCents: number;
   }>;
   let subtotalInCents = 0;
-  let shippingAddressId: string;
+  let shippingAddressId: string | null = null;
+  // Gast-Lieferadresse (userId=null) wird NICHT sofort persistiert, sondern
+  // erst innerhalb der Order-Transaktion angelegt — sonst bleibt bei einem
+  // späteren Fehlschlag (Land nicht lieferbar, Promo/Stock in der Tx) eine
+  // verwaiste Address-Zeile mit PII ohne verknüpfte Order zurück (critic-2).
+  let guestAddressData: {
+    userId: null;
+    firstName: string;
+    lastName: string;
+    company: string | null;
+    street: string;
+    street2: string | null;
+    city: string;
+    postalCode: string;
+    country: string;
+    phone: string | null;
+  } | null = null;
   let cartIdForClear: string | null = null;
   let addressSnapshot: {
     firstName: string;
@@ -317,42 +333,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create a one-off Address row for the guest (userId=null).
-    // These rows are attached only to the order record and never
-    // surface in any user's "saved addresses" list.
-    const address = await db.address.create({
-      data: {
-        userId: null,
-        firstName: guestShipping.firstName,
-        lastName: guestShipping.lastName,
-        company:
-          typeof guestShipping.company === "string" && guestShipping.company
-            ? guestShipping.company
-            : null,
-        street: guestShipping.street,
-        street2:
-          typeof guestShipping.street2 === "string" && guestShipping.street2
-            ? guestShipping.street2
-            : null,
-        city: guestShipping.city,
-        postalCode: guestShipping.postalCode,
-        country: guestShipping.country,
-        phone:
-          typeof guestShipping.phone === "string" && guestShipping.phone
-            ? guestShipping.phone
-            : null,
-      },
-    });
-    shippingAddressId = address.id;
+    // One-off Gast-Adresse (userId=null) NUR vorbereiten — die eigentliche
+    // Persistenz passiert erst in der Order-Transaktion unten, damit sie bei
+    // einem Rollback nicht als verwaiste PII-Zeile zurückbleibt. Diese Rows
+    // hängen ausschließlich am Order-Record und tauchen nie in der
+    // "gespeicherte Adressen"-Liste eines Users auf.
+    guestAddressData = {
+      userId: null,
+      firstName: guestShipping.firstName,
+      lastName: guestShipping.lastName,
+      company:
+        typeof guestShipping.company === "string" && guestShipping.company
+          ? guestShipping.company
+          : null,
+      street: guestShipping.street,
+      street2:
+        typeof guestShipping.street2 === "string" && guestShipping.street2
+          ? guestShipping.street2
+          : null,
+      city: guestShipping.city,
+      postalCode: guestShipping.postalCode,
+      country: guestShipping.country,
+      phone:
+        typeof guestShipping.phone === "string" && guestShipping.phone
+          ? guestShipping.phone
+          : null,
+    };
     addressSnapshot = {
-      firstName: address.firstName,
-      lastName: address.lastName,
-      company: address.company,
-      street: address.street,
-      street2: address.street2,
-      postalCode: address.postalCode,
-      city: address.city,
-      country: address.country,
+      firstName: guestAddressData.firstName,
+      lastName: guestAddressData.lastName,
+      company: guestAddressData.company,
+      street: guestAddressData.street,
+      street2: guestAddressData.street2,
+      postalCode: guestAddressData.postalCode,
+      city: guestAddressData.city,
+      country: guestAddressData.country,
     };
     recipientEmail = rawGuestEmail;
     recipientName = rawGuestName;
@@ -524,6 +539,12 @@ export async function POST(req: NextRequest) {
   let order;
   try {
     order = await db.$transaction(async (tx) => {
+    // Gast-Adresse erst hier anlegen, damit sie bei einem Rollback der
+    // Transaktion (Promo erschöpft/doppelt, Stock weg) automatisch verworfen
+    // wird. Auth-User nutzen ihre bereits gespeicherte Adresse.
+    const resolvedShippingAddressId = guestAddressData
+      ? (await tx.address.create({ data: guestAddressData })).id
+      : shippingAddressId;
     const newOrder = await tx.order.create({
       data: {
         orderNumber: generateOrderNumber(),
@@ -539,8 +560,8 @@ export async function POST(req: NextRequest) {
         taxInCents: totals.taxInCents,
         shippingInCents: totals.shippingInCents,
         totalInCents: totals.totalInCents,
-        shippingAddressId,
-        billingAddressId: shippingAddressId,
+        shippingAddressId: resolvedShippingAddressId,
+        billingAddressId: resolvedShippingAddressId,
         items: { createMany: { data: orderItems } },
         events: {
           create: {

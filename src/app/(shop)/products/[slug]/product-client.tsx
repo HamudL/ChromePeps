@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ShoppingCart, Minus, Plus, Check, Copy, Dna } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -276,7 +277,10 @@ export function VariantBuyPanel({
           )}
         </div>
         <p className="font-mono text-[10px] tracking-[0.1em] uppercase text-muted-foreground text-right max-w-[180px] leading-relaxed">
-          Inkl. 19 % MwSt.
+          Inkl. 19 % MwSt., zzgl.{" "}
+          <Link href="/versand" className="underline hover:text-foreground">
+            Versandkosten
+          </Link>
           <br />
           Gratis Versand ab 200 €
         </p>

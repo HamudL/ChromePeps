@@ -480,7 +480,7 @@ export default function AdminCertificatesPage() {
                                   href={e.reportUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-primary hover:underline inline-flex items-center gap-1"
+                                  className="text-primary-strong hover:underline inline-flex items-center gap-1"
                                 >
                                   Öffnen
                                   <ExternalLink className="h-3 w-3" />
@@ -943,7 +943,7 @@ export default function AdminCertificatesPage() {
                     href={form.pdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline truncate max-w-[300px]"
+                    className="text-sm text-primary-strong hover:underline truncate max-w-[300px]"
                   >
                     {form.pdfUrl}
                   </a>

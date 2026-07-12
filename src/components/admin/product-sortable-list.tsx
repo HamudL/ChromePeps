@@ -144,7 +144,7 @@ export function ProductSortableList({ products: initial }: Props) {
           <GripVertical className="h-3.5 w-3.5" />
           Ziehen Sie Produkte am Griff, um die Reihenfolge zu ändern.
           {saving && (
-            <span className="ml-auto inline-flex items-center gap-1.5 text-primary">
+            <span className="ml-auto inline-flex items-center gap-1.5 text-primary-strong">
               <Loader2 className="h-3 w-3 animate-spin" />
               Speichern …
             </span>

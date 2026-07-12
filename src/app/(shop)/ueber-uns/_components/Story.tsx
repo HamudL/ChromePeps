@@ -39,18 +39,42 @@ export function Story({
     const bar = section.querySelector<HTMLElement>("[data-bar]");
     const annots = Array.from(section.querySelectorAll<HTMLElement>("[data-show]"));
 
-    // Frames vorladen (decode), sobald der Browser idle ist.
+    // Der Frame-Scrub (120 WebP ≈ 5 MB) ist ein reines Desktop-Feature. Auf
+    // Mobile ODER bei prefers-reduced-motion wird weder vorgeladen noch die
+    // Sequenz gescrubbt — es bleibt beim statisch gerenderten frame_001.
+    // (Konvention der Schwester-Komponenten, die alle Reduced-Motion gaten.)
+    const enableScrub =
+      window.matchMedia("(min-width: 768px)").matches &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let cancelled = false;
+    const timers: number[] = [];
+    let idleHandle: number | null = null;
+
+    // Frames gestaffelt vorladen (decode) — in kleinen Wellen statt in einem
+    // 120er-Burst, damit die Verbindung nicht blockiert wird. Startet, sobald
+    // der Browser idle ist.
     const preload = () => {
-      for (const url of URLS) {
-        const img = new Image();
-        img.src = url;
-        img.decode?.().catch(() => {});
-      }
+      const WAVE = 12;
+      let i = 0;
+      const loadWave = () => {
+        if (cancelled) return;
+        const end = Math.min(i + WAVE, URLS.length);
+        for (; i < end; i++) {
+          const img = new Image();
+          img.src = URLS[i];
+          img.decode?.().catch(() => {});
+        }
+        if (i < URLS.length) timers.push(window.setTimeout(loadWave, 60));
+      };
+      loadWave();
     };
-    if (typeof window.requestIdleCallback === "function") {
-      window.requestIdleCallback(preload, { timeout: 2000 });
-    } else {
-      window.setTimeout(preload, 100);
+    if (enableScrub) {
+      if (typeof window.requestIdleCallback === "function") {
+        idleHandle = window.requestIdleCallback(preload, { timeout: 2000 });
+      } else {
+        timers.push(window.setTimeout(preload, 100));
+      }
     }
 
     let current = -1;
@@ -91,8 +115,13 @@ export function Story({
       if (bar) bar.style.width = `${(t * 100).toFixed(1)}%`;
       if (scan) scan.style.setProperty("--t", t.toFixed(3));
 
-      target = Math.min(FRAMES - 1, Math.floor(t * FRAMES));
-      if (lerpRaf === null) lerpRaf = requestAnimationFrame(lerpTick);
+      // Frame-Sequenz nur auf Desktop ohne Reduced-Motion scrubben; sonst
+      // bleibt das statische frame_001 stehen (kein src-Swap, keine 120
+      // ungecachten Requests beim Scrollen).
+      if (enableScrub) {
+        target = Math.min(FRAMES - 1, Math.floor(t * FRAMES));
+        if (lerpRaf === null) lerpRaf = requestAnimationFrame(lerpTick);
+      }
     };
 
     const onScroll = () => {
@@ -107,6 +136,11 @@ export function Story({
     window.addEventListener("resize", onScroll);
     update();
     return () => {
+      cancelled = true;
+      if (idleHandle !== null && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleHandle);
+      }
+      timers.forEach((t) => window.clearTimeout(t));
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       if (lerpRaf !== null) cancelAnimationFrame(lerpRaf);

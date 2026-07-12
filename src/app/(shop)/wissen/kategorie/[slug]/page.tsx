@@ -134,7 +134,7 @@ export default async function WissenCategoryPage({
 
           <div className="mt-5 flex items-end justify-between gap-8 flex-wrap">
             <div>
-              <span className="mono-tag text-primary">
+              <span className="mono-tag text-primary-strong">
                 Kategorie · {String(myIndex + 1).padStart(2, "0")} /{" "}
                 {String(allCategories.length).padStart(2, "0")}
               </span>

@@ -114,6 +114,29 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  // Nur tatsächlich bezahlte Sessions werden als Order angelegt.
+  // createOrderFromStripeSession setzt paymentStatus fest auf "SUCCEEDED" —
+  // eine noch unbezahlte Session dürfte hier also NICHT durchlaufen.
+  // Beim aktuellen Checkout (payment_method_types: ["card"]) feuert
+  // checkout.session.completed synchron mit payment_status "paid", der
+  // Guard ist daher heute ein No-op. Sobald aber asynchrone/verzögerte
+  // Zahlarten (SEPA-Lastschrift, Klarna, Sofort, bank-debit) aktiviert
+  // werden, kann das Event auch mit "unpaid"/"processing" feuern — dann
+  // würde ohne diese Prüfung eine als bezahlt markierte Order entstehen,
+  // obwohl kein Geld eingegangen ist. Spiegelbildlich zur Prüfung in
+  // /api/stripe/verify-session. Das Event bleibt idempotent "verbraucht"
+  // (StripeEvent-Row wurde bereits geclaimt); die spätere Bestätigung käme
+  // als eigenes Event (async_payment_succeeded) mit eigener Event-ID.
+  if (session.payment_status !== "paid") {
+    console.log(
+      "[Stripe Webhook] Session noch nicht bezahlt (payment_status:",
+      session.payment_status,
+      ") — keine Order angelegt für Session:",
+      session.id
+    );
+    return;
+  }
+
   const userId = session.metadata?.userId ?? null;
   const guestEmail = session.metadata?.guestEmail ?? null;
   const guestName = session.metadata?.guestName ?? null;

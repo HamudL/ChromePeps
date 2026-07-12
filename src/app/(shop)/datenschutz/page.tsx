@@ -148,6 +148,59 @@ export default function DatenschutzPage() {
             Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO bzw. § 25 Abs. 2 Nr. 2
             TTDSG.
           </p>
+
+          <h3 className="font-medium mt-3">3.6 E-Mail-Versand (Resend)</h3>
+          <p>
+            Für den Versand von E-Mails (z.B. Bestätigung der Newsletter-
+            Anmeldung im Double-Opt-in-Verfahren, Bestell-, Auftrags- und
+            Versandbestätigungen sowie sonstige transaktionsbezogene
+            Nachrichten) setzen wir den Dienstleister Resend, Inc., USA, ein. An
+            Resend werden die Empfänger-E-Mail-Adresse sowie der Inhalt der
+            jeweiligen E-Mail übermittelt und dort in unserem Auftrag als
+            Auftragsverarbeiter verarbeitet. Rechtsgrundlage ist Art. 6 Abs. 1
+            lit. b DSGVO (Vertragserfüllung, z.B. bei Bestell- und
+            Versandbestätigungen) bzw. Art. 6 Abs. 1 lit. a DSGVO (Einwilligung,
+            für den Versand des Newsletters). Die Übermittlung in die USA erfolgt
+            auf Grundlage der EU-Standardvertragsklauseln. Weitere Informationen:{" "}
+            <a
+              href="https://resend.com/legal/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              https://resend.com/legal/privacy-policy
+            </a>
+            .
+          </p>
+
+          <h3 className="font-medium mt-3">
+            3.7 Fehler- und Performance-Monitoring (Sentry)
+          </h3>
+          <p>
+            Zur Erkennung, Analyse und Behebung technischer Fehler sowie zur
+            Überwachung der Stabilität und Performance unserer Website setzen wir
+            den Dienst Sentry (Anbieter: Functional Software, Inc., USA) ein.
+            Tritt beim Aufruf der Website ein Fehler auf, können dabei technische
+            Informationen wie die aufgerufene URL, der Zeitpunkt, Browsertyp und
+            -version, Betriebssystem sowie Fehler- und Diagnosedaten an Sentry
+            übermittelt und dort in unserem Auftrag verarbeitet werden. Wir haben
+            Sentry so konfiguriert, dass keine Standard-Personendaten (z.B.
+            IP-Adresse, Cookies) als Ereignisdaten übertragen werden
+            (sendDefaultPii deaktiviert); eine Sitzungsaufzeichnung (Session
+            Replay) findet nicht statt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f
+            DSGVO (berechtigtes Interesse an einem stabilen, sicheren und
+            fehlerfreien Betrieb der Website). Die Übermittlung in die USA erfolgt
+            auf Grundlage der EU-Standardvertragsklauseln. Weitere Informationen:{" "}
+            <a
+              href="https://sentry.io/privacy/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              https://sentry.io/privacy/
+            </a>
+            .
+          </p>
         </section>
 
         {/* Abschnitt 4 muss zur tatsächlichen Technik passen: GA4 wird im

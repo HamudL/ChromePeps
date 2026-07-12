@@ -1200,7 +1200,7 @@ export function CheckoutClient({
                 ) : (
                   <Building2 className="mr-2 h-4 w-4" />
                 )}
-                {paymentMethod === "STRIPE" ? "Mit Stripe bezahlen" : "Bestellung aufgeben (Vorkasse)"}
+                Zahlungspflichtig bestellen
               </Button>
             </CardContent>
           </Card>
@@ -1337,7 +1337,7 @@ export function CheckoutClient({
             ) : (
               <Building2 className="mr-2 h-4 w-4" />
             )}
-            {paymentMethod === "STRIPE" ? "Bezahlen" : "Bestellen"}
+            Zahlungspflichtig bestellen
           </Button>
         </div>
       </div>

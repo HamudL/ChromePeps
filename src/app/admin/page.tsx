@@ -292,7 +292,7 @@ export default async function AdminDashboardPage() {
           </div>
           <Link
             href="/admin/orders"
-            className="text-sm text-primary hover:underline flex items-center gap-1"
+            className="text-sm text-primary-strong hover:underline flex items-center gap-1"
           >
             View all <ArrowRight className="h-3 w-3" />
           </Link>

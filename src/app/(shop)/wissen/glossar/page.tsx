@@ -79,7 +79,7 @@ export default async function WissenGlossarPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-end mt-5">
             <div>
-              <span className="mono-tag text-primary">
+              <span className="mono-tag text-primary-strong">
                 Nachschlagewerk · A–Z
               </span>
               <h1 className="mt-3 font-serif text-[60px] md:text-[88px] leading-[0.95] tracking-[-0.025em] font-medium">

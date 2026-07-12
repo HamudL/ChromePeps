@@ -19,7 +19,12 @@ export async function GET(req: NextRequest) {
   });
   if (!rl.success) return rateLimitExceeded(rl);
 
-  const page = parseInt(req.nextUrl.searchParams.get("page") ?? "1");
+  // page robust parsen: Ganzzahl >= 1, Default 1. Verhindert negativen oder
+  // NaN-skip (Prisma-500) bei page=0, page=-1 oder page=abc.
+  const page = Math.max(
+    1,
+    parseInt(req.nextUrl.searchParams.get("page") ?? "1", 10) || 1
+  );
   const pageSize = 10;
   const skip = (page - 1) * pageSize;
 

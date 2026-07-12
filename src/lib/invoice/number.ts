@@ -24,6 +24,23 @@ import { isPrismaUniqueError } from "@/lib/db";
 
 const MAX_RETRIES = 5;
 
+// Rechnungsdatum und Nummernkreis-Jahr MÜSSEN aus derselben Zeitzone
+// abgeleitet werden (UStG §14, lückenlose Nummerierung). Das PDF rendert das
+// Datum in Europe/Berlin — also muss auch das Jahr des Nummernkreises aus der
+// Berliner Ortszeit stammen, sonst kann eine am 01.01. kurz nach Mitternacht
+// (Berlin, = 31.12. UTC) erzeugte Rechnung eine Nummer aus dem Vorjahr tragen,
+// während das PDF bereits das neue Jahr anzeigt.
+export const INVOICE_TIME_ZONE = "Europe/Berlin";
+
+function berlinYear(date: Date): number {
+  return Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: INVOICE_TIME_ZONE,
+      year: "numeric",
+    }).format(date)
+  );
+}
+
 function formatInvoiceNumber(year: number, seq: number): string {
   const padded = seq.toString().padStart(4, "0");
   return `CP-RE-${year}-${padded}`;
@@ -57,7 +74,7 @@ export async function getOrCreateInvoice(
   const existing = await db.invoice.findUnique({ where: { orderId } });
   if (existing) return existing;
 
-  const year = now.getUTCFullYear();
+  const year = berlinYear(now);
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const last = await db.invoice.findFirst({

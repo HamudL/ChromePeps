@@ -42,10 +42,31 @@ import { LiveMetrics } from "@/components/shop/live-metrics";
 import { RecentlyViewed } from "@/components/shop/recently-viewed";
 import { SectionBlur } from "@/components/layout/section-blur";
 
-// Title/Description erben vom Root-Layout — hier nur das Canonical der
-// Startseite (das Root-Layout setzt bewusst KEIN globales canonical).
+// Startseite: eigener keyword-tragender Title + Description/OG statt des
+// reinen Brand-Fallbacks aus dem Root-Layout. Der `title`-String nutzt das
+// "%s | ChromePeps"-Template (layout.tsx) → "Forschungspeptide, HPLC-
+// geprüft | ChromePeps". Das Root-Layout setzt bewusst KEIN globales
+// canonical, daher hier explizit "/". Das file-based opengraph-image.tsx
+// (Root-Segment) bleibt automatisch als OG-Bild verknüpft.
 export const metadata: Metadata = {
+  title: "Forschungspeptide, HPLC-geprüft",
+  description:
+    "Forschungspeptide mit unabhängig per HPLC geprüfter Reinheit. Analysezertifikat (CoA) und Lot-Nummer zu jeder Bestellung, Versand aus Deutschland. Ausschließlich als Referenzmaterial für die In-vitro-Forschung.",
   alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "de_DE",
+    url: "/",
+    title: "ChromePeps – Forschungspeptide mit HPLC-geprüfter Reinheit",
+    description:
+      "Unabhängig per HPLC geprüfte Forschungspeptide. Analysezertifikat (CoA) und Lot-Nummer zu jeder Bestellung. Versand aus Deutschland.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ChromePeps – Forschungspeptide mit HPLC-geprüfter Reinheit",
+    description:
+      "Unabhängig per HPLC geprüfte Forschungspeptide. Analysezertifikat (CoA) und Lot-Nummer zu jeder Bestellung. Versand aus Deutschland.",
+  },
 };
 
 async function getBestsellers(): Promise<ProductCardData[]> {

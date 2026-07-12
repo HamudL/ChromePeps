@@ -11,7 +11,7 @@ describe("CookieBanner", () => {
 
   it("renders when decision is null", () => {
     render(<CookieBanner />);
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Cookie-Hinweis" })).toBeInTheDocument();
     expect(screen.getByText("Cookies & Datenschutz")).toBeInTheDocument();
   });
 

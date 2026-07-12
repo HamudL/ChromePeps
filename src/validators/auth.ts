@@ -25,6 +25,11 @@ export const registerSchema = z
 export const updateProfileSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   email: z.string().email().optional(),
+  // Re-Authentifizierung für die sicherheitskritische E-Mail-Änderung.
+  // Optional, weil eine reine Namensänderung kein Passwort verlangt; ob das
+  // Feld tatsächlich Pflicht ist, entscheidet der Route-Handler anhand des
+  // realen E-Mail-Wechsels (nur dann wird es geprüft).
+  currentPassword: z.string().optional(),
 });
 
 export const changePasswordSchema = z

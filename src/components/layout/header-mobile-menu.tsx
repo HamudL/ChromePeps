@@ -45,7 +45,7 @@ export function HeaderMobileMenu({ links }: HeaderMobileMenuProps) {
                 aria-current={active ? "page" : undefined}
                 className={
                   active
-                    ? "text-lg font-semibold text-primary"
+                    ? "text-lg font-semibold text-primary-strong"
                     : "text-lg font-medium hover:text-primary transition-colors"
                 }
               >

@@ -65,7 +65,7 @@ export default async function WissenHubPage() {
           aria-hidden="true"
         />
         <div className="container relative py-20 md:py-28">
-          <span className="mono-tag text-primary">
+          <span className="mono-tag text-primary-strong">
             Wissensbereich · /wissen
           </span>
           <h1 className="mt-5 font-serif text-[44px] md:text-[64px] lg:text-[72px] leading-[1.02] tracking-[-0.02em] font-medium max-w-[16ch]">

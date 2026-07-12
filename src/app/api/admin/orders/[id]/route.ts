@@ -181,6 +181,33 @@ export async function PATCH(
     );
   }
 
+  // Statusübergang absichern: Aus einem Terminalzustand mit bereits
+  // ZURÜCKGEBUCHTEM Bestand (CANCELLED/REFUNDED — beide setzen via
+  // restoreOrderStock den stockRestoredAt-Marker) darf eine Bestellung
+  // nicht wieder nach vorn (PROCESSING/SHIPPED/DELIVERED/PENDING) geöffnet
+  // werden. Ein solcher Rück-Übergang würde den Bestand NICHT erneut
+  // dekrementieren (Dekrement passiert nur bei Bestellerstellung) → das
+  // Inventar bliebe dauerhaft um die Bestellmenge zu hoch (Oversell), und
+  // stockRestoredAt verhinderte zusätzlich jede Selbstkorrektur bei einem
+  // späteren erneuten Storno. Außerdem würden becameShipped/becameDelivered
+  // fälschlich Versand-/Liefer-/Review-Mails auslösen. Sicherste Variante:
+  // solche Reaktivierungen hart unterbinden (klarer 400). Ein idempotentes
+  // Setzen desselben Status (z.B. Note-Update auf CANCELLED) bleibt erlaubt.
+  const TERMINAL_RESTORED_STATUSES = ["CANCELLED", "REFUNDED"];
+  if (
+    TERMINAL_RESTORED_STATUSES.includes(existing.status) &&
+    parsed.data.status !== existing.status
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Eine stornierte oder erstattete Bestellung kann nicht reaktiviert werden (Bestand wurde bereits zurückgebucht). Bitte eine neue Bestellung anlegen.",
+      },
+      { status: 400 }
+    );
+  }
+
   const updateData: Record<string, unknown> = { status: parsed.data.status };
 
   if (parsed.data.trackingNumber) {

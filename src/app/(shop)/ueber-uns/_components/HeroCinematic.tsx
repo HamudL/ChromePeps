@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { UeberUnsData } from "./types";
 import { CountUp } from "./CountUp";
-import { HeroBackdrop } from "./HeroBackdrop";
 import styles from "./HeroCinematic.module.css";
+
+// three.js/@react-three (~540 KB raw / ~150 KB gzip) NUR laden, wenn der
+// WebGL-Backdrop tatsächlich gezeigt wird: Desktop (>= 768 px) UND kein
+// prefers-reduced-motion. Sonst wird dieser dynamic-Import nie ausgelöst →
+// three fällt komplett aus dem First-Load-Bundle von /ueber-uns. Der Hero
+// zeigt dann nur seinen soliden dunklen Grund (.hero { background: #0b0806 });
+// auf Desktop bleibt das Ergebnis unverändert. Muster gespiegelt von
+// src/app/(shop)/hero-logo.tsx.
+const HeroBackdrop = dynamic(
+  () => import("./HeroBackdrop").then((mod) => mod.HeroBackdrop),
+  { ssr: false },
+);
 
 const d = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
 
@@ -16,6 +28,24 @@ const d = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
  */
 export function HeroCinematic({ data }: { data: UeberUnsData }) {
   const stageRef = useRef<HTMLDivElement>(null);
+  const [showBackdrop, setShowBackdrop] = useState(false);
+
+  // WebGL-Backdrop erst nach dem Mount und nur auf Desktop ohne
+  // Reduced-Motion einblenden. Läuft rein clientseitig → kein
+  // Hydration-Mismatch (SSR und erster Client-Render zeigen dank ssr:false
+  // + Default-false beide keinen Backdrop).
+  useEffect(() => {
+    const mqDesktop = window.matchMedia("(min-width: 768px)");
+    const mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setShowBackdrop(mqDesktop.matches && !mqMotion.matches);
+    sync();
+    mqDesktop.addEventListener("change", sync);
+    mqMotion.addEventListener("change", sync);
+    return () => {
+      mqDesktop.removeEventListener("change", sync);
+      mqMotion.removeEventListener("change", sync);
+    };
+  }, []);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -42,7 +72,7 @@ export function HeroCinematic({ data }: { data: UeberUnsData }) {
 
   return (
     <section className={styles.hero} id="top">
-      <HeroBackdrop className={styles.backdrop} />
+      {showBackdrop && <HeroBackdrop className={styles.backdrop} />}
       <div className={styles.grain} aria-hidden="true" />
 
       <div className={styles.inner}>

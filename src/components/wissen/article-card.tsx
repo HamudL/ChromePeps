@@ -54,7 +54,7 @@ export function ArticleCard({ article, variant = "grid" }: Props) {
             className="mono-label text-muted-foreground mb-2"
             style={{ fontSize: 10 }}
           >
-            <span className="text-primary">{article.category.name}</span>
+            <span className="text-primary-strong">{article.category.name}</span>
           </div>
           <h3 className="font-serif text-[24px] md:text-[26px] leading-[1.18] tracking-tight font-medium">
             <span className="gold-underline">{article.title}</span>

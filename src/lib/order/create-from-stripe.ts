@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 import { generateOrderNumber } from "@/lib/order/generate-order-number";
-import { calculateOrderTotals } from "@/lib/order/calculate-totals";
+import { calculateOrderTotals, TAX_MULTIPLIER } from "@/lib/order/calculate-totals";
 import { redeemPromo } from "@/lib/order/redeem-promo";
 import { resolveShippingRate } from "@/lib/shipping/rates";
 
@@ -213,7 +213,18 @@ export async function createOrderFromStripeSession(
     const paidShipping = stripeSession.shipping_cost
       ? stripeSession.shipping_cost.amount_total
       : totals.shippingInCents;
-    const taxInCents = Math.round(paidTotal - paidTotal / 1.19);
+    // MwSt. aus dem kassierten Brutto extrahieren — Satz aus der zentralen
+    // Konstante (calculate-totals.TAX_MULTIPLIER) statt eines erneuten
+    // 1.19-Literals, damit eine künftige Satz-Änderung nicht an dieser
+    // Stelle stillschweigend hängenbleibt.
+    const taxInCents = Math.round(paidTotal - paidTotal / TAX_MULTIPLIER);
+    // subtotalInCents konsistent aus den tatsächlich kassierten Beträgen
+    // ableiten, sodass die Order-Invariante subtotal - discount + shipping
+    // == total erhalten bleibt. Würde hier der (potenziell veraltete) neu
+    // berechnete Katalog-Subtotal stehenbleiben, ergäbe subtotal - discount
+    // + shipping NICHT mehr das ausgewiesene total (= kassierter Stripe-
+    // Betrag) und die §14-UStG-Rechnung wäre rechnerisch inkonsistent.
+    const paidSubtotal = paidTotal + paidDiscount - paidShipping;
     reconcileNote =
       `[Reconcile] Stripe-Charge (${(paidTotal / 100).toFixed(2)} €) wich von der ` +
       `Neuberechnung (${(totals.totalInCents / 100).toFixed(2)} €) ab — ` +
@@ -223,7 +234,7 @@ export async function createOrderFromStripeSession(
         `computed=${totals.totalInCents} paid=${paidTotal} — using Stripe amounts`
     );
     totals = {
-      subtotalInCents: totals.subtotalInCents,
+      subtotalInCents: paidSubtotal,
       discountInCents: paidDiscount,
       shippingInCents: paidShipping,
       totalInCents: paidTotal,

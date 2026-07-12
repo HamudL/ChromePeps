@@ -42,9 +42,36 @@ function formatPrice(cents: number): string {
   }).format(cents / 100);
 }
 
-export const alt = "ChromePeps Produkt";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+
+/**
+ * Produktspezifischer `og:image:alt`-Text. Ein statischer `alt`-Export
+ * (Modul-Ebene) kann die Route-Params NICHT lesen — nur
+ * generateImageMetadata bekommt sie zur Render-Zeit. Fallback auf einen
+ * generischen Text, wenn das Produkt (mehr) nicht existiert.
+ */
+export async function generateImageMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const product = await db.product.findUnique({
+    where: { slug, isActive: true },
+    select: { name: true },
+  });
+  return [
+    {
+      id: "product",
+      alt: product
+        ? `${product.name} — ChromePeps Analysezertifikat`
+        : "ChromePeps Produkt",
+      size,
+      contentType,
+    },
+  ];
+}
 
 // Farbpalette (1:1 aus dem V3-Lab-Certificate-Design extrahiert).
 const COLORS = {

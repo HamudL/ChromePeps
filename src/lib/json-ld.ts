@@ -35,7 +35,10 @@ export function organizationJsonLd() {
     "@type": "Organization",
     name: APP_NAME,
     url: BASE_URL,
-    logo: `${BASE_URL}/icon`,
+    // public/logo.png (ausgeliefert unter /logo.png). NICHT /icon: das
+    // App-Router-Metadata-Icon liegt unter src/app/icon.png und wird nur
+    // unter /icon.png serviert — /icon (ohne Extension) ist 404.
+    logo: `${BASE_URL}/logo.png`,
     description: APP_DESCRIPTION,
     sameAs: [],
   };
@@ -86,6 +89,13 @@ export function productJsonLd(input: ProductJsonLdInput) {
   const price = (input.priceInCents / 100).toFixed(2);
   const url = `${BASE_URL}/products/${input.slug}`;
 
+  // Google Merchant/Rich-Results empfiehlt priceValidUntil. Relativ ~1
+  // Jahr in die Zukunft (Datum ohne Zeitanteil) statt eines hartkodierten
+  // Datums, damit das Angebot nie „abgelaufen" wirkt.
+  const priceValid = new Date();
+  priceValid.setFullYear(priceValid.getFullYear() + 1);
+  const priceValidUntil = priceValid.toISOString().split("T")[0];
+
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -101,10 +111,23 @@ export function productJsonLd(input: ProductJsonLdInput) {
       url,
       priceCurrency: (input.currency ?? "EUR").toUpperCase(),
       price,
+      priceValidUntil,
       availability: input.inStock
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
+      // 14-tägige Widerrufsfrist (gesetzliches Widerrufsrecht). Rücksende-
+      // kosten trägt gem. Widerrufsbelehrung der Kunde (ReturnShippingFees),
+      // daher NICHT als FreeReturn ausgezeichnet.
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "DE",
+        returnPolicyCategory:
+          "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 14,
+        returnMethod: "https://schema.org/ReturnByMail",
+        returnFees: "https://schema.org/ReturnShippingFees",
+      },
     },
   };
 
@@ -194,7 +217,8 @@ export function articleJsonLd(input: ArticleJsonLdInput) {
       name: APP_NAME,
       logo: {
         "@type": "ImageObject",
-        url: `${BASE_URL}/icon`,
+        // Siehe organizationJsonLd(): /icon ist 404, /logo.png existiert.
+        url: `${BASE_URL}/logo.png`,
       },
     },
     mainEntityOfPage: {

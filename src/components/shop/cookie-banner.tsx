@@ -20,9 +20,12 @@ export function CookieBanner() {
   if (!mounted || decision !== null) return null;
 
   return (
+    // Nicht-modale Einwilligungs-Region: Der Banner blockiert die Seite
+    // nicht (kein Overlay, kein Fokus-Trap), daher role="region" mit
+    // aria-label statt der widersprüchlichen dialog+aria-live-Kombination,
+    // die Fokusverwaltung erwarten ließe (WCAG-konsistente Semantik).
     <div
-      role="dialog"
-      aria-live="polite"
+      role="region"
       aria-label="Cookie-Hinweis"
       className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6"
     >
