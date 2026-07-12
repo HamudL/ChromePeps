@@ -16,12 +16,16 @@ test.describe("Cookie Consent Banner", () => {
   });
 
   test("banner is visible on first visit", async ({ page }) => {
-    const banner = page.getByRole("dialog", { name: /cookie/i });
+    // Der Cookie-Banner ist bewusst role="region" (nicht-modal, kein
+    // Fokus-Trap) mit aria-label "Cookie-Hinweis" — siehe cookie-banner.tsx.
+    const banner = page.getByRole("region", { name: /cookie/i });
     await expect(banner).toBeVisible({ timeout: 5_000 });
   });
 
   test("banner disappears after accepting", async ({ page }) => {
-    const banner = page.getByRole("dialog", { name: /cookie/i });
+    // Der Cookie-Banner ist bewusst role="region" (nicht-modal, kein
+    // Fokus-Trap) mit aria-label "Cookie-Hinweis" — siehe cookie-banner.tsx.
+    const banner = page.getByRole("region", { name: /cookie/i });
     await expect(banner).toBeVisible({ timeout: 5_000 });
 
     await page.getByRole("button", { name: /akzeptieren/i }).click();
@@ -29,7 +33,9 @@ test.describe("Cookie Consent Banner", () => {
   });
 
   test("banner stays hidden after reload when accepted", async ({ page }) => {
-    const banner = page.getByRole("dialog", { name: /cookie/i });
+    // Der Cookie-Banner ist bewusst role="region" (nicht-modal, kein
+    // Fokus-Trap) mit aria-label "Cookie-Hinweis" — siehe cookie-banner.tsx.
+    const banner = page.getByRole("region", { name: /cookie/i });
     await expect(banner).toBeVisible({ timeout: 5_000 });
 
     await page.getByRole("button", { name: /akzeptieren/i }).click();
@@ -43,7 +49,9 @@ test.describe("Cookie Consent Banner", () => {
   });
 
   test("banner disappears after rejecting", async ({ page }) => {
-    const banner = page.getByRole("dialog", { name: /cookie/i });
+    // Der Cookie-Banner ist bewusst role="region" (nicht-modal, kein
+    // Fokus-Trap) mit aria-label "Cookie-Hinweis" — siehe cookie-banner.tsx.
+    const banner = page.getByRole("region", { name: /cookie/i });
     await expect(banner).toBeVisible({ timeout: 5_000 });
 
     await page.getByRole("button", { name: /ablehnen/i }).click();
