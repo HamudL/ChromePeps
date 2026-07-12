@@ -92,6 +92,35 @@ fi
 #       (b) "no changes". Wenn (a) nichts hatte (z.B. ad-hoc Schema-
 #       Tweaks ohne Migration), pflegt (b) sie ein.
 log "[4/5] Applying database schema..."
+
+# Baseline-Adoption (einmalig, selbstheilend): Die Migrations-Historie wurde
+# zu einer einzigen Baseline-Migration (00000000000000_baseline) gesquasht,
+# weil die alte 14-teilige Kette auf einer frischen DB nicht mehr anwendbar
+# war. Die bestehende Prod-DB hat aber bereits alle Tabellen (via db push)
+# und die ALTEN Migrationsnamen in _prisma_migrations. Ohne diesen Guard
+# würde `migrate deploy` die Baseline als "pending" sehen und ihre CREATE
+# TABLEs gegen bereits existierende Tabellen laufen lassen → harter Abbruch.
+# Der Guard markiert die Baseline als applied (OHNE ihre SQL auszuführen),
+# WENN die Kern-Tabellen existieren, die Baseline aber noch nicht vermerkt
+# ist. Auf einer frischen DB (keine _prisma_migrations / keine products-
+# Tabelle) greift der Guard NICHT — dort wendet migrate deploy die Baseline
+# regulär an. Idempotent: nach dem ersten Deploy ist die Baseline vermerkt
+# und der Guard ist ein No-op. Lokal gegen frische UND prod-artige DB verifiziert.
+BASELINE_MIGRATION="00000000000000_baseline"
+ADOPT_SQL="SELECT CASE
+  WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='_prisma_migrations')
+   AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='products')
+   AND NOT EXISTS (SELECT 1 FROM _prisma_migrations WHERE migration_name='${BASELINE_MIGRATION}')
+  THEN 'adopt' ELSE 'skip' END;"
+NEEDS_ADOPT=$(docker compose exec -T postgres psql -U chromepeps -d chromepeps -tAc "$ADOPT_SQL" 2>/dev/null | tr -d '[:space:]' || true)
+if [ "$NEEDS_ADOPT" = "adopt" ]; then
+  log "  Baseline noch nicht vermerkt, Tabellen existieren → markiere ${BASELINE_MIGRATION} als applied (kein Re-Create)."
+  if ! docker compose run --rm --no-deps -T app npx prisma migrate resolve --applied "$BASELINE_MIGRATION"; then
+    log "ERROR: Baseline-Adoption (migrate resolve) fehlgeschlagen. Alter Container serviert weiter. Abbruch."
+    exit 1
+  fi
+fi
+
 if ! docker compose run --rm --no-deps -T app npx prisma migrate deploy; then
   log "ERROR: prisma migrate deploy failed. Old app container is still serving. Aborting deploy."
   exit 1
