@@ -39,7 +39,6 @@ import { HeroLogo } from "./hero-logo";
 import { PeptideNetwork } from "@/components/shop/peptide-network";
 import { TrustBar } from "@/components/shop/trust-bar";
 import { LiveMetrics } from "@/components/shop/live-metrics";
-import { RecentlyViewed } from "@/components/shop/recently-viewed";
 import { SectionBlur } from "@/components/layout/section-blur";
 
 // Startseite: eigener keyword-tragender Title + Description/OG statt des
@@ -477,10 +476,6 @@ export default async function HomePage() {
         <SectionBlur />
         </>
       )}
-
-      {/* ── Zuletzt angesehen (client-island, blendet sich bei leerem
-          Store / SSR selbst aus) ── */}
-      <RecentlyViewed />
 
       {/* ── Disclaimer ── */}
       <section className="border-t">

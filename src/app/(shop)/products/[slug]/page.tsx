@@ -21,10 +21,7 @@ import { productJsonLd, breadcrumbJsonLd, safeJsonLd } from "@/lib/json-ld";
 import { ReviewSection } from "@/components/shop/review-section";
 import { ReviewList, type ReviewListItem } from "@/components/shop/review-list";
 import { StarRating } from "@/components/shop/star-rating";
-import { ProductCard } from "@/components/shop/product-card";
 import { CertificateCard } from "@/components/shop/certificate-card";
-import { getRelatedProducts } from "@/lib/products/related";
-import { getBestsellerProductIds } from "@/lib/products/card";
 import type { Metadata } from "next";
 import type { ProductWithDetails } from "@/types";
 
@@ -33,8 +30,6 @@ import {
   ImageGallery,
   SequenceCopyBlock,
 } from "./product-client";
-import { ProductViewTracker } from "@/components/shop/product-view-tracker";
-import { RecentlyViewed } from "@/components/shop/recently-viewed";
 import { SectionBlur } from "@/components/layout/section-blur";
 import { FadeUp } from "../../home-animations";
 
@@ -210,25 +205,15 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   // hasSale-Logik wanderte in VariantBuyPanel — wird dort anhand der
   // gleichen Felder (compareAtPriceInCents, priceInCents) berechnet.
 
-  // Related products + bestseller flags + latest COA + Review-Stats
-  // run in parallel — die Stats-Aggregation muss separat laufen weil
-  // wir nur die ersten 20 Reviews mitladen (Lazy-Load via Client-
-  // Component für den Rest).
-  const [relatedRaw, bestsellerIds, latestCoa, reviewStats] = await Promise.all([
-    getRelatedProducts(
-      { id: product.id, categoryId: product.categoryId },
-      4
-    ),
-    getBestsellerProductIds(),
+  // Latest COA + Review-Stats laufen parallel — die Stats-Aggregation
+  // muss separat laufen weil wir nur die ersten 20 Reviews mitladen
+  // (Lazy-Load via Client-Component für den Rest).
+  const [latestCoa, reviewStats] = await Promise.all([
     getLatestCertificate(product.id),
     getReviewStats(product.id),
   ]);
   const avgRating = reviewStats.avgRating;
   const reviewsTotalCount = reviewStats.totalCount;
-  const relatedProducts = relatedRaw.map((p) => ({
-    ...p,
-    isBestseller: bestsellerIds.has(p.id),
-  }));
 
   const productSchema = productJsonLd({
     name: product.name,
@@ -285,8 +270,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   return (
     <div className="flex flex-col">
-      {/* Analytics + structured data (invisible) */}
-      <ProductViewTracker product={product} />
+      {/* Structured data (invisible) */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(productSchema) }}
@@ -646,8 +630,13 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   Beschreibung
                 </h2>
               </FadeUp>
+              {/* Bewusst KEINE .prose-Klasse: das ist die eigene
+                  Wissens-Artikel-Klasse aus globals.css (das Tailwind-
+                  Typography-Plugin ist nicht installiert) und setzt
+                  un-layered `color: hsl(var(--foreground))` — auf dieser
+                  dunklen Sektion wäre der Text schwarz auf schwarz. */}
               <FadeUp delay={0.05}>
-                <div className="prose prose-sm prose-invert max-w-none text-white/70 whitespace-pre-line leading-relaxed">
+                <div className="text-[15px] text-white/70 whitespace-pre-line leading-relaxed">
                   {product.description}
                 </div>
               </FadeUp>
@@ -720,43 +709,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           <ReviewSection productId={product.id} />
         </div>
       </section>
-
-      {/* ── Related Products (dark) ── */}
-      {relatedProducts.length > 0 && (
-        <>
-        <SectionBlur />
-        <section className="section-dark">
-          <div className="container py-12 md:py-16">
-            <FadeUp>
-              <div className="mb-10 max-w-2xl">
-                <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary mb-2">
-                  Auch interessant
-                </p>
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-                  Ähnliche Produkte
-                </h2>
-                <p className="mt-2 text-sm text-white/60">
-                  Weitere Peptide aus der Kategorie {product.category.name}
-                </p>
-              </div>
-            </FadeUp>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10 md:gap-x-6 md:gap-y-12">
-              {relatedProducts.map((related, i) => (
-                <FadeUp key={related.id} delay={i * 0.08}>
-                  <ProductCard product={related} />
-                </FadeUp>
-              ))}
-            </div>
-          </div>
-        </section>
-        <SectionBlur />
-        </>
-      )}
-
-      {/* ── Zuletzt angesehen (client-island, blendet sich bei leerem
-          Store / SSR selbst aus; filtert das aktuelle Produkt heraus) ── */}
-      <RecentlyViewed currentProductId={product.id} />
 
       {/* ── Research Disclaimer ── */}
       <section className="border-t">

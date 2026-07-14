@@ -22,7 +22,7 @@ import { usePathname } from "next/navigation";
  * spät hinzugefügten Elemente entstehen durch:
  *   - gestreamte / Suspense-Inhalte nach client-seitiger Navigation,
  *   - Client-Components, die nach Mount rendern (z.B. Lazy-Load weiterer
- *     Reviews via /api/reviews, RecentlyViewed),
+ *     Reviews via /api/reviews),
  *   - conditionally eingeblendete Sektionen (Tabs, „mehr anzeigen").
  * Deshalb läuft zusätzlich zum Scan ein MutationObserver, der neue
  * `.reveal-up`-Knoten nachzieht. (PR #63 fixte nur den Re-Scan pro

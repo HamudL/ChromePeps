@@ -239,46 +239,25 @@ export default async function CategoryLandingPage({
 
   const totalPages = Math.ceil(total / pageSize);
 
-  // Kategorie-Index "01 / 05" — mit Sort-Order aus allCategories
-  const sortedIndex = allCategories.findIndex((c) => c.slug === slug);
-  const categoryIndex =
-    sortedIndex >= 0
-      ? `${String(sortedIndex + 1).padStart(2, "0")} / ${String(
-          allCategories.length
-        ).padStart(2, "0")}`
-      : null;
-
   const basePath = `/products/category/${slug}`;
   const hasActiveFilters = sort !== "newest" || inStock || minPurity != null;
 
-  // Hero-Stats analog zu /products: nur Werte mit echtem Inhalt zeigen,
+  // Fakten-Zeile analog zu /products: nur Werte mit echtem Inhalt zeigen,
   // damit eine frische Kategorie ohne CoAs nicht mit "—" beworben wird.
-  const heroStats: { value: string; suffix?: string; label: string }[] = [
-    { value: String(stats.productCount), label: "Produkte" },
+  const heroFacts: string[] = [
+    `${stats.productCount} ${stats.productCount === 1 ? "Produkt" : "Produkte"}`,
   ];
   if (stats.avgPurity != null) {
-    heroStats.push({
-      value: stats.avgPurity.toFixed(2).replace(".", ","),
-      suffix: "%",
-      label: "Ø Reinheit",
-    });
+    heroFacts.push(
+      `Ø ${stats.avgPurity.toFixed(2).replace(".", ",")} % Reinheit`,
+    );
   }
   if (stats.minPriceInCents != null) {
-    heroStats.push({
-      value: formatPrice(stats.minPriceInCents),
-      label: "Preis ab",
-    });
+    heroFacts.push(`ab ${formatPrice(stats.minPriceInCents)}`);
   }
   if (stats.latestBatchNumber) {
-    heroStats.push({
-      value: stats.latestBatchNumber,
-      label: "Neuste Charge",
-    });
+    heroFacts.push(`Neuste Charge ${stats.latestBatchNumber}`);
   }
-
-  const heroCrumb = categoryIndex
-    ? ["ChromePeps", `Kategorie ${categoryIndex}`, category.name]
-    : ["ChromePeps", "Kategorie", category.name];
 
   const heroSubline =
     category.description ??
@@ -287,17 +266,9 @@ export default async function CategoryLandingPage({
   return (
     <div className="flex flex-col">
       <ApothekeShopHero
-        crumb={heroCrumb}
-        title={
-          <>
-            <em className="not-italic text-primary">
-              {category.name}
-            </em>
-          </>
-        }
+        title={category.name}
         subline={heroSubline}
-        stats={heroStats}
-        featured={[]}
+        facts={heroFacts}
       />
 
       <ShopFilterBar

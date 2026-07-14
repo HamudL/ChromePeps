@@ -12,7 +12,6 @@ import {
   productCardSelect,
   getBestsellerProductIds,
 } from "@/lib/products/card";
-import { getFeaturedProductPool } from "@/lib/products/featured";
 import { getShopCategories } from "@/lib/shop/categories";
 import { getShopStats } from "@/lib/shop/stats";
 import type { ProductCardData } from "@/types";
@@ -276,7 +275,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     : NaN;
   const minPurity = Number.isFinite(minPurityRaw) ? minPurityRaw : null;
 
-  const [{ products, total, totalPages }, categories, stats, featured] =
+  const [{ products, total, totalPages }, categories, stats] =
     await Promise.all([
       getProducts({
         search,
@@ -288,12 +287,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       }),
       getShopCategories(),
       getShopStats(),
-      // Featured nur auf der Haupt-Listing-Seite (ohne Kategorie-Filter
-      // und ohne Suche) — sonst wäre "ein Bestseller" als Eyecatcher
-      // neben einer Suche/Filterung semantisch falsch.
-      !category && !search
-        ? getFeaturedProductPool(10)
-        : Promise.resolve([] as Awaited<ReturnType<typeof getFeaturedProductPool>>),
     ]);
 
   const hasActiveFilters = !!(
@@ -312,33 +305,22 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     ? "Suchergebnisse"
     : currentCategoryName ?? "Alle Produkte";
 
-  const heroStats: { value: string; label: string; suffix?: string }[] = [];
+  // Ruhige Fakten-Zeile unter der Subline \u2014 nur echte Werte, keine
+  // leeren Platzhalter (frische DB ohne COAs zeigt schlicht weniger).
+  const heroFacts: string[] = [];
   if (stats.batchCount > 0) {
-    heroStats.push({
-      value: stats.batchCount.toLocaleString("de-DE"),
-      label: "Chargen getestet",
-    });
+    heroFacts.push(
+      `${stats.batchCount.toLocaleString("de-DE")} Chargen getestet`,
+    );
   }
   if (stats.avgPurity12m != null) {
-    heroStats.push({
-      value: stats.avgPurity12m.toFixed(2).replace(".", ","),
-      suffix: "%",
-      label: "\u00D8 Reinheit",
-    });
+    heroFacts.push(
+      `\u00D8 ${stats.avgPurity12m.toFixed(2).replace(".", ",")} % Reinheit`,
+    );
   }
+  heroFacts.push("Versand aus Deutschland");
 
-  const year = new Date().getFullYear();
-  const heroTitle = search ? (
-    <>
-      Suche. <em className="not-italic text-primary">Gefiltert.</em>{" "}
-      Versand aus Deutschland.
-    </>
-  ) : (
-    <>
-      Rein. <em className="not-italic text-primary">Verifiziert.</em>{" "}
-      Versand aus Deutschland.
-    </>
-  );
+  const heroTitle = search ? "Suchergebnisse" : "Forschungspeptide";
 
   const heroSubline = search
     ? `${total} Treffer für „${search}“.`
@@ -347,11 +329,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   return (
     <div className="flex flex-col">
       <ApothekeShopHero
-        crumb={["ChromePeps", "Research Peptides", `Katalog ${year}`]}
         title={heroTitle}
         subline={heroSubline}
-        stats={heroStats}
-        featured={featured}
+        facts={heroFacts}
       />
 
       <ShopFilterBar
