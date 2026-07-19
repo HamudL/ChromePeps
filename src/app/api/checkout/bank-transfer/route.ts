@@ -13,6 +13,7 @@ import { BANK_TRANSFER_ENABLED } from "@/lib/constants";
 import { invalidateStockCaches } from "@/lib/order/invalidate-stock-caches";
 import { sendOrderConfirmationEmail } from "@/lib/mail/send";
 import { resolveShippingRate } from "@/lib/shipping/rates";
+import { snapshotOrderAddress } from "@/lib/order/snapshot-address";
 
 /**
  * POST /api/checkout/bank-transfer
@@ -541,10 +542,16 @@ export async function POST(req: NextRequest) {
     order = await db.$transaction(async (tx) => {
     // Gast-Adresse erst hier anlegen, damit sie bei einem Rollback der
     // Transaktion (Promo erschöpft/doppelt, Stock weg) automatisch verworfen
-    // wird. Auth-User nutzen ihre bereits gespeicherte Adresse.
+    // wird. Auth-User nutzen ihre gespeicherte Adresse — wir frieren sie
+    // aber in eine unveränderliche, besitzerlose Kopie ein (AUDIT: Daten-
+    // Integrität #17/#18), damit späteres Bearbeiten/Löschen der Adresse
+    // diese Bestellung und ihren §14-UStG-Beleg nicht rückwirkend ändert
+    // bzw. via ON DELETE SET NULL nullt (siehe snapshot-address.ts).
     const resolvedShippingAddressId = guestAddressData
       ? (await tx.address.create({ data: guestAddressData })).id
-      : shippingAddressId;
+      : shippingAddressId
+        ? await snapshotOrderAddress(tx, shippingAddressId)
+        : null;
     const newOrder = await tx.order.create({
       data: {
         orderNumber: generateOrderNumber(),
