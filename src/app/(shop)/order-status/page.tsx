@@ -16,6 +16,7 @@ import {
   MapPin,
   Mail,
   Hash,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,6 +93,13 @@ function OrderStatusInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<OrderStatusData | null>(null);
+  // Die Zugangsdaten der ERFOLGREICHEN Abfrage — bewusst getrennt von den
+  // Formularfeldern: wer nach dem Abruf im Feld weitertippt, würde sonst
+  // den Rechnungs-Download mit halb geänderten Daten losschicken.
+  const [lookupCredentials, setLookupCredentials] = useState<{
+    orderNumber: string;
+    email: string;
+  } | null>(null);
 
   const lookup = async (nextOrderNumber?: string, nextEmail?: string) => {
     const useOrderNumber = nextOrderNumber ?? orderNumber;
@@ -115,12 +123,18 @@ function OrderStatusInner() {
       if (!res.ok || !json.success) {
         setError(json.error ?? "Fehler beim Abrufen der Bestellung.");
         setOrder(null);
+        setLookupCredentials(null);
         return;
       }
       setOrder(json.data);
+      setLookupCredentials({
+        orderNumber: useOrderNumber.trim(),
+        email: useEmail.trim(),
+      });
     } catch {
       setError("Verbindung fehlgeschlagen. Bitte erneut versuchen.");
       setOrder(null);
+      setLookupCredentials(null);
     } finally {
       setLoading(false);
     }
@@ -248,7 +262,9 @@ function OrderStatusInner() {
               </div>
             )}
 
-            {order && <OrderResult order={order} />}
+            {order && lookupCredentials && (
+              <OrderResult order={order} credentials={lookupCredentials} />
+            )}
           </div>
         </div>
       </div>
@@ -271,7 +287,107 @@ function OrderStatusInner() {
   );
 }
 
-function OrderResult({ order }: { order: OrderStatusData }) {
+/**
+ * Rechnungs-Download für Gäste.
+ *
+ * POST statt eines simplen Links, weil die E-Mail-Adresse zur Autorisierung
+ * gehört und nicht in eine URL gehört (Server-Logs, Referer, History). Die
+ * Antwort ist ein PDF-Blob, den wir über einen kurzlebigen Object-URL an
+ * den Browser-Download übergeben.
+ */
+function InvoiceDownload({
+  order,
+  credentials,
+}: {
+  order: OrderStatusData;
+  credentials: { orderNumber: string; email: string };
+}) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  if (order.paymentStatus !== "SUCCEEDED") {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Die Rechnung steht zur Verfügung, sobald deine Zahlung eingegangen ist.
+      </p>
+    );
+  }
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      const res = await fetch("/api/order-status/invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        setDownloadError(
+          json?.error ?? "Rechnung konnte nicht geladen werden."
+        );
+        return;
+      }
+
+      const suggested = res.headers
+        .get("Content-Disposition")
+        ?.match(/filename="([^"]+)"/)?.[1];
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = suggested ?? `Rechnung-${order.orderNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setDownloadError("Verbindung fehlgeschlagen. Bitte erneut versuchen.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={() => void handleDownload()}
+        disabled={downloading}
+      >
+        {downloading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Rechnung wird erstellt…
+          </>
+        ) : (
+          <>
+            <FileText className="mr-2 h-4 w-4" />
+            Rechnung herunterladen
+          </>
+        )}
+      </Button>
+      {downloadError && (
+        <p className="text-xs text-destructive" role="alert">
+          {downloadError}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function OrderResult({
+  order,
+  credentials,
+}: {
+  order: OrderStatusData;
+  credentials: { orderNumber: string; email: string };
+}) {
   const statusLabel = STATUS_LABEL[order.status] ?? {
     label: order.status,
     className: "bg-muted text-muted-foreground border-border",
@@ -432,6 +548,9 @@ function OrderResult({ order }: { order: OrderStatusData }) {
               <p className="text-xs text-muted-foreground text-right mt-0.5">
                 inkl. {formatPrice(order.taxInCents)} MwSt.
               </p>
+            </div>
+            <div className="pt-3 mt-3 border-t">
+              <InvoiceDownload order={order} credentials={credentials} />
             </div>
           </CardContent>
         </Card>
