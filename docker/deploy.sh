@@ -152,17 +152,39 @@ fi
 log "[5/5] Restarting app + nginx..."
 docker compose up -d --force-recreate app nginx
 
-# Wait for app to become healthy
+# Wait for app to become healthy.
+#
+# Das Timeout liegt bewusst über der `--start-period=40s` des
+# Dockerfile-HEALTHCHECKs: ein langsamer, aber gesunder Boot auf dem
+# 1,8-GB-VPS darf den Deploy nicht rot machen — ein Container, der gar
+# nicht hochkommt, aber sehr wohl.
 log "Waiting for app to become healthy..."
-for i in $(seq 1 30); do
+APP_HEALTHY=false
+for i in $(seq 1 90); do
   if docker compose exec -T app wget -q --spider http://127.0.0.1:3000/api/health/live 2>/dev/null; then
     log "App is healthy after ${i}s"
+    APP_HEALTHY=true
     break
   fi
   sleep 1
 done
 
-# Cleanup: remove old dangling images
+if [ "$APP_HEALTHY" != "true" ]; then
+  log "ERROR: App antwortet nach 90s nicht auf /api/health/live."
+  log "  ACHTUNG: Der NEUE Container läuft bereits (Schritt 5 hat cutover"
+  log "  gemacht) — dieser Abbruch stellt den alten Stand NICHT wieder her."
+  log "  Diagnose und, falls nötig, Rollback:"
+  log "    cd ${COMPOSE_DIR} && docker compose logs --tail=100 app"
+  log "    cd ${COMPOSE_DIR} && bash rollback.sh"
+  log "--- docker compose ps ---"
+  docker compose ps || true
+  log "--- letzte 50 Zeilen app-Log ---"
+  docker compose logs --tail=50 app || true
+  exit 1
+fi
+
+# Cleanup: remove old dangling images. Läuft bewusst NUR im Erfolgsfall —
+# nach einem gescheiterten Deploy bleiben alle Images für die Analyse liegen.
 docker image prune -f 2>/dev/null || true
 
 log "=== Deploy complete! ==="

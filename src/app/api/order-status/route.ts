@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { parseJsonBody } from "@/lib/api/parse-json-body";
-import { rateLimit, rateLimitExceeded } from "@/lib/rate-limit";
+import { rateLimitExceeded } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
+import {
+  GUEST_LOOKUP_NOT_FOUND,
+  guestLookupEmailMatches,
+  guestLookupRateLimit,
+  parseGuestLookupInput,
+} from "@/lib/order/guest-lookup";
 
 /**
  * POST /api/order-status
@@ -60,43 +66,20 @@ type OrderStatusResponse = {
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
-  // 10 tries per 5-minute window per IP. Enough for a legitimate
-  // user who mis-types their email a few times, tight enough to
-  // make enumeration impractical at scale.
-  const limit = await rateLimit(`order-status:ip:${ip}`, {
-    maxRequests: 10,
-    windowMs: 300_000,
-  });
+  const limit = await guestLookupRateLimit(ip);
   if (!limit.success) return rateLimitExceeded(limit);
 
-  // Kaputtes JSON → leeres Objekt → 400 unten, statt unbehandelter 500.
-  const body = ((await parseJsonBody(req)) ?? {}) as {
-    orderNumber?: unknown;
-    email?: unknown;
-  };
-  const rawOrderNumber =
-    typeof body.orderNumber === "string" ? body.orderNumber.trim() : "";
-  const rawEmail =
-    typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-
-  if (!rawOrderNumber || !rawEmail) {
+  // Kaputtes JSON → leeres Objekt → 400, statt unbehandelter 500.
+  const parsed = parseGuestLookupInput(await parseJsonBody(req));
+  if (!parsed.ok) {
     return NextResponse.json(
-      {
-        success: false,
-        error: "Bitte Bestellnummer und E-Mail-Adresse angeben.",
-      },
-      { status: 400 }
-    );
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
-    return NextResponse.json(
-      { success: false, error: "Bitte eine gültige E-Mail-Adresse angeben." },
+      { success: false, error: parsed.error },
       { status: 400 }
     );
   }
 
   const order = await db.order.findUnique({
-    where: { orderNumber: rawOrderNumber },
+    where: { orderNumber: parsed.orderNumber },
     include: {
       user: { select: { email: true } },
       items: {
@@ -123,24 +106,12 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Constant-ish timing: always return the same "not found" message
-  // whether the order exists or the email doesn't match. Keeps the
-  // endpoint from being a "is this order number real?" oracle.
-  const matches = (() => {
-    if (!order) return false;
-    const orderEmail = (
-      order.user?.email ?? order.guestEmail ?? ""
-    ).toLowerCase();
-    return !!orderEmail && orderEmail === rawEmail;
-  })();
-
-  if (!order || !matches) {
+  // Immer dieselbe "nicht gefunden"-Meldung, egal ob die Bestellnummer
+  // unbekannt ist oder nur die E-Mail nicht passt — sonst wird der
+  // Endpunkt zum Orakel dafür, welche Bestellnummern existieren.
+  if (!order || !guestLookupEmailMatches(order, parsed.email)) {
     return NextResponse.json(
-      {
-        success: false,
-        error:
-          "Keine Bestellung gefunden, die zu dieser Bestellnummer und E-Mail-Adresse passt.",
-      },
+      { success: false, error: GUEST_LOOKUP_NOT_FOUND },
       { status: 404 }
     );
   }
