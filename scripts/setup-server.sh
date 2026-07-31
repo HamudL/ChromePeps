@@ -219,6 +219,45 @@ else
   log "SSL certificate already exists for $DOMAIN"
 fi
 
+# ---- Analytics-Subdomain-Zertifikat (verhindert nginx-Totalausfall) --------
+# docker/nginx/conf.d/analytics.conf wird von nginx via `include *.conf` IMMER
+# geladen (unabhaengig vom compose-Profil `analytics`) und referenziert HART
+# ein Cert fuer analytics.$DOMAIN. Fehlt es, bricht der GESAMTE nginx-Start ab
+# (ein Prozess, alle vhosts) -> auch die Hauptseite waere offline (klassische
+# Disaster-Recovery-Falle auf einem frischen VPS). Deshalb hier IMMER
+# sicherstellen, dass unter diesem Pfad ein Cert liegt.
+ANALYTICS_DOMAIN="analytics.$DOMAIN"
+ANALYTICS_LIVE="/etc/letsencrypt/live/$ANALYTICS_DOMAIN"
+if [[ ! -f "$ANALYTICS_LIVE/fullchain.pem" ]]; then
+  # 1) Echtes Let's-Encrypt-Cert versuchen (NICHT-fatal). Port 80 ist hier
+  #    frei (nginx wurde oben gestoppt); standalone klappt, SOFERN
+  #    analytics.$DOMAIN bereits auf diesen Server zeigt.
+  certbot certonly --standalone \
+    -d "$ANALYTICS_DOMAIN" \
+    --email "$EMAIL" \
+    --agree-tos \
+    --non-interactive \
+    --no-eff-email \
+    || warn "Analytics-Cert per Let's Encrypt fehlgeschlagen (zeigt analytics.$DOMAIN schon hierher?) — lege Platzhalter an."
+fi
+if [[ ! -f "$ANALYTICS_LIVE/fullchain.pem" ]]; then
+  # 2) Fallback: selbst-signiertes Platzhalter-Cert, damit nginx STARTET und
+  #    die HAUPTSEITE erreichbar bleibt. Die Analytics-Subdomain zeigt bis zum
+  #    echten Cert eine Zertifikatswarnung — die Hauptseite nicht.
+  #    Dies ist bewusst KEINE certbot-Lineage. Fuer das echte Cert spaeter:
+  #      rm -rf "$ANALYTICS_LIVE" "/etc/letsencrypt/archive/$ANALYTICS_DOMAIN"
+  #      certbot certonly --webroot -w /var/www/certbot -d "$ANALYTICS_DOMAIN" \
+  #        --email "$EMAIL" --agree-tos --non-interactive --no-eff-email
+  mkdir -p "$ANALYTICS_LIVE"
+  openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+    -keyout "$ANALYTICS_LIVE/privkey.pem" \
+    -out "$ANALYTICS_LIVE/fullchain.pem" \
+    -subj "/CN=$ANALYTICS_DOMAIN" >/dev/null 2>&1
+  cp "$ANALYTICS_LIVE/fullchain.pem" "$ANALYTICS_LIVE/chain.pem"
+  warn "Selbst-signiertes Platzhalter-Cert fuer $ANALYTICS_DOMAIN angelegt — nginx startet, Hauptseite bleibt online."
+fi
+log "Analytics-Subdomain-Zertifikat vorhanden ($ANALYTICS_LIVE)"
+
 # Auto-renew cron.
 # WICHTIG: certbot merkt sich vom Erst-Setup die standalone-Methode, die
 # Port 80 exklusiv braucht — der nginx-Container belegt Port 80 aber

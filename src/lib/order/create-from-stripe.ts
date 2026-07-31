@@ -4,6 +4,7 @@ import { generateOrderNumber } from "@/lib/order/generate-order-number";
 import { calculateOrderTotals, TAX_MULTIPLIER } from "@/lib/order/calculate-totals";
 import { redeemPromo } from "@/lib/order/redeem-promo";
 import { resolveShippingRate } from "@/lib/shipping/rates";
+import { snapshotOrderAddress } from "@/lib/order/snapshot-address";
 
 /**
  * Shared order-creation logic used by the Stripe webhook handler,
@@ -172,6 +173,14 @@ export async function createOrderFromStripeSession(
   // obwohl Stripe z.B. 12,99 € abgebucht hat (kostspieliger Bug bei
   // Liefer-Ländern außerhalb DE).
   let baseShippingInCents: number | undefined;
+  // Adress-Snapshot bei der Order-Erstellung (AUDIT: Daten-Integritaet
+  // #17/#18): Auth-User referenzieren ihre veraenderbare Adressbuch-Zeile.
+  // Wir frieren sie hier in eine unveraenderliche, besitzerlose Kopie ein,
+  // damit ein spaeteres Bearbeiten/Loeschen der gespeicherten Adresse die
+  // Anschrift dieser bezahlten Bestellung und ihres §14-UStG-Belegs nicht
+  // rueckwirkend aendert bzw. via ON DELETE SET NULL nullt. Gaeste haben
+  // bereits eine frische Einweg-Zeile (siehe snapshot-address.ts).
+  let resolvedAddressId: string | null = shippingAddressId;
   if (shippingAddressId) {
     const address = await tx.address.findUnique({
       where: { id: shippingAddressId },
@@ -180,6 +189,15 @@ export async function createOrderFromStripeSession(
     if (address?.country) {
       const rate = await resolveShippingRate(address.country);
       if (rate) baseShippingInCents = rate.priceInCents;
+    }
+    if (userId) {
+      // Authentifizierte Bestellung -> Adresse einfrieren.
+      resolvedAddressId = await snapshotOrderAddress(tx, shippingAddressId);
+    } else if (!address) {
+      // Gast-/Recovery-Pfad, aber die referenzierte Adresse existiert nicht
+      // mehr (z.B. Konto+Adressen zwischen Bezahlung und Webhook geloescht)
+      // -> nicht an einem toten Foreign Key haengen bleiben.
+      resolvedAddressId = null;
     }
   }
 
@@ -261,8 +279,8 @@ export async function createOrderFromStripeSession(
       taxInCents: totals.taxInCents,
       shippingInCents: totals.shippingInCents,
       totalInCents: totals.totalInCents,
-      shippingAddressId: shippingAddressId ?? null,
-      billingAddressId: shippingAddressId ?? null,
+      shippingAddressId: resolvedAddressId,
+      billingAddressId: resolvedAddressId,
       items: { createMany: { data: orderItems } },
       events: {
         create: {
